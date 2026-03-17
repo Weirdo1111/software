@@ -44,6 +44,14 @@ export interface WritingFeedback {
   rewrite_sample: string;
 }
 
+export interface ReadingFeedback {
+  comprehension_score: number;
+  claim_feedback: string;
+  evidence_feedback: string;
+  vocabulary_feedback: string;
+  tips: string[];
+}
+
 export interface DailyTask {
   id: string;
   title: string;
