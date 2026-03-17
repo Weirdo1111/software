@@ -1,5 +1,6 @@
 import { Ear, FileText, Mic, PenLine, Sparkles, Target } from "lucide-react";
 
+import { ReadingFeedbackForm } from "@/components/forms/reading-feedback-form";
 import { SpeakingFeedbackForm } from "@/components/forms/speaking-feedback-form";
 import { WritingFeedbackForm } from "@/components/forms/writing-feedback-form";
 import { PageFrame } from "@/components/page-frame";
@@ -100,6 +101,10 @@ function renderWorkbench(mode: LessonMode, meta: (typeof modeMeta)[LessonMode]) 
 
   if (mode === "writing") {
     return <WritingFeedbackForm defaultLevel="B1" />;
+  }
+
+  if (mode === "reading") {
+    return <ReadingFeedbackForm defaultLevel="B1" />;
   }
 
   return (
