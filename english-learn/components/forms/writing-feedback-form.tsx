@@ -3,8 +3,6 @@
 import { ArrowRight, FilePenLine, LoaderCircle, WandSparkles } from "lucide-react";
 import { useState } from "react";
 
-import { AIAnalysisState } from "@/components/forms/ai-analysis-state";
-import { SaveToDeckButton } from "@/components/forms/save-to-deck-button";
 import type { WritingFeedback } from "@/types/learning";
 
 const defaultPrompt = "Write a short analytical paragraph explaining one challenge international students face in academic reading and one practical solution.";
@@ -98,18 +96,6 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: "A
 
       {status ? <p className="rounded-[1rem] bg-[rgba(255,244,240,0.9)] px-4 py-3 text-sm font-medium text-[var(--coral)]">{status}</p> : null}
 
-      {isSubmitting ? (
-        <AIAnalysisState
-          title="Reviewing your paragraph and building revision guidance."
-          description="The writing coach is checking idea control, grammar, and vocabulary at your selected CEFR level before generating a cleaner rewrite sample."
-          steps={[
-            "Reading your paragraph and identifying the main argument.",
-            "Comparing sentence control, grammar, and vocabulary to the target level.",
-            "Preparing priority fixes and a stronger revision example.",
-          ]}
-        />
-      ) : null}
-
       {result ? (
         <div className="grid gap-4 rounded-[1.6rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.74)] p-5">
           <div className="flex items-center gap-3 text-[var(--ink)]">
@@ -132,10 +118,6 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: "A
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Rewrite sample</p>
             <p className="mt-2 text-sm leading-7 text-[var(--ink)]">{result.rewrite_sample}</p>
           </div>
-          <SaveToDeckButton
-            tag="Writing"
-            items={result.errors.map((err) => ({ front: "Writing fix", back: err }))}
-          />
         </div>
       ) : null}
     </form>

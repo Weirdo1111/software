@@ -1,13 +1,11 @@
+﻿import Link from "next/link";
 import { Ear, FileText, Mic, PenLine, Sparkles, Target } from "lucide-react";
 
-import { ReadingFeedbackForm } from "@/components/forms/reading-feedback-form";
 import { SpeakingFeedbackForm } from "@/components/forms/speaking-feedback-form";
 import { WritingFeedbackForm } from "@/components/forms/writing-feedback-form";
+import { ListeningWorkbench } from "@/components/listening-workbench";
 import { PageFrame } from "@/components/page-frame";
 import { getLocale } from "@/lib/i18n/get-locale";
-import { buildPracticePassageFromArticle, getReadingArticleById } from "@/lib/reading-articles";
-import { getPassageForLevel } from "@/lib/reading-passages";
-import type { CEFRLevel } from "@/types/learning";
 
 type LessonMode = "listening" | "speaking" | "reading" | "writing";
 
@@ -16,12 +14,6 @@ function detectMode(id: string): LessonMode {
   if (id.includes("speaking")) return "speaking";
   if (id.includes("reading")) return "reading";
   return "writing";
-}
-
-/** Extract the CEFR level prefix from a lesson id like "B1-reading-starter" */
-function extractLevel(id: string): CEFRLevel {
-  const match = id.match(/^(A1|A2|B1|B2)/i);
-  return (match ? match[1].toUpperCase() : "B1") as CEFRLevel;
 }
 
 const modeMeta = {
@@ -103,28 +95,17 @@ const modeMeta = {
   },
 } as const;
 
-function renderWorkbench(
-  mode: LessonMode,
-  meta: (typeof modeMeta)[LessonMode],
-  lessonId: string,
-  articleId?: string,
-) {
-  const level = extractLevel(lessonId);
+function renderWorkbench(mode: LessonMode, meta: (typeof modeMeta)[LessonMode]) {
+  if (mode === "listening") {
+    return <ListeningWorkbench />;
+  }
 
   if (mode === "speaking") {
-    return <SpeakingFeedbackForm defaultLevel={level} />;
+    return <SpeakingFeedbackForm defaultLevel="B1" />;
   }
 
   if (mode === "writing") {
-    return <WritingFeedbackForm defaultLevel={level} />;
-  }
-
-  if (mode === "reading") {
-    const linkedArticle = articleId ? getReadingArticleById(articleId) : undefined;
-    const passage = linkedArticle ? buildPracticePassageFromArticle(linkedArticle) : getPassageForLevel(level);
-    const readingLessonId = linkedArticle ? `${lessonId}:${linkedArticle.id}` : lessonId;
-
-    return <ReadingFeedbackForm defaultLevel={level} passage={passage} lessonId={readingLessonId} />;
+    return <WritingFeedbackForm defaultLevel="B1" />;
   }
 
   return (
@@ -154,37 +135,50 @@ export default async function LessonPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ lang?: string; articleId?: string }>;
+  searchParams: Promise<{ lang?: string }>;
 }) {
+  const locale = await getLocale(searchParams);
   const resolvedParams = await params;
-  const resolvedSearchParams = await searchParams;
-  const locale = await getLocale(resolvedSearchParams);
   const mode = detectMode(resolvedParams.id);
-  const level = extractLevel(resolvedParams.id);
   const meta = modeMeta[mode];
-  const linkedArticle =
-    mode === "reading" && resolvedSearchParams.articleId
-      ? getReadingArticleById(resolvedSearchParams.articleId)
-      : undefined;
-  const readingPassage =
-    mode === "reading"
-      ? linkedArticle
-        ? buildPracticePassageFromArticle(linkedArticle)
-        : getPassageForLevel(level)
-      : null;
-  const sourceTitle = readingPassage?.title ?? meta.source;
-  const description = linkedArticle?.focus ?? meta.focus;
   const Icon = meta.icon;
-  const topSectionLayoutClass = mode === "speaking" ? "grid gap-5" : "grid gap-5 xl:grid-cols-[1.02fr_0.98fr]";
+
+  if (mode === "listening") {
+    return (
+      <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8">
+        <header className="surface-panel rounded-[2rem] p-6 sm:p-7">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="section-label">DIICSU Listening Practice</p>
+              <h1 className="font-display mt-3 text-4xl tracking-tight text-[var(--ink)] sm:text-5xl">Academic Listening Lab</h1>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-[var(--ink-soft)] sm:text-base">
+                Focused listening training for first-year students: sentence understanding plus keyword spelling for faster adaptation to English-medium classes.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href={`/learn?lang=${locale}`}
+                className="inline-flex items-center gap-2 rounded-full bg-[var(--navy)] px-4 py-2 text-sm font-semibold text-[#f7efe3] transition hover:translate-y-[-1px]"
+              >
+                Back to Learning Hub
+              </Link>
+            </div>
+          </div>
+        </header>
+
+        <ListeningWorkbench />
+      </main>
+    );
+  }
 
   return (
-    <PageFrame locale={locale} title={meta.label} description={description}>
-      <div className={topSectionLayoutClass}>
+    <PageFrame locale={locale} title={meta.label} description={meta.focus}>
+      <div className="grid gap-5 xl:grid-cols-[1.02fr_0.98fr]">
         <article className={`rounded-[2rem] border border-[rgba(20,50,75,0.12)] bg-gradient-to-br ${meta.tone} p-6 sm:p-7 shadow-[0_20px_45px_rgba(23,32,51,0.08)]`}>
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="section-label">Lesson brief</p>
-              <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">{sourceTitle}</h2>
+              <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">{meta.source}</h2>
             </div>
             <div className="inline-flex size-12 items-center justify-center rounded-2xl bg-[var(--navy)] text-[#f7efe3]">
               <Icon className="size-5" />
@@ -212,7 +206,7 @@ export default async function LessonPage({
           </div>
         </article>
 
-        {renderWorkbench(mode, meta, resolvedParams.id, linkedArticle?.id)}
+        {renderWorkbench(mode, meta)}
       </div>
 
       <section className="mt-6 grid gap-5 lg:grid-cols-[1.02fr_0.98fr]">
@@ -243,3 +237,4 @@ export default async function LessonPage({
     </PageFrame>
   );
 }
+

@@ -4,7 +4,7 @@ import { CheckCircle2, Circle, Lock } from "lucide-react";
 const nodes = [
   { id: "node-1", label: "Listening Basics", status: "done", lesson: "A2-listening-starter" },
   { id: "node-2", label: "Speaking Starter", status: "done", lesson: "A2-speaking-starter" },
-  { id: "node-3", label: "Reading Library", status: "active", href: "/reading" },
+  { id: "node-3", label: "Reading Fluency", status: "active", lesson: "A2-reading-starter" },
   { id: "node-4", label: "Writing Focus", status: "active", lesson: "A2-writing-starter" },
   { id: "node-5", label: "Integrated Challenge", status: "locked", lesson: "A2-integrated-challenge" },
 ] as const;
@@ -37,13 +37,7 @@ export function SkillMap({ locale }: { locale: "zh" | "en" }) {
                   )}
                   <div>
                     <p className="text-sm font-semibold tracking-tight">{node.label}</p>
-                    <p className="text-xs text-black/55">
-                      {isLocked
-                        ? "Complete previous nodes to unlock"
-                        : "href" in node
-                          ? "Browse articles, save favorites, and continue to feedback practice"
-                          : "Recommended 8-10 minutes"}
-                    </p>
+                    <p className="text-xs text-black/55">{isLocked ? "Complete previous nodes to unlock" : "Recommended 8-10 minutes"}</p>
                   </div>
                 </div>
 
@@ -51,7 +45,7 @@ export function SkillMap({ locale }: { locale: "zh" | "en" }) {
                   <span className="rounded-full bg-black/10 px-2 py-1 text-xs font-medium text-black/55">Locked</span>
                 ) : (
                   <Link
-                    href={"href" in node ? `${node.href}?lang=${locale}` : `/lesson/${node.lesson}?lang=${locale}`}
+                    href={`/lesson/${node.lesson}?lang=${locale}`}
                     className="rounded-full border border-black/25 px-3 py-1 text-xs font-semibold text-black transition hover:bg-black hover:text-white"
                   >
                     Open

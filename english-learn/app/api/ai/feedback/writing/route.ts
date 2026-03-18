@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
+import OpenAI from "openai";
 import { z } from "zod";
 
 import { jsonError } from "@/lib/api";
-import { generateStructuredJSON, hasAIConfig } from "@/lib/ai/client";
 import { writingFeedbackPrompt } from "@/lib/ai/prompts";
+import { env } from "@/lib/env";
 
 const schema = z.object({
   essay_text: z.string().min(10),
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const payload = schema.parse(body);
 
-    if (!hasAIConfig()) {
+    if (!env.server.OPENAI_API_KEY) {
       return NextResponse.json({
         overall_score: 7.1,
         errors: ["Use third-person singular: 'saves'", "Use 'at home' instead of 'in home'"],
@@ -32,7 +33,13 @@ export async function POST(request: Request) {
       });
     }
 
-    const output = await generateStructuredJSON(writingFeedbackPrompt(payload.target_level, payload.essay_text));
+    const openai = new OpenAI({ apiKey: env.server.OPENAI_API_KEY });
+    const response = await openai.responses.create({
+      model: "gpt-4o-mini",
+      input: writingFeedbackPrompt(payload.target_level, payload.essay_text),
+    });
+
+    const output = response.output_text || "";
     const parsed = safeParseJSON(output, {
       overall_score: 7,
       errors: ["Grammar and tense inconsistency."],
