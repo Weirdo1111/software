@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
 import { z } from "zod";
 
 import { jsonError } from "@/lib/api";
+import { generateStructuredJSON, hasAIConfig } from "@/lib/ai/client";
 import { speakingFeedbackPrompt } from "@/lib/ai/prompts";
-import { env } from "@/lib/env";
 
 const schema = z.object({
   audio_url: z.string().url().optional(),
@@ -28,7 +27,7 @@ export async function POST(request: Request) {
 
     const transcript = payload.transcript || "Learner submitted an audio response.";
 
-    if (!env.server.OPENAI_API_KEY) {
+    if (!hasAIConfig()) {
       return NextResponse.json({
         pronunciation_score: 7.2,
         fluency_score: 6.8,
@@ -41,13 +40,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const openai = new OpenAI({ apiKey: env.server.OPENAI_API_KEY });
-    const response = await openai.responses.create({
-      model: "gpt-4o-mini",
-      input: speakingFeedbackPrompt(payload.target_level, transcript),
-    });
-
-    const output = response.output_text || "";
+    const output = await generateStructuredJSON(speakingFeedbackPrompt(payload.target_level, transcript));
     const parsed = safeParseJSON(output, {
       pronunciation_score: 7,
       fluency_score: 7,

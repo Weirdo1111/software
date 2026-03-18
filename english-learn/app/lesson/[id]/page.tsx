@@ -5,6 +5,9 @@ import { SpeakingFeedbackForm } from "@/components/forms/speaking-feedback-form"
 import { WritingFeedbackForm } from "@/components/forms/writing-feedback-form";
 import { PageFrame } from "@/components/page-frame";
 import { getLocale } from "@/lib/i18n/get-locale";
+import { buildPracticePassageFromArticle, getReadingArticleById } from "@/lib/reading-articles";
+import { getPassageForLevel } from "@/lib/reading-passages";
+import type { CEFRLevel } from "@/types/learning";
 
 type LessonMode = "listening" | "speaking" | "reading" | "writing";
 
@@ -13,6 +16,12 @@ function detectMode(id: string): LessonMode {
   if (id.includes("speaking")) return "speaking";
   if (id.includes("reading")) return "reading";
   return "writing";
+}
+
+/** Extract the CEFR level prefix from a lesson id like "B1-reading-starter" */
+function extractLevel(id: string): CEFRLevel {
+  const match = id.match(/^(A1|A2|B1|B2)/i);
+  return (match ? match[1].toUpperCase() : "B1") as CEFRLevel;
 }
 
 const modeMeta = {
@@ -94,17 +103,28 @@ const modeMeta = {
   },
 } as const;
 
-function renderWorkbench(mode: LessonMode, meta: (typeof modeMeta)[LessonMode]) {
+function renderWorkbench(
+  mode: LessonMode,
+  meta: (typeof modeMeta)[LessonMode],
+  lessonId: string,
+  articleId?: string,
+) {
+  const level = extractLevel(lessonId);
+
   if (mode === "speaking") {
-    return <SpeakingFeedbackForm defaultLevel="B1" />;
+    return <SpeakingFeedbackForm defaultLevel={level} />;
   }
 
   if (mode === "writing") {
-    return <WritingFeedbackForm defaultLevel="B1" />;
+    return <WritingFeedbackForm defaultLevel={level} />;
   }
 
   if (mode === "reading") {
-    return <ReadingFeedbackForm defaultLevel="B1" />;
+    const linkedArticle = articleId ? getReadingArticleById(articleId) : undefined;
+    const passage = linkedArticle ? buildPracticePassageFromArticle(linkedArticle) : getPassageForLevel(level);
+    const readingLessonId = linkedArticle ? `${lessonId}:${linkedArticle.id}` : lessonId;
+
+    return <ReadingFeedbackForm defaultLevel={level} passage={passage} lessonId={readingLessonId} />;
   }
 
   return (
@@ -134,22 +154,36 @@ export default async function LessonPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ lang?: string }>;
+  searchParams: Promise<{ lang?: string; articleId?: string }>;
 }) {
-  const locale = await getLocale(searchParams);
   const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
+  const locale = await getLocale(resolvedSearchParams);
   const mode = detectMode(resolvedParams.id);
+  const level = extractLevel(resolvedParams.id);
   const meta = modeMeta[mode];
+  const linkedArticle =
+    mode === "reading" && resolvedSearchParams.articleId
+      ? getReadingArticleById(resolvedSearchParams.articleId)
+      : undefined;
+  const readingPassage =
+    mode === "reading"
+      ? linkedArticle
+        ? buildPracticePassageFromArticle(linkedArticle)
+        : getPassageForLevel(level)
+      : null;
+  const sourceTitle = readingPassage?.title ?? meta.source;
+  const description = linkedArticle?.focus ?? meta.focus;
   const Icon = meta.icon;
 
   return (
-    <PageFrame locale={locale} title={meta.label} description={meta.focus}>
+    <PageFrame locale={locale} title={meta.label} description={description}>
       <div className="grid gap-5 xl:grid-cols-[1.02fr_0.98fr]">
         <article className={`rounded-[2rem] border border-[rgba(20,50,75,0.12)] bg-gradient-to-br ${meta.tone} p-6 sm:p-7 shadow-[0_20px_45px_rgba(23,32,51,0.08)]`}>
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="section-label">Lesson brief</p>
-              <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">{meta.source}</h2>
+              <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">{sourceTitle}</h2>
             </div>
             <div className="inline-flex size-12 items-center justify-center rounded-2xl bg-[var(--navy)] text-[#f7efe3]">
               <Icon className="size-5" />
@@ -177,7 +211,7 @@ export default async function LessonPage({
           </div>
         </article>
 
-        {renderWorkbench(mode, meta)}
+        {renderWorkbench(mode, meta, resolvedParams.id, linkedArticle?.id)}
       </div>
 
       <section className="mt-6 grid gap-5 lg:grid-cols-[1.02fr_0.98fr]">
