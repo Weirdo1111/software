@@ -4,6 +4,7 @@ import { ArrowRight, FilePenLine, LoaderCircle, WandSparkles } from "lucide-reac
 import { useState } from "react";
 
 import { AIAnalysisState } from "@/components/forms/ai-analysis-state";
+import { SaveToDeckButton } from "@/components/forms/save-to-deck-button";
 import type { WritingFeedback } from "@/types/learning";
 
 const defaultPrompt = "Write a short analytical paragraph explaining one challenge international students face in academic reading and one practical solution.";
@@ -131,6 +132,10 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: "A
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Rewrite sample</p>
             <p className="mt-2 text-sm leading-7 text-[var(--ink)]">{result.rewrite_sample}</p>
           </div>
+          <SaveToDeckButton
+            tag="Writing"
+            items={result.errors.map((err) => ({ front: "Writing fix", back: err }))}
+          />
         </div>
       ) : null}
     </form>
