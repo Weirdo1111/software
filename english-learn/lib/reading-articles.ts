@@ -414,6 +414,35 @@ export function getLessonCodeForReadingArticle(article: Pick<ReadingArticle, "ce
   return `${article.cefr}-reading-starter`;
 }
 
+/**
+ * Return up to `limit` related articles, ranked by shared category, then CEFR proximity, then keyword overlap.
+ */
+export function getRelatedArticles(
+  article: ReadingArticle,
+  limit = 3,
+): ReadingArticle[] {
+  const cefrOrder: ReadingArticle["cefr"][] = ["A2", "B1", "B2"];
+  const currentCefrIndex = cefrOrder.indexOf(article.cefr);
+
+  return readingArticles
+    .filter((a) => a.id !== article.id)
+    .map((candidate) => {
+      let score = 0;
+      // Same category = strong signal
+      if (candidate.category === article.category) score += 10;
+      // CEFR proximity (closer = better)
+      const cefrDist = Math.abs(cefrOrder.indexOf(candidate.cefr) - currentCefrIndex);
+      score += 3 - cefrDist;
+      // Keyword overlap
+      const overlap = candidate.keywords.filter((k) => article.keywords.includes(k)).length;
+      score += overlap * 2;
+      return { candidate, score };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map((entry) => entry.candidate);
+}
+
 export function buildPracticePassageFromArticle(article: ReadingArticle): ReadingPracticePassage {
   return {
     level: article.cefr,

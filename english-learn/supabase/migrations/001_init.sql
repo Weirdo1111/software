@@ -74,6 +74,7 @@ create table if not exists review_cards (
   user_id uuid not null,
   front text not null,
   back text not null,
+  tag text not null default 'general',
   stability numeric not null default 2,
   difficulty numeric not null default 5,
   due_at timestamptz not null default now(),

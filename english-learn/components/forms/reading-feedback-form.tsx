@@ -119,7 +119,7 @@ export function ReadingFeedbackForm({
             words: selectedVocab.map((word) => ({
               front: word,
               back: getVocabTranslation(word),
-              tag: "reading",
+              tag: "Reading",
             })),
           }),
         })

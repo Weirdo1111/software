@@ -4,6 +4,7 @@ import { ArrowRight, LoaderCircle, Mic, Waves } from "lucide-react";
 import { useState } from "react";
 
 import { AIAnalysisState } from "@/components/forms/ai-analysis-state";
+import { SaveToDeckButton } from "@/components/forms/save-to-deck-button";
 import type { SpeakingFeedback } from "@/types/learning";
 
 const defaultPrompt = "In one minute, explain how a university should support students who are learning through English.";
@@ -137,6 +138,10 @@ export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: "
               </div>
             ))}
           </div>
+          <SaveToDeckButton
+            tag="Speaking"
+            items={result.tips.map((tip) => ({ front: "Speaking tip", back: tip }))}
+          />
         </div>
       ) : null}
     </form>
