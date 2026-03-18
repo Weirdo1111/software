@@ -47,6 +47,7 @@ export function ReviewSession() {
   const [submitting, setSubmitting] = useState(false);
   const [reviewed, setReviewed] = useState(0);
   const [sessionDone, setSessionDone] = useState(false);
+  const [rateError, setRateError] = useState("");
 
   const fetchCards = useCallback(async () => {
     setLoading(true);
@@ -75,9 +76,10 @@ export function ReviewSession() {
     if (!card || submitting) return;
 
     setSubmitting(true);
+    setRateError("");
 
     try {
-      await fetch("/api/review-cards", {
+      const res = await fetch("/api/review-cards", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -87,8 +89,15 @@ export function ReviewSession() {
           difficulty: card.difficulty,
         }),
       });
-    } catch {
-      // Continue even if persist fails
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Rating submission failed.");
+      }
+    } catch (err) {
+      setSubmitting(false);
+      setRateError(err instanceof Error ? err.message : "Rating submission failed. Please try again.");
+      return;
     }
 
     setSubmitting(false);
@@ -240,6 +249,11 @@ export function ReviewSession() {
             <p className="text-xs text-[var(--ink-soft)]">
               Keyboard: press 1 (forgot) through 4 (easy) to rate quickly
             </p>
+            {rateError ? (
+              <p className="rounded-[1rem] bg-[rgba(255,244,240,0.9)] px-4 py-3 text-sm font-medium text-[var(--coral)]">
+                {rateError}
+              </p>
+            ) : null}
           </div>
         ) : null}
       </div>
