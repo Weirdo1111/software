@@ -32,7 +32,28 @@ export async function POST(request: Request) {
       return NextResponse.json({ saved: 0, persisted: false, message: "Database not configured." });
     }
 
-    const rows = payload.words.map((word) => ({
+    // Dedup: check which words already exist for this user
+    const fronts = payload.words.map((w) => w.front.toLowerCase());
+    const { data: existing } = await supabase
+      .from("review_cards")
+      .select("front")
+      .eq("user_id", userId)
+      .in("front", fronts);
+
+    const existingSet = new Set((existing ?? []).map((r) => r.front.toLowerCase()));
+    const newWords = payload.words.filter((w) => !existingSet.has(w.front.toLowerCase()));
+
+    if (newWords.length === 0) {
+      const skipped = payload.words.length;
+      return NextResponse.json({
+        saved: 0,
+        skipped,
+        persisted: true,
+        message: `${skipped} card(s) already in your deck — no duplicates added.`,
+      });
+    }
+
+    const rows = newWords.map((word) => ({
       user_id: userId,
       front: word.front,
       back: word.back,
@@ -48,10 +69,14 @@ export async function POST(request: Request) {
       return jsonError("Failed to save vocabulary cards", 500);
     }
 
+    const skipped = payload.words.length - newWords.length;
     return NextResponse.json({
-      saved: payload.words.length,
+      saved: newWords.length,
+      skipped,
       persisted: true,
-      message: `${payload.words.length} card(s) added to review deck.`,
+      message: skipped > 0
+        ? `${newWords.length} card(s) added, ${skipped} duplicate(s) skipped.`
+        : `${newWords.length} card(s) added to review deck.`,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -69,14 +94,17 @@ export async function GET(request: Request) {
     const userId = getRequestUserId(request);
     const url = new URL(request.url);
     const filter = url.searchParams.get("filter"); // "due" | "all"
+    const tag = url.searchParams.get("tag"); // e.g. "Reading"
 
     const supabase = createSupabaseServiceClient();
 
     if (!supabase) {
       // Return mock cards when DB is not configured so the review page still works
+      const filtered = tag ? mockCards.filter((c) => c.tag === tag) : mockCards;
       return NextResponse.json({
-        cards: mockCards,
-        stats: { due: 3, total: 3, mature: 0, at_risk: 0 },
+        cards: filtered,
+        stats: { due: filtered.length, total: filtered.length, mature: 0, at_risk: 0 },
+        review_history: [],
         persisted: false,
       });
     }
@@ -91,6 +119,10 @@ export async function GET(request: Request) {
       query = query.lte("due_at", new Date().toISOString());
     }
 
+    if (tag) {
+      query = query.eq("tag", tag);
+    }
+
     const { data: cards, error } = await query;
 
     if (error) {
@@ -103,9 +135,38 @@ export async function GET(request: Request) {
     const mature = allCards.filter((c) => c.stability >= 10).length;
     const atRisk = allCards.filter((c) => c.lapses >= 3).length;
 
+    // Fetch recent review history (last 10 entries)
+    const { data: logs } = await supabase
+      .from("review_logs")
+      .select("id, card_id, rating, next_due_at, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    // Resolve card fronts for the logs
+    const logCardIds = [...new Set((logs ?? []).map((l) => l.card_id))];
+    let cardFrontMap: Record<string, string> = {};
+    if (logCardIds.length > 0) {
+      const { data: logCards } = await supabase
+        .from("review_cards")
+        .select("id, front, tag")
+        .in("id", logCardIds);
+      for (const c of logCards ?? []) {
+        cardFrontMap[c.id] = c.front;
+      }
+    }
+
+    const reviewHistory = (logs ?? []).map((l) => ({
+      id: l.id,
+      card_front: cardFrontMap[l.card_id] ?? "Unknown",
+      rating: l.rating,
+      reviewed_at: l.created_at,
+    }));
+
     return NextResponse.json({
       cards: allCards,
       stats: { due, total: allCards.length, mature, at_risk: atRisk },
+      review_history: reviewHistory,
       persisted: true,
     });
   } catch {
@@ -192,6 +253,43 @@ export async function PATCH(request: Request) {
     }
 
     return jsonError("Failed to submit review", 500);
+  }
+}
+
+/* ── DELETE: remove a card ────────────────────────────────────── */
+
+const deleteSchema = z.object({
+  card_id: z.string().min(1),
+});
+
+export async function DELETE(request: Request) {
+  try {
+    const body = await request.json();
+    const payload = deleteSchema.parse(body);
+    const userId = getRequestUserId(request);
+
+    const supabase = createSupabaseServiceClient();
+
+    if (!supabase) {
+      return NextResponse.json({ deleted: true, persisted: false });
+    }
+
+    const { error } = await supabase
+      .from("review_cards")
+      .delete()
+      .eq("id", payload.card_id)
+      .eq("user_id", userId);
+
+    if (error) {
+      return jsonError("Failed to delete card", 500);
+    }
+
+    return NextResponse.json({ deleted: true, persisted: true });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return jsonError(error.issues[0]?.message ?? "Invalid payload", 422);
+    }
+    return jsonError("Failed to delete card", 500);
   }
 }
 
