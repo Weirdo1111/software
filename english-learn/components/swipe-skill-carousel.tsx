@@ -23,9 +23,9 @@ const cards = [
   },
   {
     key: "reading",
-    title: "Reading Burst",
-    desc: "Micro-text skimming + phrase hints",
-    id: "A2-reading-starter",
+    title: "Reading Library",
+    desc: "Topic search + full articles + saved reading history",
+    href: "/reading",
     icon: FileText,
     tone: "from-amber-200/80 to-orange-100",
   },
@@ -79,10 +79,10 @@ export function SwipeSkillCarousel({ locale }: { locale: "zh" | "en" }) {
         <p className="mt-1 text-sm text-black/65">{card.desc}</p>
 
         <Link
-          href={`/lesson/${card.id}?lang=${locale}`}
+          href={"href" in card ? `${card.href}?lang=${locale}` : `/lesson/${card.id}?lang=${locale}`}
           className="mt-4 inline-flex rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white"
         >
-          Start Burst
+          {"href" in card ? "Open Library" : "Start Burst"}
         </Link>
       </article>
 

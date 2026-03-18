@@ -3,6 +3,7 @@
 import { ArrowRight, LoaderCircle, Mic, Waves } from "lucide-react";
 import { useState } from "react";
 
+import { AIAnalysisState } from "@/components/forms/ai-analysis-state";
 import type { SpeakingFeedback } from "@/types/learning";
 
 const defaultPrompt = "In one minute, explain how a university should support students who are learning through English.";
@@ -95,6 +96,18 @@ export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: "
       </button>
 
       {status ? <p className="rounded-[1rem] bg-[rgba(255,244,240,0.9)] px-4 py-3 text-sm font-medium text-[var(--coral)]">{status}</p> : null}
+
+      {isSubmitting ? (
+        <AIAnalysisState
+          title="Listening to your response through the transcript draft."
+          description="The speaking coach is estimating how clear, fluent, and accurate the answer sounds at your selected level, then preparing practical coaching tips."
+          steps={[
+            "Reading the transcript as a stand-in for the spoken response.",
+            "Checking fluency, grammar, and how naturally the ideas connect.",
+            "Preparing coaching tips you can use in the next attempt.",
+          ]}
+        />
+      ) : null}
 
       {result ? (
         <div className="grid gap-4 rounded-[1.6rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.74)] p-5">

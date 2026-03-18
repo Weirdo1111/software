@@ -1,56 +1,78 @@
 "use client";
 
-import { ArrowRight, BookMarked, BookOpen, LoaderCircle } from "lucide-react";
+import { ArrowRight, BookMarked, BookOpen, CheckCircle2, LoaderCircle } from "lucide-react";
 import { useState } from "react";
 
+import { AIAnalysisState } from "@/components/forms/ai-analysis-state";
+import { getPassageForLevel, type ReadingPracticePassage } from "@/lib/reading-passages";
 import type { ReadingFeedback } from "@/types/learning";
 
-const PASSAGE = [
-  "Remote learning has reshaped how first-year students interact with academic texts. A survey conducted across five Chinese universities found that students studying from home complete more assigned readings than their campus-based peers. The central claim is clear: independent reading frequency increases under remote conditions, yet comprehension depth declines when collaborative discussion is removed from the process.",
-  "Proponents of fully online study argue that self-paced access to digital materials improves reading coverage. However, longitudinal data from the same survey shows that students without weekly seminar discussion produce shorter and less evidence-based written responses after eight weeks. One concrete example is the drop in referencing accuracy seen in remote cohorts compared to blended-learning groups.",
-  "For new university students, terms such as longitudinal, cohort, blended learning, and evidence-based appear regularly in academic source material and are worth adding to a personal vocabulary review system.",
-];
-
-const VOCAB_OPTIONS = ["longitudinal", "cohort", "blended learning", "evidence-based", "referencing accuracy"];
-
 const MAX_VOCAB = 2;
+type ReadingLevel = "A1" | "A2" | "B1" | "B2";
 
-export function ReadingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: "A1" | "A2" | "B1" | "B2" }) {
-  const [targetLevel, setTargetLevel] = useState(defaultLevel);
-  const [claim, setClaim] = useState(
-    "independent reading frequency increases under remote conditions, yet comprehension depth declines when collaborative discussion is removed",
-  );
-  const [evidence, setEvidence] = useState(
-    "students without weekly seminar discussion produce shorter and less evidence-based written responses after eight weeks",
-  );
-  const [contrastSignal, setContrastSignal] = useState("However");
+
+export function ReadingFeedbackForm({
+  defaultLevel = "B1",
+  passage,
+  lessonId,
+  syncPassageWithTargetLevel = false,
+}: {
+  defaultLevel?: ReadingLevel;
+  passage: ReadingPracticePassage;
+  lessonId: string;
+  syncPassageWithTargetLevel?: boolean;
+}) {
+  const [targetLevel, setTargetLevel] = useState<ReadingLevel>(defaultLevel);
+  const [claim, setClaim] = useState("");
+  const [evidence, setEvidence] = useState("");
+  const [contrastSignal, setContrastSignal] = useState("");
   const [selectedVocab, setSelectedVocab] = useState<string[]>([]);
   const [result, setResult] = useState<ReadingFeedback | null>(null);
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [vocabSaved, setVocabSaved] = useState(false);
 
-  function toggleVocab(word: string) {
-    setSelectedVocab((prev) => {
-      if (prev.includes(word)) return prev.filter((w) => w !== word);
-      if (prev.length >= MAX_VOCAB) return prev;
-      return [...prev, word];
-    });
+  const activePassage = syncPassageWithTargetLevel ? getPassageForLevel(targetLevel) : passage;
+  const activeLessonId = syncPassageWithTargetLevel ? getLessonIdForLevel(targetLevel) : lessonId;
+  const isReady = claim.trim().length > 5 && evidence.trim().length > 5 && contrastSignal.trim().length > 0;
+
+  function handleTargetLevelChange(nextLevel: ReadingLevel) {
+    setTargetLevel(nextLevel);
+
+    if (!syncPassageWithTargetLevel) return;
+
+    setClaim("");
+    setEvidence("");
+    setContrastSignal("");
+    setSelectedVocab([]);
+    setResult(null);
+    setStatus("");
+    setVocabSaved(false);
   }
 
-  const isReady = claim.trim().length > 5 && evidence.trim().length > 5 && contrastSignal.trim().length > 0;
+  function toggleVocab(word: string) {
+    setSelectedVocab((previous) => {
+      if (previous.includes(word)) return previous.filter((item) => item !== word);
+      if (previous.length >= MAX_VOCAB) return previous;
+      return [...previous, word];
+    });
+  }
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
     setStatus("");
     setResult(null);
     setIsSubmitting(true);
+    setVocabSaved(false);
+
+    const startTime = Date.now();
 
     try {
       const response = await fetch("/api/ai/feedback/reading", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          passage: PASSAGE.join("\n\n"),
+          passage: activePassage.paragraphs.join("\n\n"),
           answers: {
             claim,
             evidence,
@@ -67,6 +89,48 @@ export function ReadingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: "A
       }
 
       setResult(data);
+
+      const durationSec = Math.max(1, Math.round((Date.now() - startTime) / 1000));
+      const passed = (data.comprehension_score as number) >= 6;
+
+      fetch("/api/attempts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          exercise_id: `${activeLessonId}:reading-comprehension`,
+          answer_payload: {
+            claim,
+            evidence,
+            contrast_signal: contrastSignal,
+            vocabulary: selectedVocab,
+            comprehension_score: data.comprehension_score,
+            answer: passed,
+            correct_answer: true,
+          },
+          duration_sec: durationSec,
+        }),
+      }).catch(() => {});
+
+      if (selectedVocab.length > 0) {
+        fetch("/api/review-cards", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            words: selectedVocab.map((word) => ({
+              front: word,
+              back: getVocabTranslation(word),
+              tag: "reading",
+            })),
+          }),
+        })
+          .then(async (saveResponse) => {
+            if (saveResponse.ok) {
+              const body = await saveResponse.json().catch(() => ({}));
+              if (body.persisted) setVocabSaved(true);
+            }
+          })
+          .catch(() => {});
+      }
     } catch (nextError) {
       const message = nextError instanceof Error ? nextError.message : "Failed to generate reading feedback.";
       setStatus(message);
@@ -90,11 +154,16 @@ export function ReadingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: "A
         </p>
       </div>
 
-      {/* Passage */}
       <div className="rounded-[1.4rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.72)] p-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--ink-soft)]">Passage</p>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--ink-soft)]">Passage</p>
+          <span className="rounded-full bg-[rgba(123,75,20,0.1)] px-3 py-1 text-xs font-semibold text-[#7b4b14]">
+            {activePassage.band} | {activePassage.level}
+          </span>
+        </div>
+        <h3 className="mt-3 text-sm font-semibold text-[var(--ink)]">{activePassage.title}</h3>
         <div className="mt-3 grid gap-4">
-          {PASSAGE.map((paragraph, index) => (
+          {activePassage.paragraphs.map((paragraph, index) => (
             <p key={index} className="text-sm leading-8 text-[var(--ink)]">
               {paragraph}
             </p>
@@ -102,24 +171,27 @@ export function ReadingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: "A
         </div>
       </div>
 
-      {/* Level selector */}
-      <label className="grid w-fit gap-2 text-sm font-medium text-[var(--ink)]">
+      <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
         Target level
         <select
           value={targetLevel}
-          onChange={(event) => setTargetLevel(event.target.value as "A1" | "A2" | "B1" | "B2")}
-          className="rounded-[1.1rem] border border-[rgba(20,50,75,0.16)] bg-white/75 px-4 py-3 text-sm outline-none"
+          onChange={(event) => handleTargetLevelChange(event.target.value as ReadingLevel)}
+          className="w-fit rounded-[1.1rem] border border-[rgba(20,50,75,0.16)] bg-white/75 px-4 py-3 text-sm outline-none"
         >
           <option value="A1">A1</option>
           <option value="A2">A2</option>
           <option value="B1">B1</option>
           <option value="B2">B2</option>
         </select>
+        <span className="text-xs font-normal leading-6 text-[var(--ink-soft)]">
+          {syncPassageWithTargetLevel
+            ? "Switching level loads the matching reading passage and clears the current answers."
+            : "This changes the feedback target while keeping the current lesson passage fixed."}
+        </span>
       </label>
 
-      {/* Checkpoint 1 */}
       <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-        Checkpoint 1 — What sentence expresses the main claim most clearly?
+        Checkpoint 1 - What sentence expresses the main claim most clearly?
         <textarea
           value={claim}
           onChange={(event) => setClaim(event.target.value)}
@@ -128,9 +200,8 @@ export function ReadingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: "A
         />
       </label>
 
-      {/* Checkpoint 2 */}
       <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-        Checkpoint 2 — Which detail functions as evidence rather than background?
+        Checkpoint 2 - Which detail functions as evidence rather than background?
         <textarea
           value={evidence}
           onChange={(event) => setEvidence(event.target.value)}
@@ -139,25 +210,23 @@ export function ReadingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: "A
         />
       </label>
 
-      {/* Checkpoint 3 */}
       <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-        Checkpoint 3 — What transition signals contrast in the passage?
+        Checkpoint 3 - What transition signals contrast in the passage?
         <input
           type="text"
           value={contrastSignal}
           onChange={(event) => setContrastSignal(event.target.value)}
-          placeholder="e.g. However, Although, Yet…"
+          placeholder="e.g. However, Although, Yet"
           className="rounded-[1.2rem] border border-[rgba(20,50,75,0.16)] bg-white/75 px-4 py-3 text-sm outline-none"
         />
       </label>
 
-      {/* Vocabulary selector */}
       <div className="grid gap-3">
         <p className="text-sm font-medium text-[var(--ink)]">
-          Vocabulary — Select up to {MAX_VOCAB} terms to add to your review deck
+          Vocabulary - Select up to {MAX_VOCAB} terms to add to your review deck
         </p>
         <div className="flex flex-wrap gap-2">
-          {VOCAB_OPTIONS.map((word) => {
+          {activePassage.vocab_options.map((word) => {
             const isSelected = selectedVocab.includes(word);
             const isDisabled = !isSelected && selectedVocab.length >= MAX_VOCAB;
             return (
@@ -181,24 +250,33 @@ export function ReadingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: "A
         </div>
       </div>
 
-      {/* Submit */}
       <button
         type="submit"
         disabled={isSubmitting || !isReady}
         className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--navy)] px-5 py-3 text-sm font-semibold text-[#f7efe3] disabled:cursor-not-allowed disabled:opacity-45"
       >
         {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
-        {isSubmitting ? "Analyzing answers…" : "Get reading feedback"}
+        {isSubmitting ? "Analyzing answers..." : "Get reading feedback"}
       </button>
 
-      {/* Error */}
       {status ? (
         <p className="rounded-[1rem] bg-[rgba(255,244,240,0.9)] px-4 py-3 text-sm font-medium text-[var(--coral)]">
           {status}
         </p>
       ) : null}
 
-      {/* Result */}
+      {isSubmitting ? (
+        <AIAnalysisState
+          title="Comparing your answers with the passage structure."
+          description="The reading coach is checking whether your claim, evidence, and contrast signal match the passage, then preparing vocabulary feedback and next-step tips."
+          steps={[
+            "Reviewing the main claim and the evidence you selected.",
+            "Checking the contrast signal and the vocabulary choices against the passage.",
+            "Preparing a comprehension score with targeted coaching advice.",
+          ]}
+        />
+      ) : null}
+
       {result ? (
         <div className="grid gap-4 rounded-[1.6rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.74)] p-5">
           <div className="flex items-center gap-3 text-[var(--ink)]">
@@ -210,9 +288,7 @@ export function ReadingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: "A
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
               Comprehension score
             </p>
-            <p className="font-display mt-2 text-3xl tracking-tight text-[var(--ink)]">
-              {result.comprehension_score}
-            </p>
+            <p className="font-display mt-2 text-3xl tracking-tight text-[var(--ink)]">{result.comprehension_score}</p>
           </div>
 
           <div className="grid gap-3">
@@ -238,8 +314,46 @@ export function ReadingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: "A
               </div>
             ))}
           </div>
+
+          {vocabSaved && selectedVocab.length > 0 ? (
+            <div className="flex items-center gap-2 rounded-[1rem] bg-[rgba(106,148,131,0.1)] px-4 py-3 text-sm font-medium text-[#285f4d]">
+              <CheckCircle2 className="size-4" />
+              {selectedVocab.length === 1 ? "1 word" : `${selectedVocab.length} words`} added to your review deck
+            </div>
+          ) : null}
         </div>
       ) : null}
     </form>
   );
+}
+
+function getLessonIdForLevel(level: ReadingLevel) {
+  return `${level}-reading-starter`;
+}
+
+function getVocabTranslation(word: string): string {
+  const translations: Record<string, string> = {
+    library: "library / study place on campus",
+    homework: "homework / work to finish after class",
+    deadline: "deadline / the final time to submit work",
+    "reading task": "reading task / assigned reading activity",
+    "study habit": "study habit / a regular way of learning",
+    attendance: "attendance / regular class presence",
+    lecture: "lecture / teacher-led class session",
+    coursework: "coursework / assessed class tasks",
+    assessment: "assessment / evaluation task",
+    "end-of-term": "end-of-term / final stage of a module",
+    longitudinal: "longitudinal / tracked across time",
+    cohort: "cohort / a group studied together",
+    "blended learning": "blended learning / mixed online and in-person study",
+    "evidence-based": "evidence-based / supported by proof",
+    "referencing accuracy": "referencing accuracy / correct citation use",
+    "meta-analysis": "meta-analysis / combined analysis of many studies",
+    methodological: "methodological / related to research method",
+    interdisciplinary: "interdisciplinary / across different subjects",
+    synthesize: "synthesize / combine ideas into one view",
+    curriculum: "curriculum / planned course content",
+  };
+
+  return translations[word] ?? word;
 }
