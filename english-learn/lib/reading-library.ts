@@ -9,8 +9,17 @@ interface ReadingLibrarySnapshot {
   history: ReadingHistoryEntry[];
 }
 
+export interface ParagraphNote {
+  articleId: string;
+  /** "sectionIndex-paragraphIndex" */
+  paragraphKey: string;
+  text: string;
+  updatedAt: string;
+}
+
 export const READING_FAVORITES_KEY = "english-learn:reading:favorites";
 export const READING_HISTORY_KEY = "english-learn:reading:history";
+export const READING_NOTES_KEY = "english-learn:reading:notes";
 const READING_LIBRARY_EVENT = "english-learn:reading:changed";
 
 const MAX_HISTORY_ITEMS = 18;
@@ -190,4 +199,69 @@ export function recordReadingHistoryInStorage(articleId: string, viewedAt?: stri
   });
   emitReadingLibraryChange();
   return nextHistory;
+}
+
+/* ── Paragraph notes ─────────────────────────────────────────────── */
+
+function isNoteArray(value: unknown): value is ParagraphNote[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (item) =>
+        item &&
+        typeof item === "object" &&
+        typeof item.articleId === "string" &&
+        typeof item.paragraphKey === "string" &&
+        typeof item.text === "string" &&
+        typeof item.updatedAt === "string",
+    )
+  );
+}
+
+export function loadNotesFromStorage(): ParagraphNote[] {
+  if (typeof window === "undefined") return [];
+  return safeParse(window.localStorage.getItem(READING_NOTES_KEY), [], isNoteArray);
+}
+
+export function getNotesForArticle(articleId: string): ParagraphNote[] {
+  return loadNotesFromStorage().filter((note) => note.articleId === articleId);
+}
+
+export function saveNoteForParagraph(articleId: string, paragraphKey: string, text: string) {
+  const allNotes = loadNotesFromStorage();
+  const trimmed = text.trim();
+
+  // Remove if empty
+  if (!trimmed) {
+    const filtered = allNotes.filter(
+      (n) => !(n.articleId === articleId && n.paragraphKey === paragraphKey),
+    );
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(READING_NOTES_KEY, JSON.stringify(filtered));
+    }
+    emitReadingLibraryChange();
+    return;
+  }
+
+  const existing = allNotes.findIndex(
+    (n) => n.articleId === articleId && n.paragraphKey === paragraphKey,
+  );
+
+  const note: ParagraphNote = {
+    articleId,
+    paragraphKey,
+    text: trimmed,
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (existing >= 0) {
+    allNotes[existing] = note;
+  } else {
+    allNotes.push(note);
+  }
+
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(READING_NOTES_KEY, JSON.stringify(allNotes));
+  }
+  emitReadingLibraryChange();
 }
