@@ -1,6 +1,6 @@
 "use client";
 
-import { BrainCircuit, CalendarClock, LoaderCircle } from "lucide-react";
+import { BrainCircuit, CalendarClock, Clock, Filter, LoaderCircle, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { ReviewSession, ReviewStatsPanel } from "@/components/review/review-session";
@@ -25,22 +25,52 @@ interface ReviewCard {
   created_at: string;
 }
 
+interface ReviewHistoryEntry {
+  id: string;
+  card_front: string;
+  rating: number;
+  reviewed_at: string;
+}
+
+const TAG_OPTIONS = ["All", "Reading", "Writing", "Speaking", "Listening", "general"] as const;
+
+const tagStyle: Record<string, string> = {
+  Reading: "bg-[#fff4e4] text-[#7b4b14]",
+  Writing: "bg-[#edf6f1] text-[#1a493f]",
+  Speaking: "bg-[#edf5fb] text-[#14324b]",
+  Listening: "bg-[#f3edf8] text-[#4a2d6e]",
+  general: "bg-[rgba(20,50,75,0.06)] text-[var(--ink-soft)]",
+};
+
+const ratingLabel: Record<number, { text: string; color: string }> = {
+  1: { text: "Forgot", color: "text-red-600" },
+  2: { text: "Hard", color: "text-amber-600" },
+  3: { text: "Good", color: "text-emerald-600" },
+  4: { text: "Easy", color: "text-blue-600" },
+};
+
 export function ReviewPageShell() {
   const [stats, setStats] = useState<ReviewStats>({ due: 0, total: 0, mature: 0, at_risk: 0 });
   const [recentCards, setRecentCards] = useState<ReviewCard[]>([]);
+  const [reviewHistory, setReviewHistory] = useState<ReviewHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTag, setActiveTag] = useState<string>("All");
+  const [deleting, setDeleting] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (tag?: string) => {
     setLoading(true);
     try {
-      const res = await fetch("/api/review-cards?filter=all");
+      const params = new URLSearchParams({ filter: "all" });
+      if (tag && tag !== "All") params.set("tag", tag);
+      const res = await fetch(`/api/review-cards?${params}`);
       const data = await res.json();
       setStats(data.stats ?? { due: 0, total: 0, mature: 0, at_risk: 0 });
       const allCards: ReviewCard[] = data.cards ?? [];
       const sortedByRecent = [...allCards].sort(
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       );
-      setRecentCards(sortedByRecent.slice(0, 6));
+      setRecentCards(sortedByRecent.slice(0, 8));
+      setReviewHistory(data.review_history ?? []);
     } catch {
       // Keep default state
     } finally {
@@ -49,8 +79,28 @@ export function ReviewPageShell() {
   }, []);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchData(activeTag);
+  }, [fetchData, activeTag]);
+
+  async function handleDelete(cardId: string) {
+    if (deleting) return;
+    setDeleting(cardId);
+    try {
+      const res = await fetch("/api/review-cards", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ card_id: cardId }),
+      });
+      if (res.ok) {
+        setRecentCards((prev) => prev.filter((c) => c.id !== cardId));
+        setStats((prev) => ({ ...prev, total: Math.max(0, prev.total - 1) }));
+      }
+    } catch {
+      // Silently fail
+    } finally {
+      setDeleting(null);
+    }
+  }
 
   if (loading) {
     return (
@@ -66,6 +116,25 @@ export function ReviewPageShell() {
       {/* Stats overview */}
       <ReviewStatsPanel stats={stats} />
 
+      {/* Tag filter */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Filter className="size-4 text-[var(--ink-soft)]" />
+        {TAG_OPTIONS.map((tag) => (
+          <button
+            key={tag}
+            type="button"
+            onClick={() => setActiveTag(tag)}
+            className={`rounded-full border px-4 py-2 text-xs font-semibold transition-colors ${
+              activeTag === tag
+                ? "border-[#7b4b14] bg-[#7b4b14] text-white"
+                : "border-[rgba(20,50,75,0.16)] bg-white/80 text-[var(--ink-soft)] hover:border-[#7b4b14] hover:text-[#7b4b14]"
+            }`}
+          >
+            {tag === "general" ? "General" : tag}
+          </button>
+        ))}
+      </div>
+
       {/* Main content */}
       <div className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
         {/* Review session */}
@@ -79,6 +148,7 @@ export function ReviewPageShell() {
           <article className="surface-panel reveal-up rounded-[2rem] p-6 sm:p-7">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--ink-soft)]">
               Your vocabulary cards
+              {activeTag !== "All" ? ` · ${activeTag}` : ""}
             </p>
             <h2 className="font-display mt-4 text-2xl tracking-tight text-[var(--ink)]">
               {recentCards.length > 0 ? "Recently added to your deck." : "No cards in your deck yet."}
@@ -88,16 +158,33 @@ export function ReviewPageShell() {
                 {recentCards.map((card) => (
                   <div
                     key={card.id}
-                    className="rounded-[1.3rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.76)] p-4"
+                    className="group rounded-[1.3rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.76)] p-4"
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div>
+                      <div className="min-w-0">
                         <h3 className="text-sm font-semibold text-[var(--ink)]">{card.front}</h3>
                         <p className="mt-1 text-sm leading-6 text-[var(--ink-soft)] line-clamp-2">{card.back}</p>
                       </div>
-                      <span className="shrink-0 rounded-full bg-[rgba(20,50,75,0.06)] px-2.5 py-1 text-xs font-medium text-[var(--ink-soft)]">
-                        {card.tag}
-                      </span>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-xs font-medium ${tagStyle[card.tag] ?? tagStyle.general}`}
+                        >
+                          {card.tag}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(card.id)}
+                          disabled={deleting === card.id}
+                          className="inline-flex size-7 items-center justify-center rounded-lg border border-transparent text-[var(--ink-soft)] opacity-0 transition-all hover:border-red-200 hover:text-red-500 group-hover:opacity-100 disabled:opacity-50"
+                          aria-label={`Delete ${card.front}`}
+                        >
+                          {deleting === card.id ? (
+                            <LoaderCircle className="size-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="size-3.5" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                     <div className="mt-3 flex gap-4 text-xs text-[var(--ink-soft)]">
                       <span>Stability: {card.stability}</span>
@@ -109,8 +196,43 @@ export function ReviewPageShell() {
               </div>
             ) : (
               <p className="mt-4 text-sm leading-7 text-[var(--ink-soft)]">
-                Add vocabulary from reading articles (select words while reading) or from feedback sessions
-                (speaking, writing, reading). Cards you add will appear here and in your review sessions.
+                {activeTag !== "All"
+                  ? `No ${activeTag} cards yet. Add vocabulary from ${activeTag.toLowerCase()} exercises.`
+                  : "Add vocabulary from reading articles (select words while reading) or from feedback sessions (speaking, writing, reading). Cards you add will appear here and in your review sessions."}
+              </p>
+            )}
+          </article>
+
+          {/* Recent review history */}
+          <article className="surface-panel reveal-up rounded-[2rem] p-6 sm:p-7">
+            <div className="flex items-center gap-2">
+              <Clock className="size-4 text-[var(--ink-soft)]" />
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--ink-soft)]">
+                Recent reviews
+              </p>
+            </div>
+            {reviewHistory.length > 0 ? (
+              <div className="mt-4 grid gap-2">
+                {reviewHistory.map((entry) => {
+                  const label = ratingLabel[entry.rating] ?? { text: `${entry.rating}`, color: "text-[var(--ink)]" };
+                  const timeAgo = formatTimeAgo(entry.reviewed_at);
+                  return (
+                    <div
+                      key={entry.id}
+                      className="flex items-center justify-between gap-3 rounded-[1rem] border border-[rgba(20,50,75,0.08)] bg-white/60 px-4 py-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-[var(--ink)]">{entry.card_front}</p>
+                        <p className="mt-0.5 text-xs text-[var(--ink-soft)]">{timeAgo}</p>
+                      </div>
+                      <span className={`shrink-0 text-xs font-semibold ${label.color}`}>{label.text}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="mt-4 text-sm leading-7 text-[var(--ink-soft)]">
+                No review history yet. Complete a review session to see your activity here.
               </p>
             )}
           </article>
@@ -146,4 +268,15 @@ export function ReviewPageShell() {
       </div>
     </div>
   );
+}
+
+function formatTimeAgo(isoDate: string): string {
+  const diff = Date.now() - new Date(isoDate).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
 }
