@@ -1,13 +1,13 @@
 # English Learn MVP
 
-English learning web app for non-native speakers (CEFR A1-B2), implemented with Next.js + Supabase + OpenAI + Stripe.
+English learning web app for non-native speakers (CEFR A1-B2), implemented with Next.js + Supabase + an OpenAI-compatible AI provider + Stripe.
 The onboarding flow is skill-first: listening/speaking/reading/writing sessions come before optional placement test.
 
 ## Stack
 
 - Next.js 16 (App Router) + TypeScript + Tailwind CSS
 - Supabase (Auth, Postgres, Storage, RLS)
-- OpenAI Responses API for speaking/writing feedback
+- OpenAI-compatible AI API for speaking/writing/reading feedback
 - Stripe Checkout + webhook for subscription
 - PostHog analytics + Sentry monitoring
 - Vitest for unit testing
@@ -27,6 +27,20 @@ cp .env.example .env.local
 ```
 
 Fill required keys in `.env.local`.
+
+For OpenAI, set:
+
+```bash
+OPENAI_API_KEY=your_openai_key
+```
+
+For GLM-4.7-Flash via Zhipu's OpenAI-compatible API, set:
+
+```bash
+AI_API_KEY=your_zhipu_key
+AI_BASE_URL=https://open.bigmodel.cn/api/paas/v4/
+AI_MODEL=glm-4.7-flash
+```
 
 3. Run dev server
 
