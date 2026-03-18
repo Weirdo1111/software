@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import type { RecorderStatus, SpeakingAudioClip } from "@/components/forms/speaking/types";
 
@@ -30,15 +30,32 @@ function estimateAudioLevel(analyser: AnalyserNode) {
   return Math.min(1, Math.sqrt(sum / data.length) * 4);
 }
 
+function subscribeRecorderSupport() {
+  return () => {};
+}
+
+function getRecorderSupportSnapshot() {
+  return hasRecorderSupport();
+}
+
+function getRecorderSupportServerSnapshot() {
+  return true;
+}
+
 // Date: 2026/3/18
 // Author: Tianbo Cao
 // Added a browser audio recorder hook so the speaking studio can capture real rehearsal audio before ASR is connected.
 export function useAudioRecorder() {
-  const [status, setStatus] = useState<RecorderStatus>(hasRecorderSupport() ? "idle" : "unsupported");
+  const [status, setStatus] = useState<RecorderStatus>("idle");
   const [error, setError] = useState("");
   const [elapsedMs, setElapsedMs] = useState(0);
   const [audioLevel, setAudioLevel] = useState(0);
   const [audioClip, setAudioClip] = useState<SpeakingAudioClip | null>(null);
+  const isSupported = useSyncExternalStore(
+    subscribeRecorderSupport,
+    getRecorderSupportSnapshot,
+    getRecorderSupportServerSnapshot,
+  );
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -277,7 +294,7 @@ export function useAudioRecorder() {
     await teardownAudioMonitor();
     stopStreamTracks();
     mediaRecorderRef.current = null;
-    setStatus(hasRecorderSupport() ? "idle" : "unsupported");
+    setStatus("idle");
   }
 
   useEffect(() => {
@@ -300,7 +317,7 @@ export function useAudioRecorder() {
     elapsedMs,
     audioLevel,
     audioClip,
-    isSupported: status !== "unsupported",
+    isSupported,
     startRecording,
     pauseRecording,
     resumeRecording,

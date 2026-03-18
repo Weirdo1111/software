@@ -228,6 +228,7 @@ export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: S
         transcript={transcript}
         recorderStatus={recorder.status}
         audioClip={recorder.audioClip}
+        isRecorderSupported={recorder.isSupported}
       />
 
       <div className="grid items-start gap-5 xl:grid-cols-2">

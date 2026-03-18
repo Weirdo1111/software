@@ -11,7 +11,11 @@ function formatClipSize(blob: Blob) {
   return `${(blob.size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function getStatusLabel(status: RecorderStatus) {
+function getStatusLabel(status: RecorderStatus, isSupported: boolean) {
+  if (!isSupported) {
+    return "Microphone not supported";
+  }
+
   switch (status) {
     case "recording":
       return "Recording live";
@@ -19,8 +23,6 @@ function getStatusLabel(status: RecorderStatus) {
       return "Paused";
     case "stopped":
       return "Take saved";
-    case "unsupported":
-      return "Microphone not supported";
     case "error":
       return "Recorder error";
     default:
@@ -73,14 +75,16 @@ export function SpeakingRecorderPanel({
         </div>
         <span
           className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${
-            isRecording
+            !isSupported
+              ? "bg-[rgba(20,50,75,0.06)] text-[var(--ink-soft)]"
+              : isRecording
               ? "bg-[rgba(195,109,89,0.12)] text-[var(--coral)]"
               : isPaused
                 ? "bg-[rgba(216,142,52,0.12)] text-[#9b661f]"
                 : "bg-[rgba(20,50,75,0.06)] text-[var(--ink-soft)]"
           }`}
         >
-          {getStatusLabel(status)}
+          {getStatusLabel(status, isSupported)}
         </span>
       </div>
 
