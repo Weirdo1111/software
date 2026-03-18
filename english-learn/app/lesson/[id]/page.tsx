@@ -175,10 +175,11 @@ export default async function LessonPage({
   const sourceTitle = readingPassage?.title ?? meta.source;
   const description = linkedArticle?.focus ?? meta.focus;
   const Icon = meta.icon;
+  const topSectionLayoutClass = mode === "speaking" ? "grid gap-5" : "grid gap-5 xl:grid-cols-[1.02fr_0.98fr]";
 
   return (
     <PageFrame locale={locale} title={meta.label} description={description}>
-      <div className="grid gap-5 xl:grid-cols-[1.02fr_0.98fr]">
+      <div className={topSectionLayoutClass}>
         <article className={`rounded-[2rem] border border-[rgba(20,50,75,0.12)] bg-gradient-to-br ${meta.tone} p-6 sm:p-7 shadow-[0_20px_45px_rgba(23,32,51,0.08)]`}>
           <div className="flex items-start justify-between gap-4">
             <div>
