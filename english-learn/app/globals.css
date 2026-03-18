@@ -1,0 +1,157 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #f4ecdf;
+  --paper-strong: #eadfcb;
+  --paper-soft: #fbf7f1;
+  --ink: #172033;
+  --ink-soft: #566278;
+  --line: rgba(72, 85, 104, 0.18);
+  --navy: #14324b;
+  --teal: #2a6958;
+  --amber: #d88e34;
+  --coral: #c36d59;
+  --glow: rgba(20, 50, 75, 0.12);
+  --font-body: "Avenir Next", "Segoe UI", "PingFang SC", "Hiragino Sans GB", sans-serif;
+  --font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "Times New Roman", "Songti SC", serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(20, 50, 75, 0.15), transparent 30%),
+    radial-gradient(circle at 85% 0%, rgba(216, 142, 52, 0.18), transparent 30%),
+    radial-gradient(circle at 50% 100%, rgba(42, 105, 88, 0.15), transparent 34%),
+    linear-gradient(135deg, #efe4d2 0%, #f6f0e6 48%, #f1e8dc 100%);
+  background-attachment: fixed;
+  font-family: var(--font-body);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.42;
+  background:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0 16px, rgba(20, 50, 75, 0.03) 16px 32px);
+  background-size: 36px 36px, 36px 36px, 100% 100%;
+  mix-blend-mode: multiply;
+}
+
+::selection {
+  color: #f7f2e8;
+  background: var(--navy);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.page-grid {
+  position: relative;
+}
+
+.page-grid::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.32), transparent 30%, transparent 70%, rgba(20, 50, 75, 0.04));
+}
+
+.surface-panel {
+  border: 1px solid rgba(20, 50, 75, 0.12);
+  background: linear-gradient(135deg, rgba(255, 251, 246, 0.94), rgba(255, 255, 255, 0.72));
+  box-shadow: 0 24px 60px rgba(23, 32, 51, 0.08);
+  backdrop-filter: blur(18px);
+}
+
+.surface-ink {
+  border: 1px solid rgba(255, 245, 226, 0.14);
+  background:
+    radial-gradient(circle at top right, rgba(216, 142, 52, 0.16), transparent 32%),
+    linear-gradient(160deg, rgba(20, 50, 75, 0.98), rgba(16, 27, 42, 0.96));
+  box-shadow: 0 24px 60px rgba(12, 18, 29, 0.24);
+  color: #f7efe3;
+}
+
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(20, 50, 75, 0.16);
+  background: rgba(255, 255, 255, 0.72);
+  padding: 0.4rem 0.8rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.metric-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(20, 50, 75, 0.14);
+  background: rgba(255, 255, 255, 0.8);
+  padding: 0.5rem 0.9rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.data-rule {
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(90deg, rgba(20, 50, 75, 0.2), rgba(20, 50, 75, 0.03));
+}
+
+@keyframes revealUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reveal-up {
+  animation: revealUp 0.7s ease both;
+}
+
+@keyframes ambientFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.ambient-card {
+  animation: ambientFloat 7s ease-in-out infinite;
+}
+
+.progress-stripe {
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.22) 50%, rgba(255, 255, 255, 0.22) 75%, transparent 75%, transparent);
+  background-size: 18px 18px;
+}
