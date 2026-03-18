@@ -1,17 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, BookOpen, Bookmark, BookmarkCheck, Clock3, FileText, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, BookOpen, Bookmark, BookmarkCheck, Clock3, FileText, Sparkles } from "lucide-react";
 import { useEffect } from "react";
 
 import {
+  ArticleCard,
+  buildReadingHref,
   cefrBadgeLabel,
   cefrStageLabel,
   difficultyStyle,
   examReferenceLabel,
 } from "@/components/reading/article-card";
+import { ParagraphNote } from "@/components/reading/paragraph-note";
 import { useReadingLibrary } from "@/components/reading/use-reading-library";
-import { getLessonCodeForReadingArticle, type ReadingArticle } from "@/lib/reading-articles";
+import { WordLookupLayer } from "@/components/reading/word-lookup-layer";
+import { getLessonCodeForReadingArticle, getRelatedArticles, type ReadingArticle } from "@/lib/reading-articles";
 
 function buildLessonHref(article: ReadingArticle, lang?: string) {
   const lessonCode = getLessonCodeForReadingArticle(article);
@@ -47,6 +51,7 @@ export function ReadingArticleShell({
 
   const isFavorite = favoriteIds.includes(article.id);
   const historyEntry = history.find((entry) => entry.articleId === article.id);
+  const relatedArticles = getRelatedArticles(article, 3);
 
   return (
     <div className="grid gap-6">
@@ -93,25 +98,35 @@ export function ReadingArticleShell({
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <article className="surface-panel rounded-[2rem] p-6 sm:p-7">
-          <div className="grid gap-8">
-            {article.sections.map((section) => (
-              <section key={section.heading} className="grid gap-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--ink-soft)]">Section</p>
-                  <h3 className="mt-2 text-xl font-semibold text-[var(--ink)]">{section.heading}</h3>
-                </div>
-                <div className="grid gap-4">
-                  {section.paragraphs.map((paragraph) => (
-                    <p key={paragraph} className="text-sm leading-8 text-[var(--ink)] sm:text-[15px]">
-                      {paragraph}
-                    </p>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
-        </article>
+        <WordLookupLayer>
+          <article className="surface-panel rounded-[2rem] p-6 sm:p-7">
+            <div className="grid gap-8">
+              {article.sections.map((section, sectionIndex) => (
+                <section key={section.heading} className="grid gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--ink-soft)]">Section</p>
+                    <h3 className="mt-2 text-xl font-semibold text-[var(--ink)]">{section.heading}</h3>
+                  </div>
+                  <div className="grid gap-4">
+                    {section.paragraphs.map((paragraph, paragraphIndex) => (
+                      <div key={paragraph} className="group/para flex items-start gap-2">
+                        <p className="flex-1 text-sm leading-8 text-[var(--ink)] sm:text-[15px]">
+                          {paragraph}
+                        </p>
+                        <div className="mt-1 flex-shrink-0">
+                          <ParagraphNote
+                            articleId={article.id}
+                            paragraphKey={`${sectionIndex}-${paragraphIndex}`}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          </article>
+        </WordLookupLayer>
 
         <aside className="grid gap-4">
           <article className="surface-panel rounded-[1.7rem] p-5">
@@ -172,6 +187,29 @@ export function ReadingArticleShell({
           </article>
         </aside>
       </section>
+
+      {/* Related articles */}
+      {relatedArticles.length > 0 ? (
+        <section className="surface-panel rounded-[2rem] p-6 sm:p-7">
+          <p className="section-label">
+            <ArrowUpRight className="size-3.5" /> Related articles
+          </p>
+          <h2 className="font-display mt-4 text-2xl tracking-tight text-[var(--ink)]">
+            Continue reading on similar topics.
+          </h2>
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {relatedArticles.map((related) => (
+              <ArticleCard
+                key={related.id}
+                article={related}
+                href={buildReadingHref(related.id, lang)}
+                isFavorite={favoriteIds.includes(related.id)}
+                onToggleFavorite={toggleFavorite}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }
