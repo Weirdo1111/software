@@ -1,92 +1,67 @@
-# English Learn MVP
+# EnglishSoftware
 
-English learning web app for non-native speakers (CEFR A1-B2), implemented with Next.js + Supabase + OpenAI + Stripe.
-The onboarding flow is skill-first: listening/speaking/reading/writing sessions come before optional placement test.
+Course project repository for an academic English learning platform.
 
-## Stack
+## Repository Layout
 
-- Next.js 16 (App Router) + TypeScript + Tailwind CSS
-- Supabase (Auth, Postgres, Storage, RLS)
-- OpenAI Responses API for speaking/writing feedback
-- Stripe Checkout + webhook for subscription
-- PostHog analytics + Sentry monitoring
-- Vitest for unit testing
+```text
+EnglishSoftware/
+|-- english-learn/              # Next.js application source code
+|-- docs/                       # Planning, design, and team documents
+`-- README.md
+```
 
-## Local Setup
+## Where The Code Is
 
-1. Install dependencies
+Main application code is in [english-learn](./english-learn).
 
-```bash
+## How To Run
+
+1. Open terminal at repository root.
+2. Enter app directory:
+
+```powershell
+cd english-learn
+```
+
+3. Install dependencies:
+
+```powershell
 npm install
 ```
 
-2. Configure env
+4. Create env file:
 
-```bash
-cp .env.example .env.local
+```powershell
+New-Item .env.local -ItemType File
 ```
 
-Fill required keys in `.env.local`.
+Minimum:
 
-3. Run dev server
+```env
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
 
-```bash
+5. Start dev server:
+
+```powershell
 npm run dev
 ```
 
-4. Run tests/lint/typecheck
+6. Open <http://localhost:3000>
 
-```bash
+## Useful Commands
+
+Run inside `english-learn/`:
+
+```powershell
 npm run test
 npm run lint
 npm run typecheck
 ```
 
-## Supabase SQL
+## App Notes
 
-1. Apply migration from [supabase/migrations/001_init.sql](supabase/migrations/001_init.sql)
-2. Optional seed data from [supabase/seed.sql](supabase/seed.sql)
-
-## Routes
-
-- `/` Home
-- `/learn` Four-skill learning hub
-- `/auth/sign-in`, `/auth/sign-up`
-- `/onboarding`
-- `/placement-test`
-- `/dashboard`
-- `/lesson/[id]`
-- `/review`
-- `/progress`
-- `/pricing`
-- `/settings`
-- `/admin`
-
-## API Endpoints
-
-- `POST /api/onboarding`
-- `POST /api/placement/start`
-- `POST /api/placement/submit`
-- `GET /api/plan/today`
-- `POST /api/attempts`
-- `POST /api/ai/feedback/speaking`
-- `POST /api/ai/feedback/writing`
-- `GET /api/progress/summary?range=7d|30d`
-- `POST /api/subscription/checkout`
-- `POST /api/webhooks/stripe`
-- `POST /api/auth/sign-up`
-- `POST /api/auth/sign-in`
-
-## Notes
-
-- If env keys are missing, APIs return mock fallback values to keep local demo runnable.
-- Stripe webhook endpoint validates signature only when `STRIPE_WEBHOOK_SECRET` is configured.
-- Supabase RLS is enabled for user-owned tables.
-
-## Week 1 Listening MVP
-
-- Route: `/lesson/A2-listening-starter`
-- Focused single-page listening practice UI for DIICSU first-year students
-- Includes sentence comprehension + keyword dictation + instant feedback
-- Includes return buttons to home and learning hub
-- Includes progress display (current item, completion percentage, correct count)
+- Stack: Next.js 16, TypeScript, Tailwind CSS, Supabase, OpenAI API, Stripe
+- App-specific docs are in [english-learn/README.md](./english-learn/README.md)
+- Listening MVP route: `/lesson/A2-listening-starter`
