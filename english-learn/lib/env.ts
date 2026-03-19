@@ -2,7 +2,6 @@ const requiredServerVars = [
   "SUPABASE_URL",
   "SUPABASE_ANON_KEY",
   "SUPABASE_SERVICE_ROLE_KEY",
-  "OPENAI_API_KEY",
   "STRIPE_SECRET_KEY",
   "STRIPE_WEBHOOK_SECRET",
 ] as const;
@@ -22,6 +21,9 @@ export const env = {
     SUPABASE_URL: getEnvValue("SUPABASE_URL", false),
     SUPABASE_ANON_KEY: getEnvValue("SUPABASE_ANON_KEY", false),
     SUPABASE_SERVICE_ROLE_KEY: getEnvValue("SUPABASE_SERVICE_ROLE_KEY", false),
+    AI_API_KEY: getEnvValue("AI_API_KEY", false),
+    AI_BASE_URL: getEnvValue("AI_BASE_URL", false),
+    AI_MODEL: getEnvValue("AI_MODEL", false),
     OPENAI_API_KEY: getEnvValue("OPENAI_API_KEY", false),
     STRIPE_SECRET_KEY: getEnvValue("STRIPE_SECRET_KEY", false),
     STRIPE_WEBHOOK_SECRET: getEnvValue("STRIPE_WEBHOOK_SECRET", false),
@@ -45,6 +47,10 @@ export function assertServerEnv() {
       throw new Error(`Missing required server env: ${key}`);
     }
   });
+
+  if (!process.env.AI_API_KEY && !process.env.OPENAI_API_KEY) {
+    throw new Error("Missing required server env: AI_API_KEY or OPENAI_API_KEY");
+  }
 }
 
 export function assertClientEnv() {
