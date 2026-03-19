@@ -30,11 +30,11 @@ export default async function Home({
             <Sparkles className="size-3.5" /> MVP direction
           </p>
           <h2 className="font-display mt-5 max-w-4xl text-4xl leading-tight tracking-tight text-[var(--ink)] sm:text-5xl">
-            A focused academic English platform built around assessment, banding, and four-skill study.
+            A DIICSU-focused academic English platform for first-year adaptation.
           </h2>
           <p className="mt-4 max-w-3xl text-sm leading-7 text-[var(--ink-soft)] sm:text-base">
-            The first release should feel clear and credible: learners enter, complete a placement test, receive a Low / Medium /
-            High recommendation, then move into academic listening, speaking, reading, and writing tasks designed for their band.
+            The first release should feel clear and credible for DIICSU students: complete placement, receive a Low / Medium / High
+            recommendation, then train with English-medium class tasks across listening, speaking, reading, and writing.
           </p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -184,7 +184,7 @@ export default async function Home({
         <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
           <h2 className="font-display text-3xl tracking-tight text-[var(--ink)]">MVP features the client can evaluate quickly.</h2>
           <p className="max-w-2xl text-sm leading-7 text-[var(--ink-soft)]">
-            The UI now frames the product as an academic tool for progression rather than a generic English practice site.
+            The UI now frames the product as a DIICSU student support tool, not a generic English practice site.
           </p>
         </div>
         <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">

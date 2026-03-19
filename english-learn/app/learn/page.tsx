@@ -18,16 +18,16 @@ export default async function LearnPage({ searchParams }: { searchParams: Promis
   return (
     <PageFrame
       locale={locale}
-      title="Learning modules for academic English"
-      description="The launch UI centers on four connected modules with level-sensitive difficulty, visible outputs, and a clear loop from study to progress tracking."
+      title="DIICSU first-year learning modules"
+      description="Four connected modules designed for DIICSU first-year students adapting to English-medium study."
     >
       <div className="grid gap-5 xl:grid-cols-[1.25fr_0.95fr]">
         <section className="surface-panel reveal-up rounded-[2rem] p-6 sm:p-8">
           <p className="section-label">Default pathway</p>
           <h2 className="font-display mt-4 text-4xl tracking-tight text-[var(--ink)] sm:text-5xl">Medium band is the launch baseline.</h2>
           <p className="mt-4 max-w-3xl text-sm leading-7 text-[var(--ink-soft)] sm:text-base">
-            The main target audience is intermediate university learners, so the first visible path should feel optimized for Medium while still
-            showing how Low and High versions expand or simplify the same learning structure.
+            The main target audience is DIICSU first-year learners adjusting to full English delivery, so the first visible path should feel
+            optimized for Medium while still showing how Low and High versions expand or simplify the same learning structure.
           </p>
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
             {levelBands.map((band) => (

@@ -152,7 +152,7 @@ export default async function LessonPage({
               <p className="section-label">DIICSU Listening Practice</p>
               <h1 className="font-display mt-3 text-4xl tracking-tight text-[var(--ink)] sm:text-5xl">Academic Listening Lab</h1>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-[var(--ink-soft)] sm:text-base">
-                Focused listening training for first-year students: sentence understanding plus keyword spelling for faster adaptation to English-medium classes.
+                Focused listening training for DIICSU first-year students: understand core lecture instructions, answer once, then review transcript and explanation.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">

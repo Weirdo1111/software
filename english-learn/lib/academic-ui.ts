@@ -3,7 +3,7 @@ export type AcademicSkill = "listening" | "speaking" | "reading" | "writing";
 export const platformSignals = [
   {
     label: "Audience",
-    value: "Intermediate university students who need stronger academic performance.",
+    value: "DIICSU first-year students adapting to English-medium lectures, tutorials, and coursework.",
   },
   {
     label: "Logic",
@@ -11,7 +11,7 @@ export const platformSignals = [
   },
   {
     label: "Outcome",
-    value: "Consistent gains across academic listening, speaking, reading, and writing.",
+    value: "Faster adaptation to DIICSU study demands across listening, speaking, reading, and writing.",
   },
 ] as const;
 
@@ -39,7 +39,7 @@ export const learnerJourney = [
   {
     step: "05",
     title: "Study across four skills",
-    detail: "Work through listening, speaking, reading, and writing modules as one connected loop.",
+    detail: "Work through DIICSU-focused listening, speaking, reading, and writing modules as one connected loop.",
   },
   {
     step: "06",
@@ -71,7 +71,7 @@ export const levelBands = [
   {
     name: "Medium",
     short: "Core target band",
-    summary: "Balanced practice for the main audience: intermediate learners building steady academic performance.",
+    summary: "Balanced practice for the main audience: DIICSU first-year learners building stable academic English performance.",
     support: "Integrated note-taking, speaking rehearsal, text analysis, and paragraph-level writing.",
     unlock: "Default pathway for launch because it matches the agreed primary user group.",
     accentClass: "border-[#6a9483]/60 bg-[#edf6f1] text-[#1a493f]",
@@ -91,9 +91,9 @@ export const levelBands = [
 export const learningModules = [
   {
     skill: "listening",
-    title: "Academic Listening",
-    focus: "Lecture signposting, note capture, and evidence detection.",
-    summary: "Short lecture clips with note-taking prompts and instant comprehension checks.",
+    title: "DIICSU Academic Listening",
+    focus: "Lecture signposting, assignment instructions, and evidence detection.",
+    summary: "Short DIICSU-style class sentences with comprehension checks and guided review.",
     deliverable: "Annotated lecture notes + gist summary",
     minutes: "18-22 min",
     progress: 72,
@@ -104,7 +104,7 @@ export const learningModules = [
   },
   {
     skill: "speaking",
-    title: "Academic Speaking",
+    title: "DIICSU Academic Speaking",
     focus: "Seminar response, pronunciation clarity, and spoken structure.",
     summary: "Guided discussion turns, shadowing, and AI-supported fluency feedback.",
     deliverable: "90-second seminar response",
@@ -117,7 +117,7 @@ export const learningModules = [
   },
   {
     skill: "reading",
-    title: "Academic Reading",
+    title: "DIICSU Academic Reading",
     focus: "Text structure, claim-evidence mapping, and vocabulary in context.",
     summary: "Articles and abstracts broken into skimmable blocks with inference and referencing tasks.",
     deliverable: "Structure map + evidence notes",
@@ -130,7 +130,7 @@ export const learningModules = [
   },
   {
     skill: "writing",
-    title: "Academic Writing",
+    title: "DIICSU Academic Writing",
     focus: "Topic sentences, cohesion, and paragraph-level development.",
     summary: "Produce short academic responses with revision prompts and structured feedback.",
     deliverable: "150-200 word analytical paragraph",
@@ -209,7 +209,7 @@ export const dashboardFocus = [
   {
     label: "Weekly target",
     value: "90 min",
-    note: "Keep one task active in each of the four core academic skills.",
+    note: "Keep one task active in each of the four DIICSU-focused academic skills.",
   },
 ] as const;
 

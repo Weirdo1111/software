@@ -1,11 +1,51 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, CircleAlert, Ear, Lightbulb, Play } from "lucide-react";
 
-import { isChoiceCorrect, listeningWeekOneItems } from "@/lib/listening";
+import { isChoiceCorrect, listeningWeekOneItems, type ListeningItem } from "@/lib/listening";
+
+function getWeakPointLabel(item: ListeningItem) {
+  const text = `${item.sentence} ${item.gistQuestion}`.toLowerCase();
+
+  if (text.includes("deadline") || text.includes("upload") || text.includes("moodle") || text.includes("submit")) {
+    return "Assignment instructions and deadline details";
+  }
+
+  if (text.includes("vocabulary") || text.includes("glossary")) {
+    return "Academic vocabulary support strategies";
+  }
+
+  if (text.includes("seminar") || text.includes("example") || text.includes("opinion")) {
+    return "Finding evidence in seminar communication";
+  }
+
+  return "Main-idea listening in short academic sentences";
+}
+
+function buildRecommendation(accuracy: number, averagePlays: number, topWeakPoints: string[]) {
+  if (accuracy >= 85 && averagePlays <= 1.5) {
+    return "Strong control. Next session, start at 1x speed and focus on faster note capture.";
+  }
+
+  if (accuracy < 60) {
+    return "Use 0.85x for your first play, then 1x once. Confirm key instruction words before checking.";
+  }
+
+  if (averagePlays > 2.3) {
+    return "Try a two-step pace: first play at 0.85x, second play at 1x, then answer without replaying.";
+  }
+
+  if (topWeakPoints.length > 0) {
+    return `Review this area first next time: ${topWeakPoints[0]}.`;
+  }
+
+  return "Keep the same rhythm and aim for higher accuracy with fewer replays next session.";
+}
 
 export function ListeningWorkbench() {
+  const totalItems = listeningWeekOneItems.length;
+
   const [index, setIndex] = useState(0);
   const [showHint, setShowHint] = useState(false);
   const [hasPlayed, setHasPlayed] = useState(false);
@@ -16,23 +56,42 @@ export function ListeningWorkbench() {
   const [answeredCount, setAnsweredCount] = useState(0);
   const [speed, setSpeed] = useState(1);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackProgress, setPlaybackProgress] = useState(0);
   const [showListenTooltip, setShowListenTooltip] = useState(false);
+  const [showSessionReportModal, setShowSessionReportModal] = useState(false);
+  const [playCounts, setPlayCounts] = useState<number[]>(() => listeningWeekOneItems.map(() => 0));
+  const [resultByItem, setResultByItem] = useState<Array<boolean | null>>(() => listeningWeekOneItems.map(() => null));
 
   const speedOptions = [0.6, 0.85, 1, 1.15, 1.3];
-  const progressFrameRef = useRef<number | null>(null);
   const tooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasOpenedSessionReportRef = useRef(false);
 
   const item = listeningWeekOneItems[index];
   const choiceCorrect = isChoiceCorrect(choice, item.gistAnswer);
   const accuracy = answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : 0;
+  const completedAll = answeredCount === totalItems;
 
-  const clearProgressAnimation = () => {
-    if (progressFrameRef.current !== null) {
-      cancelAnimationFrame(progressFrameRef.current);
-      progressFrameRef.current = null;
-    }
-  };
+  const answeredIndices = resultByItem
+    .map((result, itemIndex) => (result === null ? null : itemIndex))
+    .filter((itemIndex): itemIndex is number => itemIndex !== null);
+
+  const averagePlays =
+    answeredIndices.length > 0
+      ? Number((answeredIndices.reduce((sum, itemIndex) => sum + playCounts[itemIndex], 0) / answeredIndices.length).toFixed(1))
+      : 0;
+
+  const weakPointCounts = resultByItem.reduce<Record<string, number>>((acc, result, itemIndex) => {
+    if (result !== false) return acc;
+    const label = getWeakPointLabel(listeningWeekOneItems[itemIndex]);
+    acc[label] = (acc[label] || 0) + 1;
+    return acc;
+  }, {});
+
+  const topWeakPoints = Object.entries(weakPointCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 2)
+    .map(([label]) => label);
+
+  const recommendation = buildRecommendation(accuracy, averagePlays, topWeakPoints);
 
   const clearTooltipTimer = () => {
     if (tooltipTimerRef.current) {
@@ -53,43 +112,32 @@ export function ListeningWorkbench() {
   const speakSentence = () => {
     if (typeof window === "undefined" || !window.speechSynthesis) return;
 
-    clearProgressAnimation();
+    const playIndex = index;
+    const shouldCountForReport = !submittedChoice;
+
     window.speechSynthesis.cancel();
+    setHasPlayed(true);
+    if (shouldCountForReport) {
+      setPlayCounts((value) => value.map((count, itemIndex) => (itemIndex === playIndex ? count + 1 : count)));
+    }
     setIsPlaying(true);
-    setPlaybackProgress(0);
 
     const utterance = new SpeechSynthesisUtterance(item.sentence);
     utterance.lang = "en-US";
     utterance.rate = speed;
 
-    const estimatedDurationMs = Math.max(1800, Math.round((item.sentence.split(" ").length / 2.6) * 1000 * (1 / speed)));
-    const startedAt = performance.now();
-
     utterance.onstart = () => {
       setIsPlaying(true);
-      setPlaybackProgress(0);
-      const animate = (now: number) => {
-        const elapsed = now - startedAt;
-        const percent = Math.min(95, (elapsed / estimatedDurationMs) * 100);
-        setPlaybackProgress(percent);
-        if (percent < 95) {
-          progressFrameRef.current = requestAnimationFrame(animate);
-        }
-      };
-      progressFrameRef.current = requestAnimationFrame(animate);
+      setHasPlayed(true);
     };
 
     utterance.onend = () => {
-      clearProgressAnimation();
       setIsPlaying(false);
-      setPlaybackProgress(100);
       setHasPlayed(true);
     };
 
     utterance.onerror = () => {
-      clearProgressAnimation();
       setIsPlaying(false);
-      setPlaybackProgress(0);
     };
 
     window.speechSynthesis.speak(utterance);
@@ -103,9 +151,7 @@ export function ListeningWorkbench() {
     setShowPostReview(false);
     setHasPlayed(false);
     setIsPlaying(false);
-    setPlaybackProgress(0);
     setShowListenTooltip(false);
-    clearProgressAnimation();
     clearTooltipTimer();
     if (typeof window !== "undefined" && window.speechSynthesis) {
       window.speechSynthesis.cancel();
@@ -113,8 +159,14 @@ export function ListeningWorkbench() {
   };
 
   useEffect(() => {
+    if (completedAll && !hasOpenedSessionReportRef.current) {
+      setShowSessionReportModal(true);
+      hasOpenedSessionReportRef.current = true;
+    }
+  }, [completedAll]);
+
+  useEffect(() => {
     return () => {
-      clearProgressAnimation();
       clearTooltipTimer();
       if (typeof window !== "undefined" && window.speechSynthesis) {
         window.speechSynthesis.cancel();
@@ -123,7 +175,7 @@ export function ListeningWorkbench() {
   }, []);
 
   const nextItem = () => {
-    if (index < listeningWeekOneItems.length - 1) {
+    if (index < totalItems - 1) {
       setIndex((value) => value + 1);
       resetCurrent();
     }
@@ -140,7 +192,6 @@ export function ListeningWorkbench() {
           >
             {isPlaying ? "Playing..." : hasPlayed ? "Audio completed" : "Not played yet"}
           </span>
-          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">Progress {Math.round(playbackProgress)}%</span>
         </div>
 
         <div className="flex flex-col gap-3 rounded-[0.9rem] border border-[rgba(20,50,75,0.12)] bg-white/85 p-2 sm:flex-row sm:items-center sm:justify-between">
@@ -175,14 +226,15 @@ export function ListeningWorkbench() {
   );
 
   return (
-    <article className="surface-panel rounded-[2rem] p-6 sm:p-7">
+    <>
+      <article className="surface-panel rounded-[2rem] p-6 sm:p-7">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="section-label">
-          <Ear className="size-3.5" /> Listening Lab Prototype
+          <Ear className="size-3.5" /> DIICSU First-Year Listening
         </p>
       </div>
 
-      <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">Listen - Understand - Review</h2>
+      <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">Listen - Understand - Check - Review</h2>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
         <div className="rounded-[1.2rem] border border-[rgba(20,50,75,0.12)] bg-white/70 p-4">
@@ -192,7 +244,7 @@ export function ListeningWorkbench() {
         <div className="rounded-[1.2rem] border border-[rgba(20,50,75,0.12)] bg-white/70 p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-soft)]">Current sentence</p>
           <p className="font-display mt-2 text-3xl">
-            {index + 1}/{listeningWeekOneItems.length}
+            {index + 1}/{totalItems}
           </p>
         </div>
       </div>
@@ -243,6 +295,7 @@ export function ListeningWorkbench() {
                   if (choiceCorrect) {
                     setCorrectCount((value) => value + 1);
                   }
+                  setResultByItem((value) => value.map((result, itemIndex) => (itemIndex === index ? choiceCorrect : result)));
                   setShowPostReview(!choiceCorrect);
                 }}
                 disabled={choice === null || submittedChoice || !hasPlayed}
@@ -251,19 +304,19 @@ export function ListeningWorkbench() {
                 Check answer
               </button>
             </div>
-          <button
-            type="button"
-            onClick={() => setShowHint((value) => !value)}
-            className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white/80 px-4 py-2 text-sm font-semibold text-[var(--ink-soft)] transition hover:bg-[rgba(20,50,75,0.08)]"
-          >
-            <Lightbulb className="size-4" />
-            {showHint ? "Hide hint" : "Show hint"}
-          </button>
+            <button
+              type="button"
+              onClick={() => setShowHint((value) => !value)}
+              className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white/80 px-4 py-2 text-sm font-semibold text-[var(--ink-soft)] transition hover:bg-[rgba(20,50,75,0.08)]"
+            >
+              <Lightbulb className="size-4" />
+              {showHint ? "Hide hint" : "Show hint"}
+            </button>
           </div>
           <button
             type="button"
             onClick={nextItem}
-            disabled={index >= listeningWeekOneItems.length - 1 || !submittedChoice}
+            disabled={index >= totalItems - 1 || !submittedChoice}
             className="rounded-full bg-[var(--teal)] px-4 py-2 text-sm font-semibold text-[#f6f0e5] disabled:cursor-not-allowed disabled:opacity-45"
           >
             Next sentence
@@ -281,7 +334,11 @@ export function ListeningWorkbench() {
 
         {submittedChoice ? (
           <div className="mt-4 space-y-3">
-            <p className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold ${choiceCorrect ? "bg-[#e7f6ef] text-[#1f6b52]" : "bg-[#fdeaea] text-[#8d2f2f]"}`}>
+            <p
+              className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold ${
+                choiceCorrect ? "bg-[#e7f6ef] text-[#1f6b52]" : "bg-[#fdeaea] text-[#8d2f2f]"
+              }`}
+            >
               {choiceCorrect ? <CheckCircle2 className="size-4" /> : <CircleAlert className="size-4" />}
               {choiceCorrect ? "Correct. You can review details or move next." : "Not right. Review the transcript and details below."}
             </p>
@@ -295,27 +352,70 @@ export function ListeningWorkbench() {
               </button>
             ) : null}
             {showPostReview ? (
-                <div className="rounded-[1rem] border border-[rgba(20,50,75,0.14)] bg-white/85 p-4 text-sm leading-7 text-[var(--ink)]">
-                  <p>
-                    <span className="font-semibold">Transcript:</span> {item.sentence}
-                  </p>
-                  <p className="mt-2">
-                    <span className="font-semibold">Correct answer:</span> {item.gistOptions[item.gistAnswer]}
-                  </p>
-                  <p className="mt-2">
-                    <span className="font-semibold">Sentence explanation:</span> {item.gistExplanation}
-                  </p>
-                </div>
+              <div className="rounded-[1rem] border border-[rgba(20,50,75,0.14)] bg-white/85 p-4 text-sm leading-7 text-[var(--ink)]">
+                <p>
+                  <span className="font-semibold">Transcript:</span> {item.sentence}
+                </p>
+                <p className="mt-2">
+                  <span className="font-semibold">Correct answer:</span> {item.gistOptions[item.gistAnswer]}
+                </p>
+                <p className="mt-2">
+                  <span className="font-semibold">Sentence explanation:</span> {item.gistExplanation}
+                </p>
+              </div>
             ) : null}
           </div>
         ) : null}
       </div>
 
-      {index >= listeningWeekOneItems.length - 1 ? (
-        <p className="mt-4 rounded-[1rem] border border-[rgba(42,105,88,0.25)] bg-[rgba(231,246,239,0.85)] px-4 py-3 text-sm font-semibold text-[#1f6b52]">
-          Week 1 listening set completed. You can demo this full flow now.
-        </p>
+      </article>
+
+      {showSessionReportModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,23,42,0.45)] px-4 py-8">
+          <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-[1.4rem] border border-[rgba(20,50,75,0.14)] bg-white p-5 shadow-[0_30px_80px_rgba(15,23,42,0.35)]">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="section-label">Session report</p>
+                <h3 className="mt-3 text-xl font-semibold text-[var(--ink)]">Your listening session summary</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSessionReportModal(false)}
+                className="rounded-full border border-[rgba(20,50,75,0.16)] bg-white px-4 py-2 text-sm font-semibold text-[var(--ink-soft)] hover:bg-[rgba(20,50,75,0.06)]"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-[1rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.82)] p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Accuracy</p>
+                <p className="mt-2 text-2xl font-semibold text-[var(--ink)]">{accuracy}%</p>
+              </div>
+              <div className="rounded-[1rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.82)] p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Items completed</p>
+                <p className="mt-2 text-2xl font-semibold text-[var(--ink)]">
+                  {answeredCount}/{totalItems}
+                </p>
+              </div>
+              <div className="rounded-[1rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.82)] p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Avg. plays per item</p>
+                <p className="mt-2 text-2xl font-semibold text-[var(--ink)]">{averagePlays}</p>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-[1rem] border border-[rgba(20,50,75,0.1)] bg-[rgba(244,247,250,0.75)] p-4 text-sm text-[var(--ink)]">
+              <p className="font-semibold">Common weak points</p>
+              <p className="mt-2">{topWeakPoints.length > 0 ? topWeakPoints.join(" | ") : "No recurring weak point detected in this session."}</p>
+            </div>
+
+            <div className="mt-3 rounded-[1rem] border border-[rgba(42,105,88,0.26)] bg-[rgba(231,246,239,0.9)] p-4 text-sm text-[#1f6b52]">
+              <p className="font-semibold">Suggested next step</p>
+              <p className="mt-2">{recommendation}</p>
+            </div>
+          </div>
+        </div>
       ) : null}
-    </article>
+    </>
   );
 }
