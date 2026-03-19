@@ -10,19 +10,20 @@ export type SkillType =
 
 export interface PlacementQuestion {
   id: string;
-  type: "single_choice" | "reading" | "listening";
-  skill: Extract<SkillType, "vocab" | "grammar" | "reading" | "listening">;
+  type: "single_choice";
+  skill: Extract<SkillType, "listening" | "speaking" | "reading" | "writing">;
   prompt: string;
+  context?: string;
   options: string[];
   answer: number;
   level: CEFRLevel;
 }
 
 export interface SkillBreakdown {
-  vocab: number;
-  grammar: number;
-  reading: number;
   listening: number;
+  speaking: number;
+  reading: number;
+  writing: number;
 }
 
 export interface AttemptResult {
