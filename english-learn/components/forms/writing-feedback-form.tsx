@@ -5,18 +5,44 @@ import { useState } from "react";
 
 import { AIAnalysisState } from "@/components/forms/ai-analysis-state";
 import { SaveToDeckButton } from "@/components/forms/save-to-deck-button";
-import type { WritingFeedback } from "@/types/learning";
+import { getWritingPromptById, getWritingPromptsForLevel } from "@/lib/writing-prompts";
+import type { CEFRLevel, WritingFeedback } from "@/types/learning";
 
-const defaultPrompt = "Write a short analytical paragraph explaining one challenge international students face in academic reading and one practical solution.";
-
-export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: "A1" | "A2" | "B1" | "B2" }) {
-  const [essay, setEssay] = useState(
-    "International students often struggle with academic reading because texts include many unfamiliar words and long sentences. A practical solution is to teach them how to identify key terms, mark topic sentences, and build a small subject-specific vocabulary list before class.",
-  );
-  const [targetLevel, setTargetLevel] = useState(defaultLevel);
+export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: CEFRLevel }) {
+  const initialPrompt =
+    getWritingPromptsForLevel(defaultLevel)[0] ?? getWritingPromptById("b1-english-medium-support");
+  const [targetLevel, setTargetLevel] = useState<CEFRLevel>(defaultLevel);
+  const [selectedPromptId, setSelectedPromptId] = useState(initialPrompt?.id ?? "b1-english-medium-support");
+  const [essay, setEssay] = useState(initialPrompt?.sample_response ?? "");
   const [result, setResult] = useState<WritingFeedback | null>(null);
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const availablePrompts = getWritingPromptsForLevel(targetLevel);
+  const selectedPrompt =
+    getWritingPromptById(selectedPromptId) ?? availablePrompts[0] ?? getWritingPromptById("b1-english-medium-support");
+
+  if (!selectedPrompt) return null;
+
+  function loadPrompt(nextPromptId: string) {
+    const nextPrompt = getWritingPromptById(nextPromptId);
+    if (!nextPrompt) return;
+
+    setSelectedPromptId(nextPrompt.id);
+    setEssay(nextPrompt.sample_response);
+    setResult(null);
+    setStatus("");
+  }
+
+  function handleTargetLevelChange(nextLevel: CEFRLevel) {
+    const nextPrompts = getWritingPromptsForLevel(nextLevel);
+    const nextPrompt = nextPrompts[0] ?? selectedPrompt;
+
+    setTargetLevel(nextLevel);
+    if (nextPrompt) {
+      loadPrompt(nextPrompt.id);
+    }
+  }
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -31,6 +57,7 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: "A
         body: JSON.stringify({
           essay_text: essay,
           target_level: targetLevel,
+          prompt_id: selectedPrompt.id,
         }),
       });
 
@@ -56,27 +83,57 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: "A
         </p>
         <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">Check idea control, language accuracy, and revision quality.</h2>
         <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">This form is positioned as an academic writing lab rather than a generic grammar checker.</p>
+        <div className="mt-4 rounded-[1.2rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.72)] p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Quick guide</p>
+          <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">
+            Choose a scenario, write one focused 150-200 word paragraph with a clear topic sentence, one explanation, and one concrete example, then use the AI feedback to revise.
+          </p>
+        </div>
       </div>
 
       <div className="rounded-[1.4rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.72)] p-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--ink-soft)]">Prompt</p>
-        <p className="mt-2 text-sm leading-7 text-[var(--ink)]">{defaultPrompt}</p>
+        <div className="grid gap-4">
+          <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
+            Target level
+            <select
+              value={targetLevel}
+              onChange={(event) => handleTargetLevelChange(event.target.value as CEFRLevel)}
+              className="rounded-[1.1rem] border border-[rgba(20,50,75,0.16)] bg-white/75 px-4 py-3 text-sm outline-none"
+            >
+              <option value="A1">A1</option>
+              <option value="A2">A2</option>
+              <option value="B1">B1</option>
+              <option value="B2">B2</option>
+            </select>
+          </label>
+
+          <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
+            Practice scenario
+            <select
+              value={selectedPrompt.id}
+              onChange={(event) => loadPrompt(event.target.value)}
+              className="rounded-[1.1rem] border border-[rgba(20,50,75,0.16)] bg-white/75 px-4 py-3 text-sm outline-none"
+            >
+              {availablePrompts.map((prompt) => (
+                <option key={prompt.id} value={prompt.id}>
+                  {prompt.title}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="mt-4 rounded-[1.2rem] bg-white/80 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Scenario</p>
+          <p className="mt-2 text-sm font-semibold text-[var(--ink)]">{selectedPrompt.scenario}</p>
+          <p className="mt-3 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Prompt</p>
+          <p className="mt-2 text-sm leading-7 text-[var(--ink)]">{selectedPrompt.prompt}</p>
+          <p className="mt-3 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Focus</p>
+          <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">{selectedPrompt.skill_focus}</p>
+        </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-[auto_1fr] sm:items-end">
-        <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-          Target level
-          <select
-            value={targetLevel}
-            onChange={(event) => setTargetLevel(event.target.value as "A1" | "A2" | "B1" | "B2")}
-            className="rounded-[1.1rem] border border-[rgba(20,50,75,0.16)] bg-white/75 px-4 py-3 text-sm outline-none"
-          >
-            <option value="A1">A1</option>
-            <option value="A2">A2</option>
-            <option value="B1">B1</option>
-            <option value="B2">B2</option>
-          </select>
-        </label>
+      <div className="grid gap-4">
         <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
           Draft paragraph
           <textarea

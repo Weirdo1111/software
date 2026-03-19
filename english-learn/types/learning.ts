@@ -89,6 +89,17 @@ export interface WritingFeedback {
   rewrite_sample: string;
 }
 
+export interface WritingPrompt {
+  id: string;
+  level: CEFRLevel;
+  title: string;
+  scenario: string;
+  prompt: string;
+  skill_focus: string;
+  checkpoints: string[];
+  sample_response: string;
+}
+
 export interface ReadingFeedback {
   comprehension_score: number;
   claim_feedback: string;
