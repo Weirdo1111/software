@@ -39,6 +39,8 @@ export interface SpeakingFeedback {
   grammar_score: number;
   strengths: string[];
   revision_focus: string;
+  delivery_snapshot: string;
+  sample_upgrade: string;
   tips: string[];
 }
 
