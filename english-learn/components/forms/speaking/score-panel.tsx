@@ -1,24 +1,24 @@
 import { Waves } from "lucide-react";
 
-import { SaveToDeckButton } from "@/components/forms/save-to-deck-button";
 import type { SpeakingFeedback } from "@/types/learning";
 
 // Date: 2026/3/18
 // Author: Tianbo Cao
-// Moved the score presentation into a focused component so feedback rendering stays easy to extend.
+// Simplified score rendering so the post-submission view stays focused on the next revision step.
 export function SpeakingScorePanel({ result }: { result: SpeakingFeedback }) {
   return (
-    <div className="grid gap-5 rounded-[1.7rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.74)] p-5 sm:p-6">
-      <div className="flex items-center gap-3 text-[var(--ink)]">
-        <Waves className="size-4" />
-        <p className="text-sm font-semibold">Scoring summary</p>
+    <div className="grid gap-4 rounded-[1.7rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.74)] p-5 sm:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 text-[var(--ink)]">
+        <div className="flex items-center gap-3">
+          <Waves className="size-4" />
+          <p className="text-sm font-semibold">Scoring summary</p>
+        </div>
+        <div className="rounded-full bg-[rgba(20,50,75,0.05)] px-4 py-2 text-sm font-semibold text-[var(--ink)]">
+          Overall {result.overall_score}
+        </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        <div className="rounded-[1.25rem] bg-white/84 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Overall</p>
-          <p className="font-display mt-2 text-3xl tracking-tight text-[var(--ink)]">{result.overall_score}</p>
-        </div>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-[1.25rem] bg-white/84 p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Task</p>
           <p className="font-display mt-2 text-3xl tracking-tight text-[var(--ink)]">{result.task_response_score}</p>
@@ -62,8 +62,6 @@ export function SpeakingScorePanel({ result }: { result: SpeakingFeedback }) {
           </div>
         ))}
       </div>
-
-      <SaveToDeckButton tag="Speaking" items={result.tips.map((tip) => ({ front: "Speaking tip", back: tip }))} />
     </div>
   );
 }

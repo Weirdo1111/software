@@ -4,7 +4,7 @@ import type { PartnerMessage } from "@/components/forms/speaking/types";
 
 // Date: 2026/3/18
 // Author: Tianbo Cao
-// Split the AI partner rehearsal UI into its own module to keep the form container readable.
+// Reduced the partner panel to an optional rehearsal step between recording and scoring.
 export function SpeakingPartnerPanel({
   partnerMessages,
   partnerTurn,
@@ -24,19 +24,21 @@ export function SpeakingPartnerPanel({
 }) {
   return (
     <div className="rounded-[1.6rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(248,250,252,0.86)] p-5 sm:p-6">
-      <div className="flex items-start gap-3 text-[var(--ink)]">
-        <Bot className="mt-0.5 size-4" />
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">AI speaking partner</p>
-          <p className="mt-3 text-lg font-semibold text-[var(--ink)]">Use short turns to stress-test your answer.</p>
+      <div className="flex items-start justify-between gap-4 text-[var(--ink)]">
+        <div className="flex items-start gap-3">
+          <Bot className="mt-0.5 size-4" />
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">AI speaking partner</p>
+            <p className="mt-3 text-lg font-semibold text-[var(--ink)]">Use one or two turns to test your answer.</p>
+          </div>
         </div>
+        <span className="rounded-full bg-[rgba(20,50,75,0.05)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+          Optional
+        </span>
       </div>
-      <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">
-        Use short turns to rehearse your answer. Each learner turn is added to the transcript draft so you can refine
-        it and submit the final version for scoring.
-      </p>
+      <p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">Each turn is added to the transcript so you can refine it before scoring.</p>
 
-      <div className="mt-5 grid min-h-72 max-h-80 gap-3 overflow-y-auto rounded-[1.25rem] border border-[rgba(20,50,75,0.1)] bg-white/80 p-4">
+      <div className="mt-5 grid min-h-56 max-h-72 gap-3 overflow-y-auto rounded-[1.25rem] border border-[rgba(20,50,75,0.1)] bg-white/80 p-4">
         {partnerMessages.length > 0 ? (
           partnerMessages.map((message, index) => (
             <div
@@ -52,19 +54,18 @@ export function SpeakingPartnerPanel({
           ))
         ) : (
           <div className="rounded-[1rem] bg-[rgba(20,50,75,0.04)] px-4 py-3 text-sm leading-6 text-[var(--ink-soft)]">
-            Start with one short answer. The AI partner will respond in the selected scenario and push you to add
-            evidence, examples, or clarification.
+            Start with one short answer. The AI partner will reply and ask one follow-up question.
           </div>
         )}
       </div>
 
       <label className="mt-4 grid gap-2 text-sm font-medium text-[var(--ink)]">
-        Your next speaking turn
+        Your next turn
         <textarea
           value={partnerTurn}
           onChange={(event) => onPartnerTurnChange(event.target.value)}
           placeholder="Type the next thing you would say aloud."
-          className="min-h-32 rounded-[1.25rem] border border-[rgba(20,50,75,0.16)] bg-white/82 px-4 py-3 text-sm leading-7 outline-none"
+          className="min-h-28 rounded-[1.25rem] border border-[rgba(20,50,75,0.16)] bg-white/82 px-4 py-3 text-sm leading-7 outline-none"
         />
       </label>
 
