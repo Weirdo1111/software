@@ -1,9 +1,13 @@
 "use client";
 
 import { Check, StickyNote, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
-import { getNotesForArticle, saveNoteForParagraph } from "@/lib/reading-library";
+import {
+  getParagraphNoteText,
+  saveNoteForParagraph,
+  subscribeReadingLibrary,
+} from "@/lib/reading-library";
 
 export function ParagraphNote({
   articleId,
@@ -13,30 +17,33 @@ export function ParagraphNote({
   paragraphKey: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [text, setText] = useState("");
-  const [saved, setSaved] = useState(false);
+  const [draft, setDraft] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const savedText = useSyncExternalStore(
+    subscribeReadingLibrary,
+    () => getParagraphNoteText(articleId, paragraphKey),
+    () => "",
+  );
+  const saved = savedText.trim().length > 0;
 
-  // Load existing note on mount
-  useEffect(() => {
-    const notes = getNotesForArticle(articleId);
-    const existing = notes.find((n) => n.paragraphKey === paragraphKey);
-    if (existing) {
-      setText(existing.text);
-      setSaved(true);
+  function handleToggle() {
+    if (isOpen) {
+      setIsOpen(false);
+      return;
     }
-  }, [articleId, paragraphKey]);
+
+    setDraft(savedText);
+    setIsOpen(true);
+  }
 
   function handleSave() {
-    saveNoteForParagraph(articleId, paragraphKey, text);
-    setSaved(text.trim().length > 0);
+    saveNoteForParagraph(articleId, paragraphKey, draft);
     setIsOpen(false);
   }
 
   function handleDelete() {
     saveNoteForParagraph(articleId, paragraphKey, "");
-    setText("");
-    setSaved(false);
+    setDraft("");
     setIsOpen(false);
   }
 
@@ -50,7 +57,7 @@ export function ParagraphNote({
     <div className="relative">
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
         className={`inline-flex size-7 items-center justify-center rounded-lg border transition-colors ${
           saved
             ? "border-[#7b4b14]/30 bg-[#7b4b14]/10 text-[#7b4b14]"
@@ -69,8 +76,8 @@ export function ParagraphNote({
           </p>
           <textarea
             ref={textareaRef}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
             placeholder="Write your thoughts about this paragraph..."
             className="min-h-[80px] w-full resize-none rounded-[0.8rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(247,234,210,0.25)] px-3 py-2 text-sm leading-6 text-[var(--ink)] outline-none placeholder:text-[var(--ink-soft)]/50 focus:border-[#7b4b14]/40"
           />

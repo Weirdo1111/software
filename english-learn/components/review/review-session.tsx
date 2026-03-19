@@ -1,6 +1,6 @@
 "use client";
 
-import { BookMarked, CheckCircle2, Eye, LoaderCircle, RotateCcw, Trophy } from "lucide-react";
+import { Eye, LoaderCircle, RotateCcw, Trophy } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 interface ReviewCard {
@@ -40,7 +40,6 @@ const tagStyle: Record<string, string> = {
 
 export function ReviewSession() {
   const [cards, setCards] = useState<ReviewCard[]>([]);
-  const [stats, setStats] = useState<ReviewStats>({ due: 0, total: 0, mature: 0, at_risk: 0 });
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
@@ -55,7 +54,6 @@ export function ReviewSession() {
       const res = await fetch("/api/review-cards?filter=due");
       const data = await res.json();
       setCards(data.cards ?? []);
-      setStats(data.stats ?? { due: 0, total: 0, mature: 0, at_risk: 0 });
       setCurrentIndex(0);
       setFlipped(false);
       setReviewed(0);
