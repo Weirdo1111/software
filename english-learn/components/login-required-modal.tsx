@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 type LoginRequiredModalProps = {
@@ -15,13 +14,7 @@ export function LoginRequiredModal({
   onClose,
   locale = "en",
 }: LoginRequiredModalProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted || !open) return null;
+  if (!open || typeof document === "undefined") return null;
 
   const isZh = locale === "zh";
 
@@ -61,6 +54,6 @@ export function LoginRequiredModal({
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }
