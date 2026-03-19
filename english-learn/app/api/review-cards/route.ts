@@ -145,7 +145,7 @@ export async function GET(request: Request) {
 
     // Resolve card fronts for the logs
     const logCardIds = [...new Set((logs ?? []).map((l) => l.card_id))];
-    let cardFrontMap: Record<string, string> = {};
+    const cardFrontMap: Record<string, string> = {};
     if (logCardIds.length > 0) {
       const { data: logCards } = await supabase
         .from("review_cards")

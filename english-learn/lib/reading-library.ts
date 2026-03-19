@@ -227,6 +227,12 @@ export function getNotesForArticle(articleId: string): ParagraphNote[] {
   return loadNotesFromStorage().filter((note) => note.articleId === articleId);
 }
 
+export function getParagraphNoteText(articleId: string, paragraphKey: string) {
+  return (
+    getNotesForArticle(articleId).find((note) => note.paragraphKey === paragraphKey)?.text ?? ""
+  );
+}
+
 export function saveNoteForParagraph(articleId: string, paragraphKey: string, text: string) {
   const allNotes = loadNotesFromStorage();
   const trimmed = text.trim();
