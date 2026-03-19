@@ -59,6 +59,11 @@ export function buildMockSpeakingFeedback(transcript: string, checkpoints: strin
     revision_focus: missingCheckpoint
       ? `Your next revision should target this task requirement: ${missingCheckpoint}.`
       : "Your next revision should focus on sounding more precise and more confidently structured.",
+    delivery_snapshot:
+      wordCount >= 40
+        ? "The response sounds like a workable seminar turn, but it still needs tighter task framing."
+        : "The response is understandable, but it still sounds too brief for a strong academic answer.",
+    sample_upgrade: buildMockSampleUpgrade(transcript, hasReason, hasExample),
     tips: [
       hasReason ? "Keep your reason, but make it shorter and more direct." : "Add one reason using because or one reason is that.",
       hasExample ? "Tighten the example so it directly supports your main claim." : "Add one brief academic example from class, campus life, or independent study.",
@@ -82,4 +87,17 @@ export function buildMockSpeakingPartnerReply(learnerTurn: string): SpeakingPart
       ? "Use a transition phrase at the start of the next sentence so the response sounds more controlled."
       : "Start the next turn with one reason is that or this is important because.",
   };
+}
+
+function buildMockSampleUpgrade(transcript: string, hasReason: boolean, hasExample: boolean) {
+  const baseIdea = transcript.trim().replace(/\s+/g, " ");
+  const opening = baseIdea.length > 0 ? baseIdea : "Universities should provide clearer academic English support.";
+  const reasonSentence = hasReason
+    ? "This matters because students need guided chances to explain ideas clearly in English."
+    : "One reason is that guided speaking practice helps students process course ideas more accurately.";
+  const exampleSentence = hasExample
+    ? "For example, short tutorial tasks can help students test vocabulary and receive immediate feedback from tutors."
+    : "For example, tutors can ask students to give one-minute responses before seminar discussion begins.";
+
+  return `${opening} ${reasonSentence} ${exampleSentence} As a result, students build confidence and participate more actively in academic discussion.`;
 }
