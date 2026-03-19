@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import Link from "next/link";
+
 const serif = Cormorant_Garamond({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -13,10 +14,16 @@ const sans = Inter({
   weight: ["400", "500", "600", "700"],
 });
 
+const DEMO_USERNAME = "admin";
+const DEMO_EMAIL = "admin@example.com";
+const DEMO_PASSWORD = "123456";
+
 export default function LoginPage() {
   const [lang, setLang] = useState<"zh" | "en">("en");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const copy = {
     zh: {
@@ -31,6 +38,7 @@ export default function LoginPage() {
       email: "账号 / 邮箱",
       password: "密码",
       login: "登录",
+      loginLoading: "登录中...",
       register: "注册",
       forgot: "忘记密码？",
       feature1Title: "Assessment-first",
@@ -40,6 +48,11 @@ export default function LoginPage() {
       feature3Title: "Steady progress",
       feature3Text: "用更清晰的节奏与反馈保持成长。",
       footerNote: "Quiet design. Clear route.",
+      demoTitle: "演示账号",
+      demoText: "账号：admin 或 admin@example.com / 密码：123456",
+      invalid: "账号或密码错误",
+      accessTitle: "Learner access",
+      accessText: "从登录开始，进入属于你的学习节奏。",
     },
     en: {
       brand: "English Learn",
@@ -53,6 +66,7 @@ export default function LoginPage() {
       email: "Email / Account",
       password: "Password",
       login: "Log in",
+      loginLoading: "Signing in...",
       register: "Sign up",
       forgot: "Forgot password?",
       feature1Title: "Assessment-first",
@@ -62,23 +76,34 @@ export default function LoginPage() {
       feature3Title: "Steady progress",
       feature3Text: "A calmer structure for consistent improvement.",
       footerNote: "Quiet design. Clear route.",
+      demoTitle: "Demo account",
+      demoText: "Account: admin or admin@example.com / Password: 123456",
+      invalid: "Invalid account or password",
+      accessTitle: "Learner access",
+      accessText: "Start here, then move into your own learning rhythm.",
     },
   }[lang];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
-    console.log({
-      email,
-      password,
-    });
+    const normalized = email.trim().toLowerCase();
+    const validUser =
+      normalized === DEMO_USERNAME || normalized === DEMO_EMAIL;
+    const validPassword = password === DEMO_PASSWORD;
 
-    // 这里接你自己的登录接口
-    // await fetch("/api/auth/sign-in", {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify({ email, password }),
-    // });
+    if (validUser && validPassword) {
+      localStorage.setItem("demo_logged_in", "true");
+      localStorage.setItem("demo_user", normalized);
+      window.dispatchEvent(new Event("demo-auth-changed"));
+      window.location.href = "/dashboard";
+      return;
+    }
+
+    setLoading(false);
+    setError(copy.invalid);
   };
 
   return (
@@ -161,7 +186,9 @@ export default function LoginPage() {
                   </div>
 
                   <div className="text-sm leading-6 text-slate-500">
-                    <div className="font-medium text-[#22314d]">English Learn</div>
+                    <div className="font-medium text-[#22314d]">
+                      English Learn
+                    </div>
                     <div>{copy.footerNote}</div>
                   </div>
                 </div>
@@ -191,20 +218,13 @@ export default function LoginPage() {
                   />
                 </div>
 
-                <div className="mt-10 flex flex-wrap gap-4">
-                  <button
-                    type="button"
-                    className="rounded-full bg-[#22314d] px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:translate-y-[-1px]"
-                  >
-                    {lang === "zh" ? "了解学习路径" : "Explore route"}
-                  </button>
-
-                  <button
-                    type="button"
-                    className="rounded-full border border-slate-300 bg-white/80 px-6 py-3.5 text-sm font-semibold text-[#22314d] transition hover:bg-white"
-                  >
-                    {lang === "zh" ? "查看模块" : "View modules"}
-                  </button>
+                <div className="mt-10 rounded-[28px] border border-slate-200 bg-white/80 p-5">
+                  <div className="mb-2 text-[11px] font-semibold tracking-[0.24em] text-slate-500">
+                    {copy.demoTitle.toUpperCase()}
+                  </div>
+                  <p className="text-[15px] leading-7 text-slate-600">
+                    {copy.demoText}
+                  </p>
                 </div>
               </div>
             </div>
@@ -241,20 +261,27 @@ export default function LoginPage() {
                   onChange={setPassword}
                 />
 
+                {error ? (
+                  <div className="rounded-[20px] border border-red-300/20 bg-red-400/10 px-4 py-3 text-sm text-red-200">
+                    {error}
+                  </div>
+                ) : null}
+
                 <div className="pt-2">
                   <button
                     type="submit"
-                    className="h-15 flex h-14 w-full items-center justify-center rounded-[22px] bg-white text-base font-semibold text-[#22314d] transition hover:translate-y-[-1px] hover:bg-[#f8f5ef]"
+                    disabled={loading}
+                    className="flex h-14 w-full items-center justify-center rounded-[22px] bg-white text-base font-semibold text-[#22314d] transition hover:translate-y-[-1px] hover:bg-[#f8f5ef] disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {copy.login}
+                    {loading ? copy.loginLoading : copy.login}
                   </button>
 
                   <Link
-  href="/register"
-  className="mt-4 flex h-14 w-full items-center justify-center rounded-[22px] border border-white/15 bg-white/5 text-base font-semibold text-white transition hover:bg-white/10"
->
-  {copy.register}
-</Link>
+                    href="/register"
+                    className="mt-4 flex h-14 w-full items-center justify-center rounded-[22px] border border-white/15 bg-white/5 text-base font-semibold text-white transition hover:bg-white/10"
+                  >
+                    {copy.register}
+                  </Link>
                 </div>
 
                 <div className="pt-1 text-center">
@@ -270,7 +297,7 @@ export default function LoginPage() {
               <div className="mt-8 rounded-[28px] border border-white/10 bg-white/5 p-5">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div className="text-lg font-semibold text-white">
-                    {lang === "zh" ? "Learner access" : "Learner access"}
+                    {copy.accessTitle}
                   </div>
                   <span className="rounded-full border border-[#9d8a61] px-3 py-1 text-[11px] font-semibold tracking-[0.2em] text-[#e4d2ab]">
                     MVP
@@ -278,9 +305,7 @@ export default function LoginPage() {
                 </div>
 
                 <p className="text-[15px] leading-7 text-slate-300">
-                  {lang === "zh"
-                    ? "从登录开始，进入属于你的学习节奏。"
-                    : "Start here, then move into your own learning rhythm."}
+                  {copy.accessText}
                 </p>
               </div>
             </div>
@@ -320,7 +345,7 @@ function Field({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="rounded-[24px] border border-white/10 bg-white/6 p-4 backdrop-blur-sm">
+    <div className="rounded-[24px] border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
       <label className="mb-2 block text-sm font-medium text-slate-300">
         {label}
       </label>
