@@ -1,88 +1,98 @@
-# EnglishSoftware
+# English Learn MVP
 
-Course project repository for an academic English learning platform.
+English learning web app for non-native speakers (CEFR A1-B2), implemented with Next.js + Supabase + an OpenAI-compatible AI provider + Stripe.
+The onboarding flow is skill-first: listening/speaking/reading/writing sessions come before optional placement test.
 
-## Repository Layout
+## Stack
 
-```text
-EnglishSoftware/
-|-- english-learn/              # Next.js application source code
-|-- docs/
-|   |-- course-materials/       # Course PDFs and reference materials
-|   |-- planning/               # Project plans, checklists, and team docs
-|   |-- design/
-|   |   |-- ui-prototypes/      # UI mockups and prototype notes
-|   |   `-- module-design/      # Speaking and writing module materials
-|   `-- archive/                # Kept for reference, not part of the main structure
-`-- README.md
-```
+- Next.js 16 (App Router) + TypeScript + Tailwind CSS
+- Supabase (Auth, Postgres, Storage, RLS)
+- OpenAI-compatible AI API for speaking/writing/reading feedback
+- Stripe Checkout + webhook for subscription
+- PostHog analytics + Sentry monitoring
+- Vitest for unit testing
 
-## Where The Code Is
+## Local Setup
 
-The application code is in [english-learn](./english-learn).
+1. Install dependencies
 
-Main tech stack:
-
-- Next.js 16
-- TypeScript
-- Tailwind CSS
-- Supabase
-- OpenAI API
-- Stripe
-
-## How To Run The Project
-
-1. Open a terminal in the project root.
-2. Enter the app directory:
-
-```powershell
-cd english-learn
-```
-
-3. Install dependencies:
-
-```powershell
+```bash
 npm install
 ```
 
-4. Create a local environment file:
+2. Configure env
 
-```powershell
-New-Item .env.local -ItemType File
+```bash
+cp .env.example .env.local
 ```
 
-At minimum, you can set:
+Fill required keys in `.env.local`.
 
-```env
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+For OpenAI, set:
+
+```bash
+OPENAI_API_KEY=your_openai_key
 ```
 
-If you want full functionality, also configure Supabase, OpenAI, Stripe, PostHog, and Sentry keys in `.env.local`.
+For GLM-4.7-Flash via Zhipu's OpenAI-compatible API, set:
 
-5. Start the development server:
+```bash
+AI_API_KEY=your_zhipu_key
+AI_BASE_URL=https://open.bigmodel.cn/api/paas/v4/
+AI_MODEL=glm-4.7-flash
+```
 
-```powershell
+3. Run dev server
+
+```bash
 npm run dev
 ```
 
-6. Open:
+4. Run tests/lint/typecheck
 
-```text
-http://localhost:3000
-```
-
-## Useful Commands
-
-Run these inside `english-learn/`:
-
-```powershell
+```bash
 npm run test
 npm run lint
 npm run typecheck
 ```
 
+## Supabase SQL
+
+1. Apply migration from [supabase/migrations/001_init.sql](supabase/migrations/001_init.sql)
+2. Optional seed data from [supabase/seed.sql](supabase/seed.sql)
+
+## Routes
+
+- `/` Home
+- `/learn` Four-skill learning hub
+- `/auth/sign-in`, `/auth/sign-up`
+- `/onboarding`
+- `/placement-test`
+- `/dashboard`
+- `/lesson/[id]`
+- `/review`
+- `/progress`
+- `/pricing`
+- `/settings`
+- `/admin`
+
+## API Endpoints
+
+- `POST /api/onboarding`
+- `POST /api/placement/start`
+- `POST /api/placement/submit`
+- `GET /api/plan/today`
+- `POST /api/attempts`
+- `POST /api/ai/feedback/speaking`
+- `POST /api/ai/feedback/writing`
+- `GET /api/progress/summary?range=7d|30d`
+- `POST /api/subscription/checkout`
+- `POST /api/webhooks/stripe`
+- `POST /api/auth/sign-up`
+- `POST /api/auth/sign-in`
+
 ## Notes
 
-- The app can still demonstrate many pages and flows without full backend configuration.
-- Some API routes fall back to mock data when external services are not configured.
-- Detailed app-specific notes are in [english-learn/README.md](./english-learn/README.md).
+- If env keys are missing, APIs return mock fallback values to keep local demo runnable.
+- Stripe webhook endpoint validates signature only when `STRIPE_WEBHOOK_SECRET` is configured.
+- Supabase RLS is enabled for user-owned tables.
