@@ -5,14 +5,12 @@ import { useState } from "react";
 
 import { AIAnalysisState } from "@/components/forms/ai-analysis-state";
 import { SpeakingDraftPanel } from "@/components/forms/speaking/draft-panel";
-import { SpeakingHistoryPanel } from "@/components/forms/speaking/history-panel";
-import { SpeakingOverviewStrip } from "@/components/forms/speaking/overview-strip";
 import { SpeakingPartnerPanel } from "@/components/forms/speaking/partner-panel";
 import { SpeakingPromptBank } from "@/components/forms/speaking/prompt-bank";
 import { SpeakingRecorderPanel } from "@/components/forms/speaking/recorder-panel";
 import { SpeakingScorePanel } from "@/components/forms/speaking/score-panel";
-import { useSpeakingAttemptHistory } from "@/components/forms/speaking/use-speaking-attempt-history";
 import { useAudioRecorder } from "@/components/forms/speaking/use-audio-recorder";
+import { appendSpeakingAttemptInStorage } from "@/lib/speaking-attempts";
 import type { PartnerMessage, SpeakingLevel } from "@/components/forms/speaking/types";
 import { getSpeakingPromptById, getSpeakingPromptsForLevel } from "@/lib/speaking-prompts";
 import type { SpeakingAttemptRecord, SpeakingFeedback, SpeakingPartnerReply } from "@/types/learning";
@@ -34,7 +32,6 @@ export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: S
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPartnerSubmitting, setIsPartnerSubmitting] = useState(false);
   const recorder = useAudioRecorder();
-  const attemptHistory = useSpeakingAttemptHistory();
 
   const availablePrompts = getSpeakingPromptsForLevel(targetLevel);
   const selectedPrompt =
@@ -123,7 +120,7 @@ export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: S
         recording_mime_type: recorder.audioClip?.mimeType ?? null,
         created_at: new Date().toISOString(),
       };
-      attemptHistory.addAttempt(attemptRecord);
+      appendSpeakingAttemptInStorage(attemptRecord);
 
       const durationSec = Math.max(30, Math.round((Date.now() - startedAt) / 1000));
       const passed = (data as SpeakingFeedback).overall_score >= 6;
@@ -199,18 +196,13 @@ export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: S
   }
 
   return (
-    <form onSubmit={onSubmit} className="surface-panel grid gap-6 rounded-[2rem] p-6 sm:p-7">
-      <div className="max-w-4xl">
+    <form onSubmit={onSubmit} className="surface-panel grid gap-4 rounded-[2rem] p-5 sm:p-6">
+      <div className="max-w-2xl">
         <p className="section-label">
           <Mic className="size-3.5" /> Speaking studio
         </p>
-        <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
-          Rehearse an academic response, practice with an AI partner, and then get scored feedback.
-        </h2>
-        <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">
-          Pick a prompt that matches your target band, use the AI partner to test your ideas, and then submit the final
-          transcript draft for scoring.
-        </p>
+        <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">Record, refine, and score one academic response.</h2>
+        <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">Choose a prompt, record one take, polish the transcript, and get AI feedback.</p>
       </div>
 
       <SpeakingPromptBank
@@ -223,55 +215,34 @@ export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: S
         onResetPractice={() => void resetPracticeState(selectedPrompt.id)}
       />
 
-      <SpeakingOverviewStrip
-        selectedPrompt={selectedPrompt}
-        transcript={transcript}
-        recorderStatus={recorder.status}
+      <SpeakingRecorderPanel
+        status={recorder.status}
+        error={recorder.error}
+        elapsedMs={recorder.elapsedMs}
+        audioLevel={recorder.audioLevel}
         audioClip={recorder.audioClip}
-        isRecorderSupported={recorder.isSupported}
+        isSupported={recorder.isSupported}
+        onStart={() => void recorder.startRecording()}
+        onPause={recorder.pauseRecording}
+        onResume={() => void recorder.resumeRecording()}
+        onStop={recorder.stopRecording}
+        onReset={() => void recorder.resetRecording()}
       />
 
-      <div className="grid items-start gap-5 xl:grid-cols-2">
-        <div className="grid gap-5">
-          <SpeakingRecorderPanel
-            status={recorder.status}
-            error={recorder.error}
-            elapsedMs={recorder.elapsedMs}
-            audioLevel={recorder.audioLevel}
-            audioClip={recorder.audioClip}
-            isSupported={recorder.isSupported}
-            onStart={() => void recorder.startRecording()}
-            onPause={recorder.pauseRecording}
-            onResume={() => void recorder.resumeRecording()}
-            onStop={recorder.stopRecording}
-            onReset={() => void recorder.resetRecording()}
-          />
-          <SpeakingDraftPanel transcript={transcript} onTranscriptChange={setTranscript} />
-        </div>
-        <div className="grid gap-5">
-          <SpeakingPartnerPanel
-            partnerMessages={partnerMessages}
-            partnerTurn={partnerTurn}
-            partnerStatus={partnerStatus}
-            partnerNote={partnerNote}
-            isPartnerSubmitting={isPartnerSubmitting}
-            onPartnerTurnChange={setPartnerTurn}
-            onPartnerSubmit={() => void handlePartnerSubmit()}
-          />
-          <SpeakingHistoryPanel
-            attempts={attemptHistory.attempts}
-            selectedPromptId={selectedPrompt.id}
-            selectedPromptTitle={selectedPrompt.title}
-            onLoadTranscript={setTranscript}
-          />
-        </div>
-      </div>
+      <SpeakingDraftPanel transcript={transcript} onTranscriptChange={setTranscript} />
 
-      <div className="flex flex-col gap-3 rounded-[1.5rem] border border-[rgba(20,50,75,0.08)] bg-[rgba(255,255,255,0.55)] p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-sm leading-6 text-[var(--ink-soft)]">
-          Submit your strongest draft after recording or partner practice. The score panel and history tracker will update
-          immediately after each attempt.
-        </div>
+      <SpeakingPartnerPanel
+        partnerMessages={partnerMessages}
+        partnerTurn={partnerTurn}
+        partnerStatus={partnerStatus}
+        partnerNote={partnerNote}
+        isPartnerSubmitting={isPartnerSubmitting}
+        onPartnerTurnChange={setPartnerTurn}
+        onPartnerSubmit={() => void handlePartnerSubmit()}
+      />
+
+      <div className="flex flex-col gap-3 rounded-[1.45rem] border border-[rgba(20,50,75,0.08)] bg-[rgba(255,255,255,0.55)] p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="text-sm leading-6 text-[var(--ink-soft)]">Submit the final transcript when you are ready for scoring.</div>
         <button
           type="submit"
           disabled={isSubmitting || !isReady}
