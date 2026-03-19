@@ -1,12 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { CheckCircle2, LoaderCircle, RefreshCcw, Send } from "lucide-react";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowUp, CheckCircle2, Compass, LoaderCircle, RefreshCcw, Send } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 interface PlacementQuestion {
   id: string;
+  type: string;
+  context?: string;
   prompt: string;
   options: string[];
   skill?: string;
@@ -15,14 +18,21 @@ interface PlacementQuestion {
 
 interface PlacementResult {
   cefr_level: string;
+  band_label: string;
   score: number;
+  total_questions: number;
+  skill_breakdown: Record<string, number>;
+  strongest_skill: string;
+  weakest_skill: string;
+  recommended_focus: string;
+  summary: string;
 }
 
 const skillLabels: Record<string, string> = {
-  vocab: "Vocabulary",
-  grammar: "Grammar",
-  reading: "Reading",
   listening: "Listening",
+  speaking: "Speaking",
+  reading: "Reading",
+  writing: "Writing",
 };
 
 const choiceLabels = ["A", "B", "C", "D", "E", "F"];
@@ -39,7 +49,11 @@ function mapBand(level: string) {
   return "High";
 }
 
-export function PlacementForm() {
+function formatSkillName(skill: string) {
+  return skillLabels[skill] ?? skill;
+}
+
+export function PlacementForm({ locale }: { locale: string }) {
   const [sessionId, setSessionId] = useState<string>("");
   const [questions, setQuestions] = useState<PlacementQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<string, number>>({});
@@ -47,6 +61,7 @@ export function PlacementForm() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const questionRefs = useRef<Record<string, HTMLElement | null>>({});
 
   const start = useCallback(async () => {
     setLoading(true);
@@ -82,6 +97,35 @@ export function PlacementForm() {
   const answeredCount = Object.keys(answers).length;
   const completion = questions.length === 0 ? 0 : Math.round((answeredCount / questions.length) * 100);
   const canSubmit = useMemo(() => questions.length > 0 && answeredCount === questions.length, [answeredCount, questions.length]);
+  const firstUnanswered = useMemo(() => questions.find((question) => answers[question.id] === undefined), [answers, questions]);
+  const skillAnchors = useMemo(
+    () =>
+      questions.reduce<Record<string, string>>((accumulator, question) => {
+        if (question.skill && !accumulator[question.skill]) {
+          accumulator[question.skill] = question.id;
+        }
+        return accumulator;
+      }, {}),
+    [questions],
+  );
+
+  function scrollToQuestion(questionId?: string) {
+    if (!questionId) {
+      return;
+    }
+
+    questionRefs.current[questionId]?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
+
+  function scrollToTop() {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }
 
   async function submit() {
     if (!canSubmit || submitting) {
@@ -98,6 +142,7 @@ export function PlacementForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           test_session_id: sessionId,
+          question_ids: questions.map((question) => question.id),
           answers: orderedAnswers,
         }),
       });
@@ -109,7 +154,14 @@ export function PlacementForm() {
 
       setResult({
         cefr_level: data.cefr_level,
+        band_label: data.band_label,
         score: data.score,
+        total_questions: data.total_questions,
+        skill_breakdown: data.skill_breakdown ?? {},
+        strongest_skill: data.strongest_skill,
+        weakest_skill: data.weakest_skill,
+        recommended_focus: data.recommended_focus,
+        summary: data.summary,
       });
     } catch (nextError) {
       const message = nextError instanceof Error ? nextError.message : "Submit failed.";
@@ -162,7 +214,7 @@ export function PlacementForm() {
           </button>
         </div>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+        <div className="mt-6 grid gap-3">
           <div className="rounded-[1.3rem] border border-[rgba(20,50,75,0.12)] bg-white/75 p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--ink-soft)]">Questions</p>
             <p className="font-display mt-2 text-3xl tracking-tight text-[var(--ink)]">{questions.length}</p>
@@ -180,17 +232,63 @@ export function PlacementForm() {
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-[rgba(20,50,75,0.08)]">
           <div className="h-full rounded-full bg-[var(--navy)] progress-stripe transition-[width] duration-300" style={{ width: `${completion}%` }} />
         </div>
+
+        <div className="mt-5 grid gap-3">
+          <div className="rounded-[1.3rem] border border-[rgba(20,50,75,0.12)] bg-white/75 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--ink-soft)]">Quick actions</p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => scrollToQuestion(firstUnanswered?.id)}
+                disabled={!firstUnanswered}
+                className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white/80 px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:bg-[rgba(20,50,75,0.08)] disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                <Compass className="size-4" /> {firstUnanswered ? "Jump to next unanswered" : "All answered"}
+              </button>
+              <button
+                type="button"
+                onClick={scrollToTop}
+                className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white/80 px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:bg-[rgba(20,50,75,0.08)]"
+              >
+                <ArrowUp className="size-4" /> Back to top
+              </button>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-3">
+              {Object.entries(skillAnchors).map(([skill, questionId]) => (
+                <button
+                  key={skill}
+                  type="button"
+                  onClick={() => scrollToQuestion(questionId)}
+                  className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(20,50,75,0.05)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:bg-[rgba(20,50,75,0.1)]"
+                >
+                  {formatSkillName(skill)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </section>
 
       <div className="grid gap-4">
         {questions.map((question, index) => (
-          <article key={question.id} className="rounded-[1.8rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.82)] p-5 sm:p-6">
+          <article
+            key={question.id}
+            ref={(node) => {
+              questionRefs.current[question.id] = node;
+            }}
+            className="rounded-[1.8rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.82)] p-5 sm:p-6"
+          >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--ink-soft)]">
                   Q{index + 1} • {skillLabels[question.skill ?? ""] ?? question.skill ?? "Assessment"}
                   {question.level ? ` • ${question.level}` : ""}
                 </p>
+                {question.context ? (
+                  <p className="mt-3 rounded-[1.1rem] bg-[rgba(20,50,75,0.06)] px-4 py-3 text-sm leading-6 text-[var(--ink-soft)]">
+                    {question.context}
+                  </p>
+                ) : null}
                 <h4 className="mt-3 text-lg font-semibold leading-7 text-[var(--ink)]">{question.prompt}</h4>
               </div>
               {answers[question.id] !== undefined ? (
@@ -209,7 +307,7 @@ export function PlacementForm() {
                     type="button"
                     onClick={() => setAnswers((prev) => ({ ...prev, [question.id]: optionIndex }))}
                     className={cn(
-                      "grid gap-3 rounded-[1.2rem] border p-4 text-left transition sm:grid-cols-[auto_1fr] sm:items-start",
+                      "grid gap-3 rounded-[1.2rem] border p-4 text-left transition",
                       selected
                         ? "border-[rgba(20,50,75,0.26)] bg-[rgba(20,50,75,0.08)] shadow-[0_12px_24px_rgba(20,50,75,0.08)]"
                         : "border-[rgba(20,50,75,0.12)] bg-white/70 hover:bg-[rgba(20,50,75,0.05)]",
@@ -233,23 +331,10 @@ export function PlacementForm() {
       </div>
 
       <section className="rounded-[1.8rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.84)] p-5 sm:p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="grid gap-4">
           <div>
-            <p className="text-sm leading-7 text-[var(--ink-soft)]">
-              Submit once every question is answered. The result will map the learner to a banded academic pathway.
-            </p>
+            <p className="text-sm leading-7 text-[var(--ink-soft)]">Submit once every question is answered. The result will map the learner to a banded academic pathway.</p>
             {error ? <p className="mt-2 text-sm font-semibold text-[var(--coral)]">{error}</p> : null}
-            {result ? (
-              <div className="mt-4 rounded-[1.4rem] border border-[rgba(42,105,88,0.16)] bg-[rgba(237,246,241,0.88)] p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--teal)]">Placement result</p>
-                <h4 className="font-display mt-2 text-3xl tracking-tight text-[var(--ink)]">
-                  {mapBand(result.cefr_level)} band • {result.cefr_level}
-                </h4>
-                <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
-                  Score: {result.score} / {questions.length}. The dashboard and learning hub can now route this learner into a more suitable academic path.
-                </p>
-              </div>
-            ) : null}
           </div>
           <button
             type="button"
@@ -260,6 +345,58 @@ export function PlacementForm() {
             {submitting ? <LoaderCircle className="size-4 animate-spin" /> : <Send className="size-4" />}
             {submitting ? "Submitting..." : "Submit placement"}
           </button>
+
+          {result ? (
+            <div className="rounded-[1.4rem] border border-[rgba(42,105,88,0.16)] bg-[rgba(237,246,241,0.88)] p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--teal)]">Placement result</p>
+              <h4 className="font-display mt-2 text-3xl tracking-tight text-[var(--ink)]">
+                {result.band_label || mapBand(result.cefr_level)} band • {result.cefr_level}
+              </h4>
+              <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
+                Score: {result.score} / {result.total_questions || questions.length}. The dashboard and learning hub can now route this learner into a
+                more suitable academic path.
+              </p>
+              <p className="mt-3 text-sm leading-6 text-[var(--ink)]">{result.summary}</p>
+              <div className="mt-4 grid gap-3">
+                <div className="rounded-[1.2rem] border border-[rgba(20,50,75,0.1)] bg-white/70 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Strongest now</p>
+                  <p className="mt-2 text-sm font-semibold text-[var(--ink)]">{formatSkillName(result.strongest_skill)}</p>
+                </div>
+                <div className="rounded-[1.2rem] border border-[rgba(20,50,75,0.1)] bg-white/70 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Recommended focus</p>
+                  <p className="mt-2 text-sm font-semibold text-[var(--ink)]">{result.recommended_focus}</p>
+                </div>
+                {Object.entries(result.skill_breakdown).map(([skill, value]) => (
+                  <div key={skill} className="rounded-[1.2rem] border border-[rgba(20,50,75,0.1)] bg-white/72 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">{formatSkillName(skill)}</p>
+                    <p className="font-display mt-2 text-2xl tracking-tight text-[var(--ink)]">{value}</p>
+                    <p className="mt-1 text-xs leading-5 text-[var(--ink-soft)]">correct answers in this skill</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => void start()}
+                  className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white/85 px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:bg-white"
+                >
+                  <RefreshCcw className="size-4" /> Retake test
+                </button>
+                <Link
+                  href={`/dashboard?lang=${locale}`}
+                  className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white/85 px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:bg-white"
+                >
+                  Open dashboard
+                </Link>
+                <Link
+                  href={`/learn?lang=${locale}`}
+                  className="inline-flex items-center gap-2 rounded-full bg-[var(--navy)] px-4 py-2 text-sm font-semibold text-[#f7efe3] transition hover:opacity-95"
+                >
+                  Go to learning hub
+                </Link>
+              </div>
+            </div>
+          ) : null}
         </div>
       </section>
     </div>
