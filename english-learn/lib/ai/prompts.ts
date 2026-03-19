@@ -1,4 +1,4 @@
-import type { CEFRLevel, SpeakingPrompt } from "@/types/learning";
+import type { CEFRLevel, SpeakingPrompt, WritingPrompt } from "@/types/learning";
 
 // Date: 2026/3/18
 // Author: Tianbo Cao
@@ -59,12 +59,27 @@ Learner's latest turn:
 ${learnerTurn}`;
 }
 
-export function writingFeedbackPrompt(targetLevel: CEFRLevel, essayText: string) {
+export function writingFeedbackPrompt(
+  targetLevel: CEFRLevel,
+  essayText: string,
+  prompt?: WritingPrompt | null,
+) {
+  const promptContext = prompt
+    ? `Selected writing task:
+- Title: ${prompt.title}
+- Scenario: ${prompt.scenario}
+- Prompt: ${prompt.prompt}
+- Skill focus: ${prompt.skill_focus}
+- Checkpoints: ${prompt.checkpoints.join("; ")}
+
+`
+    : "";
+
   return `You are an English writing coach for non-native learners at ${targetLevel}.
 Evaluate the essay on structure, grammar, and vocabulary.
 Return strict JSON with keys: overall_score, errors, rewrite_sample.
 errors must be short strings.
-Essay:\n${essayText}`;
+${promptContext}Essay:\n${essayText}`;
 }
 
 export function readingFeedbackPrompt(
