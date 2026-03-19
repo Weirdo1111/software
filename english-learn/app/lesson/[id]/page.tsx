@@ -176,70 +176,80 @@ export default async function LessonPage({
   const description = linkedArticle?.focus ?? meta.focus;
   const Icon = meta.icon;
   const topSectionLayoutClass = mode === "speaking" ? "grid gap-5" : "grid gap-5 xl:grid-cols-[1.02fr_0.98fr]";
+  // Date: 2026/3/18
+  // Author: Tianbo Cao
+  // Keep the speaking lesson page focused on the core studio by hiding the extra lesson framing panels.
+  const showLessonMetaPanels = mode !== "speaking";
 
   return (
     <PageFrame locale={locale} title={meta.label} description={description}>
-      <div className={topSectionLayoutClass}>
-        <article className={`rounded-[2rem] border border-[rgba(20,50,75,0.12)] bg-gradient-to-br ${meta.tone} p-6 sm:p-7 shadow-[0_20px_45px_rgba(23,32,51,0.08)]`}>
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="section-label">Lesson brief</p>
-              <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">{sourceTitle}</h2>
-            </div>
-            <div className="inline-flex size-12 items-center justify-center rounded-2xl bg-[var(--navy)] text-[#f7efe3]">
-              <Icon className="size-5" />
-            </div>
-          </div>
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-[1.3rem] border border-white/60 bg-white/65 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-soft)]">Expected output</p>
-              <p className="mt-3 text-sm leading-7 text-[var(--ink)]">{meta.output}</p>
-            </div>
-            <div className="rounded-[1.3rem] border border-white/60 bg-white/65 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-soft)]">Coach focus</p>
-              <p className="mt-3 text-sm leading-7 text-[var(--ink)]">{meta.coach}</p>
-            </div>
-          </div>
-          <div className="mt-6 grid gap-3">
-            {meta.tasks.map((task, index) => (
-              <div key={task} className="grid gap-3 rounded-[1.4rem] border border-white/60 bg-white/68 p-4 sm:grid-cols-[auto_1fr] sm:items-start">
-                <div className="inline-flex size-10 items-center justify-center rounded-2xl bg-[var(--navy)] text-sm font-semibold text-[#f7efe3]">
-                  {index + 1}
+      {showLessonMetaPanels ? (
+        <>
+          <div className={topSectionLayoutClass}>
+            <article className={`rounded-[2rem] border border-[rgba(20,50,75,0.12)] bg-gradient-to-br ${meta.tone} p-6 sm:p-7 shadow-[0_20px_45px_rgba(23,32,51,0.08)]`}>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="section-label">Lesson brief</p>
+                  <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">{sourceTitle}</h2>
                 </div>
-                <p className="text-sm leading-7 text-[var(--ink)]">{task}</p>
+                <div className="inline-flex size-12 items-center justify-center rounded-2xl bg-[var(--navy)] text-[#f7efe3]">
+                  <Icon className="size-5" />
+                </div>
               </div>
-            ))}
-          </div>
-        </article>
-
-        {renderWorkbench(mode, meta, resolvedParams.id, linkedArticle?.id)}
-      </div>
-
-      <section className="mt-6 grid gap-5 lg:grid-cols-[1.02fr_0.98fr]">
-        <article className="surface-panel reveal-up rounded-[2rem] p-6 sm:p-7">
-          <p className="section-label">
-            <Target className="size-3.5" /> Checkpoints
-          </p>
-          <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">What success looks like in this lesson.</h2>
-          <div className="mt-6 grid gap-3">
-            {meta.checkpoints.map((item) => (
-              <div key={item} className="rounded-[1.3rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.76)] p-4 text-sm leading-7 text-[var(--ink-soft)]">
-                {item}
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-[1.3rem] border border-white/60 bg-white/65 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-soft)]">Expected output</p>
+                  <p className="mt-3 text-sm leading-7 text-[var(--ink)]">{meta.output}</p>
+                </div>
+                <div className="rounded-[1.3rem] border border-white/60 bg-white/65 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-soft)]">Coach focus</p>
+                  <p className="mt-3 text-sm leading-7 text-[var(--ink)]">{meta.coach}</p>
+                </div>
               </div>
-            ))}
-          </div>
-        </article>
+              <div className="mt-6 grid gap-3">
+                {meta.tasks.map((task, index) => (
+                  <div key={task} className="grid gap-3 rounded-[1.4rem] border border-white/60 bg-white/68 p-4 sm:grid-cols-[auto_1fr] sm:items-start">
+                    <div className="inline-flex size-10 items-center justify-center rounded-2xl bg-[var(--navy)] text-sm font-semibold text-[#f7efe3]">
+                      {index + 1}
+                    </div>
+                    <p className="text-sm leading-7 text-[var(--ink)]">{task}</p>
+                  </div>
+                ))}
+              </div>
+            </article>
 
-        <article className="surface-ink ambient-card reveal-up rounded-[2rem] p-6 sm:p-7">
-          <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#f2d9ae]">Cross-skill booster</p>
-          <h2 className="font-display mt-4 text-3xl tracking-tight">Every lesson should reinforce another skill.</h2>
-          <div className="mt-6 grid gap-3 text-sm leading-7 text-[#efe5d6]/78">
-            <p>Listening lessons feed better seminar speaking because note quality improves idea recall.</p>
-            <p>Reading lessons strengthen writing because claim-evidence structures become easier to imitate.</p>
-            <p>Speaking and writing feedback creates the evidence needed for future reassessment decisions.</p>
+            {renderWorkbench(mode, meta, resolvedParams.id, linkedArticle?.id)}
           </div>
-        </article>
-      </section>
+
+          <section className="mt-6 grid gap-5 lg:grid-cols-[1.02fr_0.98fr]">
+            <article className="surface-panel reveal-up rounded-[2rem] p-6 sm:p-7">
+              <p className="section-label">
+                <Target className="size-3.5" /> Checkpoints
+              </p>
+              <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">What success looks like in this lesson.</h2>
+              <div className="mt-6 grid gap-3">
+                {meta.checkpoints.map((item) => (
+                  <div key={item} className="rounded-[1.3rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.76)] p-4 text-sm leading-7 text-[var(--ink-soft)]">
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </article>
+
+            <article className="surface-ink ambient-card reveal-up rounded-[2rem] p-6 sm:p-7">
+              <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#f2d9ae]">Cross-skill booster</p>
+              <h2 className="font-display mt-4 text-3xl tracking-tight">Every lesson should reinforce another skill.</h2>
+              <div className="mt-6 grid gap-3 text-sm leading-7 text-[#efe5d6]/78">
+                <p>Listening lessons feed better seminar speaking because note quality improves idea recall.</p>
+                <p>Reading lessons strengthen writing because claim-evidence structures become easier to imitate.</p>
+                <p>Speaking and writing feedback creates the evidence needed for future reassessment decisions.</p>
+              </div>
+            </article>
+          </section>
+        </>
+      ) : (
+        renderWorkbench(mode, meta, resolvedParams.id, linkedArticle?.id)
+      )}
     </PageFrame>
   );
 }

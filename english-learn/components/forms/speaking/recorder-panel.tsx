@@ -32,7 +32,7 @@ function getStatusLabel(status: RecorderStatus, isSupported: boolean) {
 
 // Date: 2026/3/18
 // Author: Tianbo Cao
-// Added a dedicated recorder panel so the speaking workbench can capture rehearsal audio without overloading the main form.
+// Reduced the recorder UI to the controls and status signals the learner needs during one speaking take.
 export function SpeakingRecorderPanel({
   status,
   error,
@@ -66,12 +66,9 @@ export function SpeakingRecorderPanel({
     <div className="rounded-[1.6rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.76)] p-5 sm:p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Recording booth</p>
-          <p className="mt-3 text-lg font-semibold text-[var(--ink)]">Capture a full speaking take before scoring.</p>
-          <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
-            Capture a real speaking take here. The clip is stored locally in the browser for now and is ready for the
-            next Doubao speech step.
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Recorder</p>
+          <p className="mt-3 text-lg font-semibold text-[var(--ink)]">Record one full take.</p>
+          <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">The clip stays in your browser and can be reviewed before scoring.</p>
         </div>
         <span
           className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${
@@ -106,11 +103,6 @@ export function SpeakingRecorderPanel({
                 style={{ width: levelWidth }}
               />
             </div>
-          </div>
-
-          <div className="grid gap-2 rounded-[1.2rem] border border-[rgba(20,50,75,0.08)] bg-white/84 px-4 py-4 text-sm text-[var(--ink-soft)]">
-            <p>Record one full response before scoring so you can compare what you said with the transcript draft.</p>
-            <p>Current scoring still uses text, but the clip is ready for transcript and speaking-history features.</p>
           </div>
         </div>
       </div>
