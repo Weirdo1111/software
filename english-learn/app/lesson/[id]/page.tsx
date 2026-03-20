@@ -1,10 +1,12 @@
-import { Ear, FileText, Mic, PenLine, Sparkles, Target } from "lucide-react";
+import { Ear, FileText, Mic, PenLine, Target } from "lucide-react";
 
+import { ListeningFeedbackForm } from "@/components/forms/listening-feedback-form";
 import { ReadingFeedbackForm } from "@/components/forms/reading-feedback-form";
 import { SpeakingFeedbackForm } from "@/components/forms/speaking-feedback-form";
 import { WritingFeedbackForm } from "@/components/forms/writing-feedback-form";
 import { PageFrame } from "@/components/page-frame";
 import { getLocale } from "@/lib/i18n/get-locale";
+import { getListeningMaterialsCatalog } from "@/lib/listening-materials-repository";
 import { buildPracticePassageFromArticle, getReadingArticleById } from "@/lib/reading-articles";
 import { getPassageForLevel } from "@/lib/reading-passages";
 import type { CEFRLevel } from "@/types/learning";
@@ -28,19 +30,19 @@ const modeMeta = {
   listening: {
     label: "Academic Listening Studio",
     icon: Ear,
-    focus: "Identify lecture structure, examples, and evidence while listening at realistic speed.",
-    source: "Short lecture clip on student support policy",
-    output: "Structured lecture notes + one-sentence gist summary",
-    coach: "Focus on signposting language such as 'first', 'in contrast', and 'the key point is'.",
+    focus: "Move between controlled accent drills and official TED talks while keeping the same DIICSU-focused note-taking workflow.",
+    source: "DIICSU listening bank plus TED official embeds matched to five undergraduate disciplines",
+    output: "Structured notes + listening check + saved technical vocabulary + real-world TED exposure",
+    coach: "Use accent practice for targeted control, then move into TED mode when you are ready for more natural pacing and authentic delivery.",
     tasks: [
-      "Listen once for overall structure and main claim.",
-      "Listen again and capture one example that supports the claim.",
-      "Write a 25-word summary from notes only.",
+      "Choose Accent Practice or TED Listening, then select your DIICSU major.",
+      "Play the clip or open the official TED embed, take structured notes, and answer the checkpoints.",
+      "Review the transcript option and save useful technical terms to the deck.",
     ],
     checkpoints: [
-      "What is the speaker's main recommendation?",
-      "Which example supports that recommendation?",
-      "What transition signaled a contrast?",
+      "What is the main task or recommendation in the clip?",
+      "Which exact detail should appear in your notes?",
+      "Which specialist term or key idea helped you track the speaker?",
     ],
     tone: "from-[#d7e8f7] via-white to-[#edf6fc]",
   },
@@ -105,14 +107,18 @@ const modeMeta = {
 
 function renderWorkbench(
   mode: LessonMode,
-  meta: (typeof modeMeta)[LessonMode],
   lessonId: string,
+  listeningMaterials: Awaited<ReturnType<typeof getListeningMaterialsCatalog>> | null,
   articleId?: string,
 ) {
   const level = extractLevel(lessonId);
 
   if (mode === "speaking") {
     return <SpeakingFeedbackForm defaultLevel={level} />;
+  }
+
+  if (mode === "listening") {
+    return <ListeningFeedbackForm defaultLevel={level} materials={listeningMaterials ?? undefined} />;
   }
 
   if (mode === "writing") {
@@ -127,26 +133,7 @@ function renderWorkbench(
     return <ReadingFeedbackForm defaultLevel={level} passage={passage} lessonId={readingLessonId} />;
   }
 
-  return (
-    <article className="surface-panel rounded-[2rem] p-6 sm:p-7">
-      <p className="section-label">
-        <Sparkles className="size-3.5" /> Practice workbench
-      </p>
-      <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">Checkpoint prompts for this lesson.</h2>
-      <div className="mt-6 grid gap-3">
-        {meta.checkpoints.map((item, index) => (
-          <div key={item} className="rounded-[1.4rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.76)] p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-soft)]">Prompt {index + 1}</p>
-            <p className="mt-3 text-sm leading-7 text-[var(--ink)]">{item}</p>
-          </div>
-        ))}
-      </div>
-      <div className="mt-6 rounded-[1.5rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.72)] p-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--ink-soft)]">Coach note</p>
-        <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">{meta.coach}</p>
-      </div>
-    </article>
-  );
+  return null;
 }
 
 export default async function LessonPage({
@@ -176,10 +163,11 @@ export default async function LessonPage({
   const description = linkedArticle?.focus ?? meta.focus;
   const Icon = meta.icon;
   const topSectionLayoutClass = mode === "speaking" ? "grid gap-5" : "grid gap-5 xl:grid-cols-[1.02fr_0.98fr]";
+  const listeningMaterials = mode === "listening" ? await getListeningMaterialsCatalog() : null;
   // Date: 2026/3/18
   // Author: Tianbo Cao
   // Keep the speaking lesson page focused on the core studio by hiding the extra lesson framing panels.
-  const showLessonMetaPanels = mode !== "speaking";
+  const showLessonMetaPanels = mode !== "speaking" && mode !== "listening";
 
   return (
     <PageFrame locale={locale} title={meta.label} description={description}>
@@ -218,7 +206,7 @@ export default async function LessonPage({
               </div>
             </article>
 
-            {renderWorkbench(mode, meta, resolvedParams.id, linkedArticle?.id)}
+            {renderWorkbench(mode, resolvedParams.id, listeningMaterials, linkedArticle?.id)}
           </div>
 
           <section className="mt-6 grid gap-5 lg:grid-cols-[1.02fr_0.98fr]">
@@ -248,7 +236,7 @@ export default async function LessonPage({
           </section>
         </>
       ) : (
-        renderWorkbench(mode, meta, resolvedParams.id, linkedArticle?.id)
+        renderWorkbench(mode, resolvedParams.id, listeningMaterials, linkedArticle?.id)
       )}
     </PageFrame>
   );
