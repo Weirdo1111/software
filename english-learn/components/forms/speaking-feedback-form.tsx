@@ -4,6 +4,7 @@ import { ArrowRight, LoaderCircle, Mic } from "lucide-react";
 import { useState } from "react";
 
 import { AIAnalysisState } from "@/components/forms/ai-analysis-state";
+import { exportAudioBlobAsWavBase64 } from "@/components/forms/speaking/audio-export";
 import { SpeakingDraftPanel } from "@/components/forms/speaking/draft-panel";
 import { SpeakingPartnerPanel } from "@/components/forms/speaking/partner-panel";
 import { SpeakingPromptBank } from "@/components/forms/speaking/prompt-bank";
@@ -29,8 +30,10 @@ export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: S
   const [partnerStatus, setPartnerStatus] = useState("");
   const [result, setResult] = useState<SpeakingFeedback | null>(null);
   const [status, setStatus] = useState("");
+  const [transcribeStatus, setTranscribeStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPartnerSubmitting, setIsPartnerSubmitting] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const recorder = useAudioRecorder();
 
   const availablePrompts = getSpeakingPromptsForLevel(targetLevel);
@@ -51,6 +54,7 @@ export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: S
     setPartnerStatus("");
     setResult(null);
     setStatus("");
+    setTranscribeStatus("");
     await recorder.resetRecording();
   }
 
@@ -153,6 +157,39 @@ export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: S
     }
   }
 
+  async function handleTranscribeLatestTake() {
+    if (!recorder.audioClip) return;
+
+    setTranscribeStatus("");
+    setIsTranscribing(true);
+
+    try {
+      const wavPayload = await exportAudioBlobAsWavBase64(recorder.audioClip.blob);
+      const response = await fetch("/api/ai/speaking/transcribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          audio_base64: wavPayload.audioBase64,
+          mime_type: wavPayload.mimeType,
+          duration_ms: recorder.audioClip.durationMs,
+        }),
+      });
+
+      const data = (await response.json()) as { transcript?: string; error?: string };
+      if (!response.ok || !data.transcript) {
+        throw new Error(data.error || "Failed to transcribe the latest take.");
+      }
+
+      setTranscript(data.transcript);
+      setTranscribeStatus("The latest recording has been transcribed into the draft field.");
+    } catch (nextError) {
+      const message = nextError instanceof Error ? nextError.message : "Failed to transcribe the latest take.";
+      setTranscribeStatus(message);
+    } finally {
+      setIsTranscribing(false);
+    }
+  }
+
   async function handlePartnerSubmit() {
     setPartnerStatus("");
     setPartnerNote("");
@@ -222,11 +259,14 @@ export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: S
         audioLevel={recorder.audioLevel}
         audioClip={recorder.audioClip}
         isSupported={recorder.isSupported}
+        isTranscribing={isTranscribing}
+        transcribeStatus={transcribeStatus}
         onStart={() => void recorder.startRecording()}
         onPause={recorder.pauseRecording}
         onResume={() => void recorder.resumeRecording()}
         onStop={recorder.stopRecording}
         onReset={() => void recorder.resetRecording()}
+        onTranscribe={() => void handleTranscribeLatestTake()}
       />
 
       <SpeakingDraftPanel transcript={transcript} onTranscriptChange={setTranscript} />
@@ -271,7 +311,7 @@ export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: S
         />
       ) : null}
 
-      {result ? <SpeakingScorePanel result={result} /> : null}
+      {result ? <SpeakingScorePanel result={result} onUseSampleUpgrade={setTranscript} /> : null}
     </form>
   );
 }

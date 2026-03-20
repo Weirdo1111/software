@@ -40,6 +40,8 @@ export interface SpeakingFeedback {
   grammar_score: number;
   strengths: string[];
   revision_focus: string;
+  delivery_snapshot: string;
+  sample_upgrade: string;
   tips: string[];
 }
 
@@ -87,6 +89,17 @@ export interface WritingFeedback {
   overall_score: number;
   errors: string[];
   rewrite_sample: string;
+}
+
+export interface WritingPrompt {
+  id: string;
+  level: CEFRLevel;
+  title: string;
+  scenario: string;
+  prompt: string;
+  skill_focus: string;
+  checkpoints: string[];
+  sample_response: string;
 }
 
 export interface ReadingFeedback {

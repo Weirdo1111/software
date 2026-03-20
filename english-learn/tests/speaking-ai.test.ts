@@ -12,6 +12,8 @@ describe("speaking AI helpers", () => {
     expect(feedback.overall_score).toBeGreaterThanOrEqual(5.5);
     expect(feedback.task_response_score).toBeGreaterThanOrEqual(5.5);
     expect(feedback.strengths).toHaveLength(2);
+    expect(feedback.delivery_snapshot.length).toBeGreaterThan(10);
+    expect(feedback.sample_upgrade.length).toBeGreaterThan(30);
     expect(feedback.tips).toHaveLength(3);
   });
 

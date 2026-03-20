@@ -1,11 +1,17 @@
-import { Waves } from "lucide-react";
+import { Sparkles, Waves } from "lucide-react";
 
 import type { SpeakingFeedback } from "@/types/learning";
 
 // Date: 2026/3/18
 // Author: Tianbo Cao
 // Simplified score rendering so the post-submission view stays focused on the next revision step.
-export function SpeakingScorePanel({ result }: { result: SpeakingFeedback }) {
+export function SpeakingScorePanel({
+  result,
+  onUseSampleUpgrade,
+}: {
+  result: SpeakingFeedback;
+  onUseSampleUpgrade?: (value: string) => void;
+}) {
   return (
     <div className="grid gap-4 rounded-[1.7rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.74)] p-5 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3 text-[var(--ink)]">
@@ -51,6 +57,28 @@ export function SpeakingScorePanel({ result }: { result: SpeakingFeedback }) {
         <div className="rounded-[1.2rem] bg-white/80 p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Revision focus</p>
           <p className="mt-3 text-sm leading-7 text-[var(--ink)]">{result.revision_focus}</p>
+        </div>
+      </div>
+
+      <div className="grid gap-3 lg:grid-cols-[0.78fr_1.22fr]">
+        <div className="rounded-[1.2rem] bg-white/80 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Delivery snapshot</p>
+          <p className="mt-3 text-sm leading-7 text-[var(--ink)]">{result.delivery_snapshot}</p>
+        </div>
+        <div className="rounded-[1.2rem] bg-white/80 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">AI upgraded sample</p>
+            {onUseSampleUpgrade ? (
+              <button
+                type="button"
+                onClick={() => onUseSampleUpgrade(result.sample_upgrade)}
+                className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white/88 px-3 py-2 text-xs font-semibold text-[var(--ink)]"
+              >
+                <Sparkles className="size-3.5" /> Use as draft
+              </button>
+            ) : null}
+          </div>
+          <p className="mt-3 text-sm leading-7 text-[var(--ink)]">{result.sample_upgrade}</p>
         </div>
       </div>
 
