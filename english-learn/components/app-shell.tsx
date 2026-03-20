@@ -11,6 +11,7 @@ import {
   LogIn,
   User,
   LogOut,
+  MessageSquare,
 } from "lucide-react";
 import { useSyncExternalStore } from "react";
 
@@ -39,6 +40,12 @@ const nav = [
     protected: true,
   },
   {
+    href: "/discussion",
+    key: "nav_discussion",
+    icon: MessageSquare,
+    protected: true,
+  },
+  {
     href: "/settings",
     key: "nav_settings",
     icon: Settings,
@@ -52,7 +59,10 @@ function subscribe(onStoreChange: () => void) {
 
   return () => {
     window.removeEventListener("storage", onStoreChange);
-    window.removeEventListener("demo-auth-changed", onStoreChange as EventListener);
+    window.removeEventListener(
+      "demo-auth-changed",
+      onStoreChange as EventListener
+    );
   };
 }
 
