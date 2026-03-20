@@ -14,10 +14,6 @@ const sans = Inter({
   weight: ["400", "500", "600", "700"],
 });
 
-const DEMO_USERNAME = "admin";
-const DEMO_EMAIL = "admin@example.com";
-const DEMO_PASSWORD = "123456";
-
 export default function LoginPage() {
   const [lang, setLang] = useState<"zh" | "en">("en");
   const [email, setEmail] = useState("");
@@ -48,8 +44,6 @@ export default function LoginPage() {
       feature3Title: "Steady progress",
       feature3Text: "用更清晰的节奏与反馈保持成长。",
       footerNote: "Quiet design. Clear route.",
-      demoTitle: "演示账号",
-      demoText: "账号：admin 或 admin@example.com / 密码：123456",
       invalid: "账号或密码错误",
       accessTitle: "Learner access",
       accessText: "从登录开始，进入属于你的学习节奏。",
@@ -76,8 +70,6 @@ export default function LoginPage() {
       feature3Title: "Steady progress",
       feature3Text: "A calmer structure for consistent improvement.",
       footerNote: "Quiet design. Clear route.",
-      demoTitle: "Demo account",
-      demoText: "Account: admin or admin@example.com / Password: 123456",
       invalid: "Invalid account or password",
       accessTitle: "Learner access",
       accessText: "Start here, then move into your own learning rhythm.",
@@ -89,21 +81,41 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const normalized = email.trim().toLowerCase();
-    const validUser =
-      normalized === DEMO_USERNAME || normalized === DEMO_EMAIL;
-    const validPassword = password === DEMO_PASSWORD;
+    try {
+      const response = await fetch("/api/auth/sign-in", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          identifier: email,
+          password,
+        }),
+      });
 
-    if (validUser && validPassword) {
+      const data = (await response.json()) as {
+        error?: string;
+        user?: {
+          email: string;
+          username: string;
+        };
+      };
+
+      if (!response.ok) {
+        setLoading(false);
+        setError(data.error || copy.invalid);
+        return;
+      }
+
       localStorage.setItem("demo_logged_in", "true");
-      localStorage.setItem("demo_user", normalized);
+      localStorage.setItem("demo_user", data.user?.username || data.user?.email || email.trim());
       window.dispatchEvent(new Event("demo-auth-changed"));
       window.location.href = "/dashboard";
       return;
+    } catch {
+      setLoading(false);
+      setError(copy.invalid);
     }
-
-    setLoading(false);
-    setError(copy.invalid);
   };
 
   return (
@@ -171,7 +183,7 @@ export default function LoginPage() {
               <div className="absolute right-[-60px] top-[-60px] h-52 w-52 rounded-full bg-white/55 blur-2xl" />
               <div className="absolute bottom-[-70px] left-[-40px] h-56 w-56 rounded-full bg-[#e9e3d6]/70 blur-2xl" />
 
-              <div className="relative z-10 max-w-[760px]">
+              <div className="relative z-10 flex h-full max-w-[840px] flex-col">
                 <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/85 px-4 py-2 text-[11px] font-semibold tracking-[0.24em] text-slate-500">
                   <span className="inline-block h-2 w-2 rounded-full bg-[#22314d]" />
                   {copy.badge}
@@ -194,16 +206,16 @@ export default function LoginPage() {
                 </div>
 
                 <h1
-                  className={`${serif.className} max-w-[760px] text-[46px] leading-[1.05] tracking-[-0.035em] text-[#1f2b43] md:text-[62px] lg:text-[74px]`}
+                  className={`${serif.className} max-w-[820px] text-[52px] leading-[1.02] tracking-[-0.04em] text-[#1f2b43] md:text-[68px] lg:text-[86px]`}
                 >
                   {copy.title}
                 </h1>
 
-                <p className="mt-5 max-w-[560px] text-lg leading-8 text-slate-500">
+                <p className="mt-6 max-w-[660px] text-[19px] leading-9 text-slate-500">
                   {copy.subtitle}
                 </p>
 
-                <div className="mt-12 grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="mt-auto grid grid-cols-1 gap-5 pt-14 md:grid-cols-3">
                   <FeatureCard
                     title={copy.feature1Title}
                     text={copy.feature1Text}
@@ -218,14 +230,6 @@ export default function LoginPage() {
                   />
                 </div>
 
-                <div className="mt-10 rounded-[28px] border border-slate-200 bg-white/80 p-5">
-                  <div className="mb-2 text-[11px] font-semibold tracking-[0.24em] text-slate-500">
-                    {copy.demoTitle.toUpperCase()}
-                  </div>
-                  <p className="text-[15px] leading-7 text-slate-600">
-                    {copy.demoText}
-                  </p>
-                </div>
               </div>
             </div>
 
@@ -324,11 +328,11 @@ function FeatureCard({
   text: string;
 }) {
   return (
-    <div className="rounded-[28px] border border-slate-200 bg-[#fcfbf8] p-5 shadow-sm">
+    <div className="rounded-[30px] border border-slate-200 bg-[#fcfbf8] p-6 shadow-sm">
       <div className="mb-3 text-[11px] font-semibold tracking-[0.24em] text-slate-500">
         {title.toUpperCase()}
       </div>
-      <p className="text-[15px] leading-7 text-slate-600">{text}</p>
+      <p className="text-[16px] leading-8 text-slate-600">{text}</p>
     </div>
   );
 }
