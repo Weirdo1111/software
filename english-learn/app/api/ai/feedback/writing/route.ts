@@ -4,6 +4,7 @@ import { z } from "zod";
 import { jsonError } from "@/lib/api";
 import { generateStructuredJSON, hasAIConfig } from "@/lib/ai/client";
 import { writingFeedbackPrompt } from "@/lib/ai/prompts";
+import { getWritingPromptById } from "@/lib/writing-prompts";
 
 const schema = z.object({
   essay_text: z.string().min(10),
@@ -23,20 +24,29 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const payload = schema.parse(body);
+    const writingPrompt = payload.prompt_id ? getWritingPromptById(payload.prompt_id) : null;
+
+    if (payload.prompt_id && !writingPrompt) {
+      return jsonError("Invalid writing prompt", 422);
+    }
 
     if (!hasAIConfig()) {
       return NextResponse.json({
         overall_score: 7.1,
         errors: ["Use third-person singular: 'saves'", "Use 'at home' instead of 'in home'"],
-        rewrite_sample: "I think remote work is useful because it saves time and helps people focus better at home.",
+        rewrite_sample:
+          writingPrompt?.sample_response ??
+          "I think remote work is useful because it saves time and helps people focus better at home.",
       });
     }
 
-    const output = await generateStructuredJSON(writingFeedbackPrompt(payload.target_level, payload.essay_text));
+    const output = await generateStructuredJSON(
+      writingFeedbackPrompt(payload.target_level, payload.essay_text, writingPrompt),
+    );
     const parsed = safeParseJSON(output, {
       overall_score: 7,
       errors: ["Grammar and tense inconsistency."],
-      rewrite_sample: payload.essay_text,
+      rewrite_sample: writingPrompt?.sample_response ?? payload.essay_text,
     });
 
     return NextResponse.json(parsed);

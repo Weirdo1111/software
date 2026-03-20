@@ -1,4 +1,4 @@
-import type { CEFRLevel, SpeakingPrompt } from "@/types/learning";
+import type { CEFRLevel, SpeakingPrompt, WritingPrompt } from "@/types/learning";
 
 // Date: 2026/3/18
 // Author: Tianbo Cao
@@ -7,9 +7,11 @@ export function speakingFeedbackPrompt(targetLevel: CEFRLevel, prompt: SpeakingP
   return `You are an academic English speaking coach for non-native university students at ${targetLevel}.
 Evaluate the learner response for the selected speaking task.
 Score overall_score, task_response_score, pronunciation_score, fluency_score, and grammar_score from 0 to 10.
-Return strict JSON with keys: overall_score, task_response_score, pronunciation_score, fluency_score, grammar_score, strengths, revision_focus, tips.
+Return strict JSON with keys: overall_score, task_response_score, pronunciation_score, fluency_score, grammar_score, strengths, revision_focus, delivery_snapshot, sample_upgrade, tips.
 strengths must be an array of exactly 2 short strings.
 revision_focus must be one short paragraph with 1-2 sentences.
+delivery_snapshot must be one short sentence describing how the answer sounds right now.
+sample_upgrade must be a stronger version of the learner response in 3-5 sentences while staying realistic for ${targetLevel}.
 tips must be an array of exactly 3 short action steps.
 
 Speaking task:
@@ -57,12 +59,27 @@ Learner's latest turn:
 ${learnerTurn}`;
 }
 
-export function writingFeedbackPrompt(targetLevel: CEFRLevel, essayText: string) {
+export function writingFeedbackPrompt(
+  targetLevel: CEFRLevel,
+  essayText: string,
+  prompt?: WritingPrompt | null,
+) {
+  const promptContext = prompt
+    ? `Selected writing task:
+- Title: ${prompt.title}
+- Scenario: ${prompt.scenario}
+- Prompt: ${prompt.prompt}
+- Skill focus: ${prompt.skill_focus}
+- Checkpoints: ${prompt.checkpoints.join("; ")}
+
+`
+    : "";
+
   return `You are an English writing coach for non-native learners at ${targetLevel}.
 Evaluate the essay on structure, grammar, and vocabulary.
 Return strict JSON with keys: overall_score, errors, rewrite_sample.
 errors must be short strings.
-Essay:\n${essayText}`;
+${promptContext}Essay:\n${essayText}`;
 }
 
 export function readingFeedbackPrompt(

@@ -88,7 +88,7 @@ const modeMeta = {
     label: "Academic Writing Studio",
     icon: PenLine,
     focus: "Draft a short analytical paragraph with clearer cohesion, sentence control, and revision discipline.",
-    source: "Prompt on support strategies for English-medium study",
+    source: "Selectable academic writing practice scenarios",
     output: "150-200 word paragraph with one clear solution",
     coach: "Make the topic sentence explicit, then keep every sentence tied to that point.",
     tasks: [
@@ -162,16 +162,22 @@ export default async function LessonPage({
   const sourceTitle = readingPassage?.title ?? meta.source;
   const description = linkedArticle?.focus ?? meta.focus;
   const Icon = meta.icon;
-  const topSectionLayoutClass = mode === "speaking" ? "grid gap-5" : "grid gap-5 xl:grid-cols-[1.02fr_0.98fr]";
-  const listeningMaterials = mode === "listening" ? await getListeningMaterialsCatalog() : null;
+  const isWritingMode = mode === "writing";
+  const isListeningMode = mode === "listening";
+  const topSectionLayoutClass =
+    mode === "speaking" || isWritingMode ? "grid gap-5" : "grid gap-5 xl:grid-cols-[1.02fr_0.98fr]";
+  const lessonMetaGridClass = isWritingMode ? "mt-6 grid gap-3" : "mt-6 grid gap-3 sm:grid-cols-2";
+  const lowerSectionLayoutClass = isWritingMode ? "mt-6 grid gap-5" : "mt-6 grid gap-5 lg:grid-cols-[1.02fr_0.98fr]";
+  const listeningMaterials = isListeningMode ? await getListeningMaterialsCatalog() : null;
+  const showStandaloneLessonBrief = mode !== "speaking" && mode !== "writing" && mode !== "listening";
+  const showLowerPanels = mode !== "speaking" && mode !== "listening";
   // Date: 2026/3/18
   // Author: Tianbo Cao
   // Keep the speaking lesson page focused on the core studio by hiding the extra lesson framing panels.
-  const showLessonMetaPanels = mode !== "speaking" && mode !== "listening";
 
   return (
     <PageFrame locale={locale} title={meta.label} description={description}>
-      {showLessonMetaPanels ? (
+      {showStandaloneLessonBrief ? (
         <>
           <div className={topSectionLayoutClass}>
             <article className={`rounded-[2rem] border border-[rgba(20,50,75,0.12)] bg-gradient-to-br ${meta.tone} p-6 sm:p-7 shadow-[0_20px_45px_rgba(23,32,51,0.08)]`}>
@@ -184,7 +190,7 @@ export default async function LessonPage({
                   <Icon className="size-5" />
                 </div>
               </div>
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <div className={lessonMetaGridClass}>
                 <div className="rounded-[1.3rem] border border-white/60 bg-white/65 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-soft)]">Expected output</p>
                   <p className="mt-3 text-sm leading-7 text-[var(--ink)]">{meta.output}</p>
@@ -208,36 +214,38 @@ export default async function LessonPage({
 
             {renderWorkbench(mode, resolvedParams.id, listeningMaterials, linkedArticle?.id)}
           </div>
-
-          <section className="mt-6 grid gap-5 lg:grid-cols-[1.02fr_0.98fr]">
-            <article className="surface-panel reveal-up rounded-[2rem] p-6 sm:p-7">
-              <p className="section-label">
-                <Target className="size-3.5" /> Checkpoints
-              </p>
-              <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">What success looks like in this lesson.</h2>
-              <div className="mt-6 grid gap-3">
-                {meta.checkpoints.map((item) => (
-                  <div key={item} className="rounded-[1.3rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.76)] p-4 text-sm leading-7 text-[var(--ink-soft)]">
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </article>
-
-            <article className="surface-ink ambient-card reveal-up rounded-[2rem] p-6 sm:p-7">
-              <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#f2d9ae]">Cross-skill booster</p>
-              <h2 className="font-display mt-4 text-3xl tracking-tight">Every lesson should reinforce another skill.</h2>
-              <div className="mt-6 grid gap-3 text-sm leading-7 text-[#efe5d6]/78">
-                <p>Listening lessons feed better seminar speaking because note quality improves idea recall.</p>
-                <p>Reading lessons strengthen writing because claim-evidence structures become easier to imitate.</p>
-                <p>Speaking and writing feedback creates the evidence needed for future reassessment decisions.</p>
-              </div>
-            </article>
-          </section>
         </>
       ) : (
         renderWorkbench(mode, resolvedParams.id, listeningMaterials, linkedArticle?.id)
       )}
+
+      {showLowerPanels ? (
+        <section className={lowerSectionLayoutClass}>
+          <article className="surface-panel reveal-up rounded-[2rem] p-6 sm:p-7">
+            <p className="section-label">
+              <Target className="size-3.5" /> Checkpoints
+            </p>
+            <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">What success looks like in this lesson.</h2>
+            <div className="mt-6 grid gap-3">
+              {meta.checkpoints.map((item) => (
+                <div key={item} className="rounded-[1.3rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.76)] p-4 text-sm leading-7 text-[var(--ink-soft)]">
+                  {item}
+                </div>
+              ))}
+            </div>
+          </article>
+
+          <article className="surface-ink ambient-card reveal-up rounded-[2rem] p-6 sm:p-7">
+            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#f2d9ae]">Cross-skill booster</p>
+            <h2 className="font-display mt-4 text-3xl tracking-tight">Every lesson should reinforce another skill.</h2>
+            <div className="mt-6 grid gap-3 text-sm leading-7 text-[#efe5d6]/78">
+              <p>Listening lessons feed better seminar speaking because note quality improves idea recall.</p>
+              <p>Reading lessons strengthen writing because claim-evidence structures become easier to imitate.</p>
+              <p>Speaking and writing feedback creates the evidence needed for future reassessment decisions.</p>
+            </div>
+          </article>
+        </section>
+      ) : null}
     </PageFrame>
   );
 }

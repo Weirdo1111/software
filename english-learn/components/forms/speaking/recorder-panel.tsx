@@ -1,4 +1,4 @@
-import { Mic, Pause, RotateCcw, Square, Waves } from "lucide-react";
+import { LoaderCircle, Mic, Pause, RotateCcw, Sparkles, Square, Waves } from "lucide-react";
 
 import { formatRecordingTime } from "@/components/forms/speaking/formatters";
 import type { RecorderStatus, SpeakingAudioClip } from "@/components/forms/speaking/types";
@@ -40,11 +40,14 @@ export function SpeakingRecorderPanel({
   audioLevel,
   audioClip,
   isSupported,
+  isTranscribing,
+  transcribeStatus,
   onStart,
   onPause,
   onResume,
   onStop,
   onReset,
+  onTranscribe,
 }: {
   status: RecorderStatus;
   error: string;
@@ -52,11 +55,14 @@ export function SpeakingRecorderPanel({
   audioLevel: number;
   audioClip: SpeakingAudioClip | null;
   isSupported: boolean;
+  isTranscribing: boolean;
+  transcribeStatus: string;
   onStart: () => void;
   onPause: () => void;
   onResume: () => void;
   onStop: () => void;
   onReset: () => void;
+  onTranscribe: () => void;
 }) {
   const isRecording = status === "recording";
   const isPaused = status === "paused";
@@ -176,6 +182,31 @@ export function SpeakingRecorderPanel({
             </span>
           </div>
           <audio controls src={audioClip.url} className="mt-4 w-full" />
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={onTranscribe}
+              disabled={isTranscribing}
+              className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white/88 px-4 py-2.5 text-sm font-semibold text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              {isTranscribing ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+              {isTranscribing ? "Transcribing..." : "AI transcribe latest take"}
+            </button>
+            <p className="text-sm leading-6 text-[var(--ink-soft)]">Use Doubao ASR to turn the recording into a draft.</p>
+          </div>
+          {transcribeStatus ? (
+            <p
+              className={`mt-4 rounded-[1rem] px-4 py-3 text-sm font-medium ${
+                transcribeStatus.toLowerCase().includes("failed") ||
+                transcribeStatus.toLowerCase().includes("not configured") ||
+                transcribeStatus.toLowerCase().includes("could not")
+                  ? "bg-[rgba(255,244,240,0.9)] text-[var(--coral)]"
+                  : "bg-[rgba(237,245,251,0.92)] text-[var(--ink)]"
+              }`}
+            >
+              {transcribeStatus}
+            </p>
+          ) : null}
         </div>
       ) : null}
     </div>

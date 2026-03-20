@@ -43,7 +43,14 @@ export async function POST(request: Request) {
       grammar_score: 7,
       strengths: ["Your answer is understandable.", "Your main point is visible."],
       revision_focus: "Add one clearer example and tighten your sentence structure in the next attempt.",
-      tips: ["Practice shadowing for 10 minutes daily."],
+      delivery_snapshot: "The answer is understandable but still needs more academic control.",
+      sample_upgrade:
+        "I would argue that universities should provide more structured academic English support. One reason is that students need guided chances to test ideas aloud before high-stakes seminars. For example, short tutorial response tasks can help learners receive immediate feedback from tutors. As a result, students build confidence and contribute more clearly in class.",
+      tips: [
+        "Practice shadowing for 10 minutes daily.",
+        "Add one example that directly supports your position.",
+        "Keep sentence openings short and controlled.",
+      ],
     });
 
     return NextResponse.json(parsed);
