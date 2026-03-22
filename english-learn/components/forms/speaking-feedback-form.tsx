@@ -191,12 +191,19 @@ export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: S
   }
 
   async function handlePartnerSubmit() {
+    if (isPartnerSubmitting) return;
+
+    const learnerTurn = partnerTurn.trim();
+    if (learnerTurn.length < 6) return;
+
     setPartnerStatus("");
     setPartnerNote("");
     setIsPartnerSubmitting(true);
+    setPartnerMessages((currentMessages) => [...currentMessages, { role: "user", content: learnerTurn }]);
+    setPartnerTurn("");
+    appendLearnerTurnToTranscript(learnerTurn);
 
     try {
-      const learnerTurn = partnerTurn.trim();
       const response = await fetch("/api/ai/speaking/partner", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -214,16 +221,13 @@ export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: S
       }
 
       const partnerReply = data as SpeakingPartnerReply;
-      const assistantContent = `${partnerReply.reply}\n\nFollow-up: ${partnerReply.follow_up}`;
+      const assistantContent = `${partnerReply.reply} ${partnerReply.follow_up}`.trim();
 
       setPartnerMessages((currentMessages) => [
         ...currentMessages,
-        { role: "user", content: learnerTurn },
         { role: "assistant", content: assistantContent },
       ]);
       setPartnerNote(partnerReply.coaching_note);
-      setPartnerTurn("");
-      appendLearnerTurnToTranscript(learnerTurn);
     } catch (nextError) {
       const message = nextError instanceof Error ? nextError.message : "Failed to continue speaking practice.";
       setPartnerStatus(message);

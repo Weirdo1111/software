@@ -1,8 +1,11 @@
 import OpenAI from "openai";
+import { existsSync, readFileSync } from "fs";
+import path from "path";
 
 import { env } from "@/lib/env";
 
 const DEFAULT_MODEL = "gpt-4o-mini";
+const ROOT_API_KEY_PATH = path.resolve(process.cwd(), "..", "API_key");
 
 function getMessageText(
   content:
@@ -23,8 +26,18 @@ function getMessageText(
 }
 
 export function getAIConfig() {
+  let fileApiKey = "";
+
+  try {
+    if (existsSync(ROOT_API_KEY_PATH)) {
+      fileApiKey = readFileSync(ROOT_API_KEY_PATH, "utf8").trim();
+    }
+  } catch {
+    fileApiKey = "";
+  }
+
   return {
-    apiKey: env.server.AI_API_KEY || env.server.OPENAI_API_KEY,
+    apiKey: env.server.AI_API_KEY || env.server.OPENAI_API_KEY || fileApiKey,
     baseURL: env.server.AI_BASE_URL || undefined,
     model: env.server.AI_MODEL || DEFAULT_MODEL,
   };
