@@ -352,7 +352,7 @@ function ArticleGrid({
   contextForArticle?: (article: (typeof readingArticles)[number]) => ReactNode;
 }) {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid gap-4">
       {articles.map((article) => (
         <ArticleCard
           key={article.id}
