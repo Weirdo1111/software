@@ -76,7 +76,7 @@ function useCopy(locale: Locale) {
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 
-export function AccentPractice({ locale }: { locale: Locale }) {
+export function ListeningPractice({ locale }: { locale: Locale }) {
   const copy = useCopy(locale);
 
   const [step, setStep] = useState<Step>("pick");

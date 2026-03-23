@@ -1,8 +1,8 @@
-import { AccentPractice } from "@/components/listening/accent-practice";
+import { ListeningPractice } from "@/components/listening/listening-practice";
 import { PageFrame } from "@/components/page-frame";
 import { getLocale } from "@/lib/i18n/get-locale";
 
-export default async function AccentPracticePage({
+export default async function ListeningPracticePage({
   searchParams,
 }: {
   searchParams: Promise<{ lang?: string }>;
@@ -16,7 +16,7 @@ export default async function AccentPracticePage({
 
   return (
     <PageFrame locale={locale} title={copy.title} description={copy.description} showHeader={false}>
-      <AccentPractice locale={locale} />
+      <ListeningPractice locale={locale} />
     </PageFrame>
   );
 }

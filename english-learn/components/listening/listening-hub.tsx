@@ -52,7 +52,7 @@ export function ListeningHub({ locale }: { locale: Locale }) {
       <div className="grid gap-4 sm:grid-cols-2">
         {/* Listening Practice */}
         <Link
-          href={`/listening/accent?lang=${locale}`}
+          href={`/listening/practice?lang=${locale}`}
           className="group surface-panel rounded-[1.8rem] p-5 sm:p-6 transition hover:translate-y-[-2px] hover:shadow-[0_20px_50px_rgba(28,78,149,0.14)]"
         >
           <div className="inline-flex size-11 items-center justify-center rounded-2xl bg-[var(--navy)] text-white shadow-[0_8px_20px_rgba(28,78,149,0.25)]">
