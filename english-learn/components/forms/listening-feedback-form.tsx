@@ -3,6 +3,7 @@
 import {
   ArrowRight,
   CheckCircle2,
+  Clock3,
   Ear,
   ExternalLink,
   FileText,
@@ -12,16 +13,21 @@ import {
   PauseCircle,
   PlayCircle,
   RotateCcw,
+  Search,
+  Sparkles,
+  Star,
   Target,
+  Trophy,
   Waves,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 import { useShadowingPractice } from "@/components/forms/listening/use-shadowing-practice";
 import { SaveToDeckButton } from "@/components/forms/save-to-deck-button";
 import {
   buildListeningSentenceSegments,
   getListeningMaterial,
+  getListeningMaterialOptions,
   getTedListeningMaterial,
   listeningAccents,
   listeningMajors,
@@ -34,10 +40,19 @@ import {
   type ListeningContentMode,
   type ListeningMaterial,
 } from "@/lib/listening-materials";
+import {
+  getListeningLibraryServerSnapshot,
+  getListeningLibrarySnapshot,
+  recordListeningCompletionInStorage,
+  recordListeningHistoryInStorage,
+  subscribeListeningLibrary,
+  toggleListeningFavoriteInStorage,
+} from "@/lib/listening-library";
 import { cn } from "@/lib/utils";
 import type { CEFRLevel } from "@/types/learning";
 
 type ListeningWorkspaceView = "setup" | "studio" | "shadowing" | "check" | "review";
+type ListeningLibraryFilter = "recommended" | "all" | "favorites" | "recent" | "completed";
 
 const workspaceViews: Array<{
   id: ListeningWorkspaceView;
@@ -71,19 +86,29 @@ function getMaterialFromCatalog(
   mode: ListeningContentMode,
   majorId: DIICSUMajorId,
   accent: ListeningAccent,
+  materialGroupId?: string,
 ) {
   if (mode === "ted") {
-    return (
-      materials.find((item) => item.contentMode === "ted" && item.majorId === majorId) ??
-      getTedListeningMaterial(majorId)
-    );
+    return getTedListeningMaterial(majorId, materialGroupId, materials);
   }
 
-  return (
-    materials.find(
-      (item) => item.contentMode === "practice" && item.majorId === majorId && item.accent === accent,
-    ) ?? getListeningMaterial(majorId, accent)
-  );
+  return getListeningMaterial(majorId, accent, materialGroupId, materials);
+}
+
+const playbackRates = [0.85, 1, 1.15] as const;
+const listeningLibraryFilters: Array<{
+  id: ListeningLibraryFilter;
+  label: string;
+}> = [
+  { id: "recommended", label: "Recommended" },
+  { id: "all", label: "All" },
+  { id: "favorites", label: "Favorites" },
+  { id: "recent", label: "Recent" },
+  { id: "completed", label: "Completed" },
+];
+
+function normalizeSearchValue(value: string) {
+  return value.trim().toLowerCase();
 }
 
 export function ListeningFeedbackForm({
@@ -100,16 +125,21 @@ export function ListeningFeedbackForm({
   const [selectedMode, setSelectedMode] = useState<ListeningContentMode>("practice");
   const [selectedMajor, setSelectedMajor] = useState<DIICSUMajorId>("civil-engineering");
   const [selectedAccent, setSelectedAccent] = useState<ListeningAccent>("british");
+  const [selectedMaterialGroupId, setSelectedMaterialGroupId] = useState("civil-engineering");
   const [activeView, setActiveView] = useState<ListeningWorkspaceView>("setup");
   const [selectedSentenceIndex, setSelectedSentenceIndex] = useState(0);
   const [playingSentenceIndex, setPlayingSentenceIndex] = useState<number | null>(null);
   const [clipDurationSec, setClipDurationSec] = useState(0);
+  const [playbackRate, setPlaybackRate] = useState<(typeof playbackRates)[number]>(1);
   const [notes, setNotes] = useState("");
   const [transcriptOpen, setTranscriptOpen] = useState(false);
   const [result, setResult] = useState<ReturnType<typeof scoreListeningMaterial> | null>(null);
   const [submitStatus, setSubmitStatus] = useState("");
   const [isScoring, setIsScoring] = useState(false);
   const [attemptStartedAt, setAttemptStartedAt] = useState(() => Date.now());
+  const [libraryFilter, setLibraryFilter] = useState<ListeningLibraryFilter>("recommended");
+  const [librarySearch, setLibrarySearch] = useState("");
+  const recordedHistoryGroupIdsRef = useRef<Set<string>>(new Set());
 
   const {
     isSupported: isShadowingSupported,
@@ -122,13 +152,176 @@ export function ListeningFeedbackForm({
   } = useShadowingPractice();
 
   const catalog = materials && materials.length > 0 ? materials : listeningMaterials;
-  const activeMaterial = getMaterialFromCatalog(catalog, selectedMode, selectedMajor, selectedAccent);
+  const librarySnapshot = useSyncExternalStore(
+    subscribeListeningLibrary,
+    getListeningLibrarySnapshot,
+    getListeningLibraryServerSnapshot,
+  );
+  const materialOptions = useMemo(
+    () => getListeningMaterialOptions(catalog, selectedMode, selectedMajor),
+    [catalog, selectedMode, selectedMajor],
+  );
+  const activeMaterial = getMaterialFromCatalog(
+    catalog,
+    selectedMode,
+    selectedMajor,
+    selectedAccent,
+    selectedMaterialGroupId,
+  );
   const activeMajor = listeningMajors.find((major) => major.id === selectedMajor);
   const activeMode = listeningModes.find((mode) => mode.id === selectedMode);
   const isTedMode = activeMaterial.contentMode === "ted";
   const hasInlineTranscript = activeMaterial.transcript.trim().length > 0;
   const canUseSentenceTrainer =
     !isTedMode && Boolean(activeMaterial.audioSrc) && activeMaterial.transcript.trim().length > 0;
+  const activeMaterialIndex = materialOptions.findIndex(
+    (option) => option.id === activeMaterial.materialGroupId,
+  );
+  const nextMaterialOption =
+    materialOptions.length > 1
+      ? materialOptions[(activeMaterialIndex + 1) % materialOptions.length]
+      : null;
+  const routeGroupIdSet = useMemo(
+    () => new Set(materialOptions.map((option) => option.id)),
+    [materialOptions],
+  );
+  const favoriteGroupIdSet = useMemo(
+    () => new Set(librarySnapshot.favoriteGroupIds),
+    [librarySnapshot.favoriteGroupIds],
+  );
+  const favoriteOrder = useMemo(
+    () =>
+      new Map(librarySnapshot.favoriteGroupIds.map((groupId, index) => [groupId, index])),
+    [librarySnapshot.favoriteGroupIds],
+  );
+  const historyMap = useMemo(
+    () => new Map(librarySnapshot.history.map((entry) => [entry.groupId, entry])),
+    [librarySnapshot.history],
+  );
+  const historyOrder = useMemo(
+    () => new Map(librarySnapshot.history.map((entry, index) => [entry.groupId, index])),
+    [librarySnapshot.history],
+  );
+  const completionMap = useMemo(
+    () => new Map(librarySnapshot.completions.map((entry) => [entry.groupId, entry])),
+    [librarySnapshot.completions],
+  );
+  const completionOrder = useMemo(
+    () => new Map(librarySnapshot.completions.map((entry, index) => [entry.groupId, index])),
+    [librarySnapshot.completions],
+  );
+  const incompleteMaterialOptions = useMemo(
+    () => materialOptions.filter((option) => !completionMap.has(option.id)),
+    [completionMap, materialOptions],
+  );
+  const recommendedMaterialOption =
+    incompleteMaterialOptions[0] ?? materialOptions[0] ?? null;
+  const continueEntry = librarySnapshot.history.find((entry) => routeGroupIdSet.has(entry.groupId)) ?? null;
+  const continueMaterialOption =
+    materialOptions.find((option) => option.id === continueEntry?.groupId) ?? null;
+  const routeFavoriteCount = materialOptions.filter((option) => favoriteGroupIdSet.has(option.id)).length;
+  const routeCompletedCount = materialOptions.filter((option) => completionMap.has(option.id)).length;
+  const routeRecentCount = materialOptions.filter((option) => historyMap.has(option.id)).length;
+  const activeMaterialCompletion = completionMap.get(activeMaterial.materialGroupId);
+  const activeMaterialHistory = historyMap.get(activeMaterial.materialGroupId);
+  const isActiveMaterialFavorite = favoriteGroupIdSet.has(activeMaterial.materialGroupId);
+  const routeFilterCounts = useMemo(
+    () => ({
+      all: materialOptions.length,
+      recommended: incompleteMaterialOptions.length > 0 ? incompleteMaterialOptions.length : Number(Boolean(recommendedMaterialOption)),
+      favorites: routeFavoriteCount,
+      recent: routeRecentCount,
+      completed: routeCompletedCount,
+    }),
+    [
+      incompleteMaterialOptions.length,
+      materialOptions.length,
+      recommendedMaterialOption,
+      routeCompletedCount,
+      routeFavoriteCount,
+      routeRecentCount,
+    ],
+  );
+  const filteredMaterialOptions = useMemo(() => {
+    const normalizedSearch = normalizeSearchValue(librarySearch);
+
+    const baseOptions = materialOptions.filter((option) => {
+      const matchesSearch =
+        normalizedSearch.length === 0 ||
+        normalizeSearchValue(
+          `${option.label} ${option.summary} ${option.recommendedLevel} ${option.durationLabel}`,
+        ).includes(normalizedSearch);
+
+      if (!matchesSearch) {
+        return false;
+      }
+
+      switch (libraryFilter) {
+        case "recommended":
+          return incompleteMaterialOptions.length > 0
+            ? !completionMap.has(option.id)
+            : option.id === recommendedMaterialOption?.id;
+        case "favorites":
+          return favoriteGroupIdSet.has(option.id);
+        case "recent":
+          return historyMap.has(option.id);
+        case "completed":
+          return completionMap.has(option.id);
+        case "all":
+        default:
+          return true;
+      }
+    });
+
+    return baseOptions.sort((left, right) => {
+      if (libraryFilter === "favorites") {
+        return (favoriteOrder.get(left.id) ?? Number.MAX_SAFE_INTEGER) - (favoriteOrder.get(right.id) ?? Number.MAX_SAFE_INTEGER);
+      }
+
+      if (libraryFilter === "recent") {
+        return (historyOrder.get(left.id) ?? Number.MAX_SAFE_INTEGER) - (historyOrder.get(right.id) ?? Number.MAX_SAFE_INTEGER);
+      }
+
+      if (libraryFilter === "completed") {
+        return (completionOrder.get(left.id) ?? Number.MAX_SAFE_INTEGER) - (completionOrder.get(right.id) ?? Number.MAX_SAFE_INTEGER);
+      }
+
+      const leftRank =
+        left.id === recommendedMaterialOption?.id
+          ? 0
+          : completionMap.has(left.id)
+            ? 3
+            : favoriteGroupIdSet.has(left.id)
+              ? 1
+              : 2;
+      const rightRank =
+        right.id === recommendedMaterialOption?.id
+          ? 0
+          : completionMap.has(right.id)
+            ? 3
+            : favoriteGroupIdSet.has(right.id)
+              ? 1
+              : 2;
+
+      if (leftRank !== rightRank) {
+        return leftRank - rightRank;
+      }
+
+      return left.label.localeCompare(right.label);
+    });
+  }, [
+    completionMap,
+    completionOrder,
+    favoriteGroupIdSet,
+    favoriteOrder,
+    historyMap,
+    historyOrder,
+    incompleteMaterialOptions.length,
+    libraryFilter,
+    librarySearch,
+    materialOptions,
+    recommendedMaterialOption,
+  ]);
 
   const sentenceSegments = useMemo(
     () => buildListeningSentenceSegments(activeMaterial),
@@ -161,8 +354,16 @@ export function ListeningFeedbackForm({
     nextMode: ListeningContentMode,
     nextMajor: DIICSUMajorId,
     nextAccent: ListeningAccent,
+    nextMaterialGroupId?: string,
+    nextView: ListeningWorkspaceView = "setup",
   ) {
-    const nextMaterial = getMaterialFromCatalog(catalog, nextMode, nextMajor, nextAccent);
+    const nextMaterial = getMaterialFromCatalog(
+      catalog,
+      nextMode,
+      nextMajor,
+      nextAccent,
+      nextMaterialGroupId,
+    );
 
     setNotes("");
     setTranscriptOpen(false);
@@ -170,22 +371,52 @@ export function ListeningFeedbackForm({
     setSubmitStatus("");
     setAttemptStartedAt(Date.now());
     setAnswers(buildAnswerState(nextMaterial.questions.map((question) => question.id)));
-    setActiveView("setup");
+    setActiveView(nextView);
   }
 
   function handleModeChange(nextMode: ListeningContentMode) {
+    const nextMaterialGroupId = getListeningMaterialOptions(catalog, nextMode, selectedMajor)[0]?.id;
+
     setSelectedMode(nextMode);
-    resetAttempt(nextMode, selectedMajor, selectedAccent);
+    if (nextMaterialGroupId) {
+      setSelectedMaterialGroupId(nextMaterialGroupId);
+    }
+    resetAttempt(nextMode, selectedMajor, selectedAccent, nextMaterialGroupId);
   }
 
   function handleMajorChange(nextMajor: DIICSUMajorId) {
+    const nextMaterialGroupId = getListeningMaterialOptions(catalog, selectedMode, nextMajor)[0]?.id;
+
     setSelectedMajor(nextMajor);
-    resetAttempt(selectedMode, nextMajor, selectedAccent);
+    if (nextMaterialGroupId) {
+      setSelectedMaterialGroupId(nextMaterialGroupId);
+    }
+    resetAttempt(selectedMode, nextMajor, selectedAccent, nextMaterialGroupId);
   }
 
   function handleAccentChange(nextAccent: ListeningAccent) {
     setSelectedAccent(nextAccent);
-    resetAttempt(selectedMode, selectedMajor, nextAccent);
+    resetAttempt(selectedMode, selectedMajor, nextAccent, activeMaterial.materialGroupId);
+  }
+
+  function handleMaterialGroupChange(
+    nextMaterialGroupId: string,
+    nextView: ListeningWorkspaceView = "setup",
+  ) {
+    setSelectedMaterialGroupId(nextMaterialGroupId);
+    resetAttempt(selectedMode, selectedMajor, selectedAccent, nextMaterialGroupId, nextView);
+  }
+
+  function handleNextMaterial() {
+    if (!nextMaterialOption) {
+      return;
+    }
+
+    handleMaterialGroupChange(nextMaterialOption.id, "studio");
+  }
+
+  function handleFavoriteToggle(groupId: string) {
+    toggleListeningFavoriteInStorage(groupId);
   }
 
   function handleAnswerChange(questionId: string, value: string) {
@@ -250,6 +481,37 @@ export function ListeningFeedbackForm({
     resetListening();
   }, [selectedSentenceIndex, resetListening]);
 
+  useEffect(() => {
+    if (!materialOptions.some((option) => option.id === selectedMaterialGroupId)) {
+      const fallbackMaterialGroupId = materialOptions[0]?.id;
+
+      if (fallbackMaterialGroupId) {
+        setSelectedMaterialGroupId(fallbackMaterialGroupId);
+      }
+    }
+  }, [materialOptions, selectedMaterialGroupId]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+
+    if (audio) {
+      audio.playbackRate = playbackRate;
+    }
+  }, [activeMaterial.id, playbackRate]);
+
+  useEffect(() => {
+    if (activeView === "setup") {
+      return;
+    }
+
+    if (recordedHistoryGroupIdsRef.current.has(activeMaterial.materialGroupId)) {
+      return;
+    }
+
+    recordedHistoryGroupIdsRef.current.add(activeMaterial.materialGroupId);
+    recordListeningHistoryInStorage(activeMaterial.materialGroupId);
+  }, [activeMaterial.materialGroupId, activeView]);
+
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
     setIsScoring(true);
@@ -259,6 +521,11 @@ export function ListeningFeedbackForm({
       const nextResult = scoreListeningMaterial(activeMaterial, answers, notes, targetLevel);
       setResult(nextResult);
       setActiveView("review");
+      recordListeningCompletionInStorage(
+        activeMaterial.materialGroupId,
+        nextResult.overallScore,
+        nextResult.passed,
+      );
 
       const durationSec = Math.max(45, Math.round((Date.now() - attemptStartedAt) / 1000));
       fetch("/api/attempts", {
@@ -291,32 +558,167 @@ export function ListeningFeedbackForm({
   }
 
   const renderSetupView = () => (
-    <section className="grid gap-5 xl:grid-cols-[1.02fr_0.98fr]">
+    <section className="grid gap-5 xl:grid-cols-[0.94fr_1.06fr]">
       <article className="rounded-[1.85rem] border border-[rgba(20,50,75,0.12)] bg-[linear-gradient(145deg,rgba(255,255,255,0.9),rgba(239,245,252,0.82))] p-5 shadow-[0_18px_48px_rgba(18,32,52,0.06)]">
         <p className="section-label">
-          <Target className="size-3.5" /> Session setup
+          <Target className="size-3.5" /> Route command center
         </p>
         <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
-          Start with one clear listening route.
+          Launch a listening route with library-level control.
         </h3>
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">
+          This setup page now works like a real content hub: save strong materials, reopen recent work,
+          and move straight into the studio with a clear recommendation.
+        </p>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
           <div className="rounded-[1.25rem] border border-[rgba(20,50,75,0.12)] bg-white/84 p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
-              Current route
+              Route library
             </p>
-            <p className="mt-2 text-lg font-semibold text-[var(--ink)]">
-              {activeMaterial.majorLabel} · {activeMode?.label}
-            </p>
-            <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">{activeMajor?.focus}</p>
+            <p className="mt-2 text-2xl font-semibold text-[var(--ink)]">{materialOptions.length}</p>
+            <p className="mt-1 text-xs leading-6 text-[var(--ink-soft)]">Curated materials in this route</p>
           </div>
           <div className="rounded-[1.25rem] border border-[rgba(20,50,75,0.12)] bg-white/84 p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
-              Delivery profile
+              Saved
             </p>
-            <p className="mt-2 text-lg font-semibold text-[var(--ink)]">
-              {isTedMode ? "Official TED delivery" : activeMaterial.accentLabel}
+            <p className="mt-2 text-2xl font-semibold text-[var(--ink)]">{routeFavoriteCount}</p>
+            <p className="mt-1 text-xs leading-6 text-[var(--ink-soft)]">Favorites ready for quick return</p>
+          </div>
+          <div className="rounded-[1.25rem] border border-[rgba(20,50,75,0.12)] bg-white/84 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
+              Completed
             </p>
-            <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">{activeMaterial.accentHint}</p>
+            <p className="mt-2 text-2xl font-semibold text-[var(--ink)]">{routeCompletedCount}</p>
+            <p className="mt-1 text-xs leading-6 text-[var(--ink-soft)]">Materials with a stored score</p>
+          </div>
+        </div>
+
+        <div className="mt-5 rounded-[1.3rem] border border-[rgba(20,50,75,0.12)] bg-white/84 p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
+                Active route
+              </p>
+              <p className="mt-2 text-lg font-semibold text-[var(--ink)]">
+                {activeMaterial.majorLabel} · {activeMode?.label}
+              </p>
+              <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">{activeMajor?.focus}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleFavoriteToggle(activeMaterial.materialGroupId)}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all",
+                isActiveMaterialFavorite
+                  ? "border-[#7b4b14] bg-[#7b4b14] text-white"
+                  : "border-[rgba(20,50,75,0.16)] bg-white text-[var(--ink)]",
+              )}
+            >
+              <Star className={cn("size-4", isActiveMaterialFavorite ? "fill-current" : "")} />
+              {isActiveMaterialFavorite ? "Saved" : "Save route"}
+            </button>
+          </div>
+
+          <div className="mt-4 rounded-[1.2rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.92)] p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
+                  Selected material
+                </p>
+                <p className="mt-2 text-lg font-semibold text-[var(--ink)]">
+                  {activeMaterial.materialGroupLabel}
+                </p>
+              </div>
+              <div className="rounded-full border border-[rgba(20,50,75,0.12)] bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+                {isTedMode ? "Official TED source" : activeMaterial.accentLabel}
+              </div>
+            </div>
+            <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">{activeMaterial.title}</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--ink)]">
+                {activeMaterial.durationLabel}
+              </span>
+              <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--ink)]">
+                Level {activeMaterial.recommendedLevel}
+              </span>
+              {activeMaterialCompletion ? (
+                <span className="rounded-full border border-[#6a9483]/35 bg-[#edf6f1] px-3 py-1.5 text-xs font-semibold text-[#315f4f]">
+                  Best score {activeMaterialCompletion.bestScore}/10
+                </span>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-[1.25rem] border border-[rgba(20,50,75,0.12)] bg-white/82 p-4">
+            <div className="flex items-start gap-3">
+              <div className="inline-flex size-10 items-center justify-center rounded-2xl bg-[rgba(226,237,249,0.84)] text-[var(--navy)]">
+                <Clock3 className="size-4" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
+                  Continue learning
+                </p>
+                {continueMaterialOption ? (
+                  <>
+                    <p className="mt-2 text-sm font-semibold text-[var(--ink)]">
+                      {continueMaterialOption.label}
+                    </p>
+                    <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">
+                      Opened {continueEntry?.viewCount ?? 1} times in this route. Resume from the studio workspace.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => handleMaterialGroupChange(continueMaterialOption.id, "studio")}
+                      className="mt-4 inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white px-4 py-2 text-sm font-semibold text-[var(--ink)]"
+                    >
+                      <ArrowRight className="size-4" />
+                      Resume
+                    </button>
+                  </>
+                ) : (
+                  <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">
+                    No recent item yet. Open any material once and this block will become your quick return point.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[1.25rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,249,239,0.84)] p-4">
+            <div className="flex items-start gap-3">
+              <div className="inline-flex size-10 items-center justify-center rounded-2xl bg-[#fff2d8] text-[#7b4b14]">
+                <Sparkles className="size-4" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
+                  Recommended next
+                </p>
+                {recommendedMaterialOption ? (
+                  <>
+                    <p className="mt-2 text-sm font-semibold text-[var(--ink)]">
+                      {recommendedMaterialOption.label}
+                    </p>
+                    <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">
+                      {completionMap.has(recommendedMaterialOption.id)
+                        ? "Everything in this route has already been attempted, so keep sharpening the current route."
+                        : "This material is still incomplete, so it is the best next step for forward progress."}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => handleMaterialGroupChange(recommendedMaterialOption.id, "studio")}
+                      className="mt-4 inline-flex items-center gap-2 rounded-full bg-[var(--navy)] px-4 py-2 text-sm font-semibold text-[#f7efe3]"
+                    >
+                      <ArrowRight className="size-4" />
+                      Open recommended
+                    </button>
+                  </>
+                ) : null}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -350,29 +752,206 @@ export function ListeningFeedbackForm({
       </article>
 
       <article className="rounded-[1.85rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.82)] p-5 shadow-[0_18px_48px_rgba(18,32,52,0.06)]">
-        <p className="section-label">Preview panel</p>
-        <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
-          What this listening block trains.
-        </h3>
-        <div className="mt-5 grid gap-3">
-          {activeMaterial.notePrompts.map((item, index) => (
-            <div
-              key={item}
-              className="rounded-[1.2rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.86)] p-4"
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="section-label">Material library</p>
+            <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
+              Search, filter, and launch curated listening materials.
+            </h3>
+          </div>
+          <div className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.92)] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+            {filteredMaterialOptions.length} visible
+          </div>
+        </div>
+
+        <div className="mt-5 flex flex-wrap gap-2">
+          {listeningLibraryFilters.map((filter) => (
+            <button
+              key={filter.id}
+              type="button"
+              onClick={() => setLibraryFilter(filter.id)}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all",
+                libraryFilter === filter.id
+                  ? "border-[var(--navy)] bg-[var(--navy)] text-[#f7efe3]"
+                  : "border-[rgba(20,50,75,0.16)] bg-white text-[var(--ink)]",
+              )}
             >
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
-                Prompt {index + 1}
-              </p>
-              <p className="mt-2 text-sm leading-7 text-[var(--ink)]">{item}</p>
-            </div>
+              {filter.label}
+              <span
+                className={cn(
+                  "rounded-full px-2 py-0.5 text-xs",
+                  libraryFilter === filter.id
+                    ? "bg-white/12 text-[#f7efe3]"
+                    : "bg-[rgba(226,237,249,0.84)] text-[var(--ink-soft)]",
+                )}
+              >
+                {routeFilterCounts[filter.id]}
+              </span>
+            </button>
           ))}
+        </div>
+
+        <label className="mt-5 grid gap-2 text-sm font-medium text-[var(--ink)]">
+          Search this route
+          <span className="relative block">
+            <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[var(--ink-soft)]" />
+            <input
+              type="text"
+              value={librarySearch}
+              onChange={(event) => setLibrarySearch(event.target.value)}
+              placeholder="Search by topic, scenario, level, or duration"
+              className="w-full rounded-[1.15rem] border border-[rgba(20,50,75,0.14)] bg-[rgba(247,250,252,0.9)] py-3 pl-11 pr-4 text-sm outline-none"
+            />
+          </span>
+        </label>
+
+        <div className="mt-5 grid gap-3 max-h-[52rem] overflow-y-auto pr-1">
+          {filteredMaterialOptions.length > 0 ? (
+            filteredMaterialOptions.map((option) => {
+              const isActive = option.id === activeMaterial.materialGroupId;
+              const optionMaterial = getMaterialFromCatalog(
+                catalog,
+                selectedMode,
+                selectedMajor,
+                selectedAccent,
+                option.id,
+              );
+              const optionCompletion = completionMap.get(option.id);
+              const optionHistory = historyMap.get(option.id);
+              const isFavorite = favoriteGroupIdSet.has(option.id);
+              const isRecommended = option.id === recommendedMaterialOption?.id;
+
+              return (
+                <article
+                  key={option.id}
+                  className={cn(
+                    "rounded-[1.25rem] border p-4 transition-all",
+                    isActive
+                      ? "border-[var(--navy)] bg-[rgba(226,237,249,0.84)] shadow-[0_14px_28px_rgba(28,78,149,0.08)]"
+                      : "border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.86)]",
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <div className="flex flex-wrap gap-2">
+                        {isRecommended ? (
+                          <span className="rounded-full border border-[#d88e34]/35 bg-[#fff4e4] px-3 py-1 text-xs font-semibold text-[#7b4b14]">
+                            Recommended
+                          </span>
+                        ) : null}
+                        {isFavorite ? (
+                          <span className="rounded-full border border-[#7b4b14]/20 bg-[#fff2d8] px-3 py-1 text-xs font-semibold text-[#7b4b14]">
+                            Saved
+                          </span>
+                        ) : null}
+                        {optionHistory ? (
+                          <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-white px-3 py-1 text-xs font-semibold text-[var(--ink-soft)]">
+                            Recent
+                          </span>
+                        ) : null}
+                        {optionCompletion ? (
+                          <span className="rounded-full border border-[#6a9483]/35 bg-[#edf6f1] px-3 py-1 text-xs font-semibold text-[#315f4f]">
+                            Completed
+                          </span>
+                        ) : null}
+                      </div>
+                      <h4 className="mt-3 text-lg font-semibold text-[var(--ink)]">{option.label}</h4>
+                      <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">{optionMaterial.title}</p>
+                      <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">{option.summary}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleFavoriteToggle(option.id)}
+                      className={cn(
+                        "inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition-all",
+                        isFavorite
+                          ? "border-[#7b4b14] bg-[#7b4b14] text-white"
+                          : "border-[rgba(20,50,75,0.16)] bg-white text-[var(--ink)]",
+                      )}
+                    >
+                      <Star className={cn("size-4", isFavorite ? "fill-current" : "")} />
+                    </button>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-[1.05rem] border border-[rgba(20,50,75,0.12)] bg-white/86 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+                        Duration
+                      </p>
+                      <p className="mt-2 text-sm font-semibold text-[var(--ink)]">{option.durationLabel}</p>
+                    </div>
+                    <div className="rounded-[1.05rem] border border-[rgba(20,50,75,0.12)] bg-white/86 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+                        Level
+                      </p>
+                      <p className="mt-2 text-sm font-semibold text-[var(--ink)]">{option.recommendedLevel}</p>
+                    </div>
+                    <div className="rounded-[1.05rem] border border-[rgba(20,50,75,0.12)] bg-white/86 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+                        Library signal
+                      </p>
+                      <p className="mt-2 text-sm font-semibold text-[var(--ink)]">
+                        {optionCompletion
+                          ? `Best ${optionCompletion.bestScore}/10`
+                          : optionHistory
+                            ? `${optionHistory.viewCount} visits`
+                            : "New material"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleMaterialGroupChange(option.id)}
+                      className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white px-4 py-2 text-sm font-semibold text-[var(--ink)]"
+                    >
+                      {isActive ? "Current selection" : "Preview"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleMaterialGroupChange(option.id, "studio")}
+                      className="inline-flex items-center gap-2 rounded-full bg-[var(--navy)] px-4 py-2 text-sm font-semibold text-[#f7efe3]"
+                    >
+                      <ArrowRight className="size-4" />
+                      {optionCompletion
+                        ? "Practice again"
+                        : optionHistory
+                          ? "Continue in studio"
+                          : "Open studio"}
+                    </button>
+                  </div>
+                </article>
+              );
+            })
+          ) : (
+            <div className="rounded-[1.25rem] border border-dashed border-[rgba(20,50,75,0.16)] bg-[rgba(247,250,252,0.86)] p-6 text-center">
+              <p className="text-sm font-semibold text-[var(--ink)]">No materials match this filter yet.</p>
+              <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">
+                Try another filter or clear the search box to reopen the full DIICSU route library.
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="mt-5 rounded-[1.2rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,249,239,0.84)] p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
-            Follow-up task
+            Route training prompts
           </p>
-          <p className="mt-2 text-sm leading-7 text-[var(--ink)]">{activeMaterial.followUpTask}</p>
+          <div className="mt-3 grid gap-3">
+            {activeMaterial.notePrompts.map((item, index) => (
+              <div
+                key={item}
+                className="rounded-[1.1rem] border border-[rgba(20,50,75,0.12)] bg-white/80 p-4"
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+                  Prompt {index + 1}
+                </p>
+                <p className="mt-2 text-sm leading-7 text-[var(--ink)]">{item}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </article>
     </section>
@@ -394,10 +973,42 @@ export function ListeningFeedbackForm({
                 ? `${activeMaterial.speakerName} · ${activeMaterial.speakerRole}`
                 : activeMaterial.speakerRole}
             </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {isActiveMaterialFavorite ? (
+                <span className="rounded-full border border-[#7b4b14]/20 bg-[#fff2d8] px-3 py-1.5 text-xs font-semibold text-[#7b4b14]">
+                  Saved to library
+                </span>
+              ) : null}
+              {activeMaterialHistory ? (
+                <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-white/84 px-3 py-1.5 text-xs font-semibold text-[var(--ink-soft)]">
+                  {activeMaterialHistory.viewCount} visits
+                </span>
+              ) : null}
+              {activeMaterialCompletion ? (
+                <span className="rounded-full border border-[#6a9483]/35 bg-[#edf6f1] px-3 py-1.5 text-xs font-semibold text-[#315f4f]">
+                  Best score {activeMaterialCompletion.bestScore}/10
+                </span>
+              ) : null}
+            </div>
           </div>
-          <div className="rounded-[1.1rem] bg-[var(--navy)] px-3 py-2 text-right text-xs font-semibold uppercase tracking-[0.18em] text-[#f7efe3]">
-            <div>{isTedMode ? "TED listening" : activeMaterial.accentLabel}</div>
-            <div className="mt-1 opacity-80">{activeMaterial.durationLabel}</div>
+          <div className="flex flex-col items-end gap-2">
+            <button
+              type="button"
+              onClick={() => handleFavoriteToggle(activeMaterial.materialGroupId)}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all",
+                isActiveMaterialFavorite
+                  ? "border-[#7b4b14] bg-[#7b4b14] text-white"
+                  : "border-[rgba(20,50,75,0.16)] bg-white text-[var(--ink)]",
+              )}
+            >
+              <Star className={cn("size-4", isActiveMaterialFavorite ? "fill-current" : "")} />
+              {isActiveMaterialFavorite ? "Saved" : "Save"}
+            </button>
+            <div className="rounded-[1.1rem] bg-[var(--navy)] px-3 py-2 text-right text-xs font-semibold uppercase tracking-[0.18em] text-[#f7efe3]">
+              <div>{isTedMode ? "TED listening" : activeMaterial.accentLabel}</div>
+              <div className="mt-1 opacity-80">{activeMaterial.durationLabel}</div>
+            </div>
           </div>
         </div>
 
@@ -413,6 +1024,47 @@ export function ListeningFeedbackForm({
               Focus
             </p>
             <p className="mt-2 text-sm leading-7 text-[var(--ink)]">{activeMaterial.supportFocus}</p>
+          </div>
+        </div>
+
+        <div className="mt-5 rounded-[1.3rem] border border-[rgba(20,50,75,0.14)] bg-white/82 p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
+                Material switch
+              </p>
+              <p className="mt-2 text-sm leading-7 text-[var(--ink)]">
+                Change to another DIICSU listening brief without leaving the studio flow.
+              </p>
+            </div>
+            {nextMaterialOption ? (
+              <button
+                type="button"
+                onClick={handleNextMaterial}
+                className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white px-4 py-2 text-sm font-semibold text-[var(--ink)]"
+              >
+                <ArrowRight className="size-4" />
+                Next material
+              </button>
+            ) : null}
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {materialOptions.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => handleMaterialGroupChange(option.id, "studio")}
+                className={cn(
+                  "rounded-full border px-4 py-2 text-sm font-semibold transition-all",
+                  option.id === activeMaterial.materialGroupId
+                    ? "border-[var(--navy)] bg-[var(--navy)] text-[#f7efe3]"
+                    : "border-[rgba(20,50,75,0.16)] bg-white text-[var(--ink)] hover:border-[var(--navy)] hover:text-[var(--navy)]",
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -515,6 +1167,27 @@ export function ListeningFeedbackForm({
                   Open audio file
                 </a>
               ) : null}
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
+                Playback speed
+              </span>
+              {playbackRates.map((rate) => (
+                <button
+                  key={rate}
+                  type="button"
+                  onClick={() => setPlaybackRate(rate)}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-xs font-semibold transition-all",
+                    playbackRate === rate
+                      ? "border-[#7b4b14] bg-[#7b4b14] text-white"
+                      : "border-[rgba(20,50,75,0.16)] bg-white text-[var(--ink)]",
+                  )}
+                >
+                  {rate}x
+                </button>
+              ))}
             </div>
           </div>
         )}
@@ -1196,7 +1869,7 @@ export function ListeningFeedbackForm({
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-[1.25rem] border border-[rgba(20,50,75,0.12)] bg-white/78 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
                 Current page
@@ -1218,6 +1891,12 @@ export function ListeningFeedbackForm({
               <p className="mt-2 text-sm font-semibold leading-6 text-[var(--ink)]">
                 {activeMaterial.majorLabel} · {activeMode?.label}
               </p>
+            </div>
+            <div className="rounded-[1.25rem] border border-[rgba(20,50,75,0.12)] bg-white/78 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+                Saved in route
+              </p>
+              <p className="mt-2 text-lg font-semibold text-[var(--ink)]">{routeFavoriteCount}</p>
             </div>
           </div>
         </section>
@@ -1348,7 +2027,7 @@ export function ListeningFeedbackForm({
               </div>
             </div>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <div className="rounded-[1.15rem] border border-[rgba(20,50,75,0.12)] bg-white/84 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
                   Duration
@@ -1367,6 +2046,15 @@ export function ListeningFeedbackForm({
                 </p>
                 <p className="mt-2 text-sm font-semibold text-[var(--ink)]">
                   {answeredCount}/{totalQuestions} answered
+                </p>
+              </div>
+              <div className="rounded-[1.15rem] border border-[rgba(20,50,75,0.12)] bg-white/84 p-4">
+                <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+                  <Trophy className="size-3.5" />
+                  Best score
+                </p>
+                <p className="mt-2 text-sm font-semibold text-[var(--ink)]">
+                  {activeMaterialCompletion ? `${activeMaterialCompletion.bestScore}/10` : "New route"}
                 </p>
               </div>
             </div>

@@ -34,6 +34,8 @@ export interface ListeningQuestion {
 export interface ListeningMaterial {
   id: string;
   contentMode: ListeningContentMode;
+  materialGroupId: string;
+  materialGroupLabel: string;
   majorId: DIICSUMajorId;
   majorLabel: string;
   accent: ListeningAccent;
@@ -99,6 +101,15 @@ export interface ShadowingScoreResult {
   note: string;
 }
 
+export interface ListeningMaterialOption {
+  id: string;
+  label: string;
+  summary: string;
+  durationLabel: string;
+  recommendedLevel: CEFRLevel;
+  contentMode: ListeningContentMode;
+}
+
 interface AccentVariant {
   title: string;
   source: string;
@@ -112,6 +123,8 @@ interface AccentVariant {
 }
 
 interface ListeningBlueprint {
+  groupId: string;
+  groupLabel: string;
   majorId: DIICSUMajorId;
   scenario: string;
   notePrompts: string[];
@@ -177,6 +190,8 @@ export const listeningAccents = [
 
 const listeningBlueprints: ListeningBlueprint[] = [
   {
+    groupId: "civil-engineering",
+    groupLabel: "Drainage inspection",
     majorId: "civil-engineering",
     scenario: "Field-briefing listening for drainage inspection and retaining-wall risk.",
     notePrompts: [
@@ -266,6 +281,8 @@ const listeningBlueprints: ListeningBlueprint[] = [
     },
   },
   {
+    groupId: "mathematics",
+    groupLabel: "Sampling bias",
     majorId: "mathematics",
     scenario: "Statistics-listening practice on sampling bias and interpretation.",
     notePrompts: [
@@ -355,6 +372,8 @@ const listeningBlueprints: ListeningBlueprint[] = [
     },
   },
   {
+    groupId: "computing-science",
+    groupLabel: "Caching sprint review",
     majorId: "computing-science",
     scenario: "Sprint-review listening on debugging, memory use, and repository history.",
     notePrompts: [
@@ -444,6 +463,8 @@ const listeningBlueprints: ListeningBlueprint[] = [
     },
   },
   {
+    groupId: "mechanical-engineering",
+    groupLabel: "Heat exchanger lab",
     majorId: "mechanical-engineering",
     scenario: "Lab-briefing listening on heat transfer, measurement, and safety procedure.",
     notePrompts: [
@@ -533,6 +554,8 @@ const listeningBlueprints: ListeningBlueprint[] = [
     },
   },
   {
+    groupId: "mechanical-engineering-transportation",
+    groupLabel: "Bus corridor simulation",
     majorId: "mechanical-engineering-transportation",
     scenario: "Transport-systems listening for route simulation, reliability, and delay spread.",
     notePrompts: [
@@ -621,6 +644,486 @@ const listeningBlueprints: ListeningBlueprint[] = [
       },
     },
   },
+  {
+    groupId: "civil-engineering-load-testing",
+    groupLabel: "Bridge load test",
+    majorId: "civil-engineering",
+    scenario:
+      "Site-briefing listening on bridge load testing, deflection measurement, and temporary safety limits.",
+    notePrompts: [
+      "What is the purpose of the load test?",
+      "Which span should the team measure first?",
+      "Which caution signpost phrase did you hear?",
+      "Which structural term should go into your notes?",
+    ],
+    vocabulary: [
+      { term: "deflection", definition: "the amount a structure bends or moves under load" },
+      { term: "strain gauge", definition: "a sensor used to measure deformation or strain" },
+      { term: "baseline", definition: "the reference reading used for later comparison" },
+    ],
+    questions: [
+      {
+        id: "gist",
+        prompt: "What is the main purpose of the bridge briefing?",
+        placeholder: "Write the main task in one sentence.",
+        modelAnswer:
+          "The speaker explains a bridge load test to measure deflection under a controlled load.",
+        rubricNote: "State both the structure and the measurement goal.",
+        matchGroups: [["bridge", "load test", "trial load"], ["deflection", "measure", "reading"]],
+      },
+      {
+        id: "detail",
+        prompt: "Which part of the bridge should the team measure first?",
+        placeholder: "Name the location or span.",
+        modelAnswer: "The team should begin at midspan on span two.",
+        rubricNote: "Location detail matters because it controls the testing sequence.",
+        matchGroups: [["midspan", "span two", "second span"]],
+      },
+      {
+        id: "signpost",
+        prompt: "Which phrase warned the team before the test sequence started?",
+        placeholder: "Write the warning phrase.",
+        modelAnswer: "The warning phrase is 'before we begin' or 'before we start'.",
+        rubricNote: "Procedure signposts help you catch the shift from setup to action.",
+        matchGroups: [["before we begin", "before we start", "before we load"]],
+      },
+      {
+        id: "term",
+        prompt: "Which structural term describes how much the bridge bends under the load?",
+        placeholder: "Write one technical term.",
+        modelAnswer: "The correct term is 'deflection'.",
+        rubricNote: "This term is central when you compare observed and design values.",
+        matchGroups: [["deflection"]],
+      },
+    ],
+    followUpTask:
+      "Use your notes to write a short bridge-test summary explaining the measurement point, the controlled load, and the safety decision.",
+    variants: {
+      british: {
+        title: "Bridge load-test measurement briefing",
+        source: "Civil Engineering structures lab briefing",
+        speakerRole: "British structures tutor",
+        transcript:
+          "During this morning's bridge load test, your team will begin at midspan on span two, where the trial lorry should produce the clearest deflection reading. Before we begin, check that the strain gauges are fixed correctly and that yesterday's baseline figures are visible on your sheet. The purpose of the exercise is not to prove the bridge is unsafe. It is to compare the measured deflection with the design allowance under a controlled load. First, record the unloaded value. Then take a second reading once the vehicle is in position. If the difference is larger than expected, do not repeat the run immediately. Report the figure to the supervisor so we can decide whether the support condition or the sensor placement needs another inspection.",
+        recommendedLevel: "B1",
+        durationLabel: "75-90 sec",
+        supportFocus:
+          "Track the testing purpose, measurement point, and one structural term while listening.",
+        audioVoice: "Daniel (英语（英国）)",
+        voiceLocales: ["en-GB", "en-IE"],
+      },
+      american: {
+        title: "Controlled load reading plan",
+        source: "Civil Engineering field-testing talk",
+        speakerRole: "American instructor",
+        transcript:
+          "During today's bridge load test, your group should start at midspan on span two, because that position gives us the clearest deflection reading from the trial truck. Before we start, make sure the strain gauges are attached correctly and that the baseline numbers from yesterday are on your worksheet. The goal is not to show that the bridge is failing. The goal is to compare the measured deflection with the design limit under a controlled load. First, write down the unloaded reading. Then take a second reading when the vehicle is fully in place. If the difference is larger than expected, do not repeat the test right away. Report the value first so we can check the support condition and the sensor location.",
+        recommendedLevel: "A2",
+        durationLabel: "75-90 sec",
+        supportFocus:
+          "Catch the measurement order and the reason the team pauses before repeating the test.",
+        audioVoice: "Samantha",
+        voiceLocales: ["en-US"],
+      },
+      global: {
+        title: "Span-two deflection briefing",
+        source: "International structures project briefing",
+        speakerRole: "Global English project lead",
+        transcript:
+          "For today's bridge test, please begin at midspan on span two, because the trial vehicle should give the clearest deflection reading at that point. Before we begin, confirm that the strain gauges are secured and that the baseline values from yesterday are ready in your notes. This exercise is not only about collecting numbers. It is about comparing the measured deflection with the allowed design value under a controlled load. First record the unloaded reading. Then take another reading when the vehicle is in the correct position. If the gap between the two readings is larger than expected, do not run the test again immediately. Report the result to the supervisor so we can review the support condition and the sensor setup.",
+        recommendedLevel: "B1",
+        durationLabel: "75-90 sec",
+        supportFocus:
+          "Practice international academic English while keeping the structure-test sequence clear.",
+        audioVoice: "Aman",
+        voiceLocales: ["en-IN", "en-AU", "en-NZ", "en-SG", "en-ZA"],
+      },
+    },
+  },
+  {
+    groupId: "mathematics-hypothesis-testing",
+    groupLabel: "Hypothesis test",
+    majorId: "mathematics",
+    scenario:
+      "Tutorial listening on hypothesis testing, significance level, and interpreting a p-value.",
+    notePrompts: [
+      "What decision is the class making?",
+      "Which threshold is being used?",
+      "Which rephrasing signpost phrase did you hear?",
+      "Which statistics term should stay in your notes?",
+    ],
+    vocabulary: [
+      { term: "null hypothesis", definition: "the starting claim that there is no real effect or difference" },
+      { term: "p-value", definition: "the probability measure used to judge evidence against the null hypothesis" },
+      { term: "significance level", definition: "the threshold used to decide whether a result is statistically significant" },
+    ],
+    questions: [
+      {
+        id: "gist",
+        prompt: "What is the lecturer asking the class to decide?",
+        placeholder: "Write the main statistical task in one sentence.",
+        modelAnswer:
+          "The class must decide whether the revision workshop really improved the quiz scores.",
+        rubricNote: "Summarize the decision, not only the method.",
+        matchGroups: [["workshop", "revision class", "quiz"], ["improve", "difference", "hypothesis", "test"]],
+      },
+      {
+        id: "detail",
+        prompt: "Which significance threshold does the class use?",
+        placeholder: "Write the number or percentage.",
+        modelAnswer: "The class uses the five percent level, or 0.05.",
+        rubricNote: "Threshold detail is central for correct interpretation.",
+        matchGroups: [["five percent", "5 percent", "0.05", "five"]],
+      },
+      {
+        id: "signpost",
+        prompt: "Which phrase did the lecturer use to restate the idea more simply?",
+        placeholder: "Write the rephrasing phrase.",
+        modelAnswer: "The lecturer uses a phrase like 'in other words' or 'to put it simply'.",
+        rubricNote: "Rephrasing signposts often explain a formula in clearer everyday language.",
+        matchGroups: [["in other words", "to put it simply"]],
+      },
+      {
+        id: "term",
+        prompt: "Which term names the value used to judge the evidence against the null hypothesis?",
+        placeholder: "Write one technical term.",
+        modelAnswer: "The correct term is 'p-value'.",
+        rubricNote: "Save the exact term because it appears repeatedly in later statistics work.",
+        matchGroups: [["p-value", "p value"]],
+      },
+    ],
+    followUpTask:
+      "Turn your notes into a short explanation of how the p-value and significance level work together in the final decision.",
+    variants: {
+      british: {
+        title: "Hypothesis-testing workshop briefing",
+        source: "Mathematics tutorial explanation",
+        speakerRole: "British lecturer",
+        transcript:
+          "In today's statistics workshop, we are testing whether the revision class improved the mean quiz score. Start with the null hypothesis that the workshop made no real difference. We are using the five percent significance level, so your decision depends on whether the p-value falls below 0.05. In other words, the smaller the p-value, the stronger the evidence against the null hypothesis. Do not jump straight to a conclusion simply because the sample mean increased. First check the test result, then explain what the number means in plain language. Your notes should show the hypothesis, the threshold, and the final interpretation.",
+        recommendedLevel: "B1",
+        durationLabel: "65-80 sec",
+        supportFocus:
+          "Follow the decision sequence in a statistics explanation and catch the rephrasing signpost.",
+        audioVoice: "Daniel (英语（英国）)",
+        voiceLocales: ["en-GB", "en-IE"],
+      },
+      american: {
+        title: "P-value interpretation briefing",
+        source: "Mathematics classroom explanation",
+        speakerRole: "American lecturer",
+        transcript:
+          "In today's statistics workshop, we are testing whether the revision class improved the average quiz score. Begin with the null hypothesis that the workshop caused no real difference. We are using the five percent significance level, so the decision depends on whether the p-value is below 0.05. To put it simply, a smaller p-value gives stronger evidence against the null hypothesis. Do not decide too early just because the sample mean went up. First look at the test result, then explain what that number means in ordinary language. Your notes should include the hypothesis, the threshold, and the interpretation.",
+        recommendedLevel: "A2",
+        durationLabel: "65-80 sec",
+        supportFocus:
+          "Catch the key threshold and connect it to the plain-language meaning of the result.",
+        audioVoice: "Samantha",
+        voiceLocales: ["en-US"],
+      },
+      global: {
+        title: "Significance-level decision briefing",
+        source: "International mathematics workshop",
+        speakerRole: "Global English workshop tutor",
+        transcript:
+          "In this statistics session, we are checking whether the revision workshop really improved the mean quiz score. Begin with the null hypothesis that there was no real effect. We are using the five percent significance level, so the decision depends on whether the p-value is lower than 0.05. In other words, a smaller p-value means stronger evidence against the null hypothesis. Please do not move directly to the conclusion only because the average increased. First examine the test result, then explain the number in simple language. Your notes should include the hypothesis, the threshold, and the final interpretation.",
+        recommendedLevel: "B1",
+        durationLabel: "65-80 sec",
+        supportFocus:
+          "Practice international statistics listening without losing the logic of the final decision.",
+        audioVoice: "Aman",
+        voiceLocales: ["en-IN", "en-AU", "en-NZ", "en-SG", "en-ZA"],
+      },
+    },
+  },
+  {
+    groupId: "computing-science-deployment-rollback",
+    groupLabel: "Deployment rollback",
+    majorId: "computing-science",
+    scenario:
+      "Incident-response listening on deployment rollback, authentication failures, and log review.",
+    notePrompts: [
+      "What production issue is the team responding to?",
+      "Which service failed first?",
+      "Which urgent signpost phrase did you hear?",
+      "Which release-management term should go into your notes?",
+    ],
+    vocabulary: [
+      { term: "rollback", definition: "reverting a deployment to the last stable version" },
+      { term: "authentication", definition: "the process of verifying a user's identity" },
+      { term: "latency", definition: "the delay between a request and the system response" },
+    ],
+    questions: [
+      {
+        id: "gist",
+        prompt: "What is the main incident-response task?",
+        placeholder: "Describe the main task in one sentence.",
+        modelAnswer:
+          "The team needs to investigate login failures and prepare a rollback if the new release caused them.",
+        rubricNote: "Mention both the symptom and the release decision.",
+        matchGroups: [["login", "authentication"], ["rollback", "release", "deployment", "incident"]],
+      },
+      {
+        id: "detail",
+        prompt: "Which service should the team check first?",
+        placeholder: "Name the service or layer.",
+        modelAnswer: "The team should check the authentication gateway first.",
+        rubricNote: "Service detail matters because it guides the first log review.",
+        matchGroups: [["authentication gateway", "auth gateway", "authentication service"]],
+      },
+      {
+        id: "signpost",
+        prompt: "Which urgent phrase signalled the first short-term action?",
+        placeholder: "Write the urgent signpost phrase.",
+        modelAnswer: "The signpost phrase is 'for now'.",
+        rubricNote: "Short urgent markers often identify the first operational priority.",
+        matchGroups: [["for now", "right now", "immediately"]],
+      },
+      {
+        id: "term",
+        prompt: "Which term means returning the system to the previous stable release?",
+        placeholder: "Write one technical term.",
+        modelAnswer: "The correct term is 'rollback'.",
+        rubricNote: "Release-management vocabulary should stay exact for team communication.",
+        matchGroups: [["rollback"]],
+      },
+    ],
+    followUpTask:
+      "Use your notes to give a short spoken incident summary covering the symptom, affected service, and rollback decision.",
+    variants: {
+      british: {
+        title: "Authentication rollback incident briefing",
+        source: "Computing Science operations briefing",
+        speakerRole: "British module tutor",
+        transcript:
+          "Since the noon deployment, users have reported repeated login failures on the mobile app. For now, I want the team to focus on the authentication gateway rather than the payment service, because that is where the error rate increased first. The immediate task is to confirm whether the new token check added extra latency and blocked valid requests. Start by comparing the latest logs with the last stable release. If the rollback removes the errors, we can inspect the patch in a safer environment. Do not open another feature branch yet. Record the symptom, the affected service, and the release step that we may need to reverse before the client notices a wider outage.",
+        recommendedLevel: "B1",
+        durationLabel: "70-85 sec",
+        supportFocus:
+          "Catch the service name, short-term action, and release vocabulary in an incident update.",
+        audioVoice: "Daniel (英语（英国）)",
+        voiceLocales: ["en-GB", "en-IE"],
+      },
+      american: {
+        title: "Login failure rollback plan",
+        source: "Computing Science incident meeting",
+        speakerRole: "American instructor",
+        transcript:
+          "Since the noon deployment, users have reported repeated login failures in the mobile app. For now, the team should focus on the authentication gateway instead of the payment service, because that is where the error rate rose first. The immediate goal is to confirm whether the new token check added latency and blocked valid requests. Start by comparing the latest logs with the last stable release. If a rollback removes the errors, we can inspect the patch in a safer environment. Do not create another feature branch yet. Write down the symptom, the affected service, and the release step that may need to be reversed before the outage gets wider.",
+        recommendedLevel: "A2",
+        durationLabel: "70-85 sec",
+        supportFocus:
+          "Follow an incident-response sequence at moderate speed and capture the first action clearly.",
+        audioVoice: "Samantha",
+        voiceLocales: ["en-US"],
+      },
+      global: {
+        title: "Release rollback operations briefing",
+        source: "International software-team stand-up",
+        speakerRole: "Global English project mentor",
+        transcript:
+          "After the noon deployment, users started reporting repeated login failures in the mobile app. For now, please focus on the authentication gateway rather than the payment service, because that is where the error rate increased first. The immediate task is to check whether the new token validation added extra latency and blocked valid requests. Begin by comparing the latest logs with the previous stable release. If the rollback removes the problem, we can review the patch more safely in another environment. Do not open a new feature branch yet. Your notes should include the symptom, the affected service, and the release step we may need to reverse.",
+        recommendedLevel: "B1",
+        durationLabel: "70-85 sec",
+        supportFocus:
+          "Practice mixed-accent software operations English while keeping the response sequence clear.",
+        audioVoice: "Aman",
+        voiceLocales: ["en-IN", "en-AU", "en-NZ", "en-SG", "en-ZA"],
+      },
+    },
+  },
+  {
+    groupId: "mechanical-engineering-vibration-analysis",
+    groupLabel: "Vibration analysis",
+    majorId: "mechanical-engineering",
+    scenario:
+      "Lab-briefing listening on vibration analysis, bearing wear, and condition monitoring.",
+    notePrompts: [
+      "What abnormal behavior is the team checking?",
+      "Which component should be inspected first?",
+      "Which warning signpost phrase did you hear?",
+      "Which monitoring term should stay in your notes?",
+    ],
+    vocabulary: [
+      { term: "vibration amplitude", definition: "the size of the vibration signal being measured" },
+      { term: "bearing wear", definition: "damage or deterioration in a bearing caused by use" },
+      { term: "frequency spectrum", definition: "the distribution of vibration energy across different frequencies" },
+    ],
+    questions: [
+      {
+        id: "gist",
+        prompt: "What is the main purpose of the lab briefing?",
+        placeholder: "Write the main task in one sentence.",
+        modelAnswer:
+          "The team is checking abnormal vibration on the pump rig to judge whether it suggests bearing wear.",
+        rubricNote: "Summarize both the machine problem and the diagnostic aim.",
+        matchGroups: [["vibration", "pump rig"], ["bearing", "wear", "condition", "monitoring"]],
+      },
+      {
+        id: "detail",
+        prompt: "Which component should be checked first?",
+        placeholder: "Name the location or component.",
+        modelAnswer: "The team should begin with the front bearing housing.",
+        rubricNote: "Specific hardware detail guides the inspection order.",
+        matchGroups: [["front bearing housing", "front bearing"]],
+      },
+      {
+        id: "signpost",
+        prompt: "Which phrase warned students not to change parts too quickly?",
+        placeholder: "Write the warning phrase.",
+        modelAnswer: "The warning phrase is 'before you replace anything'.",
+        rubricNote: "Procedure warnings often tell you to verify data before taking action.",
+        matchGroups: [["before you replace anything", "before replacing anything"]],
+      },
+      {
+        id: "term",
+        prompt: "Which term describes the size of the vibration signal recorded by the sensor?",
+        placeholder: "Write one technical term.",
+        modelAnswer: "The correct term is 'vibration amplitude'.",
+        rubricNote: "This term helps connect the sensor reading to the maintenance decision.",
+        matchGroups: [["vibration amplitude", "amplitude"]],
+      },
+    ],
+    followUpTask:
+      "Use your notes to explain whether the rig shows temporary imbalance or a stronger sign of bearing wear.",
+    variants: {
+      british: {
+        title: "Pump-rig vibration briefing",
+        source: "Mechanical Engineering condition-monitoring lab",
+        speakerRole: "British lab tutor",
+        transcript:
+          "In this condition-monitoring lab, your group is investigating abnormal vibration on the pump rig after yesterday's endurance run. Begin with the front bearing housing, because that sensor showed the largest vibration amplitude during the final ten minutes. Before you replace anything, compare the new reading with the baseline data from last week. The purpose is to decide whether the change suggests bearing wear or only a temporary imbalance after shutdown. Record the amplitude and note any shift in the frequency spectrum. If both values move together, the maintenance team will need a closer inspection before the rig is used again.",
+        recommendedLevel: "B1",
+        durationLabel: "70-85 sec",
+        supportFocus:
+          "Track the inspection order and the diagnostic meaning of the vibration reading.",
+        audioVoice: "Daniel (英语（英国）)",
+        voiceLocales: ["en-GB", "en-IE"],
+      },
+      american: {
+        title: "Bearing-check vibration plan",
+        source: "Mechanical Engineering lab briefing",
+        speakerRole: "American instructor",
+        transcript:
+          "In this condition-monitoring lab, your team is checking abnormal vibration on the pump rig after yesterday's endurance run. Start with the front bearing housing, because that sensor showed the highest vibration amplitude during the last ten minutes. Before you replace anything, compare the new reading with the baseline data from last week. The goal is to decide whether the change points to bearing wear or only a temporary imbalance after shutdown. Record the amplitude and any shift in the frequency spectrum. If both values move together, the rig should get a closer inspection before it is used again.",
+        recommendedLevel: "A2",
+        durationLabel: "70-85 sec",
+        supportFocus:
+          "Catch the machine component, warning signpost, and diagnostic term at moderate speed.",
+        audioVoice: "Samantha",
+        voiceLocales: ["en-US"],
+      },
+      global: {
+        title: "Condition-monitoring vibration update",
+        source: "International mechanical lab session",
+        speakerRole: "Global English lab supervisor",
+        transcript:
+          "For this condition-monitoring task, your team is investigating abnormal vibration on the pump rig after yesterday's endurance run. Please begin with the front bearing housing, because that sensor produced the largest vibration amplitude during the final ten minutes. Before you replace anything, compare the new reading with the baseline data from last week. We want to decide whether the change suggests bearing wear or only a temporary imbalance after shutdown. Record the amplitude and any shift in the frequency spectrum. If both values change together, the maintenance team should inspect the rig more closely before it is used again.",
+        recommendedLevel: "B1",
+        durationLabel: "70-85 sec",
+        supportFocus:
+          "Practice international mechanical-engineering listening while preserving the diagnostic logic.",
+        audioVoice: "Aman",
+        voiceLocales: ["en-IN", "en-AU", "en-NZ", "en-SG", "en-ZA"],
+      },
+    },
+  },
+  {
+    groupId: "mechanical-engineering-transportation-rail-turnaround",
+    groupLabel: "Rail turnaround",
+    majorId: "mechanical-engineering-transportation",
+    scenario:
+      "Operations-briefing listening on rail turnaround time, platform occupancy, and delay recovery.",
+    notePrompts: [
+      "What station operation is being checked?",
+      "Which platform should the team review first?",
+      "Which constraint signpost phrase did you hear?",
+      "Which rail-operations term should go into your notes?",
+    ],
+    vocabulary: [
+      { term: "turnaround", definition: "the process of preparing a vehicle for its next service after arrival" },
+      { term: "platform occupancy", definition: "the period when a train is using a platform and blocking access for others" },
+      { term: "recovery margin", definition: "extra timetable time available to absorb small delays" },
+    ],
+    questions: [
+      {
+        id: "gist",
+        prompt: "What is the main task in the rail-operations briefing?",
+        placeholder: "Write the main task in one sentence.",
+        modelAnswer:
+          "The team must analyze how a short turnaround at the terminal creates late departures.",
+        rubricNote: "Mention both turnaround and the delay effect on the next service.",
+        matchGroups: [["turnaround", "terminal"], ["late departures", "delay", "rail", "service"]],
+      },
+      {
+        id: "detail",
+        prompt: "Which platform should the team examine first?",
+        placeholder: "Write the platform number.",
+        modelAnswer: "The team should start with platform 4.",
+        rubricNote: "Platform detail helps you follow where the main delay begins.",
+        matchGroups: [["platform 4", "platform four"]],
+      },
+      {
+        id: "signpost",
+        prompt: "Which phrase signalled the main operational bottleneck?",
+        placeholder: "Write the signpost phrase.",
+        modelAnswer: "The signpost phrase is 'the main constraint is'.",
+        rubricNote: "Constraint phrases often identify the real operational cause.",
+        matchGroups: [["the main constraint is", "main constraint"]],
+      },
+      {
+        id: "term",
+        prompt: "Which term describes preparing the train for its next departure after arrival?",
+        placeholder: "Write one technical term.",
+        modelAnswer: "The correct term is 'turnaround'.",
+        rubricNote: "This operations term is the key concept in the whole briefing.",
+        matchGroups: [["turnaround"]],
+      },
+    ],
+    followUpTask:
+      "Use your notes to explain why platform occupancy and turnaround should be analyzed separately in a rail timetable review.",
+    variants: {
+      british: {
+        title: "Rail-turnaround operations briefing",
+        source: "Transportation systems operations talk",
+        speakerRole: "British lecturer",
+        transcript:
+          "For today's rail-operations simulation, we are examining why late arrivals at the terminal quickly become late departures on the next service. Start with platform 4, where the morning T2 service loses most of its recovery margin. The main constraint is not line speed on the approach. It is the short turnaround between unloading, cleaning, and boarding the next passengers. In your notes, separate platform occupancy from the turnaround task itself. If a train remains on the platform too long, the next unit has no space to enter on time. Record the delay source, the platform number, and one change that might protect the timetable.",
+        recommendedLevel: "B1",
+        durationLabel: "70-85 sec",
+        supportFocus:
+          "Track the platform detail, operational bottleneck, and core timetable term.",
+        audioVoice: "Daniel (英语（英国）)",
+        voiceLocales: ["en-GB", "en-IE"],
+      },
+      american: {
+        title: "Terminal turnaround delay briefing",
+        source: "Transportation project meeting",
+        speakerRole: "American instructor",
+        transcript:
+          "In today's rail-operations simulation, we are checking why late arrivals at the terminal quickly turn into late departures on the next service. Start with platform 4, where the morning T2 service loses most of its recovery margin. The main constraint is not approach speed on the line. It is the short turnaround between unloading, cleaning, and boarding the next group of passengers. In your notes, keep platform occupancy separate from the turnaround task itself. If a train stays on the platform too long, the next unit cannot enter on time. Write down the delay source, the platform number, and one change that could protect the schedule.",
+        recommendedLevel: "A2",
+        durationLabel: "70-85 sec",
+        supportFocus:
+          "Catch the platform number and understand why turnaround is the main operational problem.",
+        audioVoice: "Samantha",
+        voiceLocales: ["en-US"],
+      },
+      global: {
+        title: "Platform-occupancy turnaround briefing",
+        source: "International transport-systems workshop",
+        speakerRole: "Global English transport tutor",
+        transcript:
+          "For this rail-operations task, we are examining why late arrivals at the terminal soon become late departures on the following service. Please start with platform 4, where the morning T2 service loses most of its recovery margin. The main constraint is not the speed on the approach line. It is the short turnaround between unloading, cleaning, and boarding the next passengers. In your notes, separate platform occupancy from the turnaround work itself. If one train stays on the platform too long, the next unit cannot enter on time. Record the delay source, the platform number, and one change that may protect the timetable.",
+        recommendedLevel: "B1",
+        durationLabel: "70-85 sec",
+        supportFocus:
+          "Practice international transport English while keeping the operations logic clear.",
+        audioVoice: "Aman",
+        voiceLocales: ["en-IN", "en-AU", "en-NZ", "en-SG", "en-ZA"],
+      },
+    },
+  },
 ];
 
 export const practiceListeningMaterials: ListeningMaterial[] = listeningBlueprints.flatMap((blueprint) => {
@@ -630,8 +1133,10 @@ export const practiceListeningMaterials: ListeningMaterial[] = listeningBlueprin
 
   return (Object.entries(blueprint.variants) as Array<[ListeningAccent, AccentVariant]>).map(
     ([accent, variant]) => ({
-      id: `${blueprint.majorId}-${accent}`,
+      id: `${blueprint.groupId}-${accent}`,
       contentMode: "practice",
+      materialGroupId: blueprint.groupId,
+      materialGroupLabel: blueprint.groupLabel,
       majorId: blueprint.majorId,
       majorLabel: major.label,
       accent,
@@ -650,7 +1155,7 @@ export const practiceListeningMaterials: ListeningMaterial[] = listeningBlueprin
       vocabulary: blueprint.vocabulary,
       questions: blueprint.questions,
       followUpTask: blueprint.followUpTask,
-      audioSrc: `/audio/listening/${blueprint.majorId}-${accent}.m4a`,
+      audioSrc: `/audio/listening/${blueprint.groupId}-${accent}.m4a`,
       audioVoice: variant.audioVoice,
       voiceLocales: variant.voiceLocales,
     }),
@@ -1000,6 +1505,8 @@ export const tedListeningMaterials: ListeningMaterial[] = tedListeningBlueprints
     {
       id: `ted-${blueprint.majorId}`,
       contentMode: "ted",
+      materialGroupId: `ted-${blueprint.majorId}`,
+      materialGroupLabel: blueprint.title,
       majorId: blueprint.majorId,
       majorLabel: major.label,
       accent: "global",
@@ -1048,25 +1555,94 @@ export const listeningModes = [
   },
 ] as const;
 
-export function getListeningMaterial(majorId: DIICSUMajorId, accent: ListeningAccent) {
-  const directMatch = practiceListeningMaterials.find(
-    (material) => material.majorId === majorId && material.accent === accent,
+export function getListeningMaterialOptions(
+  materials: ListeningMaterial[],
+  mode: ListeningContentMode,
+  majorId: DIICSUMajorId,
+) {
+  const options = new Map<string, ListeningMaterialOption>();
+  const filteredMaterials = materials.filter(
+    (material) => material.contentMode === mode && material.majorId === majorId,
+  );
+
+  for (const material of filteredMaterials) {
+    if (options.has(material.materialGroupId)) {
+      continue;
+    }
+
+    options.set(material.materialGroupId, {
+      id: material.materialGroupId,
+      label: material.materialGroupLabel,
+      summary: material.scenario,
+      durationLabel: material.durationLabel,
+      recommendedLevel: material.recommendedLevel,
+      contentMode: material.contentMode,
+    });
+  }
+
+  return Array.from(options.values());
+}
+
+export function getListeningMaterial(
+  majorId: DIICSUMajorId,
+  accent: ListeningAccent,
+  materialGroupId?: string,
+  materials: ListeningMaterial[] = practiceListeningMaterials,
+) {
+  const practiceCatalog = materials.filter((material) => material.contentMode === "practice");
+  const directMatch = practiceCatalog.find(
+    (material) =>
+      material.majorId === majorId &&
+      material.accent === accent &&
+      (materialGroupId ? material.materialGroupId === materialGroupId : true),
   );
 
   if (directMatch) return directMatch;
 
-  const fallback = practiceListeningMaterials[0];
+  const groupFallback =
+    materialGroupId
+      ? practiceCatalog.find(
+          (material) => material.majorId === majorId && material.materialGroupId === materialGroupId,
+        )
+      : undefined;
+
+  if (groupFallback) return groupFallback;
+
+  const majorAccentFallback = practiceCatalog.find(
+    (material) => material.majorId === majorId && material.accent === accent,
+  );
+
+  if (majorAccentFallback) return majorAccentFallback;
+
+  const majorFallback = practiceCatalog.find((material) => material.majorId === majorId);
+
+  if (majorFallback) return majorFallback;
+
+  const fallback = practiceCatalog[0];
   if (fallback) return fallback;
 
   throw new Error("Listening materials are not configured.");
 }
 
-export function getTedListeningMaterial(majorId: DIICSUMajorId) {
-  const directMatch = tedListeningMaterials.find((material) => material.majorId === majorId);
+export function getTedListeningMaterial(
+  majorId: DIICSUMajorId,
+  materialGroupId?: string,
+  materials: ListeningMaterial[] = tedListeningMaterials,
+) {
+  const tedCatalog = materials.filter((material) => material.contentMode === "ted");
+  const directMatch = tedCatalog.find(
+    (material) =>
+      material.majorId === majorId &&
+      (materialGroupId ? material.materialGroupId === materialGroupId : true),
+  );
 
   if (directMatch) return directMatch;
 
-  const fallback = tedListeningMaterials[0];
+  const majorFallback = tedCatalog.find((material) => material.majorId === majorId);
+
+  if (majorFallback) return majorFallback;
+
+  const fallback = tedCatalog[0];
   if (fallback) return fallback;
 
   throw new Error("TED listening materials are not configured.");

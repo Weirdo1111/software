@@ -88,16 +88,12 @@ function savePosts(posts: DiscussionPost[]) {
 }
 
 export function DiscussionBoard({ locale }: { locale: Locale }) {
-  const [posts, setPosts] = useState<DiscussionPost[]>([]);
+  const [posts, setPosts] = useState<DiscussionPost[]>(() => loadPosts());
   const [sort, setSort] = useState<"latest" | "popular">("latest");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [tag, setTag] = useState("General");
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    setPosts(loadPosts());
-  }, []);
 
   useEffect(() => {
     if (posts.length > 0) savePosts(posts);

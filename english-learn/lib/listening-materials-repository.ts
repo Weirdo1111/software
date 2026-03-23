@@ -4,6 +4,8 @@ import { createSupabaseServiceClient } from "@/lib/supabase/server";
 type ListeningMaterialRow = {
   code: string;
   content_mode: string;
+  material_group_id: string | null;
+  material_group_label: string | null;
   major_id: string;
   major_label: string;
   accent: string;
@@ -53,6 +55,8 @@ function mapRowToListeningMaterial(row: ListeningMaterialRow): ListeningMaterial
   return {
     id: row.code,
     contentMode: row.content_mode as ListeningMaterial["contentMode"],
+    materialGroupId: row.material_group_id ?? row.code,
+    materialGroupLabel: row.material_group_label ?? row.title,
     majorId: row.major_id as ListeningMaterial["majorId"],
     majorLabel: row.major_label,
     accent: row.accent as ListeningMaterial["accent"],
@@ -91,10 +95,11 @@ export async function getListeningMaterialsCatalog() {
   const { data, error } = await supabase
     .from("listening_materials")
     .select(
-      "code, content_mode, major_id, major_label, accent, accent_label, accent_hint, title, source, source_name, speaker_role, speaker_name, scenario, transcript, transcript_url, official_url, embed_url, recommended_level, duration_label, support_focus, note_prompts, vocabulary, questions, follow_up_task, audio_src, audio_voice, voice_locales",
+      "code, content_mode, material_group_id, material_group_label, major_id, major_label, accent, accent_label, accent_hint, title, source, source_name, speaker_role, speaker_name, scenario, transcript, transcript_url, official_url, embed_url, recommended_level, duration_label, support_focus, note_prompts, vocabulary, questions, follow_up_task, audio_src, audio_voice, voice_locales",
     )
     .order("content_mode", { ascending: true })
     .order("major_label", { ascending: true })
+    .order("material_group_label", { ascending: true })
     .order("accent", { ascending: true });
 
   if (error || !data || data.length === 0) {
@@ -105,5 +110,5 @@ export async function getListeningMaterialsCatalog() {
     .map(mapRowToListeningMaterial)
     .filter((item): item is ListeningMaterial => item !== null);
 
-  return mapped.length > 0 ? mapped : listeningMaterials;
+  return mapped.length >= listeningMaterials.length ? mapped : listeningMaterials;
 }
