@@ -71,11 +71,11 @@ const modeMeta = {
     focus: "Map argument structure, identify evidence, and track academic vocabulary in context.",
     source: "Short abstract and commentary on remote study habits",
     output: "Claim-evidence map + vocabulary notes",
-    coach: "Skim for structure first, then return for evidence and key terminology.",
+    coach: "Skim for structure, then return for evidence and key terms.",
     tasks: [
       "Locate the author's main claim.",
-      "Mark one supporting reason and one example.",
-      "Choose two academic terms to add to the review deck.",
+      "Mark one supporting detail.",
+      "Choose up to two academic terms.",
     ],
     checkpoints: [
       "What sentence expresses the main claim most clearly?",
@@ -164,19 +164,23 @@ export default async function LessonPage({
   const Icon = meta.icon;
   const isWritingMode = mode === "writing";
   const isListeningMode = mode === "listening";
+  const isReadingMode = mode === "reading";
   const topSectionLayoutClass =
-    mode === "speaking" || isWritingMode ? "grid gap-5" : "grid gap-5 xl:grid-cols-[1.02fr_0.98fr]";
-  const lessonMetaGridClass = isWritingMode ? "mt-6 grid gap-3" : "mt-6 grid gap-3 sm:grid-cols-2";
-  const lowerSectionLayoutClass = isWritingMode ? "mt-6 grid gap-5" : "mt-6 grid gap-5 lg:grid-cols-[1.02fr_0.98fr]";
+    mode === "speaking" || isWritingMode || isReadingMode ? "grid gap-5" : "grid gap-5 xl:grid-cols-[1.02fr_0.98fr]";
+  const lessonMetaGridClass =
+    isWritingMode || isReadingMode ? "mt-6 grid gap-3" : "mt-6 grid gap-3 sm:grid-cols-2";
+  const lowerSectionLayoutClass =
+    isWritingMode || isReadingMode ? "mt-6 grid gap-5" : "mt-6 grid gap-5 lg:grid-cols-[1.02fr_0.98fr]";
   const listeningMaterials = isListeningMode ? await getListeningMaterialsCatalog() : null;
   const showStandaloneLessonBrief = mode !== "speaking" && mode !== "writing" && mode !== "listening";
   const showLowerPanels = mode !== "speaking" && mode !== "listening";
+  const showPageHeader = mode === "speaking" || mode === "writing" || mode === "listening";
   // Date: 2026/3/18
   // Author: Tianbo Cao
   // Keep the speaking lesson page focused on the core studio by hiding the extra lesson framing panels.
 
   return (
-    <PageFrame locale={locale} title={meta.label} description={description}>
+    <PageFrame locale={locale} title={meta.label} description={description} showHeader={showPageHeader}>
       {showStandaloneLessonBrief ? (
         <>
           <div className={topSectionLayoutClass}>
@@ -192,17 +196,22 @@ export default async function LessonPage({
               </div>
               <div className={lessonMetaGridClass}>
                 <div className="rounded-[1.3rem] border border-white/60 bg-white/65 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-soft)]">Expected output</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-soft)]">Output</p>
                   <p className="mt-3 text-sm leading-7 text-[var(--ink)]">{meta.output}</p>
                 </div>
                 <div className="rounded-[1.3rem] border border-white/60 bg-white/65 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-soft)]">Coach focus</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-soft)]">Focus</p>
                   <p className="mt-3 text-sm leading-7 text-[var(--ink)]">{meta.coach}</p>
                 </div>
               </div>
-              <div className="mt-6 grid gap-3">
-                {meta.tasks.map((task, index) => (
-                  <div key={task} className="grid gap-3 rounded-[1.4rem] border border-white/60 bg-white/68 p-4 sm:grid-cols-[auto_1fr] sm:items-start">
+              <div className="mt-5 grid gap-3">
+                {meta.tasks.slice(0, 2).map((task, index) => (
+                  <div
+                    key={task}
+                    className={`grid gap-3 rounded-[1.4rem] border border-white/60 bg-white/68 p-4 ${
+                      isReadingMode ? "" : "sm:grid-cols-[auto_1fr] sm:items-start"
+                    }`}
+                  >
                     <div className="inline-flex size-10 items-center justify-center rounded-2xl bg-[var(--navy)] text-sm font-semibold text-[#f7efe3]">
                       {index + 1}
                     </div>
@@ -225,9 +234,9 @@ export default async function LessonPage({
             <p className="section-label">
               <Target className="size-3.5" /> Checkpoints
             </p>
-            <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">What success looks like in this lesson.</h2>
-            <div className="mt-6 grid gap-3">
-              {meta.checkpoints.map((item) => (
+            <h2 className="font-display mt-4 text-2xl tracking-tight text-[var(--ink)]">What to check.</h2>
+            <div className="mt-5 grid gap-3">
+              {meta.checkpoints.slice(0, 2).map((item) => (
                 <div key={item} className="rounded-[1.3rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.76)] p-4 text-sm leading-7 text-[var(--ink-soft)]">
                   {item}
                 </div>
@@ -235,15 +244,17 @@ export default async function LessonPage({
             </div>
           </article>
 
-          <article className="surface-ink ambient-card reveal-up rounded-[2rem] p-6 sm:p-7">
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#f2d9ae]">Cross-skill booster</p>
-            <h2 className="font-display mt-4 text-3xl tracking-tight">Every lesson should reinforce another skill.</h2>
-            <div className="mt-6 grid gap-3 text-sm leading-7 text-[#efe5d6]/78">
-              <p>Listening lessons feed better seminar speaking because note quality improves idea recall.</p>
-              <p>Reading lessons strengthen writing because claim-evidence structures become easier to imitate.</p>
-              <p>Speaking and writing feedback creates the evidence needed for future reassessment decisions.</p>
-            </div>
-          </article>
+          {!isReadingMode ? (
+            <article className="surface-ink ambient-card reveal-up rounded-[2rem] p-6 sm:p-7">
+              <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#f2d9ae]">Cross-skill booster</p>
+              <h2 className="font-display mt-4 text-3xl tracking-tight">Every lesson should reinforce another skill.</h2>
+              <div className="mt-6 grid gap-3 text-sm leading-7 text-[#efe5d6]/78">
+                <p>Listening lessons feed better seminar speaking because note quality improves idea recall.</p>
+                <p>Reading lessons strengthen writing because claim-evidence structures become easier to imitate.</p>
+                <p>Speaking and writing feedback creates the evidence needed for future reassessment decisions.</p>
+              </div>
+            </article>
+          ) : null}
         </section>
       ) : null}
     </PageFrame>
