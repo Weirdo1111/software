@@ -103,7 +103,7 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
   const resolveHref = (id: (typeof moduleNav)[number]["id"]) => {
     if (id === "dashboard") return `/dashboard?lang=${locale}`;
     if (id === "reading") return `/reading?lang=${locale}`;
-    if (id === "listening") return lessonHref("listening");
+    if (id === "listening") return `/listening?lang=${locale}`;
     if (id === "speaking") return lessonHref("speaking");
     return lessonHref("writing");
   };
@@ -112,7 +112,7 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
 
   const isModuleActive = (id: (typeof moduleNav)[number]["id"]) => {
     if (id === "dashboard") return pathname?.startsWith("/dashboard");
-    if (id === "listening") return pathname?.includes("/lesson/") && pathname?.includes("listening");
+    if (id === "listening") return pathname?.startsWith("/listening");
     if (id === "speaking") return pathname?.includes("/lesson/") && pathname?.includes("speaking");
     if (id === "writing") return pathname?.includes("/lesson/") && pathname?.includes("writing");
     if (id === "reading") return pathname?.startsWith("/reading");

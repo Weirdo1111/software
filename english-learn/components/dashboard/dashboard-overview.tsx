@@ -116,6 +116,7 @@ function getSkillAccuracy(correct: number, attempts: number) {
 
 function getSkillHref(skill: TrackedSkill, level: string, locale: Locale) {
   if (skill === "reading") return `/reading?lang=${locale}`;
+  if (skill === "listening") return `/listening?lang=${locale}`;
   return `/lesson/${level}-${skill}-starter?lang=${locale}`;
 }
 

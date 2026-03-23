@@ -14,28 +14,22 @@ function isPathPublic(pathname: string) {
 export function ExperienceGate({ locale }: ExperienceGateProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [introOpen, setIntroOpen] = useState(false);
-
   const isPlacementPage = pathname.startsWith("/placement-test");
+
+  const [introOpen, setIntroOpen] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const isLoggedIn = localStorage.getItem("demo_logged_in") === "true";
+    const placementDone = localStorage.getItem("demo_placement_done") === "true";
+    const seenIntro = localStorage.getItem("demo_intro_seen") === "true";
+    return isLoggedIn && placementDone && !isPlacementPage && !seenIntro;
+  });
 
   useEffect(() => {
     const isLoggedIn = localStorage.getItem("demo_logged_in") === "true";
-    const placementDone = localStorage.getItem("demo_placement_done") === "true";
-
-    if (!isLoggedIn) {
-      if (!isPathPublic(pathname)) {
-        router.replace(`/login?lang=${locale}`);
-      }
-      return;
+    if (!isLoggedIn && !isPathPublic(pathname)) {
+      router.replace(`/login?lang=${locale}`);
     }
-
-    if (placementDone && !isPlacementPage) {
-      const seenIntro = localStorage.getItem("demo_intro_seen") === "true";
-      if (!seenIntro) {
-        setIntroOpen(true);
-      }
-    }
-  }, [isPlacementPage, locale, pathname, router]);
+  }, [locale, pathname, router]);
 
   const copy = useMemo(
     () =>
