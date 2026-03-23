@@ -9,7 +9,9 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "audio:listening": "node --no-warnings scripts/generate-listening-audio.mjs",
+    "seed:listening": "node --no-warnings scripts/seed-listening-materials.mjs"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.42.0",
