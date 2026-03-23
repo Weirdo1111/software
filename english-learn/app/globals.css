@@ -56,12 +56,11 @@ body::after {
   position: fixed;
   inset: -8% -10%;
   pointer-events: none;
-  opacity: 0.78;
+  opacity: 0.5;
   background:
-    radial-gradient(circle at 18% 18%, rgba(28, 78, 149, 0.1), transparent 18%),
-    radial-gradient(circle at 82% 12%, rgba(206, 156, 69, 0.11), transparent 16%),
-    linear-gradient(118deg, transparent 0 30%, rgba(28, 78, 149, 0.05) 30% 31%, transparent 31% 58%, rgba(206, 156, 69, 0.06) 58% 59%, transparent 59%),
-    radial-gradient(circle at 48% 104%, rgba(28, 78, 149, 0.12), transparent 22%);
+    radial-gradient(circle at 18% 18%, rgba(28, 78, 149, 0.08), transparent 18%),
+    radial-gradient(circle at 82% 12%, rgba(206, 156, 69, 0.08), transparent 16%),
+    radial-gradient(circle at 48% 104%, rgba(28, 78, 149, 0.1), transparent 22%);
   animation: driftField 18s ease-in-out infinite;
 }
 
@@ -86,8 +85,10 @@ body::after {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.32), transparent 30%, transparent 70%, rgba(20, 50, 75, 0.04));
 }
 
-.header-brand-row {
-  margin-bottom: 1.5rem;
+.top-nav-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .institution-brand {
@@ -282,6 +283,13 @@ body::after {
   .ambient-card,
   .signal-pill {
     animation: none !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .top-nav-row {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 
