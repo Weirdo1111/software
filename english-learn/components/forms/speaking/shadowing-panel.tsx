@@ -67,11 +67,18 @@ export function SpeakingShadowingPanel({
       : null;
   const canUseSentenceTrainer = sentenceSegments.length > 0;
 
-  useEffect(() => {
+  // Reset when practice script changes — derive selectedSentenceIndex from key
+  const [scriptKey, setScriptKey] = useState(practiceScript);
+  if (scriptKey !== practiceScript) {
+    setScriptKey(practiceScript);
     setSelectedSentenceIndex(0);
+  }
+
+  useEffect(() => {
     resetListening();
     stopPlayback();
-  }, [practiceScript, resetListening]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally reset only when script changes
+  }, [scriptKey]);
 
   useEffect(() => {
     resetListening();

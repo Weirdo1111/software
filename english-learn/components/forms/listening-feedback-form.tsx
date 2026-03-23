@@ -1,13 +1,14 @@
 "use client";
 
-import Image from "next/image";
 import {
+  BookMarked,
   CheckCircle2,
   ExternalLink,
   FileText,
   LoaderCircle,
   PlayCircle,
   Search,
+  Sparkles,
 } from "lucide-react";
 import {
   useDeferredValue,
@@ -18,14 +19,17 @@ import {
   useSyncExternalStore,
 } from "react";
 
+import { AIAnalysisState } from "@/components/forms/ai-analysis-state";
 import { SaveToDeckButton } from "@/components/forms/save-to-deck-button";
 import {
   listeningMajors,
   listeningMaterials,
   scoreListeningMaterial,
+  speakerRegions,
   tedListeningMaterials,
   type DIICSUMajorId,
   type ListeningMaterial,
+  type SpeakerRegion,
 } from "@/lib/listening-materials";
 import {
   getListeningLibraryServerSnapshot,
@@ -35,10 +39,11 @@ import {
   subscribeListeningLibrary,
 } from "@/lib/listening-library";
 import { cn } from "@/lib/utils";
-import type { CEFRLevel } from "@/types/learning";
+import type { CEFRLevel, ListeningAIFeedback } from "@/types/learning";
 
 type MajorFilter = "all" | DIICSUMajorId;
 type LevelFilter = "all" | CEFRLevel;
+type RegionFilter = "all" | SpeakerRegion;
 
 const tedThumbnailFallbackMap = new Map(
   tedListeningMaterials.map((material) => [material.materialGroupId, material.thumbnailUrl]),
@@ -64,15 +69,22 @@ function getMaterialThumbnail(material: ListeningMaterial) {
   return material.thumbnailUrl ?? tedThumbnailFallbackMap.get(material.materialGroupId) ?? null;
 }
 
-function getSpeakerInitials(name?: string) {
-  if (!name) return "TED";
+/** Image with graceful fallback — hides alt text when load fails */
+function TedThumbnail({ src, alt, className }: { src: string; alt: string; className?: string }) {
+  const [failed, setFailed] = useState(false);
 
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
+  if (failed) return null;
+
+  /* eslint-disable @next/next/no-img-element */
+  return (
+    <img
+      src={src}
+      alt={alt}
+      onError={() => setFailed(true)}
+      className={cn("absolute inset-0 h-full w-full object-cover", className)}
+    />
+  );
+  /* eslint-enable @next/next/no-img-element */
 }
 
 export function ListeningFeedbackForm({
@@ -97,6 +109,7 @@ export function ListeningFeedbackForm({
   const deferredSearchValue = useDeferredValue(searchValue);
   const [selectedMajorFilter, setSelectedMajorFilter] = useState<MajorFilter>("all");
   const [selectedLevelFilter, setSelectedLevelFilter] = useState<LevelFilter>("all");
+  const [selectedRegionFilter, setSelectedRegionFilter] = useState<RegionFilter>("all");
   const [selectedMaterialGroupId, setSelectedMaterialGroupId] = useState(
     () => tedCatalog[0]?.materialGroupId ?? "",
   );
@@ -107,6 +120,9 @@ export function ListeningFeedbackForm({
   const [isScoring, setIsScoring] = useState(false);
   const [attemptStartedAt, setAttemptStartedAt] = useState(() => Date.now());
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [aiFeedback, setAiFeedback] = useState<ListeningAIFeedback | null>(null);
+  const [isAIScoring, setIsAIScoring] = useState(false);
+  const [aiStatus, setAiStatus] = useState("");
   const recordedHistoryGroupIdsRef = useRef<Set<string>>(new Set());
 
   const librarySnapshot = useSyncExternalStore(
@@ -125,6 +141,11 @@ export function ListeningFeedbackForm({
     return ["all", ...levels] as LevelFilter[];
   }, [tedCatalog]);
 
+  const availableRegions = useMemo(() => {
+    const regionSet = new Set(tedCatalog.map((material) => material.speakerRegion).filter(Boolean));
+    return speakerRegions.filter((r) => regionSet.has(r.id));
+  }, [tedCatalog]);
+
   const filteredMaterials = useMemo(() => {
     const normalizedSearch = normalizeSearchValue(deferredSearchValue);
 
@@ -133,6 +154,8 @@ export function ListeningFeedbackForm({
         selectedMajorFilter === "all" || material.majorId === selectedMajorFilter;
       const matchesLevel =
         selectedLevelFilter === "all" || material.recommendedLevel === selectedLevelFilter;
+      const matchesRegion =
+        selectedRegionFilter === "all" || material.speakerRegion === selectedRegionFilter;
       const matchesSearch =
         normalizedSearch.length === 0 ||
         normalizeSearchValue(
@@ -147,9 +170,9 @@ export function ListeningFeedbackForm({
           ].join(" "),
         ).includes(normalizedSearch);
 
-      return matchesMajor && matchesLevel && matchesSearch;
+      return matchesMajor && matchesLevel && matchesRegion && matchesSearch;
     });
-  }, [deferredSearchValue, selectedLevelFilter, selectedMajorFilter, tedCatalog]);
+  }, [deferredSearchValue, selectedLevelFilter, selectedMajorFilter, selectedRegionFilter, tedCatalog]);
 
   useEffect(() => {
     if (!selectedMaterialGroupId) {
@@ -187,6 +210,8 @@ export function ListeningFeedbackForm({
     setResult(null);
     setSubmitStatus("");
     setShowTedEmbed(false);
+    setAiFeedback(null);
+    setAiStatus("");
     setAttemptStartedAt(Date.now());
     setAnswers(buildAnswerState(activeMaterial.questions.map((question) => question.id)));
   }, [activeMaterial]);
@@ -215,7 +240,6 @@ export function ListeningFeedbackForm({
   }
 
   const activeCompletion = completionMap.get(activeMaterial.materialGroupId);
-  const activeMajor = listeningMajors.find((major) => major.id === activeMaterial.majorId);
   const activeThumbnail = getMaterialThumbnail(activeMaterial);
   const completedTedCount = tedCatalog.filter((material) =>
     completionMap.has(material.materialGroupId),
@@ -278,33 +302,57 @@ export function ListeningFeedbackForm({
     }
   }
 
+  async function onAIFeedback() {
+    setIsAIScoring(true);
+    setAiStatus("");
+    setAiFeedback(null);
+
+    try {
+      const response = await fetch("/api/ai/feedback/listening", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          talk_title: activeMaterial.title,
+          speaker_name: activeMaterial.speakerName ?? "Unknown",
+          scenario: activeMaterial.scenario,
+          answers: {
+            gist: answers["gist"] ?? "",
+            detail: answers["detail"] ?? "",
+            signpost: answers["signpost"] ?? "",
+            term: answers["term"] ?? "",
+          },
+          notes,
+          target_level: defaultLevel,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to generate listening feedback.");
+      }
+
+      setAiFeedback(data as ListeningAIFeedback);
+    } catch (nextError) {
+      const message = nextError instanceof Error ? nextError.message : "AI feedback failed.";
+      setAiStatus(message);
+    } finally {
+      setIsAIScoring(false);
+    }
+  }
+
   return (
     <section className="grid gap-5">
       <article className="rounded-[2rem] border border-[rgba(20,50,75,0.12)] bg-white p-5 shadow-[0_18px_38px_rgba(18,32,52,0.06)] sm:p-6">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-          <div className="max-w-4xl">
-            <p className="section-label">
-              <PlayCircle className="size-3.5" /> TED Video Feed
-            </p>
-            <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
-              Browse by cover first, then study with the talk you choose.
-            </h2>
-            <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)] sm:text-base">
-              This listening page now behaves more like a video platform home feed. Students can
-              scan covers and titles quickly, filter by major or level, and then enter the study
-              view for the selected TED talk.
-            </p>
-          </div>
-
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-display text-2xl tracking-tight text-[var(--ink)]">
+            TED Listening
+          </h2>
           <div className="flex flex-wrap gap-2 text-xs font-semibold text-[var(--ink-soft)]">
             <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
-              {tedCatalog.length} TED talks
+              {tedCatalog.length} talks
             </span>
             <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
-              {completedTedCount} completed
-            </span>
-            <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
-              5 DIICSU majors
+              {completedTedCount} done
             </span>
           </div>
         </div>
@@ -369,28 +417,56 @@ export function ListeningFeedbackForm({
             </button>
           ))}
         </div>
+
+        {availableRegions.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setSelectedRegionFilter("all")}
+              className={cn(
+                "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+                selectedRegionFilter === "all"
+                  ? "bg-[var(--coral)] text-white"
+                  : "border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] text-[var(--ink)]",
+              )}
+            >
+              All regions
+            </button>
+            {availableRegions.map((region) => (
+              <button
+                key={region.id}
+                type="button"
+                onClick={() => setSelectedRegionFilter(region.id)}
+                className={cn(
+                  "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+                  selectedRegionFilter === region.id
+                    ? "bg-[var(--coral)] text-white"
+                    : "border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] text-[var(--ink)]",
+                )}
+              >
+                {region.label}
+              </button>
+            ))}
+          </div>
+        )}
       </article>
 
       <article className="rounded-[2rem] border border-[rgba(20,50,75,0.12)] bg-white p-5 shadow-[0_18px_38px_rgba(18,32,52,0.06)] sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="section-label">Selected talk</p>
-            <h3 className="mt-4 text-2xl font-semibold tracking-tight text-[var(--ink)]">
+            <h3 className="text-2xl font-semibold tracking-tight text-[var(--ink)]">
               {activeMaterial.title}
             </h3>
-            <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
+            <p className="mt-1 text-sm text-[var(--ink-soft)]">
               {activeMaterial.speakerName
-                ? `${activeMaterial.speakerName} · ${activeMaterial.speakerRole}`
-                : activeMaterial.speakerRole}
+                ? `${activeMaterial.speakerName} · ${activeMaterial.durationLabel}`
+                : activeMaterial.durationLabel}
             </p>
           </div>
 
           <div className="flex flex-wrap gap-2 text-xs font-semibold text-[var(--ink-soft)]">
             <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
               {activeMaterial.majorLabel}
-            </span>
-            <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
-              {activeMaterial.durationLabel}
             </span>
             <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
               Level {activeMaterial.recommendedLevel}
@@ -403,96 +479,48 @@ export function ListeningFeedbackForm({
           </div>
         </div>
 
-        <div className="mt-5 grid gap-5 lg:grid-cols-[19rem_minmax(0,1fr)]">
-          <div className="relative aspect-video overflow-hidden rounded-[1.3rem] bg-[rgba(20,50,75,0.08)]">
-            {activeThumbnail ? (
-              <Image
-                src={activeThumbnail}
-                alt={`${activeMaterial.title} cover`}
-                fill
-                priority
-                sizes="(max-width: 1024px) 100vw, 320px"
-                className="object-cover"
-              />
-            ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-[#23425c] via-[#11273f] to-[#08131f]" />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-[rgba(9,18,31,0.78)] to-transparent" />
-            <div className="absolute bottom-3 right-3 rounded bg-[rgba(12,22,35,0.88)] px-2 py-1 text-[11px] font-semibold text-white">
-              {activeMaterial.durationLabel.replace(" TED Talk", "")}
-            </div>
-          </div>
+        <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">{activeMaterial.scenario}</p>
 
-          <div>
-            <p className="text-sm leading-7 text-[var(--ink)]">{activeMaterial.scenario}</p>
-            <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">
-              {activeMaterial.supportFocus}
-            </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          {activeMaterial.embedUrl ? (
+            <button
+              type="button"
+              onClick={() => setShowTedEmbed((current) => !current)}
+              className="inline-flex items-center gap-2 rounded-full bg-[var(--navy)] px-5 py-3 text-sm font-semibold text-[#f7efe3]"
+            >
+              <PlayCircle className="size-4" />
+              {showTedEmbed ? "Hide preview" : "Preview this talk"}
+            </button>
+          ) : null}
 
-            <div className="mt-4 flex flex-wrap gap-3">
-              {activeMaterial.embedUrl ? (
-                <button
-                  type="button"
-                  onClick={() => setShowTedEmbed((current) => !current)}
-                  className="inline-flex items-center gap-2 rounded-full bg-[var(--navy)] px-5 py-3 text-sm font-semibold text-[#f7efe3]"
-                >
-                  <PlayCircle className="size-4" />
-                  {showTedEmbed ? "Hide preview" : "Preview this talk"}
-                </button>
-              ) : null}
+          {activeMaterial.officialUrl ? (
+            <a
+              href={activeMaterial.officialUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white px-5 py-3 text-sm font-semibold text-[var(--ink)]"
+            >
+              <ExternalLink className="size-4" />
+              Watch on TED
+            </a>
+          ) : null}
 
-              {activeMaterial.officialUrl ? (
-                <a
-                  href={activeMaterial.officialUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white px-5 py-3 text-sm font-semibold text-[var(--ink)]"
-                >
-                  <ExternalLink className="size-4" />
-                  Watch on TED
-                </a>
-              ) : null}
-
-              {activeMaterial.transcriptUrl ? (
-                <a
-                  href={activeMaterial.transcriptUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white px-5 py-3 text-sm font-semibold text-[var(--ink)]"
-                >
-                  <FileText className="size-4" />
-                  Transcript
-                </a>
-              ) : null}
-            </div>
-
-            <div className="mt-5 rounded-[1.2rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
-                Why this talk fits {activeMajor?.shortLabel ?? "DIICSU"}
-              </p>
-              <p className="mt-3 text-sm leading-7 text-[var(--ink)]">
-                {activeMajor?.focus ?? activeMaterial.majorLabel}
-              </p>
-            </div>
-          </div>
+          {activeMaterial.transcriptUrl ? (
+            <a
+              href={activeMaterial.transcriptUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white px-5 py-3 text-sm font-semibold text-[var(--ink)]"
+            >
+              <FileText className="size-4" />
+              Transcript
+            </a>
+          ) : null}
         </div>
       </article>
 
       <article className="rounded-[2rem] border border-[rgba(20,50,75,0.12)] bg-white p-5 shadow-[0_18px_38px_rgba(18,32,52,0.06)] sm:p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="section-label">Video library</p>
-            <h3 className="mt-4 text-2xl font-semibold tracking-tight text-[var(--ink)]">
-              Scan the feed and choose what to watch next.
-            </h3>
-          </div>
-
-          <div className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5 text-xs font-semibold text-[var(--ink-soft)]">
-            {filteredMaterials.length} results
-          </div>
-        </div>
-
-        <div className="mt-6 grid gap-x-5 gap-y-7 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-1 grid gap-x-5 gap-y-6 sm:grid-cols-2 xl:grid-cols-3">
           {filteredMaterials.map((material) => {
             const isActive = material.materialGroupId === activeMaterial.materialGroupId;
             const thumbnail = getMaterialThumbnail(material);
@@ -513,18 +541,14 @@ export function ListeningFeedbackForm({
                       : "border-[rgba(20,50,75,0.08)] hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(19,32,52,0.08)]",
                   )}
                 >
-                  <div className="relative aspect-video overflow-hidden rounded-[1rem] bg-[rgba(20,50,75,0.08)]">
+                  <div className="relative aspect-video overflow-hidden rounded-[1rem] bg-gradient-to-br from-[#23425c] via-[#11273f] to-[#08131f]">
                     {thumbnail ? (
-                      <Image
+                      <TedThumbnail
                         src={thumbnail}
-                        alt={`${material.title} cover`}
-                        fill
-                        sizes="(max-width: 1280px) 100vw, 420px"
-                        className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                        alt={material.title}
+                        className="transition-transform duration-300 group-hover:scale-[1.02]"
                       />
-                    ) : (
-                      <div className="absolute inset-0 bg-gradient-to-br from-[#23425c] via-[#11273f] to-[#08131f]" />
-                    )}
+                    ) : null}
                     <div className="absolute inset-0 bg-gradient-to-t from-[rgba(10,18,32,0.76)] to-transparent" />
                     <div className="absolute left-3 top-3 rounded bg-[#eb0028] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
                       TED
@@ -534,26 +558,18 @@ export function ListeningFeedbackForm({
                     </div>
                   </div>
 
-                  <div className="mt-3 flex gap-3">
-                    <div className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-[rgba(20,50,75,0.08)] text-xs font-semibold text-[var(--ink)]">
-                      {getSpeakerInitials(material.speakerName)}
-                    </div>
-                    <div className="min-w-0">
-                      <h4 className="min-h-[3.4rem] text-sm font-semibold leading-6 text-[var(--ink)]">
-                        {material.title}
-                      </h4>
-                      <p className="mt-1 text-xs leading-5 text-[var(--ink-soft)]">
-                        {material.speakerName}
+                  <div className="mt-2.5 px-1">
+                    <h4 className="text-sm font-semibold leading-5 text-[var(--ink)]">
+                      {material.title}
+                    </h4>
+                    <p className="mt-1 text-xs text-[var(--ink-soft)]">
+                      {material.speakerName} · {material.majorLabel} · {material.recommendedLevel}
+                    </p>
+                    {completion ? (
+                      <p className="mt-1 text-xs font-semibold text-[#315f4f]">
+                        Best {completion.bestScore}/10
                       </p>
-                      <p className="mt-0.5 text-xs leading-5 text-[var(--ink-soft)]">
-                        {material.majorLabel} · Level {material.recommendedLevel}
-                      </p>
-                      {completion ? (
-                        <p className="mt-1 text-xs font-semibold text-[#315f4f]">
-                          Best score {completion.bestScore}/10
-                        </p>
-                      ) : null}
-                    </div>
+                    ) : null}
                   </div>
                 </article>
               </button>
@@ -562,25 +578,15 @@ export function ListeningFeedbackForm({
         </div>
 
         {filteredMaterials.length === 0 ? (
-          <div className="mt-5 rounded-[1.2rem] border border-dashed border-[rgba(20,50,75,0.16)] bg-[rgba(247,250,252,0.72)] p-6 text-center">
+          <div className="rounded-[1.2rem] border border-dashed border-[rgba(20,50,75,0.16)] bg-[rgba(247,250,252,0.72)] p-6 text-center">
             <p className="text-sm font-semibold text-[var(--ink)]">No talks match these filters.</p>
-            <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
-              Try another keyword, level, or major.
-            </p>
           </div>
         ) : null}
       </article>
 
       <section className="grid gap-5 xl:grid-cols-[1.04fr_0.96fr]">
         <article className="rounded-[2rem] border border-[rgba(20,50,75,0.12)] bg-white p-5 shadow-[0_18px_38px_rgba(18,32,52,0.06)] sm:p-6">
-          <p className="section-label">
-            <PlayCircle className="size-3.5" /> Watch and note
-          </p>
-          <h3 className="mt-4 text-2xl font-semibold tracking-tight text-[var(--ink)]">
-            Turn the selected TED talk into a focused listening task.
-          </h3>
-
-          <div className="mt-5 overflow-hidden rounded-[1.4rem] border border-[rgba(20,50,75,0.12)] bg-[var(--navy)]">
+          <div className="overflow-hidden rounded-[1.4rem] border border-[rgba(20,50,75,0.12)] bg-[var(--navy)]">
             <div className="relative aspect-video">
               {showTedEmbed && activeMaterial.embedUrl ? (
                 <iframe
@@ -592,18 +598,10 @@ export function ListeningFeedbackForm({
                   className="h-full w-full border-0"
                 />
               ) : (
-                <>
+                <div className="absolute inset-0 bg-gradient-to-br from-[#23425c] via-[#11273f] to-[#08131f]">
                   {activeThumbnail ? (
-                    <Image
-                      src={activeThumbnail}
-                      alt={`${activeMaterial.title} preview`}
-                      fill
-                      sizes="(max-width: 1280px) 100vw, 720px"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#23425c] via-[#11273f] to-[#08131f]" />
-                  )}
+                    <TedThumbnail src={activeThumbnail} alt={activeMaterial.title} />
+                  ) : null}
                   <div className="absolute inset-0 bg-gradient-to-t from-[rgba(8,17,28,0.82)] via-[rgba(8,17,28,0.24)] to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-5">
                     <h4 className="text-xl font-semibold tracking-tight text-white">
@@ -613,7 +611,7 @@ export function ListeningFeedbackForm({
                       {activeMaterial.speakerName} · {activeMaterial.durationLabel}
                     </p>
                   </div>
-                </>
+                </div>
               )}
             </div>
           </div>
@@ -671,25 +669,14 @@ export function ListeningFeedbackForm({
         </article>
 
         <article className="rounded-[2rem] border border-[rgba(20,50,75,0.12)] bg-white p-5 shadow-[0_18px_38px_rgba(18,32,52,0.06)] sm:p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <p className="section-label">
-                <CheckCircle2 className="size-3.5" /> Listening check
-              </p>
-              <h3 className="mt-4 text-2xl font-semibold tracking-tight text-[var(--ink)]">
-                Answer after watching, not before.
-              </h3>
-            </div>
-
-            <div className="rounded-[1rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-4 py-3 text-right">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
-                Progress
-              </p>
-              <p className="mt-2 text-lg font-semibold text-[var(--ink)]">
-                {answeredCount}/{activeMaterial.questions.length}
-              </p>
-              <p className="mt-1 text-xs text-[var(--ink-soft)]">Target level {defaultLevel}</p>
-            </div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm font-semibold text-[var(--ink)]">
+              <CheckCircle2 className="mr-1.5 inline size-4" />
+              Listening check
+            </p>
+            <p className="text-sm font-semibold text-[var(--ink-soft)]">
+              {answeredCount}/{activeMaterial.questions.length} · {defaultLevel}
+            </p>
           </div>
 
           <form onSubmit={onSubmit} className="mt-5 grid gap-4">
@@ -826,6 +813,93 @@ export function ListeningFeedbackForm({
                       Model answer: {feedback.modelAnswer}
                     </p>
                   </article>
+                ))}
+              </div>
+
+              {/* AI feedback button — appears after local scoring */}
+              <div className="mt-5 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={onAIFeedback}
+                  disabled={isAIScoring}
+                  className="inline-flex items-center gap-2 rounded-full bg-[var(--navy)] px-5 py-3 text-sm font-semibold text-[#f7efe3] disabled:opacity-60"
+                >
+                  {isAIScoring ? (
+                    <LoaderCircle className="size-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="size-4" />
+                  )}
+                  {isAIScoring ? "AI analysing..." : "Get AI feedback"}
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          {aiStatus ? (
+            <p className="mt-4 rounded-[1rem] bg-[rgba(255,244,240,0.9)] px-4 py-3 text-sm font-medium text-[var(--coral)]">
+              {aiStatus}
+            </p>
+          ) : null}
+
+          {isAIScoring ? (
+            <div className="mt-5">
+              <AIAnalysisState
+                title="Evaluating your listening comprehension."
+                description="The listening coach is checking your answers against the TED talk's argument structure, then preparing personalised feedback and tips."
+                steps={[
+                  "Reviewing your main argument and key detail answers.",
+                  "Checking signpost identification and technical term choice.",
+                  "Preparing a listening score with targeted coaching advice.",
+                ]}
+              />
+            </div>
+          ) : null}
+
+          {aiFeedback ? (
+            <div className="mt-5 grid gap-4 rounded-[1.6rem] border border-[rgba(20,50,75,0.12)] bg-gradient-to-br from-[#f7ead2] via-white to-[#fdf5e8] p-5">
+              <div className="flex items-center gap-3 text-[var(--ink)]">
+                <BookMarked className="size-4" />
+                <p className="text-sm font-semibold">AI Listening Feedback</p>
+              </div>
+
+              <div className="rounded-[1.2rem] bg-white/80 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
+                  Listening score
+                </p>
+                <p className="font-display mt-2 text-3xl tracking-tight text-[var(--ink)]">
+                  {aiFeedback.listening_score}
+                </p>
+              </div>
+
+              <div className="grid gap-3">
+                <div className="rounded-[1.2rem] bg-white/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Main argument</p>
+                  <p className="mt-2 text-sm leading-7 text-[var(--ink)]">{aiFeedback.gist_feedback}</p>
+                </div>
+                <div className="rounded-[1.2rem] bg-white/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Key detail</p>
+                  <p className="mt-2 text-sm leading-7 text-[var(--ink)]">{aiFeedback.detail_feedback}</p>
+                </div>
+                <div className="rounded-[1.2rem] bg-white/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Structure / Signpost</p>
+                  <p className="mt-2 text-sm leading-7 text-[var(--ink)]">{aiFeedback.signpost_feedback}</p>
+                </div>
+                <div className="rounded-[1.2rem] bg-white/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Technical term</p>
+                  <p className="mt-2 text-sm leading-7 text-[var(--ink)]">{aiFeedback.term_feedback}</p>
+                </div>
+                <div className="rounded-[1.2rem] bg-white/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Notes quality</p>
+                  <p className="mt-2 text-sm leading-7 text-[var(--ink)]">{aiFeedback.note_feedback}</p>
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <p className="text-sm font-semibold text-[var(--ink)]">Coach tips</p>
+                {(Array.isArray(aiFeedback.tips) ? aiFeedback.tips : [String(aiFeedback.tips)]).map((tip) => (
+                  <div key={tip} className="rounded-[1rem] bg-white/80 px-4 py-3 text-sm leading-6 text-[var(--ink-soft)]">
+                    {tip}
+                  </div>
                 ))}
               </div>
             </div>

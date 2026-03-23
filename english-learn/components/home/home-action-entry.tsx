@@ -57,6 +57,7 @@ function getSkillAccuracy(correct: number, attempts: number) {
 
 function getSkillHref(skill: TrackedSkill, level: string, locale: Locale) {
   if (skill === "reading") return `/reading?lang=${locale}`;
+  if (skill === "listening") return `/listening?lang=${locale}`;
   return `/lesson/${level}-${skill}-starter?lang=${locale}`;
 }
 
@@ -256,12 +257,12 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
         <div className="mt-4 grid gap-3">
           {metrics.plan.map((row) => {
             const href = getSkillHref(row.skill, levelPrefix, locale);
-            const module = skillMeta[row.skill];
+            const skillModule = skillMeta[row.skill];
             return (
               <div key={row.skill} className="grid gap-3 rounded-[1.2rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.78)] p-4 sm:grid-cols-[1fr_auto] sm:items-center">
                 <div>
                   <p className="text-sm font-semibold text-[var(--ink)]">{skillLabel[locale][row.skill]}</p>
-                  <p className="mt-1 text-sm text-[var(--ink-soft)]">{copy.duration}: {module.minutes}</p>
+                  <p className="mt-1 text-sm text-[var(--ink-soft)]">{copy.duration}: {skillModule.minutes}</p>
                   <p className="mt-1 text-sm text-[var(--ink-soft)]">{copy.action}: {reasonFor(row)}</p>
                 </div>
                 <Link href={href} className="inline-flex items-center justify-center rounded-full border border-[rgba(20,50,75,0.16)] bg-white/90 px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:bg-[rgba(20,50,75,0.08)]">
