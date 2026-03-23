@@ -174,12 +174,13 @@ export default async function LessonPage({
   const listeningMaterials = isListeningMode ? await getListeningMaterialsCatalog() : null;
   const showStandaloneLessonBrief = mode !== "speaking" && mode !== "writing" && mode !== "listening";
   const showLowerPanels = mode !== "speaking" && mode !== "listening";
+  const showPageHeader = mode === "speaking" || mode === "writing" || mode === "listening";
   // Date: 2026/3/18
   // Author: Tianbo Cao
   // Keep the speaking lesson page focused on the core studio by hiding the extra lesson framing panels.
 
   return (
-    <PageFrame locale={locale} title={meta.label} description={description} showHeader={false}>
+    <PageFrame locale={locale} title={meta.label} description={description} showHeader={showPageHeader}>
       {showStandaloneLessonBrief ? (
         <>
           <div className={topSectionLayoutClass}>
