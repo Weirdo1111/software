@@ -1,8 +1,10 @@
-import { Bot, LoaderCircle, SendHorizontal, Square, Volume2 } from "lucide-react";
-import type { KeyboardEvent } from "react";
+import { Bot, LoaderCircle, Mic, SendHorizontal, Square, Volume2 } from "lucide-react";
+import { type KeyboardEvent } from "react";
 
+import { useShadowingPractice } from "@/components/forms/listening/use-shadowing-practice";
 import type { PartnerMessage } from "@/components/forms/speaking/types";
 import { useBrowserSpeech } from "@/components/forms/speaking/use-browser-speech";
+import { cn } from "@/lib/utils";
 
 // Date: 2026/3/18
 // Author: Tianbo Cao
@@ -25,13 +27,48 @@ export function SpeakingPartnerPanel({
   onPartnerSubmit: () => void;
 }) {
   const { playingId, playbackStatus, playMessage, stopPlayback } = useBrowserSpeech();
+  const {
+    isSupported: isShadowingSupported,
+    status: shadowingStatus,
+    error: shadowingError,
+    audioLevel: shadowingAudioLevel,
+    startListening,
+    stopListening,
+    resetListening,
+  } = useShadowingPractice();
   const canSubmit = partnerTurn.trim().length >= 6 && !isPartnerSubmitting;
+  const micClassName =
+    shadowingStatus === "listening" ? "size-4 text-white animate-pulse" : "size-4 text-[rgba(20,50,75,0.42)]";
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      onPartnerSubmit();
+      handlePartnerSubmit();
     }
+  }
+
+  function handlePartnerSubmit() {
+    if (shadowingStatus === "listening") {
+      stopListening();
+    }
+
+    resetListening();
+    onPartnerSubmit();
+  }
+
+  function handleVoiceInput() {
+    if (shadowingStatus === "listening") {
+      stopListening();
+      return;
+    }
+
+    startListening("en-GB", {
+      initialText: partnerTurn,
+      continuous: true,
+      fallbackLocale: "en-US",
+      stopOnSilence: false,
+      onTranscriptChange: onPartnerTurnChange,
+    });
   }
 
   return (
@@ -121,10 +158,33 @@ export function SpeakingPartnerPanel({
           className="min-h-24 rounded-[1.25rem] border border-[rgba(20,50,75,0.16)] bg-white px-4 py-3 text-sm leading-7 outline-none"
         />
       </label>
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-end gap-3">
         <button
           type="button"
-          onClick={onPartnerSubmit}
+          onClick={handleVoiceInput}
+          disabled={!isShadowingSupported}
+          className={cn(
+            "inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45",
+            shadowingStatus === "listening"
+              ? "border border-[#e25d4b] bg-[#c74435] text-white shadow-[0_10px_24px_rgba(199,68,53,0.2)]"
+              : "border border-[rgba(20,50,75,0.12)] bg-white text-[var(--ink)]",
+          )}
+        >
+          <Mic className={micClassName} />
+          {shadowingStatus === "listening" ? "Stop recording" : "Voice input"}
+        </button>
+        <div className="flex items-center gap-3 rounded-full border border-[rgba(20,50,75,0.12)] bg-white px-3 py-2">
+          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">dB</span>
+          <div className="h-2.5 w-28 overflow-hidden rounded-full bg-[rgba(20,50,75,0.08)]">
+            <div
+              className="h-full rounded-full bg-[#2f7cf6] transition-[width] duration-100"
+              style={{ width: `${Math.max(4, Math.round(shadowingAudioLevel * 100))}%` }}
+            />
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={handlePartnerSubmit}
           disabled={!canSubmit}
           className="inline-flex items-center gap-2 rounded-full bg-[#2f7cf6] px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-45"
         >
@@ -135,12 +195,24 @@ export function SpeakingPartnerPanel({
       {partnerTurn.trim().length > 0 && partnerTurn.trim().length < 6 ? (
         <p className="text-sm font-medium text-[var(--coral)]">Please enter at least 6 characters before continuing.</p>
       ) : (
-        <p className="text-sm text-[var(--ink-soft)]">Enter at least 6 characters to send the next turn.</p>
+        <p className="text-sm text-[var(--ink-soft)]">Speak into the microphone and your words will appear directly in this chat box.</p>
       )}
 
       {partnerStatus ? (
         <p className="mt-4 rounded-[1rem] bg-[#fff4f0] px-4 py-3 text-sm font-medium text-[var(--coral)]">
           {partnerStatus}
+        </p>
+      ) : null}
+
+      {shadowingStatus === "listening" ? (
+        <p className="mt-4 rounded-[1rem] bg-[#fff1ef] px-4 py-3 text-sm font-semibold text-[#b93829]">
+          Recording now. Click the red button to stop and keep filling the chat input.
+        </p>
+      ) : null}
+
+      {shadowingError ? (
+        <p className="mt-4 rounded-[1rem] bg-[#fff4f0] px-4 py-3 text-sm font-medium text-[var(--coral)]">
+          {shadowingError}
         </p>
       ) : null}
 
