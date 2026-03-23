@@ -29,7 +29,7 @@ export default async function ReadingArticlePage({
   }
 
   return (
-    <PageFrame locale={locale} title={article.title} description={article.focus}>
+    <PageFrame locale={locale} title={article.title} description={article.focus} showHeader={false}>
       <ReadingArticleShell article={article} lang={lang} />
     </PageFrame>
   );
