@@ -110,6 +110,16 @@ export interface ReadingFeedback {
   tips: string[];
 }
 
+export interface ListeningAIFeedback {
+  listening_score: number;
+  gist_feedback: string;
+  detail_feedback: string;
+  signpost_feedback: string;
+  term_feedback: string;
+  note_feedback: string;
+  tips: string[];
+}
+
 export interface DailyTask {
   id: string;
   title: string;
