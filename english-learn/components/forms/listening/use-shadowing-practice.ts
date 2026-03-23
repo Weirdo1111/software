@@ -76,48 +76,36 @@ export function useShadowingPractice() {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const levelFrameRef = useRef<number | null>(null);
+  const startListeningRef = useRef<(locale?: string, options?: StartListeningOptions) => void>(
+    () => {},
+  );
   const [status, setStatus] = useState<"idle" | "listening" | "stopped" | "error">("idle");
   const [transcript, setTranscript] = useState("");
   const [error, setError] = useState("");
-  const [isSupported, setIsSupported] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
 
-  function clearSilenceTimer() {
+  const clearSilenceTimer = useCallback(() => {
     if (silenceTimerRef.current !== null) {
       window.clearTimeout(silenceTimerRef.current);
       silenceTimerRef.current = null;
     }
-  }
+  }, []);
 
-  function restartSilenceTimer() {
+  const restartSilenceTimer = useCallback(() => {
     clearSilenceTimer();
     silenceTimerRef.current = window.setTimeout(() => {
       recognitionRef.current?.stop();
     }, SILENCE_TIMEOUT_MS);
-  }
+  }, [clearSilenceTimer]);
 
-  function clearLevelFrame() {
+  const clearLevelFrame = useCallback(() => {
     if (levelFrameRef.current !== null) {
       window.cancelAnimationFrame(levelFrameRef.current);
       levelFrameRef.current = null;
     }
-  }
+  }, []);
 
-  function startLevelLoop() {
-    clearLevelFrame();
-
-    const analyser = analyserRef.current;
-    if (!analyser) return;
-
-    const frame = () => {
-      setAudioLevel(estimateAudioLevel(analyser));
-      levelFrameRef.current = window.requestAnimationFrame(frame);
-    };
-
-    frame();
-  }
-
-  async function stopAudioMonitor() {
+  const stopAudioMonitor = useCallback(async () => {
     clearLevelFrame();
     setAudioLevel(0);
     sourceNodeRef.current?.disconnect();
@@ -131,9 +119,9 @@ export function useShadowingPractice() {
       await audioContextRef.current.close().catch(() => {});
       audioContextRef.current = null;
     }
-  }
+  }, [clearLevelFrame]);
 
-  async function startAudioMonitor() {
+  const startAudioMonitor = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -154,96 +142,111 @@ export function useShadowingPractice() {
       analyserRef.current = analyser;
       sourceNodeRef.current = sourceNode;
       await audioContext.resume().catch(() => {});
-      startLevelLoop();
+
+      // Inline startLevelLoop
+      clearLevelFrame();
+      const frame = () => {
+        setAudioLevel(estimateAudioLevel(analyser));
+        levelFrameRef.current = window.requestAnimationFrame(frame);
+      };
+      frame();
     } catch {
       setAudioLevel(0);
     }
-  }
+  }, [clearLevelFrame]);
 
-  const startListening = useCallback((locale = "en-GB", options?: StartListeningOptions) => {
-    const Recognition = getSpeechRecognitionConstructor();
-    const initialText = options?.initialText?.trim() ?? "";
-    const stopOnSilence = options?.stopOnSilence ?? true;
+  const startListening = useCallback(
+    (locale = "en-GB", options?: StartListeningOptions) => {
+      const Recognition = getSpeechRecognitionConstructor();
+      const initialText = options?.initialText?.trim() ?? "";
+      const stopOnSilence = options?.stopOnSilence ?? true;
 
-    if (!Recognition) {
-      setStatus("error");
-      setError("Speech recognition is not available in this browser.");
-      return;
-    }
-
-    recognitionRef.current?.abort();
-
-    const recognition = new Recognition();
-    recognition.continuous = options?.continuous ?? false;
-    recognition.interimResults = true;
-    recognition.lang = locale;
-    sessionOptionsRef.current = options ?? {};
-
-    setTranscript(initialText);
-    setError("");
-    setStatus("listening");
-    if (stopOnSilence) {
-      restartSilenceTimer();
-    }
-    void startAudioMonitor();
-
-    recognition.onresult = (event) => {
-      const spokenTranscript = Array.from(event.results)
-        .map((result) => result[0]?.transcript ?? "")
-        .join(" ")
-        .trim();
-      const nextTranscript = joinTranscript(initialText, spokenTranscript);
-
-      if (stopOnSilence) {
-        restartSilenceTimer();
-      }
-      setTranscript(nextTranscript);
-      sessionOptionsRef.current.onTranscriptChange?.(nextTranscript);
-    };
-
-    recognition.onerror = (event) => {
-      clearSilenceTimer();
-      void stopAudioMonitor();
-
-      if (event.error === "network" && options?.fallbackLocale && !options?.hasRetried) {
-        recognitionRef.current = null;
-        setError("Primary speech service did not respond. Retrying once...");
-        void Promise.resolve().then(() =>
-          startListening(options.fallbackLocale, {
-            ...options,
-            fallbackLocale: undefined,
-            hasRetried: true,
-          }),
-        );
+      if (!Recognition) {
+        setStatus("error");
+        setError("Speech recognition is not available in this browser.");
         return;
       }
 
-      setStatus("error");
-      setError(
-        event.error === "network"
-          ? "Browser speech recognition could not reach its online service. Try Chrome or Edge, check your network, or configure a backup speech provider."
-          : event.error
-            ? `Speech recognition failed: ${event.error}.`
-            : "Speech recognition failed.",
-      );
-    };
+      recognitionRef.current?.abort();
 
-    recognition.onend = () => {
-      clearSilenceTimer();
-      void stopAudioMonitor();
-      setStatus((current) => (current === "listening" ? "stopped" : current));
-      recognitionRef.current = null;
-    };
+      const recognition = new Recognition();
+      recognition.continuous = options?.continuous ?? false;
+      recognition.interimResults = true;
+      recognition.lang = locale;
+      sessionOptionsRef.current = options ?? {};
 
-    recognitionRef.current = recognition;
-    recognition.start();
-  }, []);
+      setTranscript(initialText);
+      setError("");
+      setStatus("listening");
+      if (stopOnSilence) {
+        restartSilenceTimer();
+      }
+      void startAudioMonitor();
+
+      recognition.onresult = (event) => {
+        const spokenTranscript = Array.from(event.results)
+          .map((result) => result[0]?.transcript ?? "")
+          .join(" ")
+          .trim();
+        const nextTranscript = joinTranscript(initialText, spokenTranscript);
+
+        if (stopOnSilence) {
+          restartSilenceTimer();
+        }
+        setTranscript(nextTranscript);
+        sessionOptionsRef.current.onTranscriptChange?.(nextTranscript);
+      };
+
+      recognition.onerror = (event) => {
+        clearSilenceTimer();
+        void stopAudioMonitor();
+
+        if (event.error === "network" && options?.fallbackLocale && !options?.hasRetried) {
+          recognitionRef.current = null;
+          setError("Primary speech service did not respond. Retrying once...");
+          void Promise.resolve().then(() =>
+            startListeningRef.current(options.fallbackLocale, {
+              ...options,
+              fallbackLocale: undefined,
+              hasRetried: true,
+            }),
+          );
+          return;
+        }
+
+        setStatus("error");
+        setError(
+          event.error === "network"
+            ? "Browser speech recognition could not reach its online service. Try Chrome or Edge, check your network, or configure a backup speech provider."
+            : event.error
+              ? `Speech recognition failed: ${event.error}.`
+              : "Speech recognition failed.",
+        );
+      };
+
+      recognition.onend = () => {
+        clearSilenceTimer();
+        void stopAudioMonitor();
+        setStatus((current) => (current === "listening" ? "stopped" : current));
+        recognitionRef.current = null;
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    },
+    [clearSilenceTimer, restartSilenceTimer, startAudioMonitor, stopAudioMonitor],
+  );
+
+  // Keep ref in sync so the retry callback always calls the latest version
+  useEffect(() => {
+    startListeningRef.current = startListening;
+  }, [startListening]);
 
   const stopListening = useCallback(() => {
     clearSilenceTimer();
     void stopAudioMonitor();
     recognitionRef.current?.stop();
-  }, []);
+  }, [clearSilenceTimer, stopAudioMonitor]);
 
   const resetListening = useCallback(() => {
     clearSilenceTimer();
@@ -254,11 +257,11 @@ export function useShadowingPractice() {
     setTranscript("");
     setError("");
     setStatus("idle");
-  }, []);
+  }, [clearSilenceTimer, stopAudioMonitor]);
 
-  useEffect(() => {
-    setIsSupported(Boolean(getSpeechRecognitionConstructor()));
-  }, []);
+  const [isSupported] = useState(() => {
+    return typeof window !== "undefined" && Boolean(getSpeechRecognitionConstructor());
+  });
 
   useEffect(() => {
     return () => {
@@ -268,7 +271,7 @@ export function useShadowingPractice() {
       recognitionRef.current?.abort();
       recognitionRef.current = null;
     };
-  }, []);
+  }, [clearSilenceTimer, clearLevelFrame, stopAudioMonitor]);
 
   return {
     isSupported,

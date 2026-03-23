@@ -9,6 +9,7 @@ export type DIICSUMajorId =
 
 export type ListeningAccent = "british" | "american" | "global";
 export type ListeningContentMode = "practice" | "ted";
+export type SpeakerRegion = "north-america" | "british" | "europe" | "asia" | "latin-america" | "other";
 
 export interface DIICSUMajorProfile {
   id: DIICSUMajorId;
@@ -46,6 +47,7 @@ export interface ListeningMaterial {
   sourceName: string;
   speakerRole: string;
   speakerName?: string;
+  speakerRegion?: SpeakerRegion;
   scenario: string;
   transcript: string;
   transcriptUrl?: string;
@@ -1170,6 +1172,7 @@ interface TedListeningBlueprint {
   title: string;
   speakerName: string;
   speakerRole: string;
+  speakerRegion: SpeakerRegion;
   scenario: string;
   recommendedLevel: CEFRLevel;
   durationLabel: string;
@@ -1239,6 +1242,7 @@ const tedListeningBlueprints: TedListeningBlueprint[] = [
     title: "Why we should build wooden skyscrapers",
     speakerName: "Michael Green",
     speakerRole: "TED speaker and architect",
+    speakerRegion: "north-america",
     scenario:
       "Real TED listening on sustainable construction, structural materials, and low-carbon urban development.",
     recommendedLevel: "B2",
@@ -1301,6 +1305,7 @@ const tedListeningBlueprints: TedListeningBlueprint[] = [
     title: "My green agenda for architecture",
     speakerName: "Norman Foster",
     speakerRole: "TED speaker and architect",
+    speakerRegion: "british",
     scenario:
       "Real TED listening on sustainable architecture, efficient structures, and environmental design at city scale.",
     recommendedLevel: "B2",
@@ -1363,6 +1368,7 @@ const tedListeningBlueprints: TedListeningBlueprint[] = [
     title: "The best stats you've ever seen",
     speakerName: "Hans Rosling",
     speakerRole: "TED speaker and global health data expert",
+    speakerRegion: "europe",
     scenario:
       "Real TED listening on statistics, data visualization, and how quantitative evidence can challenge common assumptions.",
     recommendedLevel: "B2",
@@ -1425,6 +1431,7 @@ const tedListeningBlueprints: TedListeningBlueprint[] = [
     title: "The beauty of data visualization",
     speakerName: "David McCandless",
     speakerRole: "TED speaker and data journalist",
+    speakerRegion: "british",
     scenario:
       "Real TED listening on visual patterns, statistical storytelling, and how complex information becomes easier to understand.",
     recommendedLevel: "B1",
@@ -1487,6 +1494,7 @@ const tedListeningBlueprints: TedListeningBlueprint[] = [
     title: "How computers learn to recognize objects instantly",
     speakerName: "Joseph Redmon",
     speakerRole: "TED speaker and computer scientist",
+    speakerRegion: "north-america",
     scenario:
       "Real TED listening on computer vision, object detection, and real-time machine-learning systems.",
     recommendedLevel: "B1",
@@ -1549,6 +1557,7 @@ const tedListeningBlueprints: TedListeningBlueprint[] = [
     title: "Deep learning, neural networks and the future of AI",
     speakerName: "Yann LeCun",
     speakerRole: "TED speaker and AI researcher",
+    speakerRegion: "europe",
     scenario:
       "Real TED listening on deep learning, neural networks, and the wider future of artificial intelligence systems.",
     recommendedLevel: "B2",
@@ -1611,6 +1620,7 @@ const tedListeningBlueprints: TedListeningBlueprint[] = [
     title: "What if 3D printing was 100x faster?",
     speakerName: "Joseph DeSimone",
     speakerRole: "TED speaker, inventor, and materials scientist",
+    speakerRegion: "north-america",
     scenario:
       "Real TED listening on advanced manufacturing, 3D printing, and how new processes can change engineering production.",
     recommendedLevel: "B1",
@@ -1673,6 +1683,7 @@ const tedListeningBlueprints: TedListeningBlueprint[] = [
     title: "A primer on 3D printing",
     speakerName: "Lisa Harouni",
     speakerRole: "TED speaker and 3D-printing entrepreneur",
+    speakerRegion: "british",
     scenario:
       "Real TED listening on additive manufacturing basics, design freedom, and how 3D printing changes production logic.",
     recommendedLevel: "B1",
@@ -1735,6 +1746,7 @@ const tedListeningBlueprints: TedListeningBlueprint[] = [
     title: "The walkable city",
     speakerName: "Jeff Speck",
     speakerRole: "TED speaker and urban planner",
+    speakerRegion: "north-america",
     scenario:
       "Real TED listening on urban mobility, transport planning, and why walkability matters for efficient city systems.",
     recommendedLevel: "B2",
@@ -1797,6 +1809,7 @@ const tedListeningBlueprints: TedListeningBlueprint[] = [
     title: "4 ways to make a city more walkable",
     speakerName: "Jeff Speck",
     speakerRole: "TED speaker and urban planner",
+    speakerRegion: "north-america",
     scenario:
       "Real TED listening on practical urban-mobility design, walkability, and how transport planning shapes everyday movement.",
     recommendedLevel: "B2",
@@ -1859,6 +1872,7 @@ const tedListeningBlueprints: TedListeningBlueprint[] = [
     title: "How to design climate-resilient buildings",
     speakerName: "Alyssa-Amor Gibbons",
     speakerRole: "TED speaker and climate-resilient design specialist",
+    speakerRegion: "other",
     scenario:
       "Real TED listening on climate-resilient construction, traditional building knowledge, and designing structures that work with local conditions.",
     recommendedLevel: "B2",
@@ -1921,6 +1935,7 @@ const tedListeningBlueprints: TedListeningBlueprint[] = [
     title: "The brilliance of bridges and roads that repair themselves",
     speakerName: "Mark Miodownik",
     speakerRole: "TED speaker, scientist, and engineer",
+    speakerRegion: "british",
     scenario:
       "Real TED listening on self-healing infrastructure materials, durability, and the future of civil systems that can sense and repair damage.",
     recommendedLevel: "B1",
@@ -1983,6 +1998,7 @@ const tedListeningBlueprints: TedListeningBlueprint[] = [
     title: "How good are you at calculating risk?",
     speakerName: "Gerd Gigerenzer",
     speakerRole: "TED speaker and risk researcher",
+    speakerRegion: "europe",
     scenario:
       "Real TED listening on statistics, probability, and the difference between relative and absolute risk in public communication.",
     recommendedLevel: "B1",
@@ -2045,6 +2061,7 @@ const tedListeningBlueprints: TedListeningBlueprint[] = [
     title: "What we miss when we focus on the average",
     speakerName: "Mona Chalabi",
     speakerRole: "TED speaker and data journalist",
+    speakerRegion: "british",
     scenario:
       "Real TED listening on data interpretation, averages, and why outliers and variation matter in statistical thinking.",
     recommendedLevel: "B1",
@@ -2107,6 +2124,7 @@ const tedListeningBlueprints: TedListeningBlueprint[] = [
     title: "AI that connects the digital and physical worlds",
     speakerName: "Anima Anandkumar",
     speakerRole: "TED speaker and AI professor",
+    speakerRegion: "asia",
     scenario:
       "Real TED listening on AI for physics-based simulation, scientific computing, and systems that connect digital models with the real world.",
     recommendedLevel: "B2",
@@ -2169,6 +2187,7 @@ const tedListeningBlueprints: TedListeningBlueprint[] = [
     title: "Can AI match the human brain?",
     speakerName: "Surya Ganguli",
     speakerRole: "TED speaker, neuroscientist, and professor",
+    speakerRegion: "north-america",
     scenario:
       "Real TED listening on AI, neuroscience, and the search for a new science of intelligence that explains both machines and brains.",
     recommendedLevel: "B2",
@@ -2231,6 +2250,7 @@ const tedListeningBlueprints: TedListeningBlueprint[] = [
     title: "What's next in 3D printing",
     speakerName: "Avi Reichental",
     speakerRole: "TED speaker and 3D-printing entrepreneur",
+    speakerRegion: "north-america",
     scenario:
       "Real TED listening on 3D printing, material flexibility, and how additive manufacturing supports customization in product design.",
     recommendedLevel: "B1",
@@ -2293,6 +2313,7 @@ const tedListeningBlueprints: TedListeningBlueprint[] = [
     title: "The next manufacturing revolution is here",
     speakerName: "Olivier Scalabre",
     speakerRole: "TED speaker and industrial systems thinker",
+    speakerRegion: "europe",
     scenario:
       "Real TED listening on advanced manufacturing, productivity, and how a fourth manufacturing revolution could reshape industrial growth.",
     recommendedLevel: "B1",
@@ -2355,6 +2376,7 @@ const tedListeningBlueprints: TedListeningBlueprint[] = [
     title: "The billion-dollar campaign to electrify transport",
     speakerName: "Monica Araya",
     speakerRole: "TED speaker and electrification advocate",
+    speakerRegion: "latin-america",
     scenario:
       "Real TED listening on transport electrification, zero-emission mobility, and how policy and funding can accelerate the shift away from combustion engines.",
     recommendedLevel: "B2",
@@ -2417,6 +2439,7 @@ const tedListeningBlueprints: TedListeningBlueprint[] = [
     title: "A carbon-free future starts with driving less",
     speakerName: "Wayne Ting",
     speakerRole: "TED speaker and mobility entrepreneur",
+    speakerRegion: "north-america",
     scenario:
       "Real TED listening on shared micromobility, lightweight transport systems, and reducing emissions by changing travel behavior.",
     recommendedLevel: "B1",
@@ -2498,6 +2521,7 @@ export const tedListeningMaterials: ListeningMaterial[] = tedListeningBlueprints
       sourceName: "TED",
       speakerRole: blueprint.speakerRole,
       speakerName: blueprint.speakerName,
+      speakerRegion: blueprint.speakerRegion,
       scenario: blueprint.scenario,
       transcript: "",
       transcriptUrl: urls.transcriptUrl,
@@ -2535,6 +2559,15 @@ export const listeningModes = [
     hint: "Real official TED talks embedded from TED with major-matched topics and note-taking tasks.",
   },
 ] as const;
+
+export const speakerRegions: { id: SpeakerRegion; label: string; shortLabel: string }[] = [
+  { id: "north-america", label: "North America", shortLabel: "N. America" },
+  { id: "british", label: "British", shortLabel: "British" },
+  { id: "europe", label: "Europe", shortLabel: "Europe" },
+  { id: "asia", label: "Asia", shortLabel: "Asia" },
+  { id: "latin-america", label: "Latin America", shortLabel: "L. America" },
+  { id: "other", label: "Other", shortLabel: "Other" },
+];
 
 export function getListeningMaterialOptions(
   materials: ListeningMaterial[],

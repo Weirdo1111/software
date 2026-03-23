@@ -2,12 +2,14 @@
 
 import Image from "next/image";
 import {
+  BookMarked,
   CheckCircle2,
   ExternalLink,
   FileText,
   LoaderCircle,
   PlayCircle,
   Search,
+  Sparkles,
 } from "lucide-react";
 import {
   useDeferredValue,
@@ -18,14 +20,17 @@ import {
   useSyncExternalStore,
 } from "react";
 
+import { AIAnalysisState } from "@/components/forms/ai-analysis-state";
 import { SaveToDeckButton } from "@/components/forms/save-to-deck-button";
 import {
   listeningMajors,
   listeningMaterials,
   scoreListeningMaterial,
+  speakerRegions,
   tedListeningMaterials,
   type DIICSUMajorId,
   type ListeningMaterial,
+  type SpeakerRegion,
 } from "@/lib/listening-materials";
 import {
   getListeningLibraryServerSnapshot,
@@ -35,10 +40,11 @@ import {
   subscribeListeningLibrary,
 } from "@/lib/listening-library";
 import { cn } from "@/lib/utils";
-import type { CEFRLevel } from "@/types/learning";
+import type { CEFRLevel, ListeningAIFeedback } from "@/types/learning";
 
 type MajorFilter = "all" | DIICSUMajorId;
 type LevelFilter = "all" | CEFRLevel;
+type RegionFilter = "all" | SpeakerRegion;
 
 const tedThumbnailFallbackMap = new Map(
   tedListeningMaterials.map((material) => [material.materialGroupId, material.thumbnailUrl]),
@@ -97,6 +103,7 @@ export function ListeningFeedbackForm({
   const deferredSearchValue = useDeferredValue(searchValue);
   const [selectedMajorFilter, setSelectedMajorFilter] = useState<MajorFilter>("all");
   const [selectedLevelFilter, setSelectedLevelFilter] = useState<LevelFilter>("all");
+  const [selectedRegionFilter, setSelectedRegionFilter] = useState<RegionFilter>("all");
   const [selectedMaterialGroupId, setSelectedMaterialGroupId] = useState(
     () => tedCatalog[0]?.materialGroupId ?? "",
   );
@@ -107,6 +114,9 @@ export function ListeningFeedbackForm({
   const [isScoring, setIsScoring] = useState(false);
   const [attemptStartedAt, setAttemptStartedAt] = useState(() => Date.now());
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [aiFeedback, setAiFeedback] = useState<ListeningAIFeedback | null>(null);
+  const [isAIScoring, setIsAIScoring] = useState(false);
+  const [aiStatus, setAiStatus] = useState("");
   const recordedHistoryGroupIdsRef = useRef<Set<string>>(new Set());
 
   const librarySnapshot = useSyncExternalStore(
@@ -125,6 +135,11 @@ export function ListeningFeedbackForm({
     return ["all", ...levels] as LevelFilter[];
   }, [tedCatalog]);
 
+  const availableRegions = useMemo(() => {
+    const regionSet = new Set(tedCatalog.map((material) => material.speakerRegion).filter(Boolean));
+    return speakerRegions.filter((r) => regionSet.has(r.id));
+  }, [tedCatalog]);
+
   const filteredMaterials = useMemo(() => {
     const normalizedSearch = normalizeSearchValue(deferredSearchValue);
 
@@ -133,6 +148,8 @@ export function ListeningFeedbackForm({
         selectedMajorFilter === "all" || material.majorId === selectedMajorFilter;
       const matchesLevel =
         selectedLevelFilter === "all" || material.recommendedLevel === selectedLevelFilter;
+      const matchesRegion =
+        selectedRegionFilter === "all" || material.speakerRegion === selectedRegionFilter;
       const matchesSearch =
         normalizedSearch.length === 0 ||
         normalizeSearchValue(
@@ -147,9 +164,9 @@ export function ListeningFeedbackForm({
           ].join(" "),
         ).includes(normalizedSearch);
 
-      return matchesMajor && matchesLevel && matchesSearch;
+      return matchesMajor && matchesLevel && matchesRegion && matchesSearch;
     });
-  }, [deferredSearchValue, selectedLevelFilter, selectedMajorFilter, tedCatalog]);
+  }, [deferredSearchValue, selectedLevelFilter, selectedMajorFilter, selectedRegionFilter, tedCatalog]);
 
   useEffect(() => {
     if (!selectedMaterialGroupId) {
@@ -187,6 +204,8 @@ export function ListeningFeedbackForm({
     setResult(null);
     setSubmitStatus("");
     setShowTedEmbed(false);
+    setAiFeedback(null);
+    setAiStatus("");
     setAttemptStartedAt(Date.now());
     setAnswers(buildAnswerState(activeMaterial.questions.map((question) => question.id)));
   }, [activeMaterial]);
@@ -275,6 +294,44 @@ export function ListeningFeedbackForm({
       );
     } finally {
       setIsScoring(false);
+    }
+  }
+
+  async function onAIFeedback() {
+    setIsAIScoring(true);
+    setAiStatus("");
+    setAiFeedback(null);
+
+    try {
+      const response = await fetch("/api/ai/feedback/listening", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          talk_title: activeMaterial.title,
+          speaker_name: activeMaterial.speakerName ?? "Unknown",
+          scenario: activeMaterial.scenario,
+          answers: {
+            gist: answers["gist"] ?? "",
+            detail: answers["detail"] ?? "",
+            signpost: answers["signpost"] ?? "",
+            term: answers["term"] ?? "",
+          },
+          notes,
+          target_level: defaultLevel,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to generate listening feedback.");
+      }
+
+      setAiFeedback(data as ListeningAIFeedback);
+    } catch (nextError) {
+      const message = nextError instanceof Error ? nextError.message : "AI feedback failed.";
+      setAiStatus(message);
+    } finally {
+      setIsAIScoring(false);
     }
   }
 
@@ -369,6 +426,38 @@ export function ListeningFeedbackForm({
             </button>
           ))}
         </div>
+
+        {availableRegions.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setSelectedRegionFilter("all")}
+              className={cn(
+                "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+                selectedRegionFilter === "all"
+                  ? "bg-[var(--coral)] text-white"
+                  : "border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] text-[var(--ink)]",
+              )}
+            >
+              All regions
+            </button>
+            {availableRegions.map((region) => (
+              <button
+                key={region.id}
+                type="button"
+                onClick={() => setSelectedRegionFilter(region.id)}
+                className={cn(
+                  "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+                  selectedRegionFilter === region.id
+                    ? "bg-[var(--coral)] text-white"
+                    : "border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] text-[var(--ink)]",
+                )}
+              >
+                {region.label}
+              </button>
+            ))}
+          </div>
+        )}
       </article>
 
       <article className="rounded-[2rem] border border-[rgba(20,50,75,0.12)] bg-white p-5 shadow-[0_18px_38px_rgba(18,32,52,0.06)] sm:p-6">
@@ -826,6 +915,93 @@ export function ListeningFeedbackForm({
                       Model answer: {feedback.modelAnswer}
                     </p>
                   </article>
+                ))}
+              </div>
+
+              {/* AI feedback button — appears after local scoring */}
+              <div className="mt-5 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={onAIFeedback}
+                  disabled={isAIScoring}
+                  className="inline-flex items-center gap-2 rounded-full bg-[var(--navy)] px-5 py-3 text-sm font-semibold text-[#f7efe3] disabled:opacity-60"
+                >
+                  {isAIScoring ? (
+                    <LoaderCircle className="size-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="size-4" />
+                  )}
+                  {isAIScoring ? "AI analysing..." : "Get AI feedback"}
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          {aiStatus ? (
+            <p className="mt-4 rounded-[1rem] bg-[rgba(255,244,240,0.9)] px-4 py-3 text-sm font-medium text-[var(--coral)]">
+              {aiStatus}
+            </p>
+          ) : null}
+
+          {isAIScoring ? (
+            <div className="mt-5">
+              <AIAnalysisState
+                title="Evaluating your listening comprehension."
+                description="The listening coach is checking your answers against the TED talk's argument structure, then preparing personalised feedback and tips."
+                steps={[
+                  "Reviewing your main argument and key detail answers.",
+                  "Checking signpost identification and technical term choice.",
+                  "Preparing a listening score with targeted coaching advice.",
+                ]}
+              />
+            </div>
+          ) : null}
+
+          {aiFeedback ? (
+            <div className="mt-5 grid gap-4 rounded-[1.6rem] border border-[rgba(20,50,75,0.12)] bg-gradient-to-br from-[#f7ead2] via-white to-[#fdf5e8] p-5">
+              <div className="flex items-center gap-3 text-[var(--ink)]">
+                <BookMarked className="size-4" />
+                <p className="text-sm font-semibold">AI Listening Feedback</p>
+              </div>
+
+              <div className="rounded-[1.2rem] bg-white/80 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
+                  Listening score
+                </p>
+                <p className="font-display mt-2 text-3xl tracking-tight text-[var(--ink)]">
+                  {aiFeedback.listening_score}
+                </p>
+              </div>
+
+              <div className="grid gap-3">
+                <div className="rounded-[1.2rem] bg-white/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Main argument</p>
+                  <p className="mt-2 text-sm leading-7 text-[var(--ink)]">{aiFeedback.gist_feedback}</p>
+                </div>
+                <div className="rounded-[1.2rem] bg-white/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Key detail</p>
+                  <p className="mt-2 text-sm leading-7 text-[var(--ink)]">{aiFeedback.detail_feedback}</p>
+                </div>
+                <div className="rounded-[1.2rem] bg-white/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Structure / Signpost</p>
+                  <p className="mt-2 text-sm leading-7 text-[var(--ink)]">{aiFeedback.signpost_feedback}</p>
+                </div>
+                <div className="rounded-[1.2rem] bg-white/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Technical term</p>
+                  <p className="mt-2 text-sm leading-7 text-[var(--ink)]">{aiFeedback.term_feedback}</p>
+                </div>
+                <div className="rounded-[1.2rem] bg-white/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Notes quality</p>
+                  <p className="mt-2 text-sm leading-7 text-[var(--ink)]">{aiFeedback.note_feedback}</p>
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <p className="text-sm font-semibold text-[var(--ink)]">Coach tips</p>
+                {(Array.isArray(aiFeedback.tips) ? aiFeedback.tips : [String(aiFeedback.tips)]).map((tip) => (
+                  <div key={tip} className="rounded-[1rem] bg-white/80 px-4 py-3 text-sm leading-6 text-[var(--ink-soft)]">
+                    {tip}
+                  </div>
                 ))}
               </div>
             </div>
