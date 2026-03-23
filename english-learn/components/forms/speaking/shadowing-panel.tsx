@@ -110,7 +110,7 @@ export function SpeakingShadowingPanel({
   }
 
   return (
-    <section className="grid gap-5 xl:grid-cols-[1fr_0.98fr]">
+    <section className="grid gap-5">
       <article className="rounded-[1.85rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.84)] p-5 shadow-[0_18px_48px_rgba(18,32,52,0.06)]">
         <div className="flex items-start justify-between gap-3">
           <div>
