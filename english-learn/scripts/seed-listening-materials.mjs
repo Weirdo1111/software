@@ -19,6 +19,8 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
 const payload = listeningMaterials.map((material) => ({
   code: material.id,
   content_mode: material.contentMode,
+  material_group_id: material.materialGroupId,
+  material_group_label: material.materialGroupLabel,
   major_id: material.majorId,
   major_label: material.majorLabel,
   accent: material.accent,

@@ -116,6 +116,10 @@ export async function createLocalUser(input: {
 }
 
 export function toPublicUser(user: StoredUser): PublicAuthUser {
-  const { passwordHash: _passwordHash, ...publicUser } = user;
-  return publicUser;
+  return {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    createdAt: user.createdAt,
+  };
 }

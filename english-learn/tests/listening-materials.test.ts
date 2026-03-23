@@ -4,6 +4,7 @@ import {
   buildListeningSentenceSegments,
   findEvidenceSentence,
   getListeningMaterial,
+  getListeningMaterialOptions,
   getTedListeningMaterial,
   listeningMaterials,
   listeningMajors,
@@ -14,15 +15,19 @@ import {
 } from "@/lib/listening-materials";
 
 describe("listening materials", () => {
-  it("covers all five DIICSU majors with three accent variants each and one TED talk each", () => {
+  it("covers all five DIICSU majors with two practice sets, three accent variants each, and one TED talk each", () => {
     expect(listeningMajors).toHaveLength(5);
-    expect(practiceListeningMaterials).toHaveLength(15);
+    expect(practiceListeningMaterials).toHaveLength(30);
     expect(tedListeningMaterials).toHaveLength(5);
-    expect(listeningMaterials).toHaveLength(20);
+    expect(listeningMaterials).toHaveLength(35);
 
     for (const major of listeningMajors) {
       const variants = practiceListeningMaterials.filter((item) => item.majorId === major.id);
-      expect(variants).toHaveLength(3);
+      const options = getListeningMaterialOptions(practiceListeningMaterials, "practice", major.id);
+
+      expect(variants).toHaveLength(6);
+      expect(options).toHaveLength(2);
+      expect(new Set(variants.map((item) => item.materialGroupId)).size).toBe(2);
       expect(
         variants.every((item) => typeof item.audioSrc === "string" && item.audioSrc.endsWith(".m4a")),
       ).toBe(true);
@@ -62,6 +67,18 @@ describe("listening materials", () => {
     expect(tedMaterial.speakerName).toBe("Joseph Redmon");
     expect(tedMaterial.transcriptUrl).toContain("/transcript");
     expect(tedMaterial.audioVoice).toBeNull();
+  });
+
+  it("can retrieve a specific practice material group for a major", () => {
+    const material = getListeningMaterial(
+      "computing-science",
+      "american",
+      "computing-science-deployment-rollback",
+    );
+
+    expect(material.materialGroupLabel).toBe("Deployment rollback");
+    expect(material.id).toBe("computing-science-deployment-rollback-american");
+    expect(material.title).toContain("rollback");
   });
 
   it("builds sentence segments with stable ordering for practice clips", () => {
