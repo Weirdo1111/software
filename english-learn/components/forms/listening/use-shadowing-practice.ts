@@ -259,9 +259,11 @@ export function useShadowingPractice() {
     setStatus("idle");
   }, [clearSilenceTimer, stopAudioMonitor]);
 
-  const [isSupported] = useState(() => {
-    return typeof window !== "undefined" && Boolean(getSpeechRecognitionConstructor());
-  });
+  const [isSupported, setIsSupported] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR-safe: browser API check after hydration
+    setIsSupported(Boolean(getSpeechRecognitionConstructor()));
+  }, []);
 
   useEffect(() => {
     return () => {
