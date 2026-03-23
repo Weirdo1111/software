@@ -28,21 +28,21 @@ function extractLevel(id: string): CEFRLevel {
 
 const modeMeta = {
   listening: {
-    label: "Academic Listening Studio",
+    label: "TED Listening Library",
     icon: Ear,
-    focus: "Move between controlled accent drills and official TED talks while keeping the same DIICSU-focused note-taking workflow.",
-    source: "DIICSU listening bank plus TED official embeds matched to five undergraduate disciplines",
-    output: "Structured notes + listening check + saved technical vocabulary + real-world TED exposure",
-    coach: "Use accent practice for targeted control, then move into TED mode when you are ready for more natural pacing and authentic delivery.",
+    focus: "Browse official TED talks matched to DIICSU majors, then turn each video into focused note-taking and listening-check practice.",
+    source: "Official TED talks with major-matched prompts, vocabulary, and listening checks for five undergraduate disciplines",
+    output: "Structured notes + TED listening check + saved technical vocabulary + major-matched academic listening practice",
+    coach: "Filter by major or level, preview the talk in the page, then open the official TED page when you want the best playback quality.",
     tasks: [
-      "Choose Accent Practice or TED Listening, then select your DIICSU major.",
-      "Play the clip or open the official TED embed, take structured notes, and answer the checkpoints.",
-      "Review the transcript option and save useful technical terms to the deck.",
+      "Choose a TED talk by major, level, or topic.",
+      "Preview the video or open the official TED page, then take structured notes.",
+      "Answer the listening questions and save useful technical terms to the deck.",
     ],
     checkpoints: [
-      "What is the main task or recommendation in the clip?",
+      "What is the main claim or recommendation in the talk?",
       "Which exact detail should appear in your notes?",
-      "Which specialist term or key idea helped you track the speaker?",
+      "Which specialist term or idea helped you track the speaker?",
     ],
     tone: "from-[#d7e8f7] via-white to-[#edf6fc]",
   },
