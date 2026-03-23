@@ -85,6 +85,35 @@ errors must be short strings.
 ${promptContext}Essay:\n${essayText}`;
 }
 
+export function listeningFeedbackPrompt(
+  targetLevel: CEFRLevel,
+  talkTitle: string,
+  speakerName: string,
+  scenario: string,
+  answers: { gist: string; detail: string; signpost: string; term: string },
+  notes: string,
+) {
+  return `You are an academic English listening coach for non-native university students at ${targetLevel}.
+Evaluate the learner's TED listening comprehension based on the talk information and their answers.
+Be encouraging but specific. Keep each feedback field to 1-2 sentences.
+Provide exactly 3 actionable tips as short strings.
+Return strict JSON with keys: listening_score (0-10), gist_feedback, detail_feedback, signpost_feedback, term_feedback, note_feedback, tips.
+listening_score should reflect overall comprehension quality across all four answers.
+note_feedback should evaluate the quality and usefulness of the learner's notes (or say "No notes provided." if empty).
+
+TED Talk: "${talkTitle}" by ${speakerName}
+Scenario: ${scenario}
+
+Learner answers:
+- Main argument (gist): ${answers.gist}
+- Key detail: ${answers.detail}
+- Signpost or structure: ${answers.signpost}
+- Technical term: ${answers.term}
+
+Learner notes:
+${notes || "(No notes provided)"}`;
+}
+
 export function readingFeedbackPrompt(
   targetLevel: CEFRLevel,
   passage: string,
