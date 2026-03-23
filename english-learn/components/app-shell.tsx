@@ -38,6 +38,12 @@ const moduleNav = [
     label: { zh: "写作", en: "Writing" },
     protected: true,
   },
+  {
+    id: "discussion",
+    href: "/discussion",
+    label: { zh: "讨论区", en: "Discussion" },
+    protected: true,
+  },
 ] as const;
 
 const allowedLevels = new Set(["A1", "A2", "B1", "B2", "C1", "C2"]);
@@ -98,13 +104,15 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
     window.location.href = "/";
   };
 
-  const lessonHref = (skill: "listening" | "speaking" | "writing") => `/lesson/${levelPrefix}-${skill}-starter?lang=${locale}`;
+  const lessonHref = (skill: "listening" | "speaking" | "writing") =>
+    `/lesson/${levelPrefix}-${skill}-starter?lang=${locale}`;
 
   const resolveHref = (id: (typeof moduleNav)[number]["id"]) => {
     if (id === "dashboard") return `/dashboard?lang=${locale}`;
     if (id === "reading") return `/reading?lang=${locale}`;
     if (id === "listening") return `/listening?lang=${locale}`;
     if (id === "speaking") return lessonHref("speaking");
+    if (id === "discussion") return `/discussion?lang=${locale}`;
     return lessonHref("writing");
   };
 
@@ -116,6 +124,7 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
     if (id === "speaking") return pathname?.includes("/lesson/") && pathname?.includes("speaking");
     if (id === "writing") return pathname?.includes("/lesson/") && pathname?.includes("writing");
     if (id === "reading") return pathname?.startsWith("/reading");
+    if (id === "discussion") return pathname?.startsWith("/discussion");
     return false;
   };
 
@@ -137,7 +146,9 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
           <div className="flex w-max min-w-full items-center gap-1 whitespace-nowrap">
             <Link
               href={`/?lang=${locale}`}
-              className={`inline-flex min-h-10 items-center rounded-[0.8rem] px-3 text-[17px] font-semibold transition ${isHomeActive ? "bg-white text-[#1d3f77]" : "text-[#edf5ff] hover:bg-white/20"}`}
+              className={`inline-flex min-h-10 items-center rounded-[0.8rem] px-3 text-[17px] font-semibold transition ${
+                isHomeActive ? "bg-white text-[#1d3f77]" : "text-[#edf5ff] hover:bg-white/20"
+              }`}
             >
               {homeLabel}
             </Link>

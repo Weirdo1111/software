@@ -2,7 +2,7 @@ import { MessageSquareText } from "lucide-react";
 
 import { PageFrame } from "@/components/page-frame";
 import { getLocale } from "@/lib/i18n/get-locale";
-import { DiscussionBoard } from "@/components/discussion/discussion-board";
+import { DiscussionClient } from "@/components/discussion/discussion-client";
 
 export default async function DiscussionPage({
   searchParams,
@@ -41,7 +41,7 @@ export default async function DiscussionPage({
       </section>
 
       <div className="mt-6">
-        <DiscussionBoard locale={locale} />
+        <DiscussionClient locale={locale} />
       </div>
     </PageFrame>
   );
