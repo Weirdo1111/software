@@ -10,6 +10,7 @@ import { SpeakingPartnerPanel } from "@/components/forms/speaking/partner-panel"
 import { SpeakingPromptBank } from "@/components/forms/speaking/prompt-bank";
 import { SpeakingRecorderPanel } from "@/components/forms/speaking/recorder-panel";
 import { SpeakingScorePanel } from "@/components/forms/speaking/score-panel";
+import { SpeakingShadowingPanel } from "@/components/forms/speaking/shadowing-panel";
 import { useAudioRecorder } from "@/components/forms/speaking/use-audio-recorder";
 import { appendSpeakingAttemptInStorage } from "@/lib/speaking-attempts";
 import type { PartnerMessage, SpeakingLevel } from "@/components/forms/speaking/types";
@@ -70,15 +71,6 @@ export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: S
 
   function handlePromptChange(promptId: string) {
     void resetPracticeState(promptId);
-  }
-
-  function appendLearnerTurnToTranscript(turn: string) {
-    const normalizedTurn = turn.trim();
-    if (!normalizedTurn) return;
-
-    setTranscript((currentTranscript) =>
-      currentTranscript.trim() ? `${currentTranscript.trim()}\n${normalizedTurn}` : normalizedTurn,
-    );
   }
 
   async function onSubmit(event: React.FormEvent) {
@@ -201,7 +193,6 @@ export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: S
     setIsPartnerSubmitting(true);
     setPartnerMessages((currentMessages) => [...currentMessages, { role: "user", content: learnerTurn }]);
     setPartnerTurn("");
-    appendLearnerTurnToTranscript(learnerTurn);
 
     try {
       const response = await fetch("/api/ai/speaking/partner", {
@@ -274,6 +265,8 @@ export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: S
       />
 
       <SpeakingDraftPanel transcript={transcript} onTranscriptChange={setTranscript} />
+
+      <SpeakingShadowingPanel prompt={selectedPrompt} transcriptSource={transcript} />
 
       <SpeakingPartnerPanel
         partnerMessages={partnerMessages}
