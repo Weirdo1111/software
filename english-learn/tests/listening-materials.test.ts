@@ -15,15 +15,16 @@ import {
 } from "@/lib/listening-materials";
 
 describe("listening materials", () => {
-  it("covers all five DIICSU majors with two practice sets, three accent variants each, and one TED talk each", () => {
+  it("covers all five DIICSU majors with two practice sets, three accent variants each, and four TED talks each", () => {
     expect(listeningMajors).toHaveLength(5);
     expect(practiceListeningMaterials).toHaveLength(30);
-    expect(tedListeningMaterials).toHaveLength(5);
-    expect(listeningMaterials).toHaveLength(35);
+    expect(tedListeningMaterials).toHaveLength(20);
+    expect(listeningMaterials).toHaveLength(50);
 
     for (const major of listeningMajors) {
       const variants = practiceListeningMaterials.filter((item) => item.majorId === major.id);
       const options = getListeningMaterialOptions(practiceListeningMaterials, "practice", major.id);
+      const tedVariants = tedListeningMaterials.filter((item) => item.majorId === major.id);
 
       expect(variants).toHaveLength(6);
       expect(options).toHaveLength(2);
@@ -32,11 +33,13 @@ describe("listening materials", () => {
         variants.every((item) => typeof item.audioSrc === "string" && item.audioSrc.endsWith(".m4a")),
       ).toBe(true);
 
-      const tedVariant = tedListeningMaterials.find((item) => item.majorId === major.id);
-      expect(tedVariant?.contentMode).toBe("ted");
-      expect(tedVariant?.embedUrl).toContain("embed.ted.com/talks/");
-      expect(tedVariant?.officialUrl).toContain("ted.com/talks/");
-      expect(tedVariant?.audioSrc).toBeNull();
+      expect(tedVariants).toHaveLength(4);
+      expect(new Set(tedVariants.map((item) => item.materialGroupId)).size).toBe(4);
+      expect(tedVariants.every((item) => item.contentMode === "ted")).toBe(true);
+      expect(tedVariants.every((item) => item.embedUrl?.includes("embed.ted.com/talks/"))).toBe(true);
+      expect(tedVariants.every((item) => item.officialUrl?.includes("ted.com/talks/"))).toBe(true);
+      expect(tedVariants.every((item) => item.thumbnailUrl?.startsWith("https://"))).toBe(true);
+      expect(tedVariants.every((item) => item.audioSrc === null)).toBe(true);
     }
   });
 
@@ -62,11 +65,24 @@ describe("listening materials", () => {
 
   it("returns a TED material for each DIICSU major", () => {
     const tedMaterial = getTedListeningMaterial("computing-science");
+    const tedOptions = getListeningMaterialOptions(listeningMaterials, "ted");
 
     expect(tedMaterial.contentMode).toBe("ted");
     expect(tedMaterial.speakerName).toBe("Joseph Redmon");
     expect(tedMaterial.transcriptUrl).toContain("/transcript");
     expect(tedMaterial.audioVoice).toBeNull();
+    expect(tedOptions).toHaveLength(20);
+  });
+
+  it("can retrieve a specific TED material group for a major", () => {
+    const tedMaterial = getTedListeningMaterial(
+      "mechanical-engineering-transportation",
+      "ted-transport-walkable-4-ways",
+    );
+
+    expect(tedMaterial.materialGroupLabel).toBe("4 ways to make a city more walkable");
+    expect(tedMaterial.speakerName).toBe("Jeff Speck");
+    expect(tedMaterial.officialUrl).toContain("jeff_speck_4_ways_to_make_a_city_more_walkable");
   });
 
   it("can retrieve a specific practice material group for a major", () => {

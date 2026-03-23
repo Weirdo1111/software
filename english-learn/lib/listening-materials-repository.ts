@@ -85,6 +85,24 @@ function mapRowToListeningMaterial(row: ListeningMaterialRow): ListeningMaterial
   };
 }
 
+const localMaterialFallbackMap = new Map(
+  listeningMaterials.map((material) => [material.materialGroupId, material]),
+);
+
+function mergeWithLocalFallback(material: ListeningMaterial): ListeningMaterial {
+  const localFallback = localMaterialFallbackMap.get(material.materialGroupId);
+
+  if (!localFallback) {
+    return material;
+  }
+
+  return {
+    ...localFallback,
+    ...material,
+    thumbnailUrl: material.thumbnailUrl ?? localFallback.thumbnailUrl,
+  };
+}
+
 export async function getListeningMaterialsCatalog() {
   const supabase = createSupabaseServiceClient();
 
@@ -108,7 +126,8 @@ export async function getListeningMaterialsCatalog() {
 
   const mapped = (data as ListeningMaterialRow[])
     .map(mapRowToListeningMaterial)
-    .filter((item): item is ListeningMaterial => item !== null);
+    .filter((item): item is ListeningMaterial => item !== null)
+    .map(mergeWithLocalFallback);
 
   return mapped.length >= listeningMaterials.length ? mapped : listeningMaterials;
 }
