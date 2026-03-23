@@ -2,17 +2,18 @@
 
 import Link from "next/link";
 import { ArrowRight, Globe, Music } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { type Locale } from "@/lib/i18n/dictionaries";
 
 function useLevel() {
-  const [level] = useState(() => {
-    if (typeof window === "undefined") return "B1";
+  const [level, setLevel] = useState("B1");
+  useEffect(() => {
     const raw = localStorage.getItem("demo_level");
     const val = String(raw ?? "B1").toUpperCase();
-    return ["A1", "A2", "B1", "B2", "C1", "C2"].includes(val) ? val : "B1";
-  });
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR-safe: must read localStorage after hydration
+    if (["A1", "A2", "B1", "B2", "C1", "C2"].includes(val)) setLevel(val);
+  }, []);
   return level;
 }
 
