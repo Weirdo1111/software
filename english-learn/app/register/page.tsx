@@ -21,6 +21,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const copy = {
     zh: {
@@ -46,6 +47,8 @@ export default function RegisterPage() {
       feature3Text: "保持稳定、清晰、可持续的学习体验。",
       footerNote: "Quiet design. Clear route.",
       passwordMismatch: "两次输入的密码不一致",
+      registerLoading: "注册中...",
+      registerFailed: "注册失败，请稍后再试",
     },
     en: {
       brand: "English Learn",
@@ -70,36 +73,57 @@ export default function RegisterPage() {
       feature3Text: "A calmer structure for consistent learning.",
       footerNote: "Quiet design. Clear route.",
       passwordMismatch: "Passwords do not match",
+      registerLoading: "Creating account...",
+      registerFailed: "Unable to create account. Please try again.",
     },
   }[lang];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     if (password !== confirmPassword) {
+      setLoading(false);
       setError(copy.passwordMismatch);
       return;
     }
 
-    console.log({
-      username,
-      email,
-      password,
-      confirmPassword,
-    });
+    try {
+      const response = await fetch("/api/auth/sign-up", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          email,
+          password,
+        }),
+      });
 
-    // 接你的注册接口
-    // await fetch("/api/auth/sign-up", {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify({
-    //     username,
-    //     email,
-    //     password,
-    //     confirmPassword,
-    //   }),
-    // });
+      const data = (await response.json()) as {
+        error?: string;
+        user?: {
+          username: string;
+          email: string;
+        };
+      };
+
+      if (!response.ok) {
+        setLoading(false);
+        setError(data.error || copy.registerFailed);
+        return;
+      }
+
+      localStorage.setItem("demo_logged_in", "true");
+      localStorage.setItem("demo_user", data.user?.username || data.user?.email || username.trim());
+      window.dispatchEvent(new Event("demo-auth-changed"));
+      window.location.href = "/dashboard";
+    } catch {
+      setLoading(false);
+      setError(copy.registerFailed);
+    }
   };
 
   return (
@@ -283,9 +307,10 @@ export default function RegisterPage() {
                 <div className="pt-2">
                   <button
                     type="submit"
-                    className="flex h-14 w-full items-center justify-center rounded-[22px] bg-white text-base font-semibold text-[#22314d] transition hover:translate-y-[-1px] hover:bg-[#f8f5ef]"
+                    disabled={loading}
+                    className="flex h-14 w-full items-center justify-center rounded-[22px] bg-white text-base font-semibold text-[#22314d] transition hover:translate-y-[-1px] hover:bg-[#f8f5ef] disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {copy.register}
+                    {loading ? copy.registerLoading : copy.register}
                   </button>
 
                   <Link
