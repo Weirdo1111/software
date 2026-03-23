@@ -1,4 +1,5 @@
 export type SpeakingLevel = "A1" | "A2" | "B1" | "B2";
+export type SpeakingModuleId = "studio" | "shadowing" | "partner";
 
 export type PartnerMessage = {
   role: "user" | "assistant";
