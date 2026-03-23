@@ -3,58 +3,58 @@ export type AcademicSkill = "listening" | "speaking" | "reading" | "writing";
 export const platformSignals = [
   {
     label: "Audience",
-    value: "Intermediate university students who need stronger academic performance.",
+    value: "DIICSU undergraduates adapting to English-medium modules, seminars, and assessed coursework.",
   },
   {
     label: "Logic",
-    value: "Assessment first, then Low / Medium / High routing with matched content.",
+    value: "Placement first, then matched support for lecture input, discussion output, and assignment delivery.",
   },
   {
     label: "Outcome",
-    value: "Consistent gains across academic listening, speaking, reading, and writing.",
+    value: "Stronger classroom participation and clearer academic performance across all four skills.",
   },
 ] as const;
 
 export const learnerJourney = [
   {
     step: "01",
-    title: "Create or access account",
-    detail: "Start with a simple learner profile and a clear explanation of the academic pathway.",
+    title: "Start with a DIICSU learner profile",
+    detail: "Frame the platform around undergraduate routines such as seminars, presentations, reading lists, and coursework.",
   },
   {
     step: "02",
-    title: "Complete placement test",
-    detail: "Use the initial questionnaire and skill checks to estimate the right difficulty band.",
+    title: "Complete the placement check",
+    detail: "Estimate how much support the learner needs before entering full-English class and assignment contexts.",
   },
   {
     step: "03",
-    title: "Assign proficiency band",
-    detail: "Route each learner to Low, Medium, or High according to current academic English readiness.",
+    title: "Assign the right support band",
+    detail: "Route each learner to Low, Medium, or High based on current readiness for academic participation.",
   },
   {
     step: "04",
-    title: "Unlock matched content",
-    detail: "Surface learning materials that match the learner's current support needs and challenge level.",
+    title: "Unlock matched study scenes",
+    detail: "Show lecture, seminar, reading, and writing tasks that feel closer to the learner's real course load.",
   },
   {
     step: "05",
-    title: "Study across four skills",
-    detail: "Work through listening, speaking, reading, and writing modules as one connected loop.",
+    title: "Train across four academic skills",
+    detail: "Move through listening, speaking, reading, and writing as one connected undergraduate study loop.",
   },
   {
     step: "06",
-    title: "Track progress over time",
-    detail: "Record minutes studied, module completion, and skill-specific evidence of growth.",
+    title: "Track evidence of adaptation",
+    detail: "Record minutes, completions, and visible gains in confidence, structure, and academic expression.",
   },
   {
     step: "07",
-    title: "Retake assessment",
-    detail: "Allow reassessment after measurable improvement instead of locking users into one level.",
+    title: "Reassess when performance stabilizes",
+    detail: "Let learners move up after sustained improvement, not just one strong session.",
   },
   {
     step: "08",
-    title: "Advance difficulty",
-    detail: "Update the user band and unlock more demanding academic tasks when ready.",
+    title: "Advance into harder academic tasks",
+    detail: "Increase challenge only when the learner is ready for denser reading, sharper speaking, and cleaner writing.",
   },
 ] as const;
 
@@ -92,11 +92,11 @@ export const learningModules = [
   {
     skill: "listening",
     title: "Academic Listening",
-    focus: "Lecture signposting, note capture, and evidence detection.",
-    summary: "Short lecture clips with note-taking prompts and instant comprehension checks.",
-    deliverable: "Annotated lecture notes + gist summary",
-    minutes: "18-22 min",
-    progress: 72,
+    focus: "Major-specific briefings, TED listening, accent comparison, and structured note capture.",
+    summary: "Replay DIICSU-oriented listening materials in British, American, and global English, then move into official TED talks for real-world listening.",
+    deliverable: "Structured notes + comprehension check + technical vocabulary deck + TED extension",
+    minutes: "20-24 min",
+    progress: 78,
     href: "/lesson/A2-listening-starter",
     surfaceClass: "from-[#d7e8f7] via-white to-[#edf6fc]",
     badgeClass: "bg-[#14324b] text-white",
@@ -105,9 +105,9 @@ export const learningModules = [
   {
     skill: "speaking",
     title: "Academic Speaking",
-    focus: "Seminar response, pronunciation clarity, and spoken structure.",
-    summary: "Guided discussion turns, shadowing, and AI-supported fluency feedback.",
-    deliverable: "90-second seminar response",
+    focus: "Seminar response, tutorial discussion, and presentation clarity.",
+    summary: "Guided discussion turns and rehearsal flows for speaking up in class with clearer structure.",
+    deliverable: "90-second seminar or presentation response",
     minutes: "16-20 min",
     progress: 58,
     href: "/lesson/A2-speaking-starter",
@@ -118,12 +118,12 @@ export const learningModules = [
   {
     skill: "reading",
     title: "Academic Reading",
-    focus: "Text structure, claim-evidence mapping, and vocabulary in context.",
-    summary: "Articles and abstracts broken into skimmable blocks with inference and referencing tasks.",
-    deliverable: "Structure map + evidence notes",
+    focus: "Reading lists, claim-evidence mapping, and vocabulary in context.",
+    summary: "Topic-based article study that helps learners handle longer academic passages and keep better notes.",
+    deliverable: "Reading list notes + evidence map + saved vocabulary trail",
     minutes: "20-24 min",
     progress: 81,
-    href: "/lesson/A2-reading-starter",
+    href: "/reading",
     surfaceClass: "from-[#f7ead2] via-white to-[#fdf5e8]",
     badgeClass: "bg-[#7b4b14] text-white",
     progressClass: "bg-[#d88e34]",
@@ -131,9 +131,9 @@ export const learningModules = [
   {
     skill: "writing",
     title: "Academic Writing",
-    focus: "Topic sentences, cohesion, and paragraph-level development.",
-    summary: "Produce short academic responses with revision prompts and structured feedback.",
-    deliverable: "150-200 word analytical paragraph",
+    focus: "Coursework paragraphs, cohesion, and source-led development.",
+    summary: "Produce short academic responses with revision prompts that feel closer to real reports and assignments.",
+    deliverable: "150-200 word coursework paragraph",
     minutes: "22-28 min",
     progress: 64,
     href: "/lesson/A2-writing-starter",
@@ -145,33 +145,33 @@ export const learningModules = [
 
 export const releaseFeatures = [
   {
-    title: "Registration and login",
-    detail: "A learner foundation layer with account access before assessment and study begin.",
+    title: "DIICSU-oriented onboarding",
+    detail: "A learner entry layer that sets expectations around seminars, reading lists, presentations, and coursework.",
     status: "MVP",
   },
   {
-    title: "Placement test + questionnaire",
-    detail: "The first gate into the product, used to personalize difficulty and support level.",
+    title: "Placement for English-medium study",
+    detail: "An initial check used to personalize how much support a learner needs before class and assignment work begin.",
     status: "MVP",
   },
   {
     title: "Low / Medium / High routing",
-    detail: "Clear banding logic so learning plans can adapt without manual intervention.",
+    detail: "Clear support bands so academic tasks can feel matched rather than generic.",
     status: "MVP",
   },
   {
-    title: "Personal dashboard",
-    detail: "Progress, profile, streaks, and next actions in a single learner view.",
+    title: "Learner dashboard",
+    detail: "Progress, profile, and next academic actions in one view geared toward undergraduate routines.",
     status: "MVP",
   },
   {
-    title: "Four-skill content modules",
-    detail: "Listening, speaking, reading, and writing experience tailored to the assigned band.",
+    title: "Four-skill academic modules",
+    detail: "Listening, speaking, reading, and writing tasks aligned to lectures, seminars, reading lists, and writing assignments.",
     status: "MVP",
   },
   {
     title: "Reassessment and progression",
-    detail: "Allow the platform to move learners upward after demonstrated improvement.",
+    detail: "Move learners upward only after visible stability in academic performance.",
     status: "MVP",
   },
 ] as const;
@@ -199,7 +199,7 @@ export const dashboardFocus = [
   {
     label: "Current band",
     value: "Medium",
-    note: "Main launch audience: intermediate university students.",
+    note: "Main launch audience: DIICSU undergraduates building confidence in English-medium study.",
   },
   {
     label: "Reassessment window",

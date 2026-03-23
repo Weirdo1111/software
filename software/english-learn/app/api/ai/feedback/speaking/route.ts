@@ -1,58 +1,56 @@
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
 import { z } from "zod";
 
 import { jsonError } from "@/lib/api";
+import { generateStructuredJSON, hasAIConfig } from "@/lib/ai/client";
 import { speakingFeedbackPrompt } from "@/lib/ai/prompts";
-import { env } from "@/lib/env";
+import { buildMockSpeakingFeedback, safeParseAIJSON } from "@/lib/speaking-ai";
+import { getSpeakingPromptById } from "@/lib/speaking-prompts";
+
+// Date: 2026/3/18
+// Author: Tianbo Cao
+// Upgraded the speaking feedback route so scoring is linked to a selected academic prompt.
 
 const schema = z.object({
   audio_url: z.string().url().optional(),
   transcript: z.string().min(1).optional(),
-  prompt_id: z.string().optional(),
+  prompt_id: z.string().min(1),
   target_level: z.enum(["A1", "A2", "B1", "B2"]),
 });
-
-function safeParseJSON<T>(text: string, fallback: T): T {
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    return fallback;
-  }
-}
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const payload = schema.parse(body);
 
-    const transcript = payload.transcript || "Learner submitted an audio response.";
-
-    if (!env.server.OPENAI_API_KEY) {
-      return NextResponse.json({
-        pronunciation_score: 7.2,
-        fluency_score: 6.8,
-        grammar_score: 7,
-        tips: [
-          "Slow down your sentence endings for clearer pronunciation.",
-          "Use linking words like 'because' and 'however' for fluency.",
-          "Check verb tense consistency in longer sentences.",
-        ],
-      });
+    const speakingPrompt = getSpeakingPromptById(payload.prompt_id);
+    if (!speakingPrompt) {
+      return jsonError("Invalid speaking prompt", 422);
     }
 
-    const openai = new OpenAI({ apiKey: env.server.OPENAI_API_KEY });
-    const response = await openai.responses.create({
-      model: "gpt-4o-mini",
-      input: speakingFeedbackPrompt(payload.target_level, transcript),
-    });
+    const transcript = payload.transcript || "Learner submitted an audio response.";
 
-    const output = response.output_text || "";
-    const parsed = safeParseJSON(output, {
+    if (!hasAIConfig()) {
+      return NextResponse.json(buildMockSpeakingFeedback(transcript, speakingPrompt.checkpoints));
+    }
+
+    const output = await generateStructuredJSON(speakingFeedbackPrompt(payload.target_level, speakingPrompt, transcript));
+    const parsed = safeParseAIJSON(output, {
+      overall_score: 7,
+      task_response_score: 7,
       pronunciation_score: 7,
       fluency_score: 7,
       grammar_score: 7,
-      tips: ["Practice shadowing for 10 minutes daily."],
+      strengths: ["Your answer is understandable.", "Your main point is visible."],
+      revision_focus: "Add one clearer example and tighten your sentence structure in the next attempt.",
+      delivery_snapshot: "The answer is understandable but still needs more academic control.",
+      sample_upgrade:
+        "I would argue that universities should provide more structured academic English support. One reason is that students need guided chances to test ideas aloud before high-stakes seminars. For example, short tutorial response tasks can help learners receive immediate feedback from tutors. As a result, students build confidence and contribute more clearly in class.",
+      tips: [
+        "Practice shadowing for 10 minutes daily.",
+        "Add one example that directly supports your position.",
+        "Keep sentence openings short and controlled.",
+      ],
     });
 
     return NextResponse.json(parsed);

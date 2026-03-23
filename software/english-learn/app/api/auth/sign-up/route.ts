@@ -3,10 +3,12 @@ import { z } from "zod";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { jsonError } from "@/lib/api";
+import { createLocalUser } from "@/lib/local-auth";
 
 const schema = z.object({
+  username: z.string().min(3),
   email: z.string().email(),
-  password: z.string().min(8),
+  password: z.string().min(6),
 });
 
 export async function POST(request: Request) {
@@ -16,7 +18,22 @@ export async function POST(request: Request) {
     const supabase = await createSupabaseServerClient();
 
     if (!supabase) {
-      return NextResponse.json({ user_id: "mock-user", message: "Supabase not configured." });
+      try {
+        const user = await createLocalUser(payload);
+
+        return NextResponse.json({
+          user,
+          user_id: user.id,
+          session: true,
+          storage: "local-file",
+        });
+      } catch (error) {
+        if (error instanceof Error) {
+          return jsonError(error.message, 409);
+        }
+
+        return jsonError("Failed to sign up", 500);
+      }
     }
 
     const { data, error } = await supabase.auth.signUp({

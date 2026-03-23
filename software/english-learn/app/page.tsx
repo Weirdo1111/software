@@ -27,6 +27,64 @@ export default async function Home({
   const locale = await getLocale(searchParams);
 
   const isLoggedIn = false;
+  const homeCopy =
+    locale === "zh"
+      ? {
+          heroLabel: "DIICSU Focus",
+          heroHeading: "面向 DIICSU 本科生的学术英语支持，不该像通用英语产品。",
+          heroBody:
+            "这版首页围绕全英文课程、seminar 发言、reading list、presentation 与 coursework 写作来组织体验，让学生更容易感到这套系统就是为他们的学习周而设计。",
+          guideWords: [
+            "Lecture preview",
+            "Seminar turn",
+            "Reading list",
+            "Coursework draft",
+            "Presentation rehearsal",
+          ],
+          scopeLabel: "A week in DIICSU",
+          scopeHeading: "不是泛泛练英语，而是更像真实的一周学习节奏。",
+          scopeBody:
+            "首页右侧不再只讲产品范围，而是把 lecture、tutorial、reading、report 与 short presentation 这些本科生日常场景直接说出来。",
+          modulesHeading: "四项能力对应 DIICSU 学生真正会遇到的学习节奏。",
+          modulesBody:
+            "每个模块都更靠近 lecture、seminar、reading list 和 coursework，而不是四个割裂的小工具。",
+          flowHeading: "这条学习路径更像 DIICSU 学生从适应到进步的过程。",
+          bandsHeading: "Low、Medium、High 应该被理解成真实支持路径，而不是抽象分层。",
+          featureLabel: "DIICSU fit",
+          featureHeading: "让页面从通用 EdTech 感，变成更明确的学院定向界面。",
+          featureBody:
+            "顶部品牌条、首页语境和模块说明现在都更靠近 DIICSU 本科生的课程与作业日常。",
+        }
+      : {
+          heroLabel: "DIICSU Focus",
+          heroHeading: "Academic English support for DIICSU undergraduates should not feel generic.",
+          heroBody:
+            "This version frames the experience around English-medium modules, seminar turns, reading lists, presentations, and coursework so the platform feels closer to a real DIICSU study week.",
+          guideWords: [
+            "Lecture preview",
+            "Seminar turn",
+            "Reading list",
+            "Coursework draft",
+            "Presentation rehearsal",
+          ],
+          scopeLabel: "A week in DIICSU",
+          scopeHeading: "Not generic English practice. A more believable study rhythm.",
+          scopeBody:
+            "The right-hand panel now names the situations DIICSU undergraduates actually face: lectures, tutorials, reading lists, reports, and short presentations.",
+          modulesHeading:
+            "Four skills aligned to the study rhythm DIICSU students actually live through.",
+          modulesBody:
+            "Each module now points more clearly to lecture prep, seminar participation, reading lists, and coursework delivery instead of four unrelated mini tools.",
+          flowHeading:
+            "A learner journey that feels closer to DIICSU adaptation and progression.",
+          bandsHeading:
+            "Low, Medium, High should feel like real support paths for undergraduate study.",
+          featureLabel: "DIICSU fit",
+          featureHeading:
+            "Make the interface read more like a DIICSU-facing academic tool than generic EdTech.",
+          featureBody:
+            "The home experience now leans into DIICSU study context, English-medium teaching, and assignment-driven progression.",
+        };
 
   return (
     <PageFrame
@@ -35,7 +93,7 @@ export default async function Home({
       description={t(locale, "hero_desc")}
     >
       <div className="grid gap-5 xl:grid-cols-[1.35fr_0.95fr]">
-        <section className="surface-panel reveal-up relative overflow-hidden rounded-[2rem] p-6 sm:p-8">
+        <section className="surface-panel hero-campus reveal-up relative overflow-hidden rounded-[2rem] p-6 sm:p-8">
           <div
             className="pointer-events-none absolute -right-12 -top-12 size-40 rounded-full bg-[rgba(20,50,75,0.08)] blur-3xl"
             aria-hidden
@@ -46,20 +104,24 @@ export default async function Home({
           />
 
           <p className="section-label">
-            <Sparkles className="size-3.5" /> MVP direction
+            <Sparkles className="size-3.5" /> {homeCopy.heroLabel}
           </p>
 
           <h2 className="font-display mt-5 max-w-4xl text-4xl leading-tight tracking-tight text-[var(--ink)] sm:text-5xl">
-            A focused academic English platform built around assessment,
-            banding, and four-skill study.
+            {homeCopy.heroHeading}
           </h2>
 
           <p className="mt-4 max-w-3xl text-sm leading-7 text-[var(--ink-soft)] sm:text-base">
-            The first release should feel clear and credible: learners enter,
-            complete a placement test, receive a Low / Medium / High
-            recommendation, then move into academic listening, speaking,
-            reading, and writing tasks designed for their band.
+            {homeCopy.heroBody}
           </p>
+
+          <div className="mt-5 flex flex-wrap gap-2">
+            {homeCopy.guideWords.map((word) => (
+              <span key={word} className="signal-pill">
+                {word}
+              </span>
+            ))}
+          </div>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
             {platformSignals.map((signal) => (
@@ -80,16 +142,15 @@ export default async function Home({
 
         <aside className="surface-ink ambient-card reveal-up rounded-[2rem] p-6 sm:p-7">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#f2d9ae]">
-            First release scope
+            {homeCopy.scopeLabel}
           </p>
 
           <h3 className="font-display mt-4 text-3xl tracking-tight">
-            Compact, but complete.
+            {homeCopy.scopeHeading}
           </h3>
 
           <p className="mt-3 text-sm leading-7 text-[#efe5d6]/78">
-            The UI should already communicate the full loop: assess, route,
-            learn, track progress, and reassess when the learner improves.
+            {homeCopy.scopeBody}
           </p>
 
           <div className="mt-6 grid gap-3">
@@ -125,13 +186,12 @@ export default async function Home({
               <Target className="size-3.5" /> Learning modules
             </p>
             <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)] sm:text-4xl">
-              The four-skill academic learning loop.
+              {homeCopy.modulesHeading}
             </h2>
           </div>
 
           <p className="max-w-2xl text-sm leading-7 text-[var(--ink-soft)]">
-            Each module needs to look connected to the same academic objective,
-            not like four unrelated mini tools.
+            {homeCopy.modulesBody}
           </p>
         </div>
 
@@ -190,7 +250,7 @@ export default async function Home({
           </p>
 
           <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
-            A clear learner journey from entry to progression.
+            {homeCopy.flowHeading}
           </h2>
 
           <div className="mt-6 grid gap-3">
@@ -219,7 +279,7 @@ export default async function Home({
           <p className="section-label">Level bands</p>
 
           <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
-            Low, Medium, High should read as real paths.
+            {homeCopy.bandsHeading}
           </h2>
 
           <div className="mt-6 space-y-4">
@@ -259,15 +319,14 @@ export default async function Home({
       </section>
 
       <section className="mt-6 surface-panel reveal-up rounded-[2rem] p-6 sm:p-7">
-        <p className="section-label">Feature map</p>
+        <p className="section-label">{homeCopy.featureLabel}</p>
 
         <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
           <h2 className="font-display text-3xl tracking-tight text-[var(--ink)]">
-            MVP features the client can evaluate quickly.
+            {homeCopy.featureHeading}
           </h2>
           <p className="max-w-2xl text-sm leading-7 text-[var(--ink-soft)]">
-            The UI now frames the product as an academic tool for progression
-            rather than a generic English practice site.
+            {homeCopy.featureBody}
           </p>
         </div>
 

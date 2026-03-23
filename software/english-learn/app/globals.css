@@ -1,17 +1,17 @@
-@import "tailwindcss";
+@import "../node_modules/tailwindcss/index.css";
 
 :root {
-  --paper: #f4ecdf;
-  --paper-strong: #eadfcb;
-  --paper-soft: #fbf7f1;
-  --ink: #172033;
-  --ink-soft: #566278;
-  --line: rgba(72, 85, 104, 0.18);
-  --navy: #14324b;
+  --paper: #f3efe7;
+  --paper-strong: #e5dccd;
+  --paper-soft: #fbfaf6;
+  --ink: #15203b;
+  --ink-soft: #4f616d;
+  --line: rgba(79, 97, 109, 0.18);
+  --navy: #1c4e95;
   --teal: #2a6958;
-  --amber: #d88e34;
+  --amber: #ce9c45;
   --coral: #c36d59;
-  --glow: rgba(20, 50, 75, 0.12);
+  --glow: rgba(28, 78, 149, 0.12);
   --font-body: "Avenir Next", "Segoe UI", "PingFang SC", "Hiragino Sans GB", sans-serif;
   --font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "Times New Roman", "Songti SC", serif;
 }
@@ -29,10 +29,10 @@ body {
   min-height: 100vh;
   color: var(--ink);
   background:
-    radial-gradient(circle at top left, rgba(20, 50, 75, 0.15), transparent 30%),
-    radial-gradient(circle at 85% 0%, rgba(216, 142, 52, 0.18), transparent 30%),
-    radial-gradient(circle at 50% 100%, rgba(42, 105, 88, 0.15), transparent 34%),
-    linear-gradient(135deg, #efe4d2 0%, #f6f0e6 48%, #f1e8dc 100%);
+    radial-gradient(circle at 12% 12%, rgba(28, 78, 149, 0.16), transparent 24%),
+    radial-gradient(circle at 86% 2%, rgba(206, 156, 69, 0.2), transparent 24%),
+    radial-gradient(circle at 50% 100%, rgba(28, 78, 149, 0.08), transparent 36%),
+    linear-gradient(135deg, #f0ebe2 0%, #f7f4ee 44%, #f1ebe1 100%);
   background-attachment: fixed;
   font-family: var(--font-body);
 }
@@ -42,13 +42,27 @@ body::before {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  opacity: 0.42;
+  opacity: 0.34;
   background:
     linear-gradient(var(--line) 1px, transparent 1px),
     linear-gradient(90deg, var(--line) 1px, transparent 1px),
-    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0 16px, rgba(20, 50, 75, 0.03) 16px 32px);
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0 16px, rgba(28, 78, 149, 0.03) 16px 32px);
   background-size: 36px 36px, 36px 36px, 100% 100%;
   mix-blend-mode: multiply;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: -8% -10%;
+  pointer-events: none;
+  opacity: 0.78;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(28, 78, 149, 0.1), transparent 18%),
+    radial-gradient(circle at 82% 12%, rgba(206, 156, 69, 0.11), transparent 16%),
+    linear-gradient(118deg, transparent 0 30%, rgba(28, 78, 149, 0.05) 30% 31%, transparent 31% 58%, rgba(206, 156, 69, 0.06) 58% 59%, transparent 59%),
+    radial-gradient(circle at 48% 104%, rgba(28, 78, 149, 0.12), transparent 22%);
+  animation: driftField 18s ease-in-out infinite;
 }
 
 ::selection {
@@ -70,6 +84,32 @@ body::before {
   inset: 0;
   pointer-events: none;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.32), transparent 30%, transparent 70%, rgba(20, 50, 75, 0.04));
+}
+
+.header-brand-row {
+  margin-bottom: 1.5rem;
+}
+
+.institution-brand {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+}
+
+.institution-brand-plate {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(135deg, rgba(28, 78, 149, 0.96), rgba(21, 32, 59, 0.98));
+  padding: 0.72rem 0.95rem;
+  box-shadow: 0 18px 38px rgba(12, 18, 29, 0.14);
+}
+
+.institution-brand-image {
+  display: block;
+  width: 13.6rem;
+  height: auto;
 }
 
 .surface-panel {
@@ -103,13 +143,19 @@ body::before {
   color: var(--ink-soft);
 }
 
+.institution-label {
+  border-color: rgba(28, 78, 149, 0.18);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.86), rgba(232, 239, 250, 0.74));
+  color: var(--navy);
+}
+
 .metric-chip {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   border-radius: 999px;
-  border: 1px solid rgba(20, 50, 75, 0.14);
-  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(28, 78, 149, 0.14);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.84), rgba(235, 241, 249, 0.78));
   padding: 0.5rem 0.9rem;
   font-size: 0.82rem;
   font-weight: 600;
@@ -120,6 +166,54 @@ body::before {
   height: 1px;
   width: 100%;
   background: linear-gradient(90deg, rgba(20, 50, 75, 0.2), rgba(20, 50, 75, 0.03));
+}
+
+.hero-campus {
+  position: relative;
+  isolation: isolate;
+}
+
+.hero-campus::before {
+  content: "";
+  position: absolute;
+  inset: -12% 42% 28% -6%;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(28, 78, 149, 0.16), transparent 68%);
+  filter: blur(12px);
+  z-index: 0;
+}
+
+.hero-campus::after {
+  content: "";
+  position: absolute;
+  inset: auto -12% 8% 24%;
+  height: 8rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(206, 156, 69, 0.18), rgba(28, 78, 149, 0.16), transparent);
+  filter: blur(22px);
+  z-index: 0;
+}
+
+.signal-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(28, 78, 149, 0.14);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.86), rgba(245, 238, 225, 0.72));
+  padding: 0.55rem 0.95rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink);
+  box-shadow: 0 12px 28px rgba(21, 32, 59, 0.05);
+  animation: beaconPulse 6s ease-in-out infinite;
+}
+
+.signal-pill:nth-child(2n) {
+  animation-delay: 1s;
+}
+
+.signal-pill:nth-child(3n) {
+  animation-delay: 2s;
 }
 
 @keyframes revealUp {
@@ -154,4 +248,49 @@ body::before {
 .progress-stripe {
   background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.22) 50%, rgba(255, 255, 255, 0.22) 75%, transparent 75%, transparent);
   background-size: 18px 18px;
+}
+
+@keyframes beaconPulse {
+  0%,
+  100% {
+    transform: translateY(0);
+    box-shadow: 0 12px 28px rgba(21, 32, 59, 0.05);
+  }
+  50% {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 34px rgba(28, 78, 149, 0.1);
+  }
+}
+
+@keyframes driftField {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, 1.2%, 0) scale(1.02);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  body::after,
+  .reveal-up,
+  .ambient-card,
+  .signal-pill {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .institution-brand-image {
+    width: 11.3rem;
+  }
+
+  .institution-brand-plate {
+    padding: 0.6rem 0.75rem;
+  }
 }
