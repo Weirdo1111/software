@@ -326,6 +326,22 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                 </div>
               </div>
             </div>
+
+            {/* Link to full schedule setup */}
+            <div className="mt-4 border-t border-[rgba(20,50,75,0.08)] pt-4">
+              <Link
+                href={`/schedule?lang=${locale}`}
+                className="inline-flex w-full items-center justify-between rounded-[0.9rem] border border-[rgba(20,50,75,0.14)] bg-[rgba(20,50,75,0.04)] px-4 py-3 text-sm font-semibold text-(--ink) transition hover:bg-[rgba(20,50,75,0.09)]"
+              >
+                <span>{locale === "zh" ? "📅 完善课程表 & 截止任务" : "📅 Set up classes & deadlines"}</span>
+                <ArrowRight className="size-4 text-(--ink-soft)" />
+              </Link>
+              <p className="mt-1.5 text-[11px] text-[var(--ink-soft)]">
+                {locale === "zh"
+                  ? "录入你的课程安排和截止任务，计划会更精准。"
+                  : "Add your classes and deadlines for a more accurate plan."}
+              </p>
+            </div>
           </div>
         )}
 
