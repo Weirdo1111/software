@@ -21,7 +21,9 @@ export function SpeakingDraftPanel({
           {wordCount} words
         </span>
       </div>
-      <p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">Keep only the version you want the AI to judge.</p>
+      <p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">
+        Keep only the version you want the AI to judge. The text here changes only after you click `AI transcribe latest take`.
+      </p>
       <label className="mt-4 grid gap-2 text-sm font-medium text-[var(--ink)]">
         Transcript
         <textarea

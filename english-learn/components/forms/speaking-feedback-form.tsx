@@ -214,8 +214,6 @@ export function SpeakingFeedbackForm({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt_id: selectedPrompt.id,
-          target_level: targetLevel,
           learner_turn: learnerTurn,
           history: partnerMessages,
         }),
@@ -260,15 +258,15 @@ export function SpeakingFeedbackForm({
           <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">{moduleCopy.description}</p>
         </div>
 
-        <SpeakingPromptBank
-          targetLevel={targetLevel}
-          availablePrompts={availablePrompts}
-          selectedPrompt={selectedPrompt}
-          onTargetLevelChange={handleTargetLevelChange}
-          onPromptChange={handlePromptChange}
-          onLoadSample={() => setTranscript(selectedPrompt.sample_opening)}
-          onResetPractice={() => void resetPracticeState(selectedPrompt.id)}
-        />
+        {module !== "partner" ? (
+          <SpeakingPromptBank
+            targetLevel={targetLevel}
+            availablePrompts={availablePrompts}
+            selectedPrompt={selectedPrompt}
+            onTargetLevelChange={handleTargetLevelChange}
+            onPromptChange={handlePromptChange}
+          />
+        ) : null}
 
         {module === "studio" ? (
           <>

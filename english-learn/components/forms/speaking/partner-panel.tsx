@@ -78,7 +78,7 @@ export function SpeakingPartnerPanel({
           <Bot className="mt-0.5 size-4" />
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">AI speaking partner</p>
-            <p className="mt-3 text-lg font-semibold text-[var(--ink)]">Chat naturally and refine your spoken answer.</p>
+            <p className="mt-3 text-lg font-semibold text-[var(--ink)]">Chat freely in English about anything you want.</p>
           </div>
         </div>
         <span className="rounded-full bg-[rgba(20,50,75,0.05)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
@@ -135,7 +135,7 @@ export function SpeakingPartnerPanel({
           ))
         ) : (
           <div className="rounded-[1rem] border border-[rgba(20,50,75,0.08)] bg-white px-4 py-3 text-sm leading-6 text-[var(--ink-soft)]">
-            Start with one short answer. The AI partner will reply and ask one follow-up question.
+            Start with any short message. The AI partner will reply and keep the conversation going.
           </div>
         )}
         {isPartnerSubmitting ? (
