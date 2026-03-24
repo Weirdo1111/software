@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { AIAnalysisState } from "@/components/forms/ai-analysis-state";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { SaveToDeckButton } from "@/components/forms/save-to-deck-button";
 import {
   scoreListeningMaterial,
@@ -186,13 +187,16 @@ export function TedDetail({
     <section className="grid gap-5">
       {/* Back + title header */}
       <article className="rounded-[2rem] border border-[rgba(20,50,75,0.12)] bg-white p-5 shadow-[0_18px_38px_rgba(18,32,52,0.06)] sm:p-6">
-        <Link
-          href={`/listening/ted?lang=${locale}`}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--navy)] transition hover:gap-3"
-        >
-          <ArrowLeft className="size-4" />
-          Back to library
-        </Link>
+        <div className="flex items-center justify-between gap-3">
+          <Link
+            href={`/listening/ted?lang=${locale}`}
+            className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--navy)] transition hover:gap-3"
+          >
+            <ArrowLeft className="size-4" />
+            Back to library
+          </Link>
+          <LanguageSwitcher locale={locale as import("@/lib/i18n/dictionaries").Locale} />
+        </div>
 
         <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
           <div>
