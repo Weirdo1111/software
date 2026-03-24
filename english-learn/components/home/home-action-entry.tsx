@@ -248,6 +248,10 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
               <p className="text-sm text-[var(--ink-soft)]">{copy.doneTasks}: <span className="font-semibold text-[var(--ink)]">{metrics.totalCompleted}</span></p>
               <p className="text-sm text-[var(--ink-soft)]">{copy.currentStage}: <span className="font-semibold text-[var(--ink)]">{getStage(levelPrefix, locale)} ({levelPrefix})</span></p>
             </div>
+            <Link href={`/schedule?lang=${locale}`} className="mt-4 inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white/90 px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:bg-[rgba(20,50,75,0.08)]">
+              Schedule
+              <ArrowRight className="size-4" />
+            </Link>
           </div>
         </div>
       </article>

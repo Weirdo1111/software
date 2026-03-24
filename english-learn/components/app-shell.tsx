@@ -18,6 +18,12 @@ const moduleNav = [
     protected: true,
   },
   {
+    id: "schedule",
+    href: "/schedule",
+    label: { zh: "Schedule", en: "Schedule" },
+    protected: true,
+  },
+  {
     id: "listening",
     label: { zh: "听力", en: "Listening" },
     protected: true,
@@ -109,6 +115,7 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
 
   const resolveHref = (id: (typeof moduleNav)[number]["id"]) => {
     if (id === "dashboard") return `/dashboard?lang=${locale}`;
+    if (id === "schedule") return `/schedule?lang=${locale}`;
     if (id === "reading") return `/reading?lang=${locale}`;
     if (id === "listening") return `/listening?lang=${locale}`;
     if (id === "speaking") return lessonHref("speaking");
@@ -120,6 +127,7 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
 
   const isModuleActive = (id: (typeof moduleNav)[number]["id"]) => {
     if (id === "dashboard") return pathname?.startsWith("/dashboard");
+    if (id === "schedule") return pathname?.startsWith("/schedule");
     if (id === "listening") return pathname?.startsWith("/listening");
     if (id === "speaking") return pathname?.includes("/lesson/") && pathname?.includes("speaking");
     if (id === "writing") return pathname?.includes("/lesson/") && pathname?.includes("writing");
