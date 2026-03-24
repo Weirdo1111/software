@@ -29,7 +29,7 @@ export default async function TedDetailPage({
   const level = (resolvedSearchParams.level ?? material.recommendedLevel ?? "B1") as CEFRLevel;
 
   return (
-    <PageFrame locale={locale} title={material.title} description={material.scenario} showHeader>
+    <PageFrame locale={locale} title={material.title} description={material.scenario} showHeader={false}>
       <TedDetail material={material} defaultLevel={level} locale={locale} />
     </PageFrame>
   );
