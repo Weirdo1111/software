@@ -5,12 +5,15 @@ import { ReadingFeedbackForm } from "@/components/forms/reading-feedback-form";
 import { SpeakingFeedbackForm } from "@/components/forms/speaking-feedback-form";
 import { SpeakingHub } from "@/components/forms/speaking-hub";
 import { WritingFeedbackForm } from "@/components/forms/writing-feedback-form";
+import { WritingHub } from "@/components/forms/writing-hub";
+import { WritingLanguageLab } from "@/components/forms/writing-language-lab";
 import { PageFrame } from "@/components/page-frame";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { getListeningMaterialsCatalog } from "@/lib/listening-materials-repository";
 import { buildPracticePassageFromArticle, getReadingArticleById } from "@/lib/reading-articles";
 import { getPassageForLevel } from "@/lib/reading-passages";
 import { isSpeakingModuleId } from "@/lib/speaking-modules";
+import { isWritingModuleId } from "@/lib/writing-modules";
 import type { CEFRLevel } from "@/types/learning";
 
 type LessonMode = "listening" | "speaking" | "reading" | "writing";
@@ -137,6 +140,14 @@ function renderWorkbench(
   }
 
   if (mode === "writing") {
+    if (!isWritingModuleId(speakingModule)) {
+      return <WritingHub locale={locale} lessonId={lessonId} />;
+    }
+
+    if (speakingModule === "language-lab") {
+      return <WritingLanguageLab defaultLevel={level} />;
+    }
+
     return <WritingFeedbackForm defaultLevel={level} />;
   }
 
@@ -188,7 +199,7 @@ export default async function LessonPage({
     isWritingMode || isReadingMode ? "mt-6 grid gap-5" : "mt-6 grid gap-5 lg:grid-cols-[1.02fr_0.98fr]";
   const listeningMaterials = isListeningMode ? await getListeningMaterialsCatalog() : null;
   const showStandaloneLessonBrief = mode !== "speaking" && mode !== "writing" && mode !== "listening";
-  const showLowerPanels = mode !== "speaking" && mode !== "listening";
+  const showLowerPanels = mode !== "speaking" && mode !== "listening" && mode !== "writing";
   const showPageHeader = false;
   // Date: 2026/3/18
   // Author: Tianbo Cao
