@@ -28,7 +28,7 @@ export function ListeningHub({ locale }: { locale: Locale }) {
         };
 
   return (
-    <section className="mx-auto max-w-3xl space-y-5 reveal-up">
+    <section className="space-y-5 reveal-up">
       <article className="surface-panel rounded-[1.8rem] p-5 sm:p-6">
         <h2 className="font-display text-2xl tracking-tight text-[var(--ink)] sm:text-3xl">{copy.title}</h2>
         <p className="mt-1 text-sm text-[var(--ink-soft)]">{copy.subtitle}</p>
