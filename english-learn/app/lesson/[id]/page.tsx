@@ -3,12 +3,14 @@ import { Ear, FileText, Mic, PenLine, Target } from "lucide-react";
 import { ListeningFeedbackForm } from "@/components/forms/listening-feedback-form";
 import { ReadingFeedbackForm } from "@/components/forms/reading-feedback-form";
 import { SpeakingFeedbackForm } from "@/components/forms/speaking-feedback-form";
+import { SpeakingHub } from "@/components/forms/speaking-hub";
 import { WritingFeedbackForm } from "@/components/forms/writing-feedback-form";
 import { PageFrame } from "@/components/page-frame";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { getListeningMaterialsCatalog } from "@/lib/listening-materials-repository";
 import { buildPracticePassageFromArticle, getReadingArticleById } from "@/lib/reading-articles";
 import { getPassageForLevel } from "@/lib/reading-passages";
+import { isSpeakingModuleId } from "@/lib/speaking-modules";
 import type { CEFRLevel } from "@/types/learning";
 
 type LessonMode = "listening" | "speaking" | "reading" | "writing";
@@ -109,12 +111,25 @@ function renderWorkbench(
   mode: LessonMode,
   lessonId: string,
   listeningMaterials: Awaited<ReturnType<typeof getListeningMaterialsCatalog>> | null,
+  locale: "zh" | "en",
+  speakingModule?: string,
   articleId?: string,
 ) {
   const level = extractLevel(lessonId);
 
   if (mode === "speaking") {
-    return <SpeakingFeedbackForm defaultLevel={level} />;
+    if (!isSpeakingModuleId(speakingModule)) {
+      return <SpeakingHub locale={locale} lessonId={lessonId} />;
+    }
+
+    return (
+      <SpeakingFeedbackForm
+        defaultLevel={level}
+        module={speakingModule}
+        locale={locale}
+        hubHref={`/lesson/${lessonId}?lang=${locale}`}
+      />
+    );
   }
 
   if (mode === "listening") {
@@ -141,7 +156,7 @@ export default async function LessonPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ lang?: string; articleId?: string }>;
+  searchParams: Promise<{ lang?: string; articleId?: string; module?: string }>;
 }) {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
@@ -174,10 +189,10 @@ export default async function LessonPage({
   const listeningMaterials = isListeningMode ? await getListeningMaterialsCatalog() : null;
   const showStandaloneLessonBrief = mode !== "speaking" && mode !== "writing" && mode !== "listening";
   const showLowerPanels = mode !== "speaking" && mode !== "listening";
-  const showPageHeader = mode === "speaking" || mode === "writing" || mode === "listening";
+  const showPageHeader = false;
   // Date: 2026/3/18
   // Author: Tianbo Cao
-  // Keep the speaking lesson page focused on the core studio by hiding the extra lesson framing panels.
+  // Keep the speaking lesson page focused on the core studio by hiding the extra lesson framing panels and shared page header.
 
   return (
     <PageFrame locale={locale} title={meta.label} description={description} showHeader={showPageHeader}>
@@ -221,11 +236,25 @@ export default async function LessonPage({
               </div>
             </article>
 
-            {renderWorkbench(mode, resolvedParams.id, listeningMaterials, linkedArticle?.id)}
+            {renderWorkbench(
+              mode,
+              resolvedParams.id,
+              listeningMaterials,
+              locale,
+              resolvedSearchParams.module,
+              linkedArticle?.id,
+            )}
           </div>
         </>
       ) : (
-        renderWorkbench(mode, resolvedParams.id, listeningMaterials, linkedArticle?.id)
+        renderWorkbench(
+          mode,
+          resolvedParams.id,
+          listeningMaterials,
+          locale,
+          resolvedSearchParams.module,
+          linkedArticle?.id,
+        )
       )}
 
       {showLowerPanels ? (

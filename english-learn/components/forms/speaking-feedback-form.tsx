@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowRight, LoaderCircle, Mic } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, ArrowRight, LoaderCircle, Mic } from "lucide-react";
 import { useState } from "react";
 
 import { AIAnalysisState } from "@/components/forms/ai-analysis-state";
@@ -11,16 +12,28 @@ import { SpeakingPromptBank } from "@/components/forms/speaking/prompt-bank";
 import { SpeakingRecorderPanel } from "@/components/forms/speaking/recorder-panel";
 import { SpeakingScorePanel } from "@/components/forms/speaking/score-panel";
 import { SpeakingShadowingPanel } from "@/components/forms/speaking/shadowing-panel";
-import { useAudioRecorder } from "@/components/forms/speaking/use-audio-recorder";
+import type { PartnerMessage, SpeakingLevel, SpeakingModuleId } from "@/components/forms/speaking/types";
+import { type Locale } from "@/lib/i18n/dictionaries";
+import { speakingModuleCopy } from "@/lib/speaking-modules";
 import { appendSpeakingAttemptInStorage } from "@/lib/speaking-attempts";
-import type { PartnerMessage, SpeakingLevel } from "@/components/forms/speaking/types";
 import { getSpeakingPromptById, getSpeakingPromptsForLevel } from "@/lib/speaking-prompts";
+import { useAudioRecorder } from "@/components/forms/speaking/use-audio-recorder";
 import type { SpeakingAttemptRecord, SpeakingFeedback, SpeakingPartnerReply } from "@/types/learning";
 
 // Date: 2026/3/18
 // Author: Tianbo Cao
-// Kept this file as the stateful container so UI sections can stay modular and easy to extend.
-export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: SpeakingLevel }) {
+// Kept this file as the stateful container for one speaking workspace, while routing decides which workspace to open.
+export function SpeakingFeedbackForm({
+  defaultLevel = "B1",
+  module,
+  locale,
+  hubHref,
+}: {
+  defaultLevel?: SpeakingLevel;
+  module: SpeakingModuleId;
+  locale: Locale;
+  hubHref: string;
+}) {
   const initialPrompt = getSpeakingPromptsForLevel(defaultLevel)[0] ?? getSpeakingPromptById("b1-language-support");
   const [targetLevel, setTargetLevel] = useState<SpeakingLevel>(defaultLevel);
   const [selectedPromptId, setSelectedPromptId] = useState(initialPrompt?.id ?? "b1-language-support");
@@ -41,6 +54,8 @@ export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: S
   const selectedPrompt =
     getSpeakingPromptById(selectedPromptId) ?? availablePrompts[0] ?? getSpeakingPromptById("b1-language-support");
   const isReady = transcript.trim().length >= 20;
+  const moduleCopy = speakingModuleCopy[module];
+  const backLabel = locale === "zh" ? "返回口语入口" : "Back to speaking modes";
 
   if (!selectedPrompt) return null;
 
@@ -199,8 +214,6 @@ export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: S
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt_id: selectedPrompt.id,
-          target_level: targetLevel,
           learner_turn: learnerTurn,
           history: partnerMessages,
         }),
@@ -228,87 +241,102 @@ export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: S
   }
 
   return (
-    <form onSubmit={onSubmit} className="surface-panel grid gap-4 rounded-[2rem] p-5 sm:p-6">
-      <div className="max-w-2xl">
-        <p className="section-label">
-          <Mic className="size-3.5" /> Speaking studio
-        </p>
-        <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">Record, refine, and score one academic response.</h2>
-        <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">Choose a prompt, record one take, polish the transcript, and get AI feedback.</p>
+    <section className="mx-auto max-w-5xl space-y-5 reveal-up">
+      <div className="flex items-center gap-3">
+        <Link href={hubHref} className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--ink-soft)] transition hover:text-[var(--ink)]">
+          <ArrowLeft className="size-4" />
+          {backLabel}
+        </Link>
       </div>
 
-      <SpeakingPromptBank
-        targetLevel={targetLevel}
-        availablePrompts={availablePrompts}
-        selectedPrompt={selectedPrompt}
-        onTargetLevelChange={handleTargetLevelChange}
-        onPromptChange={handlePromptChange}
-        onLoadSample={() => setTranscript(selectedPrompt.sample_opening)}
-        onResetPractice={() => void resetPracticeState(selectedPrompt.id)}
-      />
+      <form onSubmit={onSubmit} className="surface-panel grid gap-4 rounded-[2rem] p-5 sm:p-6">
+        <div className="max-w-2xl">
+          <p className="section-label">
+            <Mic className="size-3.5" /> {moduleCopy.label}
+          </p>
+          <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">{moduleCopy.title}</h2>
+          <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">{moduleCopy.description}</p>
+        </div>
 
-      <SpeakingRecorderPanel
-        status={recorder.status}
-        error={recorder.error}
-        elapsedMs={recorder.elapsedMs}
-        audioLevel={recorder.audioLevel}
-        audioClip={recorder.audioClip}
-        isSupported={recorder.isSupported}
-        isTranscribing={isTranscribing}
-        transcribeStatus={transcribeStatus}
-        onStart={() => void recorder.startRecording()}
-        onPause={recorder.pauseRecording}
-        onResume={() => void recorder.resumeRecording()}
-        onStop={recorder.stopRecording}
-        onReset={() => void recorder.resetRecording()}
-        onTranscribe={() => void handleTranscribeLatestTake()}
-      />
+        {module !== "partner" ? (
+          <SpeakingPromptBank
+            targetLevel={targetLevel}
+            availablePrompts={availablePrompts}
+            selectedPrompt={selectedPrompt}
+            onTargetLevelChange={handleTargetLevelChange}
+            onPromptChange={handlePromptChange}
+          />
+        ) : null}
 
-      <SpeakingDraftPanel transcript={transcript} onTranscriptChange={setTranscript} />
+        {module === "studio" ? (
+          <>
+            <SpeakingRecorderPanel
+              status={recorder.status}
+              error={recorder.error}
+              elapsedMs={recorder.elapsedMs}
+              audioLevel={recorder.audioLevel}
+              audioClip={recorder.audioClip}
+              isSupported={recorder.isSupported}
+              isTranscribing={isTranscribing}
+              transcribeStatus={transcribeStatus}
+              onStart={() => void recorder.startRecording()}
+              onPause={recorder.pauseRecording}
+              onResume={() => void recorder.resumeRecording()}
+              onStop={recorder.stopRecording}
+              onReset={() => void recorder.resetRecording()}
+              onTranscribe={() => void handleTranscribeLatestTake()}
+            />
 
-      <SpeakingShadowingPanel prompt={selectedPrompt} transcriptSource={transcript} />
+            <SpeakingDraftPanel transcript={transcript} onTranscriptChange={setTranscript} />
 
-      <SpeakingPartnerPanel
-        partnerMessages={partnerMessages}
-        partnerTurn={partnerTurn}
-        partnerStatus={partnerStatus}
-        partnerNote={partnerNote}
-        isPartnerSubmitting={isPartnerSubmitting}
-        onPartnerTurnChange={setPartnerTurn}
-        onPartnerSubmit={() => void handlePartnerSubmit()}
-      />
+            <div className="flex flex-col gap-3 rounded-[1.45rem] border border-[rgba(20,50,75,0.08)] bg-[rgba(255,255,255,0.55)] p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="text-sm leading-6 text-[var(--ink-soft)]">Submit the final transcript when you are ready for scoring.</div>
+              <button
+                type="submit"
+                disabled={isSubmitting || !isReady}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--navy)] px-5 py-3 text-sm font-semibold text-[#f7efe3] disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
+                {isSubmitting ? "Scoring your response..." : "Get AI speaking score"}
+              </button>
+            </div>
 
-      <div className="flex flex-col gap-3 rounded-[1.45rem] border border-[rgba(20,50,75,0.08)] bg-[rgba(255,255,255,0.55)] p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-sm leading-6 text-[var(--ink-soft)]">Submit the final transcript when you are ready for scoring.</div>
-        <button
-          type="submit"
-          disabled={isSubmitting || !isReady}
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--navy)] px-5 py-3 text-sm font-semibold text-[#f7efe3] disabled:cursor-not-allowed disabled:opacity-45"
-        >
-          {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
-          {isSubmitting ? "Scoring your response..." : "Get AI speaking score"}
-        </button>
-      </div>
+            {status ? (
+              <p className="rounded-[1rem] bg-[rgba(255,244,240,0.9)] px-4 py-3 text-sm font-medium text-[var(--coral)]">
+                {status}
+              </p>
+            ) : null}
 
-      {status ? (
-        <p className="rounded-[1rem] bg-[rgba(255,244,240,0.9)] px-4 py-3 text-sm font-medium text-[var(--coral)]">
-          {status}
-        </p>
-      ) : null}
+            {isSubmitting ? (
+              <AIAnalysisState
+                title="Scoring your academic speaking response."
+                description="The speaking coach is checking task completion, fluency, grammar, and how clearly the response matches the selected speaking prompt."
+                steps={[
+                  "Checking whether your response answers the selected prompt directly.",
+                  "Estimating fluency, grammar control, and pronunciation from the transcript wording.",
+                  "Preparing revision priorities and short practice tips for the next attempt.",
+                ]}
+              />
+            ) : null}
 
-      {isSubmitting ? (
-        <AIAnalysisState
-          title="Scoring your academic speaking response."
-          description="The speaking coach is checking task completion, fluency, grammar, and how clearly the response matches the selected speaking prompt."
-          steps={[
-            "Checking whether your response answers the selected prompt directly.",
-            "Estimating fluency, grammar control, and pronunciation from the transcript wording.",
-            "Preparing revision priorities and short practice tips for the next attempt.",
-          ]}
-        />
-      ) : null}
+            {result ? <SpeakingScorePanel result={result} onUseSampleUpgrade={setTranscript} /> : null}
+          </>
+        ) : null}
 
-      {result ? <SpeakingScorePanel result={result} onUseSampleUpgrade={setTranscript} /> : null}
-    </form>
+        {module === "shadowing" ? <SpeakingShadowingPanel prompt={selectedPrompt} transcriptSource={transcript} /> : null}
+
+        {module === "partner" ? (
+          <SpeakingPartnerPanel
+            partnerMessages={partnerMessages}
+            partnerTurn={partnerTurn}
+            partnerStatus={partnerStatus}
+            partnerNote={partnerNote}
+            isPartnerSubmitting={isPartnerSubmitting}
+            onPartnerTurnChange={setPartnerTurn}
+            onPartnerSubmit={() => void handlePartnerSubmit()}
+          />
+        ) : null}
+      </form>
+    </section>
   );
 }

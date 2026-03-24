@@ -1,5 +1,3 @@
-import { RefreshCcw, Sparkles } from "lucide-react";
-
 import type { SpeakingLevel } from "@/components/forms/speaking/types";
 import type { SpeakingPrompt } from "@/types/learning";
 
@@ -12,16 +10,12 @@ export function SpeakingPromptBank({
   selectedPrompt,
   onTargetLevelChange,
   onPromptChange,
-  onLoadSample,
-  onResetPractice,
 }: {
   targetLevel: SpeakingLevel;
   availablePrompts: SpeakingPrompt[];
   selectedPrompt: SpeakingPrompt;
   onTargetLevelChange: (level: SpeakingLevel) => void;
   onPromptChange: (promptId: string) => void;
-  onLoadSample: () => void;
-  onResetPractice: () => void;
 }) {
   return (
     <div className="grid gap-4 rounded-[1.65rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.76)] p-5 sm:p-6">
@@ -75,52 +69,6 @@ export function SpeakingPromptBank({
             </button>
           );
         })}
-      </div>
-
-      <div className="grid gap-4 rounded-[1.35rem] border border-[rgba(20,50,75,0.08)] bg-[rgba(248,250,252,0.74)] p-4 sm:p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Active prompt</p>
-            <h4 className="mt-2 text-lg font-semibold text-[var(--ink)]">{selectedPrompt.title}</h4>
-            <p className="mt-3 text-sm leading-7 text-[var(--ink)]">{selectedPrompt.prompt}</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <span className="rounded-full bg-[rgba(123,75,20,0.1)] px-3 py-1 text-xs font-semibold text-[#7b4b14]">
-              {selectedPrompt.level}
-            </span>
-            <span className="rounded-full bg-[rgba(20,50,75,0.06)] px-3 py-1 text-xs font-semibold text-[var(--ink-soft)]">
-              {selectedPrompt.partner_role}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {selectedPrompt.useful_phrases.map((phrase) => (
-            <span
-              key={phrase}
-              className="rounded-full border border-[rgba(20,50,75,0.12)] bg-white/84 px-3 py-1.5 text-sm text-[var(--ink)]"
-            >
-              {phrase}
-            </span>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={onLoadSample}
-            className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white/88 px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition-colors hover:border-[#7b4b14] hover:text-[#7b4b14]"
-          >
-            <Sparkles className="size-4" /> Load sample opening
-          </button>
-          <button
-            type="button"
-            onClick={onResetPractice}
-            className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white/88 px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition-colors hover:border-[#7b4b14] hover:text-[#7b4b14]"
-          >
-            <RefreshCcw className="size-4" /> Reset practice
-          </button>
-        </div>
       </div>
     </div>
   );

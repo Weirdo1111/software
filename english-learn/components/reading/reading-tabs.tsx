@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
 import { useState } from "react";
 
+import { LanguageSwitcher } from "@/components/language-switcher";
+
 import { ReadingFeedbackForm } from "@/components/forms/reading-feedback-form";
 import {
   ArticleCard,
@@ -24,11 +26,31 @@ import { getPassageForLevel } from "@/lib/reading-passages";
 
 type TabId = "topics" | "favorites" | "history" | "feedback";
 
-const tabs: { id: TabId; label: string; icon: typeof BookOpen }[] = [
-  { id: "topics", label: "Topics", icon: Layers },
-  { id: "favorites", label: "Favorites", icon: BookMarked },
-  { id: "history", label: "History", icon: Clock },
-  { id: "feedback", label: "Reading Feedback", icon: BookOpen },
+type ReadingCopy = {
+  tabs: Record<TabId, string>;
+  searchLabel: string;
+  searchPlaceholder: string;
+  articlesMatched: (n: number) => string;
+  featured: string;
+  recommendedStart: string;
+  saveArticle: string;
+  saved: string;
+  openArticle: string;
+  noArticles: string;
+  noArticlesHint: string;
+  noFavorites: string;
+  noFavoritesHint: string;
+  noHistory: string;
+  noHistoryHint: string;
+  loading: string;
+  lastOpened: (date: string, visits: number) => string;
+};
+
+const tabDefs: { id: TabId; icon: typeof BookOpen }[] = [
+  { id: "topics", icon: Layers },
+  { id: "favorites", icon: BookMarked },
+  { id: "history", icon: Clock },
+  { id: "feedback", icon: BookOpen },
 ];
 
 const historyFormatter = new Intl.DateTimeFormat("en", {
@@ -44,6 +66,45 @@ export function ReadingTabs() {
   const [query, setQuery] = useState("");
   const searchParams = useSearchParams();
   const lang = searchParams.get("lang") ?? undefined;
+  const locale = lang === "zh" ? "zh" : "en";
+
+  const copy = locale === "zh" ? {
+    tabs: { topics: "主题", favorites: "收藏", history: "历史", feedback: "阅读反馈" },
+    searchLabel: "搜索主题",
+    searchPlaceholder: "按标题、主题、关键词或学习重点搜索",
+    articlesMatched: (n: number) => `${n} 篇文章匹配`,
+    featured: "精选文章",
+    recommendedStart: "阅读库推荐起点",
+    saveArticle: "收藏",
+    saved: "已收藏",
+    openArticle: "打开全文",
+    noArticles: "没有匹配的文章",
+    noArticlesHint: "换个关键词或切换话题试试。",
+    noFavorites: "暂无收藏文章",
+    noFavoritesHint: "阅读时点击收藏按钮，方便下次快速找到。收藏保存在本浏览器中。",
+    noHistory: "暂无阅读历史",
+    noHistoryHint: "打开任意一篇文章即可开始记录阅读历史。",
+    loading: "正在加载阅读记录...",
+    lastOpened: (date: string, visits: number) => `上次打开 ${date} | 阅读 ${visits} 次`,
+  } : {
+    tabs: { topics: "Topics", favorites: "Favorites", history: "History", feedback: "Reading Feedback" },
+    searchLabel: "Search topics",
+    searchPlaceholder: "Search by title, topic, keyword, or study focus",
+    articlesMatched: (n: number) => `${n} article${n === 1 ? "" : "s"} matched`,
+    featured: "Featured article",
+    recommendedStart: "Recommended starting point in the reading library",
+    saveArticle: "Save article",
+    saved: "Saved",
+    openArticle: "Open full article",
+    noArticles: "No articles match this filter",
+    noArticlesHint: "Try a different keyword or switch to another topic. Search also works with skills like lecture notes, plagiarism, AI, or teamwork.",
+    noFavorites: "No saved articles yet",
+    noFavoritesHint: "Bookmark useful articles while reading. Favorites are stored on this browser so you can return to them later.",
+    noHistory: "No reading history yet",
+    noHistoryHint: "Open a full article to start building your reading history. History is stored on this browser.",
+    loading: "Syncing saved reading activity from this browser.",
+    lastOpened: (date: string, visits: number) => `Last opened ${date} | ${visits === 1 ? "1 visit" : `${visits} visits`}`,
+  };
   const { favoriteIds, history, hydrated, toggleFavorite } = useReadingLibrary();
 
   const normalizedQuery = query.trim().toLowerCase();
@@ -85,8 +146,9 @@ export function ReadingTabs() {
 
   return (
     <div className="grid gap-5">
-      <nav className="flex gap-1 overflow-x-auto rounded-[1.4rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.76)] p-1.5">
-        {tabs.map((tab) => {
+      <div className="flex items-center gap-2">
+        <nav className="flex flex-1 gap-1 overflow-x-auto rounded-[1.4rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.76)] p-1.5">
+          {tabDefs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (
@@ -100,11 +162,13 @@ export function ReadingTabs() {
               }`}
             >
               <Icon className="size-4" />
-              {tab.label}
+              {copy.tabs[tab.id]}
             </button>
           );
-        })}
-      </nav>
+          })}
+        </nav>
+        <LanguageSwitcher locale={locale} />
+      </div>
 
       {activeTab === "topics" ? (
         <TopicsPanel
@@ -118,6 +182,7 @@ export function ReadingTabs() {
           favoriteIds={favoriteIds}
           onToggleFavorite={toggleFavorite}
           lang={lang}
+          copy={copy}
         />
       ) : null}
 
@@ -129,17 +194,17 @@ export function ReadingTabs() {
               favoriteIds={favoriteIds}
               onToggleFavorite={toggleFavorite}
               lang={lang}
-              contextForArticle={() => "Saved for quick return before class, revision, or feedback practice."}
+              contextForArticle={() => locale === "zh" ? "已收藏，方便课前复习或练习时快速找到。" : "Saved for quick return before class, revision, or feedback practice."}
             />
           ) : (
             <EmptyPanel
               icon={<BookMarked className="size-8 text-[var(--ink-soft)]" />}
-              title="No saved articles yet"
-              description="Bookmark useful articles while reading. Favorites are stored on this browser so you can return to them later."
+              title={copy.noFavorites}
+              description={copy.noFavoritesHint}
             />
           )
         ) : (
-          <LoadingPanel />
+          <LoadingPanel message={copy.loading} />
         )
       ) : null}
 
@@ -154,20 +219,18 @@ export function ReadingTabs() {
               contextForArticle={(article) => {
                 const entry = historyItems.find((item) => item.article.id === article.id)?.entry;
                 if (!entry) return null;
-
-                const visitLabel = entry.viewCount === 1 ? "1 visit" : `${entry.viewCount} visits`;
-                return `Last opened ${historyFormatter.format(new Date(entry.viewedAt))} | ${visitLabel}`;
+                return copy.lastOpened(historyFormatter.format(new Date(entry.viewedAt)), entry.viewCount);
               }}
             />
           ) : (
             <EmptyPanel
               icon={<Clock className="size-8 text-[var(--ink-soft)]" />}
-              title="No reading history yet"
-              description="Open a full article to start building your reading history. History is stored on this browser."
+              title={copy.noHistory}
+              description={copy.noHistoryHint}
             />
           )
         ) : (
-          <LoadingPanel />
+          <LoadingPanel message={copy.loading} />
         )
       ) : null}
 
@@ -194,6 +257,7 @@ function TopicsPanel({
   favoriteIds,
   onToggleFavorite,
   lang,
+  copy,
 }: {
   activeCategory: string;
   onCategoryChange: (category: string) => void;
@@ -205,6 +269,7 @@ function TopicsPanel({
   favoriteIds: string[];
   onToggleFavorite: (articleId: string) => void;
   lang?: string;
+  copy: ReadingCopy;
 }) {
   const router = useRouter();
   const remainingArticles = filteredArticles.filter((article) => article.id !== featuredArticle?.id);
@@ -214,13 +279,13 @@ function TopicsPanel({
     <div className="grid gap-5">
       <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
         <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-          Search topics
+          {copy.searchLabel}
           <div className="flex items-center gap-3 rounded-[1.25rem] border border-[rgba(20,50,75,0.12)] bg-white/75 px-4 py-3">
             <Search className="size-4 text-[var(--ink-soft)]" />
             <input
               value={query}
               onChange={(event) => onQueryChange(event.target.value)}
-              placeholder="Search by title, topic, keyword, or study focus"
+              placeholder={copy.searchPlaceholder}
               className="w-full bg-transparent text-sm text-[var(--ink)] outline-none placeholder:text-[var(--ink-soft)]/80"
             />
             {query ? (
@@ -237,7 +302,7 @@ function TopicsPanel({
         </label>
 
         <div className="rounded-[1.25rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.72)] px-4 py-3 text-sm text-[var(--ink-soft)]">
-          {filteredArticles.length} article{filteredArticles.length === 1 ? "" : "s"} matched
+          {copy.articlesMatched(filteredArticles.length)}
         </div>
       </div>
 
@@ -276,10 +341,10 @@ function TopicsPanel({
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-3xl">
               <p className="section-label">
-                <Sparkles className="size-3.5" /> Featured article
+                <Sparkles className="size-3.5" /> {copy.featured}
               </p>
               <p className="mt-3 text-xs font-semibold uppercase tracking-[0.24em] text-[#7b4b14]/72">
-                Recommended starting point in the reading library
+                {copy.recommendedStart}
               </p>
               <span
                 className={`mt-4 inline-block rounded-full border px-3 py-1 text-xs font-semibold ${difficultyStyle[featuredArticle.difficulty]}`}
@@ -309,10 +374,10 @@ function TopicsPanel({
                 className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.12)] bg-white/80 px-4 py-2 text-sm font-medium text-[var(--ink)] transition-colors hover:border-[#7b4b14] hover:text-[#7b4b14]"
               >
                 <BookMarked className="size-4" />
-                {favoriteIds.includes(featuredArticle.id) ? "Saved" : "Save article"}
+                {favoriteIds.includes(featuredArticle.id) ? copy.saved : copy.saveArticle}
               </button>
               <span className="inline-flex items-center gap-2 rounded-full bg-[var(--navy)] px-5 py-3 text-sm font-semibold text-[#f7efe3]">
-                Open full article
+                {copy.openArticle}
                 <Sparkles className="size-4" />
               </span>
             </div>
@@ -330,8 +395,8 @@ function TopicsPanel({
       ) : (
         <EmptyPanel
           icon={<FileText className="size-8 text-[var(--ink-soft)]" />}
-          title="No articles match this filter"
-          description="Try a different keyword or switch to another topic. Search also works with skills like lecture notes, plagiarism, AI, or teamwork."
+          title={copy.noArticles}
+          description={copy.noArticlesHint}
         />
       )}
     </div>
@@ -385,10 +450,10 @@ function EmptyPanel({
   );
 }
 
-function LoadingPanel() {
+function LoadingPanel({ message }: { message: string }) {
   return (
     <div className="surface-panel rounded-[2rem] px-6 py-12 text-center text-sm leading-6 text-[var(--ink-soft)]">
-      Syncing saved reading activity from this browser.
+      {message}
     </div>
   );
 }

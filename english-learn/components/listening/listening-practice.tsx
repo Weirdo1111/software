@@ -136,7 +136,7 @@ function PickStep({
   onStart: () => void;
 }) {
   return (
-    <section className="mx-auto max-w-3xl space-y-5 reveal-up">
+    <section className="space-y-5 reveal-up">
       {/* Header */}
       <article className="surface-panel rounded-[1.8rem] p-5 sm:p-6">
         <h2 className="font-display text-2xl tracking-tight text-[var(--ink)] sm:text-3xl">{copy.pickTitle}</h2>
@@ -248,7 +248,7 @@ function ListenStep({
   const rateLabel = rate === 1 ? copy.normal : rate === 0.85 ? copy.slow : `0.75×`;
 
   return (
-    <section className="mx-auto max-w-3xl space-y-5 reveal-up">
+    <section className="space-y-5 reveal-up">
       {/* Header with back */}
       <div className="flex items-center gap-3">
         <button type="button" onClick={onBack} className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--ink-soft)] transition hover:text-[var(--ink)]">
