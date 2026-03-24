@@ -14,6 +14,7 @@ export default async function ReadingPage({
       locale={locale}
       title="Academic Reading"
       description="Search article topics, open full readings, save favorites, track history, and practise structured comprehension with AI feedback."
+      showHeader={false}
     >
       <ReadingTabs />
     </PageFrame>

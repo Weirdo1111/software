@@ -31,9 +31,8 @@ export function ExperienceGate({ locale }: ExperienceGateProps) {
 
     if (placementDone && !isPlacementPage) {
       const seenIntro = localStorage.getItem("demo_intro_seen") === "true";
-      if (!seenIntro) {
-        setIntroOpen(true);
-      }
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR-safe: must read localStorage after hydration
+      if (!seenIntro) setIntroOpen(true);
     }
   }, [isPlacementPage, locale, pathname, router]);
 

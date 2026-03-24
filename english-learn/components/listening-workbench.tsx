@@ -65,12 +65,10 @@ export function ListeningWorkbench() {
 
   const speedOptions = [0.6, 0.85, 1, 1.15, 1.3];
   const tooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hasOpenedSessionReportRef = useRef(false);
 
   const item = listeningWeekOneItems[index];
   const choiceCorrect = isChoiceCorrect(choice, item.gistAnswer);
   const accuracy = answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : 0;
-  const completedAll = answeredCount === totalItems;
 
   const answeredIndices = resultByItem
     .map((result, itemIndex) => (result === null ? null : itemIndex))
@@ -160,13 +158,6 @@ export function ListeningWorkbench() {
       window.speechSynthesis.cancel();
     }
   };
-
-  useEffect(() => {
-    if (completedAll && !hasOpenedSessionReportRef.current) {
-      setShowSessionReportModal(true);
-      hasOpenedSessionReportRef.current = true;
-    }
-  }, [completedAll]);
 
   useEffect(() => {
     return () => {
@@ -300,7 +291,13 @@ export function ListeningWorkbench() {
                     });
 
                     setSubmittedChoice(true);
-                    setAnsweredCount((value) => value + 1);
+                    setAnsweredCount((value) => {
+                      const next = value + 1;
+                      if (next === totalItems) {
+                        queueMicrotask(() => setShowSessionReportModal(true));
+                      }
+                      return next;
+                    });
                     if (choiceCorrect) {
                       setCorrectCount((value) => value + 1);
                     }

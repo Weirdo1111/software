@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CheckCircle2, Circle, Lock } from "lucide-react";
 
 const nodes = [
-  { id: "node-1", label: "Listening Basics", status: "done", lesson: "A2-listening-starter" },
+  { id: "node-1", label: "Listening Basics", status: "done", href: "/listening/ted" },
   { id: "node-2", label: "Speaking Starter", status: "done", lesson: "A2-speaking-starter" },
   { id: "node-3", label: "Reading Library", status: "active", href: "/reading" },
   { id: "node-4", label: "Writing Focus", status: "active", lesson: "A2-writing-starter" },
