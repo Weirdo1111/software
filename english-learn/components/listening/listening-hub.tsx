@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { ArrowRight, Globe, Music } from "lucide-react";
 
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { type Locale } from "@/lib/i18n/dictionaries";
 
 export function ListeningHub({ locale }: { locale: Locale }) {
@@ -30,8 +32,15 @@ export function ListeningHub({ locale }: { locale: Locale }) {
   return (
     <section className="space-y-5 reveal-up">
       <article className="surface-panel rounded-[1.8rem] p-5 sm:p-6">
-        <h2 className="font-display text-2xl tracking-tight text-[var(--ink)] sm:text-3xl">{copy.title}</h2>
-        <p className="mt-1 text-sm text-[var(--ink-soft)]">{copy.subtitle}</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="font-display text-2xl tracking-tight text-[var(--ink)] sm:text-3xl">{copy.title}</h2>
+            <p className="mt-1 text-sm text-[var(--ink-soft)]">{copy.subtitle}</p>
+          </div>
+          <Suspense fallback={<div className="h-9 w-28 rounded-full bg-black/10" />}>
+            <LanguageSwitcher locale={locale} />
+          </Suspense>
+        </div>
       </article>
 
       <div className="grid gap-4 sm:grid-cols-2">

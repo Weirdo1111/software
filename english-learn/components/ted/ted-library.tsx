@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   Search,
 } from "lucide-react";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import Link from "next/link";
 import {
   useDeferredValue,
@@ -62,12 +63,14 @@ function TedThumbnail({ src, alt, className }: { src: string; alt: string; class
   /* eslint-enable @next/next/no-img-element */
 }
 
+import { type Locale } from "@/lib/i18n/dictionaries";
+
 export function TedLibrary({
   materials,
   locale,
 }: {
   materials?: ListeningMaterial[];
-  locale: string;
+  locale: Locale;
 }) {
   const catalog = materials && materials.length > 0 ? materials : listeningMaterials;
   const tedCatalog = useMemo(
@@ -146,13 +149,14 @@ export function TedLibrary({
           <h2 className="font-display text-2xl tracking-tight text-[var(--ink)]">
             TED Listening
           </h2>
-          <div className="flex flex-wrap gap-2 text-xs font-semibold text-[var(--ink-soft)]">
+          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-[var(--ink-soft)]">
             <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
               {tedCatalog.length} talks
             </span>
             <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
               {completedTedCount} done
             </span>
+            <LanguageSwitcher locale={locale} />
           </div>
         </div>
 

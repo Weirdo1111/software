@@ -12,6 +12,7 @@ import {
   Plus,
 } from "lucide-react";
 import type { DiscussionPost, Locale } from "@/components/discussion/types";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 type ViewMode = "all" | "hot" | "latest";
 
@@ -119,6 +120,7 @@ export function DiscussionBoard({
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-[1.6rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,251,246,0.88)] p-2 shadow-[0_14px_36px_rgba(23,32,51,0.06)] backdrop-blur-md">
           <div className="flex flex-wrap items-center gap-2">
+            <LanguageSwitcher locale={locale} />
             <div className="inline-flex items-center gap-1 rounded-[1.1rem] bg-white/75 p-1">
               <button
                 type="button"

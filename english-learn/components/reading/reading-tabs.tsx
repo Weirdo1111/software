@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
 import { useState } from "react";
 
+import { LanguageSwitcher } from "@/components/language-switcher";
+
 import { ReadingFeedbackForm } from "@/components/forms/reading-feedback-form";
 import {
   ArticleCard,
@@ -144,8 +146,9 @@ export function ReadingTabs() {
 
   return (
     <div className="grid gap-5">
-      <nav className="flex gap-1 overflow-x-auto rounded-[1.4rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.76)] p-1.5">
-        {tabDefs.map((tab) => {
+      <div className="flex items-center gap-2">
+        <nav className="flex flex-1 gap-1 overflow-x-auto rounded-[1.4rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.76)] p-1.5">
+          {tabDefs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (
@@ -162,8 +165,10 @@ export function ReadingTabs() {
               {copy.tabs[tab.id]}
             </button>
           );
-        })}
-      </nav>
+          })}
+        </nav>
+        <LanguageSwitcher locale={locale} />
+      </div>
 
       {activeTab === "topics" ? (
         <TopicsPanel

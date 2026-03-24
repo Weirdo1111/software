@@ -4,6 +4,8 @@ import { ArrowRight, FilePenLine, LoaderCircle, WandSparkles } from "lucide-reac
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 
+import { LanguageSwitcher } from "@/components/language-switcher";
+
 import { AIAnalysisState } from "@/components/forms/ai-analysis-state";
 import { SaveToDeckButton } from "@/components/forms/save-to-deck-button";
 import { getWritingPromptById, getWritingPromptsForLevel } from "@/lib/writing-prompts";
@@ -121,9 +123,12 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: CE
   return (
     <form onSubmit={onSubmit} className="surface-panel grid gap-5 rounded-[2rem] p-6 sm:p-7">
       <div>
-        <p className="section-label">
-          <FilePenLine className="size-3.5" /> {wc.label}
-        </p>
+        <div className="flex items-center justify-between gap-3">
+          <p className="section-label">
+            <FilePenLine className="size-3.5" /> {wc.label}
+          </p>
+          <LanguageSwitcher locale={locale} />
+        </div>
         <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">{wc.heading}</h2>
         <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">{wc.subheading}</p>
         <div className="mt-4 rounded-[1.2rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.72)] p-4">

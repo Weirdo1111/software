@@ -73,13 +73,7 @@ export function PageFrame({
 
           <div className="data-rule my-6" />
         </header>
-      ) : (
-        <div className="flex justify-end">
-          <Suspense fallback={<div className="h-9 w-28 rounded-full bg-black/10" />}>
-            <LanguageSwitcher locale={locale} />
-          </Suspense>
-        </div>
-      )}
+      ) : null}
 
       <section className="flex-1">{children}</section>
 
