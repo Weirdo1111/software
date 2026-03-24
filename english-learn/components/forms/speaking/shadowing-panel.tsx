@@ -91,7 +91,7 @@ export function SpeakingShadowingPanel({
             className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/8 px-4 py-2 text-sm font-semibold text-[#f7efe3] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <PlayCircle className="size-4" />
-            {playingId === playbackKey ? "Playing target" : "Replay target"}
+            {playingId === playbackKey ? "Playing sentence" : "Play Sentence"}
           </button>
           <button
             type="button"

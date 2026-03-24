@@ -73,19 +73,48 @@ export function buildMockSpeakingFeedback(transcript: string, checkpoints: strin
 }
 
 export function buildMockSpeakingPartnerReply(learnerTurn: string): SpeakingPartnerReply {
-  const hasExample = /\bfor example|for instance|such as\b/i.test(learnerTurn);
-  const hasReason = /\bbecause|since|therefore|so\b/i.test(learnerTurn);
+  const normalizedTurn = learnerTurn.trim().toLowerCase();
+  const asksQuestion = normalizedTurn.includes("?");
+  const isGreeting = /\bhello\b|\bhi\b|\bhey\b/.test(normalizedTurn);
+  const mentionsStudy = /\bstudy\b|\bclass\b|\bschool\b|\buniversity\b|\bhomework\b/.test(normalizedTurn);
+  const mentionsHobby = /\bmusic\b|\bmovie\b|\bgame\b|\bsport\b|\btravel\b|\bfood\b/.test(normalizedTurn);
+
+  if (isGreeting) {
+    return {
+      reply: "Hi, it is nice to chat with you. I am here and listening.",
+      follow_up: "How has your day been so far?",
+      coaching_note: "Keep your next turn simple and natural, like you are talking to a real friend.",
+    };
+  }
+
+  if (asksQuestion) {
+    return {
+      reply: "That is a good question. I think there can be different answers depending on the situation.",
+      follow_up: "What is your own view on it?",
+      coaching_note: "Ask short clear questions and then add one sentence with your opinion.",
+    };
+  }
+
+  if (mentionsStudy) {
+    return {
+      reply: "That sounds like a very real study situation. I can understand why it matters to you.",
+      follow_up: "What part of it feels hardest for you right now?",
+      coaching_note: "Try adding one concrete detail so your next turn sounds more personal and complete.",
+    };
+  }
+
+  if (mentionsHobby) {
+    return {
+      reply: "That sounds interesting. I can see why you enjoy talking about it.",
+      follow_up: "What do you like most about it?",
+      coaching_note: "Keep going with one reason and one small example from your own experience.",
+    };
+  }
 
   return {
-    reply: hasReason
-      ? "Your idea is clear, and I can follow your main reason. The response already sounds more like a seminar contribution than a short classroom answer."
-      : "I understand your main idea, but the answer still feels a little brief for an academic discussion. Add one reason so the position sounds more convincing.",
-    follow_up: hasExample
-      ? "Can you explain why that example matters for university learning?"
-      : "Can you add one specific example from class, campus life, or independent study?",
-    coaching_note: hasReason
-      ? "Use a transition phrase at the start of the next sentence so the response sounds more controlled."
-      : "Start the next turn with one reason is that or this is important because.",
+    reply: "I understand what you mean, and I want to hear a little more about it.",
+    follow_up: "Can you tell me one more detail?",
+    coaching_note: "Keep your next turn relaxed and specific instead of trying to sound too formal.",
   };
 }
 

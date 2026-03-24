@@ -14,6 +14,8 @@ const moduleIcons: Record<SpeakingModuleId, typeof Mic> = {
   partner: Bot,
 };
 
+const moduleOrder: SpeakingModuleId[] = ["shadowing", "partner", "studio"];
+
 // Date: 2026/3/18
 // Author: Tianbo Cao
 // Added a dedicated speaking hub so each practice mode opens as its own route, matching the listening workflow.
@@ -52,7 +54,7 @@ export function SpeakingHub({
       </article>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        {(Object.keys(speakingModuleCopy) as SpeakingModuleId[]).map((moduleId) => {
+        {moduleOrder.map((moduleId) => {
           const moduleCopy = speakingModuleCopy[moduleId];
           const Icon = moduleIcons[moduleId];
 
