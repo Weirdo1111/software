@@ -1,0 +1,32 @@
+{
+  "users": [
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "username": "admin",
+      "email": "admin@example.com",
+      "passwordHash": "281eceaa1dbdcf0d3fe99696c9de49f5:87e2a85c125a509271448704c7ce004ec9cbf190f9114cdb466a1dee2e8b27d169190ecc613351ba1e3bd3415bd67904b5ec081f565bd5ae62151d08b9ed0068",
+      "createdAt": "2026-03-20T00:00:00.000Z"
+    },
+    {
+      "id": "07b069b0-0b40-4d88-94cf-958ed4095973",
+      "username": "wzx_test_user",
+      "email": "wzx_test_user@example.com",
+      "passwordHash": "5a1fb731b3754575804be6543a3ca888:1accb329e1a9946823bc2158fbe6c59828f4f6daa703dd15a7a30d52829380f8a7566a951f5dd5140dc06111e7faca5bf42949623925083c0811f1b89efb3fba",
+      "createdAt": "2026-03-20T08:47:57.393Z"
+    },
+    {
+      "id": "eac00e96-b396-4b32-b4e0-6221bf272b47",
+      "username": "wax",
+      "email": "2181232397@qq.com",
+      "passwordHash": "0061a39e6a674f1d9013ee089ec70648:7aafc615bbf53aab4eb21e4371af51f097fb8f9a8923b1b97d00caea8cbe471a371f8d6cb1b96480b3b62070ba4dfc18c3c4195aca4568e44058facda32ac572",
+      "createdAt": "2026-03-20T08:51:27.068Z"
+    },
+    {
+      "id": "06d27ce1-9c72-4f51-965d-69afbcd22a7c",
+      "username": "qqq",
+      "email": "2424242424@qq.com",
+      "passwordHash": "66cefb929fe64cf5ae562d4825c174c3:225afa93fbf43f467811e9f746eaeb714a58800227da29c54eaaa96fb0b00c6e0a6483a95d10ffd7d9f78929a06099b5f20d4aa1de3013c2f3aefccdeb40499a",
+      "createdAt": "2026-03-20T08:53:31.698Z"
+    }
+  ]
+}

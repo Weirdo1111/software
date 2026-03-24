@@ -3,12 +3,14 @@ import { Ear, FileText, Mic, PenLine, Target } from "lucide-react";
 import { ListeningFeedbackForm } from "@/components/forms/listening-feedback-form";
 import { ReadingFeedbackForm } from "@/components/forms/reading-feedback-form";
 import { SpeakingFeedbackForm } from "@/components/forms/speaking-feedback-form";
+import { SpeakingHub } from "@/components/forms/speaking-hub";
 import { WritingFeedbackForm } from "@/components/forms/writing-feedback-form";
 import { PageFrame } from "@/components/page-frame";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { getListeningMaterialsCatalog } from "@/lib/listening-materials-repository";
 import { buildPracticePassageFromArticle, getReadingArticleById } from "@/lib/reading-articles";
 import { getPassageForLevel } from "@/lib/reading-passages";
+import { isSpeakingModuleId } from "@/lib/speaking-modules";
 import type { CEFRLevel } from "@/types/learning";
 
 type LessonMode = "listening" | "speaking" | "reading" | "writing";
@@ -28,21 +30,21 @@ function extractLevel(id: string): CEFRLevel {
 
 const modeMeta = {
   listening: {
-    label: "Academic Listening Studio",
+    label: "TED Listening Library",
     icon: Ear,
-    focus: "Move between controlled accent drills and official TED talks while keeping the same DIICSU-focused note-taking workflow.",
-    source: "DIICSU listening bank plus TED official embeds matched to five undergraduate disciplines",
-    output: "Structured notes + listening check + saved technical vocabulary + real-world TED exposure",
-    coach: "Use accent practice for targeted control, then move into TED mode when you are ready for more natural pacing and authentic delivery.",
+    focus: "Browse official TED talks matched to DIICSU majors, then turn each video into focused note-taking and listening-check practice.",
+    source: "Official TED talks with major-matched prompts, vocabulary, and listening checks for five undergraduate disciplines",
+    output: "Structured notes + TED listening check + saved technical vocabulary + major-matched academic listening practice",
+    coach: "Filter by major or level, preview the talk in the page, then open the official TED page when you want the best playback quality.",
     tasks: [
-      "Choose Accent Practice or TED Listening, then select your DIICSU major.",
-      "Play the clip or open the official TED embed, take structured notes, and answer the checkpoints.",
-      "Review the transcript option and save useful technical terms to the deck.",
+      "Choose a TED talk by major, level, or topic.",
+      "Preview the video or open the official TED page, then take structured notes.",
+      "Answer the listening questions and save useful technical terms to the deck.",
     ],
     checkpoints: [
-      "What is the main task or recommendation in the clip?",
+      "What is the main claim or recommendation in the talk?",
       "Which exact detail should appear in your notes?",
-      "Which specialist term or key idea helped you track the speaker?",
+      "Which specialist term or idea helped you track the speaker?",
     ],
     tone: "from-[#d7e8f7] via-white to-[#edf6fc]",
   },
@@ -71,11 +73,11 @@ const modeMeta = {
     focus: "Map argument structure, identify evidence, and track academic vocabulary in context.",
     source: "Short abstract and commentary on remote study habits",
     output: "Claim-evidence map + vocabulary notes",
-    coach: "Skim for structure first, then return for evidence and key terminology.",
+    coach: "Skim for structure, then return for evidence and key terms.",
     tasks: [
       "Locate the author's main claim.",
-      "Mark one supporting reason and one example.",
-      "Choose two academic terms to add to the review deck.",
+      "Mark one supporting detail.",
+      "Choose up to two academic terms.",
     ],
     checkpoints: [
       "What sentence expresses the main claim most clearly?",
@@ -109,12 +111,25 @@ function renderWorkbench(
   mode: LessonMode,
   lessonId: string,
   listeningMaterials: Awaited<ReturnType<typeof getListeningMaterialsCatalog>> | null,
+  locale: "zh" | "en",
+  speakingModule?: string,
   articleId?: string,
 ) {
   const level = extractLevel(lessonId);
 
   if (mode === "speaking") {
-    return <SpeakingFeedbackForm defaultLevel={level} />;
+    if (!isSpeakingModuleId(speakingModule)) {
+      return <SpeakingHub locale={locale} lessonId={lessonId} />;
+    }
+
+    return (
+      <SpeakingFeedbackForm
+        defaultLevel={level}
+        module={speakingModule}
+        locale={locale}
+        hubHref={`/lesson/${lessonId}?lang=${locale}`}
+      />
+    );
   }
 
   if (mode === "listening") {
@@ -141,7 +156,7 @@ export default async function LessonPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ lang?: string; articleId?: string }>;
+  searchParams: Promise<{ lang?: string; articleId?: string; module?: string }>;
 }) {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
@@ -164,19 +179,23 @@ export default async function LessonPage({
   const Icon = meta.icon;
   const isWritingMode = mode === "writing";
   const isListeningMode = mode === "listening";
+  const isReadingMode = mode === "reading";
   const topSectionLayoutClass =
-    mode === "speaking" || isWritingMode ? "grid gap-5" : "grid gap-5 xl:grid-cols-[1.02fr_0.98fr]";
-  const lessonMetaGridClass = isWritingMode ? "mt-6 grid gap-3" : "mt-6 grid gap-3 sm:grid-cols-2";
-  const lowerSectionLayoutClass = isWritingMode ? "mt-6 grid gap-5" : "mt-6 grid gap-5 lg:grid-cols-[1.02fr_0.98fr]";
+    mode === "speaking" || isWritingMode || isReadingMode ? "grid gap-5" : "grid gap-5 xl:grid-cols-[1.02fr_0.98fr]";
+  const lessonMetaGridClass =
+    isWritingMode || isReadingMode ? "mt-6 grid gap-3" : "mt-6 grid gap-3 sm:grid-cols-2";
+  const lowerSectionLayoutClass =
+    isWritingMode || isReadingMode ? "mt-6 grid gap-5" : "mt-6 grid gap-5 lg:grid-cols-[1.02fr_0.98fr]";
   const listeningMaterials = isListeningMode ? await getListeningMaterialsCatalog() : null;
   const showStandaloneLessonBrief = mode !== "speaking" && mode !== "writing" && mode !== "listening";
   const showLowerPanels = mode !== "speaking" && mode !== "listening";
+  const showPageHeader = false;
   // Date: 2026/3/18
   // Author: Tianbo Cao
-  // Keep the speaking lesson page focused on the core studio by hiding the extra lesson framing panels.
+  // Keep the speaking lesson page focused on the core studio by hiding the extra lesson framing panels and shared page header.
 
   return (
-    <PageFrame locale={locale} title={meta.label} description={description}>
+    <PageFrame locale={locale} title={meta.label} description={description} showHeader={showPageHeader}>
       {showStandaloneLessonBrief ? (
         <>
           <div className={topSectionLayoutClass}>
@@ -192,17 +211,22 @@ export default async function LessonPage({
               </div>
               <div className={lessonMetaGridClass}>
                 <div className="rounded-[1.3rem] border border-white/60 bg-white/65 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-soft)]">Expected output</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-soft)]">Output</p>
                   <p className="mt-3 text-sm leading-7 text-[var(--ink)]">{meta.output}</p>
                 </div>
                 <div className="rounded-[1.3rem] border border-white/60 bg-white/65 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-soft)]">Coach focus</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-soft)]">Focus</p>
                   <p className="mt-3 text-sm leading-7 text-[var(--ink)]">{meta.coach}</p>
                 </div>
               </div>
-              <div className="mt-6 grid gap-3">
-                {meta.tasks.map((task, index) => (
-                  <div key={task} className="grid gap-3 rounded-[1.4rem] border border-white/60 bg-white/68 p-4 sm:grid-cols-[auto_1fr] sm:items-start">
+              <div className="mt-5 grid gap-3">
+                {meta.tasks.slice(0, 2).map((task, index) => (
+                  <div
+                    key={task}
+                    className={`grid gap-3 rounded-[1.4rem] border border-white/60 bg-white/68 p-4 ${
+                      isReadingMode ? "" : "sm:grid-cols-[auto_1fr] sm:items-start"
+                    }`}
+                  >
                     <div className="inline-flex size-10 items-center justify-center rounded-2xl bg-[var(--navy)] text-sm font-semibold text-[#f7efe3]">
                       {index + 1}
                     </div>
@@ -212,11 +236,25 @@ export default async function LessonPage({
               </div>
             </article>
 
-            {renderWorkbench(mode, resolvedParams.id, listeningMaterials, linkedArticle?.id)}
+            {renderWorkbench(
+              mode,
+              resolvedParams.id,
+              listeningMaterials,
+              locale,
+              resolvedSearchParams.module,
+              linkedArticle?.id,
+            )}
           </div>
         </>
       ) : (
-        renderWorkbench(mode, resolvedParams.id, listeningMaterials, linkedArticle?.id)
+        renderWorkbench(
+          mode,
+          resolvedParams.id,
+          listeningMaterials,
+          locale,
+          resolvedSearchParams.module,
+          linkedArticle?.id,
+        )
       )}
 
       {showLowerPanels ? (
@@ -225,9 +263,9 @@ export default async function LessonPage({
             <p className="section-label">
               <Target className="size-3.5" /> Checkpoints
             </p>
-            <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">What success looks like in this lesson.</h2>
-            <div className="mt-6 grid gap-3">
-              {meta.checkpoints.map((item) => (
+            <h2 className="font-display mt-4 text-2xl tracking-tight text-[var(--ink)]">What to check.</h2>
+            <div className="mt-5 grid gap-3">
+              {meta.checkpoints.slice(0, 2).map((item) => (
                 <div key={item} className="rounded-[1.3rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.76)] p-4 text-sm leading-7 text-[var(--ink-soft)]">
                   {item}
                 </div>
@@ -235,15 +273,17 @@ export default async function LessonPage({
             </div>
           </article>
 
-          <article className="surface-ink ambient-card reveal-up rounded-[2rem] p-6 sm:p-7">
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#f2d9ae]">Cross-skill booster</p>
-            <h2 className="font-display mt-4 text-3xl tracking-tight">Every lesson should reinforce another skill.</h2>
-            <div className="mt-6 grid gap-3 text-sm leading-7 text-[#efe5d6]/78">
-              <p>Listening lessons feed better seminar speaking because note quality improves idea recall.</p>
-              <p>Reading lessons strengthen writing because claim-evidence structures become easier to imitate.</p>
-              <p>Speaking and writing feedback creates the evidence needed for future reassessment decisions.</p>
-            </div>
-          </article>
+          {!isReadingMode ? (
+            <article className="surface-ink ambient-card reveal-up rounded-[2rem] p-6 sm:p-7">
+              <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#f2d9ae]">Cross-skill booster</p>
+              <h2 className="font-display mt-4 text-3xl tracking-tight">Every lesson should reinforce another skill.</h2>
+              <div className="mt-6 grid gap-3 text-sm leading-7 text-[#efe5d6]/78">
+                <p>Listening lessons feed better seminar speaking because note quality improves idea recall.</p>
+                <p>Reading lessons strengthen writing because claim-evidence structures become easier to imitate.</p>
+                <p>Speaking and writing feedback creates the evidence needed for future reassessment decisions.</p>
+              </div>
+            </article>
+          ) : null}
         </section>
       ) : null}
     </PageFrame>
