@@ -13,7 +13,7 @@ export default async function TedLibraryPage({
   const materials = await getListeningMaterialsCatalog();
 
   return (
-    <PageFrame locale={locale} title="TED Listening" description="Browse TED talks matched to your major" showHeader>
+    <PageFrame locale={locale} title="TED Listening" description="Browse TED talks matched to your major" showHeader={false}>
       <TedLibrary materials={materials} locale={locale} />
     </PageFrame>
   );
