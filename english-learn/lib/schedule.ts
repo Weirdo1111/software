@@ -142,6 +142,20 @@ function normalizeTime(value: string | null | undefined) {
   return "09:00";
 }
 
+function getDefaultPreferenceCopy(locale: Locale) {
+  return locale === "zh"
+    ? {
+        lecture: "\u5168\u82f1\u6587\u8bfe\u7a0b",
+        seminar: "\u7814\u8ba8\u8bfe\u4ea4\u6d41",
+        deadline: "\u6587\u732e\u6982\u8981",
+      }
+    : {
+        lecture: "English-medium lecture",
+        seminar: "Seminar discussion",
+        deadline: "Source summary",
+      };
+}
+
 function normalizeClass(value: unknown): ScheduleClassSession | null {
   if (!value || typeof value !== "object") return null;
 
@@ -178,8 +192,9 @@ function normalizeDeadline(value: unknown): ScheduleDeadline | null {
   };
 }
 
-export function createDefaultSchedulePreferences(referenceDate = new Date()): SchedulePreferences {
+export function createDefaultSchedulePreferences(referenceDate = new Date(), locale: Locale = "en"): SchedulePreferences {
   const today = toDateAtStart(referenceDate);
+  const copy = getDefaultPreferenceCopy(locale);
 
   return {
     version: 1,
@@ -188,13 +203,13 @@ export function createDefaultSchedulePreferences(referenceDate = new Date()): Sc
     mode: "standard",
     studyWindow: "evening",
     classes: [
-      { id: createId("class"), title: "English-medium lecture", type: "lecture", day: 0, time: "09:00" },
-      { id: createId("class"), title: "Seminar discussion", type: "seminar", day: 3, time: "14:00" },
+      { id: createId("class"), title: copy.lecture, type: "lecture", day: 0, time: "09:00" },
+      { id: createId("class"), title: copy.seminar, type: "seminar", day: 3, time: "14:00" },
     ],
     deadlines: [
       {
         id: createId("deadline"),
-        title: "Source summary",
+        title: copy.deadline,
         dueDate: formatISODate(addDays(today, 3)),
         skill: "writing",
       },
@@ -203,14 +218,16 @@ export function createDefaultSchedulePreferences(referenceDate = new Date()): Sc
   };
 }
 
-function normalizePreferences(value: unknown): SchedulePreferences {
-  const fallback = createDefaultSchedulePreferences();
+function normalizePreferences(value: unknown, locale: Locale = "en"): SchedulePreferences {
+  const fallback = createDefaultSchedulePreferences(new Date(), locale);
   if (!value || typeof value !== "object") return fallback;
 
   const next = value as Partial<SchedulePreferences>;
-  const classes = Array.isArray(next.classes) ? next.classes.map(normalizeClass).filter(Boolean) as ScheduleClassSession[] : fallback.classes;
+  const classes = Array.isArray(next.classes)
+    ? (next.classes.map(normalizeClass).filter(Boolean) as ScheduleClassSession[])
+    : fallback.classes;
   const deadlines = Array.isArray(next.deadlines)
-    ? next.deadlines.map(normalizeDeadline).filter(Boolean) as ScheduleDeadline[]
+    ? (next.deadlines.map(normalizeDeadline).filter(Boolean) as ScheduleDeadline[])
     : fallback.deadlines;
 
   return {
@@ -225,16 +242,16 @@ function normalizePreferences(value: unknown): SchedulePreferences {
   };
 }
 
-export function loadSchedulePreferencesFromStorage() {
-  if (typeof window === "undefined") return createDefaultSchedulePreferences();
+export function loadSchedulePreferencesFromStorage(locale: Locale = "en") {
+  if (typeof window === "undefined") return createDefaultSchedulePreferences(new Date(), locale);
 
   const raw = window.localStorage.getItem(SCHEDULE_PREFERENCES_KEY);
-  if (!raw) return createDefaultSchedulePreferences();
+  if (!raw) return createDefaultSchedulePreferences(new Date(), locale);
 
   try {
-    return normalizePreferences(JSON.parse(raw));
+    return normalizePreferences(JSON.parse(raw), locale);
   } catch {
-    return createDefaultSchedulePreferences();
+    return createDefaultSchedulePreferences(new Date(), locale);
   }
 }
 
@@ -345,36 +362,68 @@ function minutesForWindow(window: StudyWindow) {
   return 19 * 60 + 10;
 }
 
-function formatTimeLabel(window: StudyWindow, order: number, duration: number) {
+function formatTimeLabel(window: StudyWindow, order: number, duration: number, locale: Locale) {
   const startMinutes = minutesForWindow(window) + order * 46;
   const hours = Math.floor(startMinutes / 60);
   const minutes = startMinutes % 60;
-  return `${pad(hours)}:${pad(minutes)} · ${duration} min`;
+  const minuteLabel = locale === "zh" ? "\u5206\u949f" : "min";
+  return `${pad(hours)}:${pad(minutes)} / ${duration} ${minuteLabel}`;
 }
 
-function getAnchorTitle(skill: TrackedSkill, classType?: ScheduleClassType | null, deadlineSoon = false) {
+function getAnchorTitle(skill: TrackedSkill, locale: Locale, classType?: ScheduleClassType | null, deadlineSoon = false) {
   if (deadlineSoon) {
-    if (skill === "writing") return "Writing Clinic";
-    if (skill === "reading") return "Reading Sprint";
-    if (skill === "speaking") return "Seminar Rehearsal";
-    return "Lecture Catch-up";
+    if (skill === "writing") return locale === "zh" ? "\u5199\u4f5c\u51b2\u523a" : "Writing Clinic";
+    if (skill === "reading") return locale === "zh" ? "\u9605\u8bfb\u51b2\u523a" : "Reading Sprint";
+    if (skill === "speaking") return locale === "zh" ? "\u53d1\u8a00\u9884\u6f14" : "Seminar Rehearsal";
+    return locale === "zh" ? "\u542c\u529b\u8865\u6551" : "Lecture Catch-up";
   }
 
-  if (classType === "lecture") return "Lecture Preview";
-  if (classType === "seminar") return "Seminar Rehearsal";
-  if (classType === "lab") return "Vocabulary Rescue";
+  if (classType === "lecture") return locale === "zh" ? "\u8bfe\u7a0b\u9884\u4e60" : "Lecture Preview";
+  if (classType === "seminar") return locale === "zh" ? "\u7814\u8ba8\u9884\u6f14" : "Seminar Rehearsal";
+  if (classType === "lab") return locale === "zh" ? "\u672f\u8bed\u8865\u5f3a" : "Vocabulary Rescue";
 
-  if (skill === "writing") return "Writing Studio";
-  if (skill === "reading") return "Reading Sprint";
-  if (skill === "speaking") return "Confidence Builder";
-  return "Lecture Debrief";
+  if (skill === "writing") return locale === "zh" ? "\u5199\u4f5c\u7ec3\u4e60" : "Writing Studio";
+  if (skill === "reading") return locale === "zh" ? "\u9605\u8bfb\u8bad\u7ec3" : "Reading Sprint";
+  if (skill === "speaking") return locale === "zh" ? "\u8868\u8fbe\u7ec3\u4e60" : "Confidence Builder";
+  return locale === "zh" ? "\u8bfe\u540e\u542c\u529b" : "Lecture Debrief";
 }
 
-function getSupportTitle(skill: TrackedSkill) {
-  if (skill === "listening") return "Accent Capture";
-  if (skill === "speaking") return "Response Builder";
-  if (skill === "reading") return "Evidence Map";
-  return "Sentence Studio";
+function getSupportTitle(skill: TrackedSkill, locale: Locale) {
+  if (skill === "listening") return locale === "zh" ? "\u53e3\u97f3\u8fa8\u8bc6" : "Accent Capture";
+  if (skill === "speaking") return locale === "zh" ? "\u56de\u5e94\u8bad\u7ec3" : "Response Builder";
+  if (skill === "reading") return locale === "zh" ? "\u8bc1\u636e\u68b3\u7406" : "Evidence Map";
+  return locale === "zh" ? "\u53e5\u5f0f\u6253\u78e8" : "Sentence Studio";
+}
+
+function getMemoryTitle(locale: Locale) {
+  return locale === "zh" ? "\u590d\u4e60\u5de9\u56fa" : "Memory Pulse";
+}
+
+function formatDueReason(title: string, diff: number, locale: Locale) {
+  if (locale === "zh") {
+    return diff === 0 ? `\u4eca\u5929\u622a\u6b62\uff1a${title}` : `\u5373\u5c06\u622a\u6b62\uff1a${title}`;
+  }
+
+  return diff === 0 ? `Due today: ${title}` : `Up next: ${title}`;
+}
+
+function getCourseReason(goal: ScheduleGoal, locale: Locale) {
+  if (goal === "research") return locale === "zh" ? "\u4fdd\u6301\u9605\u8bfb\u8f93\u5165\u3002" : "Keep source reading live.";
+  if (goal === "seminar") return locale === "zh" ? "\u5148\u7a33\u4f4f\u53e3\u8bed\u8f93\u51fa\u3002" : "Protect speaking confidence.";
+  return locale === "zh" ? "\u8d34\u5408\u5f53\u524d\u8bfe\u7a0b\u4efb\u52a1\u3002" : "Support coursework flow.";
+}
+
+function getSupportReason(isWeakest: boolean, locale: Locale) {
+  if (isWeakest) return locale === "zh" ? "\u5f53\u524d\u8584\u5f31\u9879\u3002" : "Current weak point.";
+  return locale === "zh" ? "\u4fdd\u6301\u6280\u80fd\u8854\u63a5\u3002" : "Keep the chain connected.";
+}
+
+function getReviewReason(reviewDue: number, locale: Locale) {
+  if (reviewDue > 0) {
+    return locale === "zh" ? `${reviewDue} \u5f20\u590d\u4e60\u5361\u5230\u671f\u3002` : `${reviewDue} review cards due.`;
+  }
+
+  return locale === "zh" ? "\u4fdd\u6301\u5173\u952e\u8868\u8fbe\u6d3b\u8dc3\u3002" : "Keep key phrases active.";
 }
 
 function determineWeekMode(preferences: SchedulePreferences, reviewDue: number, referenceDate: Date): ScheduleWeekMode {
@@ -414,7 +463,7 @@ function createBlock(args: {
     minutes: args.minutes,
     reason: args.reason,
     href: resolveBlockHref(args.skill, args.level, args.locale),
-    timeLabel: formatTimeLabel(args.studyWindow, args.order, args.minutes),
+    timeLabel: formatTimeLabel(args.studyWindow, args.order, args.minutes, args.locale),
   };
 }
 
@@ -434,7 +483,8 @@ function pressureForDay(args: {
   snapshot: LearningTrackerSnapshot;
 }) {
   const weakness = args.snapshot.skills[args.weakestSkill];
-  const weakPenalty = weakness.attempts === 0 ? 10 : weakness.attempts > 0 && weakness.correct / weakness.attempts < 0.7 ? 8 : 4;
+  const weakPenalty =
+    weakness.attempts === 0 ? 10 : weakness.attempts > 0 && weakness.correct / weakness.attempts < 0.7 ? 8 : 4;
   const modePenalty =
     args.weekMode === "deadline-rescue"
       ? 14
@@ -497,29 +547,35 @@ export function generateWeeklySchedule(input: {
       .sort((a, b) => a.diff - b.diff)[0];
 
     let anchorSkill: TrackedSkill = rotation[day] ?? primarySkill;
-    let anchorReason = "Keep the week balanced.";
+    let anchorReason = input.locale === "zh" ? "\u4fdd\u6301\u672c\u5468\u6280\u80fd\u5e73\u8861\u3002" : "Keep the week balanced.";
 
     if (soonestDeadline) {
       anchorSkill = soonestDeadline.deadline.skill;
-      anchorReason = soonestDeadline.diff === 0 ? `Due today: ${soonestDeadline.deadline.title}` : `Up next: ${soonestDeadline.deadline.title}`;
+      anchorReason = formatDueReason(soonestDeadline.deadline.title, soonestDeadline.diff, input.locale);
     } else if (classes.some((item) => item.type === "seminar")) {
       anchorSkill = "speaking";
-      anchorReason = classes.find((item) => item.type === "seminar")?.title ?? "Seminar day";
+      anchorReason =
+        classes.find((item) => item.type === "seminar")?.title ??
+        (input.locale === "zh" ? "\u7814\u8ba8\u8bfe\u65e5" : "Seminar day");
     } else if (classes.some((item) => item.type === "lecture")) {
       anchorSkill = "listening";
-      anchorReason = classes.find((item) => item.type === "lecture")?.title ?? "Lecture day";
+      anchorReason =
+        classes.find((item) => item.type === "lecture")?.title ??
+        (input.locale === "zh" ? "\u8bfe\u7a0b\u65e5" : "Lecture day");
     } else if (classes.some((item) => item.type === "lab")) {
       anchorSkill = "reading";
-      anchorReason = classes.find((item) => item.type === "lab")?.title ?? "Lab day";
-    } else if (input.preferences.goal === "research") {
-      anchorReason = "Keep source reading live.";
-    } else if (input.preferences.goal === "seminar") {
-      anchorReason = "Protect speaking confidence.";
+      anchorReason =
+        classes.find((item) => item.type === "lab")?.title ??
+        (input.locale === "zh" ? "\u5b9e\u9a8c\u8bfe\u65e5" : "Lab day");
     } else {
-      anchorReason = "Support coursework flow.";
+      anchorReason = getCourseReason(input.preferences.goal, input.locale);
     }
 
-    const supportSkill = chooseSupportSkill(anchorSkill, orderedSkills, rotation[(day + 1) % rotation.length] ?? primarySkill);
+    const supportSkill = chooseSupportSkill(
+      anchorSkill,
+      orderedSkills,
+      rotation[(day + 1) % rotation.length] ?? primarySkill,
+    );
     const targetMinutes = targetMinutesForDay(
       input.preferences.dailyMinutes,
       input.preferences.mode,
@@ -534,7 +590,7 @@ export function generateWeeklySchedule(input: {
       createBlock({
         id: `${dateISO}-anchor`,
         type: "anchor",
-        title: getAnchorTitle(anchorSkill, classes[0]?.type, Boolean(soonestDeadline)),
+        title: getAnchorTitle(anchorSkill, input.locale, classes[0]?.type, Boolean(soonestDeadline)),
         skill: anchorSkill,
         minutes: anchorMinutes,
         reason: anchorReason,
@@ -546,10 +602,10 @@ export function generateWeeklySchedule(input: {
       createBlock({
         id: `${dateISO}-support`,
         type: "support",
-        title: getSupportTitle(supportSkill),
+        title: getSupportTitle(supportSkill, input.locale),
         skill: supportSkill,
         minutes: supportMinutes,
-        reason: supportSkill === weakestSkill ? "Current weak point." : "Keep the chain connected.",
+        reason: getSupportReason(supportSkill === weakestSkill, input.locale),
         order: 1,
         level,
         locale: input.locale,
@@ -558,10 +614,10 @@ export function generateWeeklySchedule(input: {
       createBlock({
         id: `${dateISO}-memory`,
         type: "memory",
-        title: "Memory Pulse",
+        title: getMemoryTitle(input.locale),
         skill: "review",
         minutes: memoryMinutes,
-        reason: input.reviewDue > 0 ? `${input.reviewDue} review cards due.` : "Keep key phrases active.",
+        reason: getReviewReason(input.reviewDue, input.locale),
         order: 2,
         level,
         locale: input.locale,

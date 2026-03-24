@@ -14,40 +14,40 @@ const moduleNav = [
   {
     id: "dashboard",
     href: "/dashboard",
-    label: { zh: "总览", en: "Dashboard" },
+    label: { zh: "\u603b\u89c8", en: "Dashboard" },
     protected: true,
   },
   {
     id: "schedule",
     href: "/schedule",
-    label: { zh: "Schedule", en: "Schedule" },
+    label: { zh: "\u8ba1\u5212", en: "Schedule" },
     protected: true,
   },
   {
     id: "listening",
-    label: { zh: "听力", en: "Listening" },
+    label: { zh: "\u542c\u529b", en: "Listening" },
     protected: true,
   },
   {
     id: "speaking",
-    label: { zh: "口语", en: "Speaking" },
+    label: { zh: "\u53e3\u8bed", en: "Speaking" },
     protected: true,
   },
   {
     id: "reading",
     href: "/reading",
-    label: { zh: "阅读", en: "Reading" },
+    label: { zh: "\u9605\u8bfb", en: "Reading" },
     protected: true,
   },
   {
     id: "writing",
-    label: { zh: "写作", en: "Writing" },
+    label: { zh: "\u5199\u4f5c", en: "Writing" },
     protected: true,
   },
   {
     id: "discussion",
     href: "/discussion",
-    label: { zh: "讨论区", en: "Discussion" },
+    label: { zh: "\u8ba8\u8bba", en: "Discussion" },
     protected: true,
   },
 ] as const;
@@ -83,10 +83,10 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
   const isLoggedIn = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const [levelPrefix, setLevelPrefix] = useState("A2");
 
-  const accountLabel = locale === "zh" ? "我的账户" : "My account";
-  const loginLabel = locale === "zh" ? "登录" : "Log in";
-  const logoutLabel = locale === "zh" ? "退出登录" : "Log out";
-  const homeLabel = locale === "zh" ? "首页" : "Home";
+  const accountLabel = locale === "zh" ? "\u6211\u7684\u8d26\u6237" : "My account";
+  const loginLabel = locale === "zh" ? "\u767b\u5f55" : "Log in";
+  const logoutLabel = locale === "zh" ? "\u9000\u51fa\u767b\u5f55" : "Log out";
+  const homeLabel = locale === "zh" ? "\u9996\u9875" : "Home";
 
   useEffect(() => {
     const refreshLevel = () => {

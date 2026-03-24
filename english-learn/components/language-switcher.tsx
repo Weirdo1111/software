@@ -10,8 +10,12 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
   const searchParams = useSearchParams();
 
   function onChange(nextLocale: Locale) {
+    if (nextLocale === locale) return;
+
     const params = new URLSearchParams(searchParams.toString());
     params.set("lang", nextLocale);
+    window.localStorage.setItem("english-learn:locale", nextLocale);
+    document.cookie = `english-learn-locale=${nextLocale}; path=/; max-age=31536000; samesite=lax`;
     router.push(`${pathname}?${params.toString()}`);
   }
 
@@ -24,7 +28,7 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
         onClick={() => onChange("zh")}
         type="button"
       >
-        中文
+        {"\u4e2d\u6587"}
       </button>
       <button
         className={`rounded-full px-3 py-1 transition ${
