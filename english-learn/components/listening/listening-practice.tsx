@@ -44,6 +44,7 @@ function useCopy(locale: Locale) {
         listenTitle: "听力练习",
         scenario: "场景",
         speed: "速度",
+        verySlow: "极慢",
         slow: "慢速",
         normal: "正常",
         showTranscript: "显示文本",
@@ -62,6 +63,7 @@ function useCopy(locale: Locale) {
         listenTitle: "Listening practice",
         scenario: "Scenario",
         speed: "Speed",
+        verySlow: "Very Slow",
         slow: "Slow",
         normal: "Normal",
         showTranscript: "Show transcript",
@@ -245,7 +247,7 @@ function ListenStep({
     if (audioRef.current) audioRef.current.playbackRate = next;
   };
 
-  const rateLabel = rate === 1 ? copy.normal : rate === 0.85 ? copy.slow : `0.75×`;
+  const rateLabel = rate === 1 ? copy.normal : rate === 0.85 ? copy.slow : copy.verySlow;
 
   return (
     <section className="space-y-5 reveal-up">
