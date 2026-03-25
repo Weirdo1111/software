@@ -193,6 +193,11 @@ function writeThreads(nextThreads: ContextCommentThread[]) {
   window.dispatchEvent(new Event(CONTEXT_CHANGE_EVENT));
 }
 
+function writeThreadSnapshot(nextThread: ContextCommentThread) {
+  const threads = readThreads();
+  writeThreads(upsertThread(threads, nextThread));
+}
+
 function buildDiscussionTitle(
   context: ContextCommentContext,
   comment: ContextComment,
@@ -261,6 +266,95 @@ export function getContextThread(
   return buildSeedThread(context);
 }
 
+export async function hydrateContextThreadFromServer(
+  context: ContextCommentContext,
+) {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const params = new URLSearchParams({
+      module: context.module,
+      targetId: context.targetId,
+      title: context.title,
+      plazaTag: context.plazaTag,
+    });
+
+    if (context.subtitle) {
+      params.set("subtitle", context.subtitle);
+    }
+
+    const response = await fetch(`/api/context-comments?${params.toString()}`, {
+      cache: "no-store",
+    });
+
+    if (!response.ok) return null;
+
+    const payload = (await response.json()) as {
+      thread?: ContextCommentThread | null;
+    };
+
+    if (!payload.thread) return null;
+
+    const nextThread = hydrateThread(payload.thread, context);
+    writeThreadSnapshot(nextThread);
+    return nextThread;
+  } catch {
+    return null;
+  }
+}
+
+async function persistContextCommentToServer(
+  context: ContextCommentContext,
+  comment: ContextComment,
+) {
+  if (typeof window === "undefined") return false;
+
+  try {
+    const response = await fetch("/api/context-comments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        context,
+        comment: {
+          id: comment.id,
+          author: comment.author,
+          content: comment.content,
+          createdAt: comment.createdAt,
+          topic: comment.topic,
+          anchorLabel: comment.anchorLabel,
+          anchorText: comment.anchorText,
+          promotedAt: comment.promotedAt,
+        },
+      }),
+    });
+
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function persistContextLikeToServer(commentId: string) {
+  if (typeof window === "undefined") return false;
+  if (!/^[0-9a-fA-F-]{36}$/.test(commentId)) return false;
+
+  try {
+    const response = await fetch("/api/context-comments", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ commentId }),
+    });
+
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
 export function appendContextComment(
   context: ContextCommentContext,
   draft: ContextCommentDraft,
@@ -288,6 +382,7 @@ export function appendContextComment(
   };
 
   writeThreads(upsertThread(threads, nextThread));
+  void persistContextCommentToServer(context, nextComment);
 
   if (draft.promoteToDiscussion) {
     appendDiscussionPost({
@@ -329,4 +424,5 @@ export function toggleContextCommentLike(
   };
 
   writeThreads(upsertThread(threads, nextThread));
+  void persistContextLikeToServer(commentId);
 }

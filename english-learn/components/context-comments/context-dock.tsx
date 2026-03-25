@@ -1,7 +1,7 @@
 "use client";
 
 import { MessageSquareQuote, Send, ChevronDown, Heart, Sparkles } from "lucide-react";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 
 import type {
   ContextComment,
@@ -12,6 +12,7 @@ import {
   getContextCommentsServerSnapshot,
   getContextCommentsSnapshot,
   getContextThread,
+  hydrateContextThreadFromServer,
   subscribeContextComments,
   toggleContextCommentLike,
 } from "@/lib/context-comments";
@@ -102,6 +103,10 @@ export function ContextDock({
   const lastActive = comments[0]?.createdAt
     ? formatCommentTime(locale, comments[0].createdAt)
     : null;
+
+  useEffect(() => {
+    void hydrateContextThreadFromServer(context);
+  }, [context]);
 
   function handlePublish(promoteToDiscussion: boolean) {
     const trimmed = draft.trim();

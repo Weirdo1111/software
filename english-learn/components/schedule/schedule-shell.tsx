@@ -34,7 +34,10 @@ import {
   createScheduleClassSession,
   createScheduleDeadline,
   generateWeeklySchedule,
+  getActiveWeekPlanOverrides,
   getScheduleSlotDefaultTime,
+  getScheduleWeekStartISO,
+  hydrateSchedulePreferencesFromServer,
   loadSchedulePreferencesFromStorage,
   saveSchedulePreferencesToStorage,
   SCHEDULE_TIME_SLOTS,
@@ -52,6 +55,7 @@ import {
   type ScheduleSlotId,
   type ScheduleWeekMode,
   type StudyWindow,
+  type WeeklySchedule,
 } from "@/lib/schedule";
 
 const TRACKED_SKILLS: TrackedSkill[] = ["listening", "speaking", "reading", "writing"];
@@ -203,7 +207,13 @@ function buildImportState(
   return { tone, message, warnings };
 }
 
-export function ScheduleShell({ locale }: { locale: Locale }) {
+export function ScheduleShell({
+  locale,
+  initialFocusDateISO = null,
+}: {
+  locale: Locale;
+  initialFocusDateISO?: string | null;
+}) {
   const [level, setLevel] = useState("A2");
   const [snapshot, setSnapshot] = useState(() => createEmptyLearningTrackerSnapshot());
   const [preferences, setPreferences] = useState<SchedulePreferences>(() =>
@@ -211,14 +221,19 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
   );
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
   const [classDraft, setClassDraft] = useState<ClassDraft>(() => createEmptyClassDraft());
+  const [isClassEditorOpen, setIsClassEditorOpen] = useState(false);
   const [deadlineDraft, setDeadlineDraft] = useState<DeadlineDraft>(() => createEmptyDeadlineDraft());
   const [blockDraft, setBlockDraft] = useState<BlockDraft>(() => createEmptyBlockDraft());
   const [importState, setImportState] = useState<ImportState>(() => buildImportState("idle", "", []));
   const [excelLoading, setExcelLoading] = useState(false);
   const [imageLoading, setImageLoading] = useState(false);
+  const [generatedSchedule, setGeneratedSchedule] = useState<WeeklySchedule | null>(null);
+  const [generatedExpandedDay, setGeneratedExpandedDay] = useState<number | null>(null);
 
   const excelInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const lastAppliedFocusDateRef = useRef<string | null>(null);
+  const currentWeekStartISO = useMemo(() => getScheduleWeekStartISO(new Date()), []);
 
   const copy =
     locale === "zh"
@@ -238,7 +253,7 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
           todayTitle: "今天重点",
           todayBadge: "今天",
           timetableTitle: "课表",
-          timetableHint: "点击单元格可快速录入课程，也可以直接导入图片或 Excel。",
+          timetableHint: "双击空白格添加课程，双击课程块即可修改，也可以直接导入图片或 Excel。",
           imageImport: "图片识别课程表",
           excelImport: "Excel 导入",
           importReady: "已导入课程表。",
@@ -289,7 +304,7 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
           todayTitle: "Today focus",
           todayBadge: "Today",
           timetableTitle: "Timetable",
-          timetableHint: "Click a cell to add a class, or import the whole timetable from an image or Excel file.",
+          timetableHint: "Double-click an empty cell to add a class, or double-click a course card to edit it.",
           imageImport: "Recognize from image",
           excelImport: "Import Excel",
           importReady: "Timetable imported.",
@@ -343,6 +358,7 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
 
     refreshProfile();
     refreshPreferences();
+    void hydrateSchedulePreferencesFromServer(locale);
 
     const offTracker = subscribeLearningTracker(refreshProfile);
     const offSchedule = subscribeSchedulePreferences(refreshPreferences);
@@ -358,6 +374,25 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
     };
   }, [locale]);
 
+  const appliedPlanOverrides = useMemo(
+    () => getActiveWeekPlanOverrides(preferences, new Date()),
+    [preferences],
+  );
+
+  const suggestedWeeklySchedule = useMemo(
+    () =>
+      generateWeeklySchedule({
+        preferences,
+        snapshot,
+        reviewDue: 0,
+        locale,
+        level,
+        planOverrides: [],
+        useGeneratedFallback: true,
+      }),
+    [preferences, snapshot, locale, level],
+  );
+
   const weeklySchedule = useMemo(
     () =>
       generateWeeklySchedule({
@@ -366,11 +401,25 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
         reviewDue: 0,
         locale,
         level,
+        planOverrides: appliedPlanOverrides,
+        useGeneratedFallback: false,
       }),
-    [preferences, snapshot, locale, level],
+    [preferences, snapshot, locale, level, appliedPlanOverrides],
   );
 
   const todaySchedule = weeklySchedule.days.find((day) => day.isToday) ?? weeklySchedule.days[0];
+  const hasAppliedWeekPlan = appliedPlanOverrides.length > 0;
+
+  useEffect(() => {
+    if (!initialFocusDateISO || lastAppliedFocusDateRef.current === initialFocusDateISO) return;
+
+    const matchedDay = weeklySchedule.days.find((day) => day.dateISO === initialFocusDateISO);
+    if (matchedDay) {
+      setExpandedDay(matchedDay.day);
+    }
+
+    lastAppliedFocusDateRef.current = initialFocusDateISO;
+  }, [initialFocusDateISO, weeklySchedule.days]);
 
   const timetableMap = useMemo(() => {
     const next = new Map<string, ScheduleClassSession[]>();
@@ -391,7 +440,7 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
           taskSkillLabel: "\u6280\u80fd",
           saveTask: "\u4fdd\u5b58",
           addTask: "\u65b0\u589e\u4efb\u52a1",
-          resetDay: "\u6062\u590d\u81ea\u52a8",
+          resetDay: "\u6e05\u7a7a\u5f53\u5929",
         }
       : {
           manualPlan: "Manual",
@@ -402,11 +451,59 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
           taskSkillLabel: "Skill",
           saveTask: "Save",
           addTask: "Add task",
-          resetDay: "Reset day",
+          resetDay: "Clear day",
         };
+  const plannerText =
+    locale === "zh"
+      ? {
+          builderTitle: "\u667a\u80fd\u751f\u6210",
+          builderHint: "\u5148\u8bbe\u5b9a\u76ee\u6807\u3001\u65f6\u957f\u3001\u5f3a\u5ea6\u548c\u5b66\u4e60\u65f6\u6bb5\uff0c\u7cfb\u7edf\u4f1a\u7ed3\u5408\u8bfe\u8868\u548c\u622a\u6b62\u4efb\u52a1\u751f\u6210\u672c\u5468\u5b89\u6392\u9884\u89c8\u3002",
+          generate: "\u751f\u6210\u672c\u5468\u5b89\u6392",
+          regenerate: "\u91cd\u65b0\u751f\u6210",
+          apply: "\u5e94\u7528\u5230\u672c\u5468\u5b89\u6392",
+          clearWeek: "\u6e05\u7a7a\u672c\u5468\u5b89\u6392",
+          previewTitle: "\u5f85\u5e94\u7528\u9884\u89c8",
+          previewReady: "\u5df2\u751f\u6210\u9884\u89c8",
+          previewHint: "\u5148\u67e5\u770b\u9884\u89c8\uff0c\u786e\u8ba4\u540e\u518d\u5e94\u7528\u5230\u4e0b\u65b9\u3002",
+          previewEmpty: "\u672c\u5468\u5b89\u6392\u9ed8\u8ba4\u4e3a\u7a7a\uff0c\u8bf7\u5148\u751f\u6210\u9884\u89c8\u3002",
+          generatedBadge: "\u5f85\u5e94\u7528",
+          appliedBadge: "\u5df2\u5e94\u7528",
+          weekEmpty: "\u672c\u5468\u8fd8\u6ca1\u6709\u5df2\u5e94\u7528\u7684\u5b89\u6392\u3002\u53ef\u4ee5\u5148\u5728\u4e0a\u65b9\u751f\u6210\u5e76\u5e94\u7528\uff0c\u4e5f\u53ef\u4ee5\u76f4\u63a5\u624b\u52a8\u65b0\u5efa\u3002",
+          appliedHint: "\u8fd9\u91cc\u4fdd\u5b58\u7684\u662f\u4f60\u5df2\u7ecf\u5e94\u7528\u5230\u672c\u5468\u7684\u5b89\u6392\uff0c\u4e5f\u53ef\u4ee5\u76f4\u63a5\u624b\u52a8\u7f16\u8f91\u3002",
+          dayEmpty: "\u5f53\u5929\u8fd8\u6ca1\u6709\u5b89\u6392\u3002",
+          dayItems: "\u9879",
+          applyDone: "\u672c\u5468\u5b89\u6392\u5df2\u66f4\u65b0\u3002",
+          clearDone: "\u672c\u5468\u5b89\u6392\u5df2\u6e05\u7a7a\u3002",
+        }
+      : {
+          builderTitle: "Smart Builder",
+          builderHint: "Set your goal, daily time, intensity, and study window first. The system will generate a weekly plan preview from your timetable and deadlines.",
+          generate: "Generate this week",
+          regenerate: "Regenerate",
+          apply: "Apply to this week",
+          clearWeek: "Clear this week",
+          previewTitle: "Pending preview",
+          previewReady: "Preview ready",
+          previewHint: "Review the generated plan first, then apply it to the weekly schedule below.",
+          previewEmpty: "This week starts empty. Generate a preview first.",
+          generatedBadge: "Pending",
+          appliedBadge: "Applied",
+          weekEmpty: "There is no applied plan for this week yet. Generate and apply one above, or add tasks manually.",
+          appliedHint: "This section stores the plan you've actually applied to this week, and you can still edit it manually.",
+          dayEmpty: "No tasks for this day yet.",
+          dayItems: "items",
+          applyDone: "This week's plan has been updated.",
+          clearDone: "This week's plan has been cleared.",
+        };
+  const clearTimetableText = locale === "zh" ? "\u4e00\u952e\u6e05\u7a7a" : "Clear timetable";
+  const clearTimetableDoneText = locale === "zh" ? "\u8bfe\u7a0b\u8868\u5df2\u6e05\u7a7a\u3002" : "Timetable cleared.";
+  const clearTimetableConfirmText =
+    locale === "zh" ? "\u786e\u5b9a\u8981\u6e05\u7a7a\u6574\u4e2a\u8bfe\u7a0b\u8868\u5417\uff1f" : "Clear all classes from the timetable?";
+  const activeSlotLabel =
+    SCHEDULE_TIME_SLOTS.find((slot) => slot.id === classDraft.slot)?.label[locale] ?? classDraft.slot;
 
   function getDayPlanBlocks(daySchedule: (typeof weeklySchedule.days)[number]) {
-    const override = preferences.planOverrides.find((item) => item.day === daySchedule.day);
+    const override = appliedPlanOverrides.find((item) => item.day === daySchedule.day);
     return override?.blocks ?? daySchedule.blocks.map(toEditableBlock);
   }
 
@@ -421,18 +518,20 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
   }
 
   function saveDayPlanBlocks(day: number, blocks: EditableScheduleBlock[]) {
-    const nextOverrides = preferences.planOverrides.filter((item) => item.day !== day);
+    const nextOverrides = appliedPlanOverrides.filter((item) => item.day !== day);
     if (blocks.length > 0) {
       nextOverrides.push({ day, blocks });
     }
 
     updatePreferences({
+      planWeekStartISO: currentWeekStartISO,
       planOverrides: nextOverrides.sort((a, b) => a.day - b.day),
     });
   }
 
   function beginCreateClass(day: number, slot: ScheduleSlotId) {
     setClassDraft(createEmptyClassDraft(day, slot));
+    setIsClassEditorOpen(true);
   }
 
   function beginEditClass(item: ScheduleClassSession) {
@@ -444,10 +543,12 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
       type: item.type,
       time: item.time,
     });
+    setIsClassEditorOpen(true);
   }
 
   function cancelClassEdit() {
     setClassDraft(createEmptyClassDraft(classDraft.day, classDraft.slot));
+    setIsClassEditorOpen(false);
   }
 
   function submitClass() {
@@ -485,6 +586,7 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
     }
 
     setClassDraft(createEmptyClassDraft(classDraft.day, classDraft.slot));
+    setIsClassEditorOpen(false);
   }
 
   function removeClass(id: string) {
@@ -493,7 +595,18 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
     });
     if (classDraft.id === id) {
       setClassDraft(createEmptyClassDraft(classDraft.day, classDraft.slot));
+      setIsClassEditorOpen(false);
     }
+  }
+
+  function clearTimetable() {
+    if (preferences.classes.length === 0) return;
+    if (typeof window !== "undefined" && !window.confirm(clearTimetableConfirmText)) return;
+
+    updatePreferences({ classes: [] });
+    setClassDraft(createEmptyClassDraft());
+    setIsClassEditorOpen(false);
+    setImportState(buildImportState("success", clearTimetableDoneText));
   }
 
   function updateDeadline(id: string, partial: Partial<ScheduleDeadline>) {
@@ -588,10 +701,41 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
 
   function resetDayPlan(day: number) {
     updatePreferences({
-      planOverrides: preferences.planOverrides.filter((item) => item.day !== day),
+      planWeekStartISO: currentWeekStartISO,
+      planOverrides: appliedPlanOverrides.filter((item) => item.day !== day),
     });
     if (blockDraft.day === day) {
       setBlockDraft(createEmptyBlockDraft(day));
+    }
+  }
+
+  function generatePlanPreview() {
+    setGeneratedSchedule(suggestedWeeklySchedule);
+    setGeneratedExpandedDay(suggestedWeeklySchedule.days.find((day) => day.isToday)?.day ?? 0);
+  }
+
+  function applyGeneratedPlan() {
+    if (!generatedSchedule) return;
+
+    updatePreferences({
+      planWeekStartISO: currentWeekStartISO,
+      planOverrides: generatedSchedule.days
+        .filter((day) => day.blocks.length > 0)
+        .map((day) => ({
+          day: day.day,
+          blocks: day.blocks.map(toEditableBlock),
+        })),
+    });
+    setExpandedDay(generatedSchedule.days.find((day) => day.isToday)?.day ?? 0);
+  }
+
+  function clearWeekPlan() {
+    updatePreferences({
+      planWeekStartISO: null,
+      planOverrides: [],
+    });
+    if (blockDraft.id || blockDraft.title || blockDraft.reason) {
+      setBlockDraft(createEmptyBlockDraft());
     }
   }
 
@@ -675,7 +819,7 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
   }
 
   return (
-    <section className="mt-6 grid gap-5 reveal-up">
+    <section className="mt-6 flex w-full min-w-0 flex-col gap-5 reveal-up">
       <input
         ref={imageInputRef}
         type="file"
@@ -691,16 +835,16 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
         onChange={onExcelFileChange}
       />
 
-      <article className="surface-panel rounded-[2rem] p-4 sm:p-5">
+      <article id="schedule-week" className="surface-panel w-full min-w-0 rounded-[2rem] p-4 sm:p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="font-display text-4xl tracking-tight text-[var(--ink)] sm:text-5xl">{copy.title}</h2>
             <div className="mt-3 flex flex-wrap gap-2">
-              <StatPill label={copy.weekTarget} value={`${weeklySchedule.weeklyTargetMinutes} ${copy.minuteShort}`} />
-              <StatPill label={copy.weekMode} value={weekModeLabels[weeklySchedule.weekMode][locale]} />
+              <StatPill label={copy.weekTarget} value={`${suggestedWeeklySchedule.weeklyTargetMinutes} ${copy.minuteShort}`} />
+              <StatPill label={copy.weekMode} value={weekModeLabels[suggestedWeeklySchedule.weekMode][locale]} />
               <StatPill
                 label={copy.weekFocus}
-                value={`${skillMeta[weeklySchedule.primarySkill].label[locale]} / ${skillMeta[weeklySchedule.weakestSkill].label[locale]}`}
+                value={`${skillMeta[suggestedWeeklySchedule.primarySkill].label[locale]} / ${skillMeta[suggestedWeeklySchedule.weakestSkill].label[locale]}`}
               />
             </div>
           </div>
@@ -742,10 +886,124 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
             ))}
           </PrefRow>
         </div>
+
+        <div className="mt-5 rounded-[1.4rem] border border-[rgba(20,50,75,0.08)] bg-white/72 p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="text-base font-semibold text-[var(--ink)]">{plannerText.builderTitle}</h3>
+              <p className="mt-1 text-sm text-[var(--ink-soft)]">{plannerText.builderHint}</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={generatePlanPreview}
+                className="inline-flex items-center gap-2 rounded-full bg-[var(--navy)] px-4 py-2 text-sm font-semibold text-[#f7efe3] transition hover:translate-y-[-1px]"
+              >
+                <Sparkles className="size-4" />
+                {generatedSchedule ? plannerText.regenerate : plannerText.generate}
+              </button>
+              <button
+                type="button"
+                onClick={applyGeneratedPlan}
+                disabled={!generatedSchedule}
+                className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.14)] bg-white px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:bg-[rgba(20,50,75,0.06)] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {plannerText.apply}
+              </button>
+              <button
+                type="button"
+                onClick={clearWeekPlan}
+                disabled={!hasAppliedWeekPlan}
+                className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.14)] bg-white px-4 py-2 text-sm font-semibold text-[var(--ink-soft)] transition hover:text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {plannerText.clearWeek}
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-[1.2rem] border border-[rgba(20,50,75,0.08)] bg-[rgba(20,50,75,0.03)] p-3.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-[rgba(20,50,75,0.08)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">
+                {generatedSchedule ? plannerText.previewReady : plannerText.previewTitle}
+              </span>
+              {hasAppliedWeekPlan ? (
+                <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                  {plannerText.appliedBadge}
+                </span>
+              ) : null}
+              {generatedSchedule ? (
+                <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">
+                  {plannerText.generatedBadge}
+                </span>
+              ) : null}
+            </div>
+
+            {generatedSchedule ? (
+              <>
+                <p className="mt-3 text-sm text-[var(--ink-soft)]">{plannerText.previewHint}</p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-7">
+                  {generatedSchedule.days.map((day) => {
+                    const isPreviewExpanded = generatedExpandedDay === day.day;
+                    return (
+                      <button
+                        key={day.dateISO}
+                        type="button"
+                        onClick={() => setGeneratedExpandedDay(isPreviewExpanded ? null : day.day)}
+                        className={`rounded-[1rem] border px-3 py-3 text-left transition ${
+                          isPreviewExpanded
+                            ? "border-[rgba(28,78,149,0.2)] bg-[rgba(28,78,149,0.06)]"
+                            : "border-[rgba(20,50,75,0.08)] bg-white/78 hover:bg-white"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-semibold text-[var(--ink)]">{dayLabels[locale][day.day]}</span>
+                          <span className="text-[11px] font-semibold text-[var(--ink-soft)]">
+                            {day.blocks.length} {plannerText.dayItems}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-[11px] text-[var(--ink-soft)]">{day.blocks.map((block) => block.timeLabel).join(" · ")}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {typeof generatedExpandedDay === "number" ? (
+                  <div className="mt-3 rounded-[1rem] border border-[rgba(20,50,75,0.08)] bg-white/82 p-3">
+                    <div className="grid gap-2">
+                      {generatedSchedule.days
+                        .find((day) => day.day === generatedExpandedDay)
+                        ?.blocks.map((block) => {
+                          const meta = skillMeta[block.skill];
+                          const Icon = meta.Icon;
+                          return (
+                            <div key={block.id} className="rounded-[0.9rem] border border-[rgba(20,50,75,0.08)] bg-white px-3 py-3">
+                              <div className="flex items-center justify-between gap-3">
+                                <span className="inline-flex items-center gap-2 rounded-full bg-[rgba(20,50,75,0.06)] px-2.5 py-1 text-[11px] font-semibold text-[var(--ink)]">
+                                  <Icon className="size-3.5" />
+                                  {meta.label[locale]}
+                                </span>
+                                <span className="text-[11px] font-semibold text-[var(--ink-soft)]">{block.timeLabel}</span>
+                              </div>
+                              <p className="mt-2 text-sm font-semibold text-[var(--ink)]">{block.title}</p>
+                              <p className="mt-1 text-sm text-[var(--ink-soft)]">{block.reason}</p>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <div className="mt-3">
+                <EmptyHint text={plannerText.previewEmpty} />
+              </div>
+            )}
+          </div>
+        </div>
       </article>
 
       {todaySchedule ? (
-        <article className="surface-panel rounded-[2rem] p-5 sm:p-6">
+        <article className="surface-panel w-full min-w-0 rounded-[2rem] p-5 sm:p-6">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h3 className="font-display text-3xl tracking-tight text-[var(--ink)]">{copy.todayTitle}</h3>
@@ -757,268 +1015,347 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
               {copy.todayBadge}
             </span>
           </div>
-          <div className="mt-5 grid gap-3 lg:grid-cols-3">
-            {todaySchedule.blocks.map((block) => {
-              const meta = skillMeta[block.skill];
-              const Icon = meta.Icon;
-              return (
-                <Link key={block.id} href={block.href} className="rounded-[1.4rem] border border-[rgba(20,50,75,0.1)] bg-white/82 p-4 transition hover:translate-y-[-2px] hover:bg-white">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="inline-flex items-center gap-2 rounded-full bg-[rgba(20,50,75,0.06)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">
-                      <Icon className="size-3.5" />
-                      {meta.label[locale]}
-                    </span>
-                    <span className="text-xs font-semibold text-[var(--ink-soft)]">{block.timeLabel}</span>
-                  </div>
-                  <h4 className="mt-4 text-lg font-semibold text-[var(--ink)]">{block.title}</h4>
-                  <p className="mt-1 text-sm text-[var(--ink-soft)]">{block.reason}</p>
-                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[var(--navy)]">
-                    {copy.start}
-                    <ArrowRight className="size-4" />
-                  </span>
-                </Link>
-              );
-            })}
+          <div className="mt-5">
+            {todaySchedule.blocks.length === 0 ? (
+              <EmptyHint text={plannerText.weekEmpty} />
+            ) : (
+              <div className="grid gap-3 lg:grid-cols-3">
+                {todaySchedule.blocks.map((block) => {
+                  const meta = skillMeta[block.skill];
+                  const Icon = meta.Icon;
+                  return (
+                    <Link key={block.id} href={block.href} className="rounded-[1.4rem] border border-[rgba(20,50,75,0.1)] bg-white/82 p-4 transition hover:translate-y-[-2px] hover:bg-white">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="inline-flex items-center gap-2 rounded-full bg-[rgba(20,50,75,0.06)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">
+                          <Icon className="size-3.5" />
+                          {meta.label[locale]}
+                        </span>
+                        <span className="text-xs font-semibold text-[var(--ink-soft)]">{block.timeLabel}</span>
+                      </div>
+                      <h4 className="mt-4 text-lg font-semibold text-[var(--ink)]">{block.title}</h4>
+                      <p className="mt-1 text-sm text-[var(--ink-soft)]">{block.reason}</p>
+                      <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[var(--navy)]">
+                        {copy.start}
+                        <ArrowRight className="size-4" />
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </article>
+      ) : null}
+
+      <div className="grid w-full min-w-0 gap-4 xl:grid-cols-[minmax(0,1.75fr)_minmax(18rem,0.95fr)] xl:items-start">
+        <article className="surface-panel w-full min-w-0 rounded-[2rem] p-4 sm:p-5">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h3 className="font-display text-[1.85rem] tracking-tight text-[var(--ink)]">{copy.timetableTitle}</h3>
+              <p className="mt-1 text-sm text-[var(--ink-soft)]">{copy.timetableHint}</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => imageInputRef.current?.click()}
+                className="inline-flex items-center gap-2 rounded-full bg-[var(--navy)] px-3.5 py-2 text-sm font-semibold text-[#f7efe3] transition hover:translate-y-[-1px] disabled:opacity-60"
+                disabled={imageLoading}
+              >
+                <ImageUp className="size-4" />
+                {copy.imageImport}
+              </button>
+              <button
+                type="button"
+                onClick={() => excelInputRef.current?.click()}
+                className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.14)] bg-white/90 px-3.5 py-2 text-sm font-semibold text-[var(--ink)] transition hover:bg-[rgba(20,50,75,0.06)] disabled:opacity-60"
+                disabled={excelLoading}
+              >
+                <FileSpreadsheet className="size-4" />
+                {copy.excelImport}
+              </button>
+              <button
+                type="button"
+                onClick={clearTimetable}
+                className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3.5 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={preferences.classes.length === 0}
+              >
+                <Trash2 className="size-4" />
+                {clearTimetableText}
+              </button>
+            </div>
+          </div>
+
+          {importState.message ? <ImportNotice state={importState} /> : null}
+
+          <div className="mt-4 overflow-x-auto rounded-[1.2rem] border border-[rgba(20,50,75,0.08)] bg-white/82">
+            <table className="min-w-[680px] w-full border-collapse text-xs sm:text-sm">
+              <thead>
+                <tr className="bg-[rgba(20,50,75,0.05)] text-[var(--ink)]">
+                  <th className="border-b border-r border-[rgba(20,50,75,0.08)] px-2.5 py-2 text-left font-semibold">
+                    {copy.slotLabel}
+                  </th>
+                  {WEEKDAY_ORDER.map((day) => (
+                    <th key={day} className="border-b border-[rgba(20,50,75,0.08)] px-2.5 py-2 text-left font-semibold">
+                      {dayLabels[locale][day]}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {SCHEDULE_TIME_SLOTS.map((slot) => (
+                  <tr key={slot.id}>
+                    <td className="w-16 border-r border-t border-[rgba(20,50,75,0.08)] px-2.5 py-2.5 font-semibold text-[var(--ink)]">
+                      {slot.label[locale]}
+                    </td>
+                    {WEEKDAY_ORDER.map((day) => {
+                      const cellItems = timetableMap.get(`${day}-${slot.id}`) ?? [];
+                      return (
+                        <td key={`${day}-${slot.id}`} className="border-t border-[rgba(20,50,75,0.08)] p-1 align-top">
+                          <div
+                            className={`group min-h-[76px] rounded-[0.85rem] border p-1.5 transition cursor-pointer ${
+                              isClassEditorOpen && classDraft.day === day && classDraft.slot === slot.id
+                                ? "border-[rgba(28,78,149,0.24)] bg-[rgba(28,78,149,0.06)]"
+                                : "border-transparent bg-[rgba(20,50,75,0.02)] hover:border-[rgba(20,50,75,0.12)]"
+                            }`}
+                            onDoubleClick={() => beginCreateClass(day, slot.id)}
+                          >
+                            <div className="grid gap-1.5">
+                              {cellItems.length === 0 ? (
+                                <div className="flex min-h-[60px] items-center justify-center rounded-[0.8rem] border border-dashed border-[rgba(20,50,75,0.10)] bg-white/55 text-center text-[11px] font-medium text-[var(--ink-soft)]">
+                                  {copy.noClassInCell}
+                                </div>
+                              ) : (
+                                cellItems.map((item) => (
+                                  <div
+                                    key={item.id}
+                                    onDoubleClick={(event) => {
+                                      event.stopPropagation();
+                                      beginEditClass(item);
+                                    }}
+                                    title={item.title}
+                                    className={`flex w-full min-h-[36px] cursor-pointer items-center gap-2 rounded-[0.8rem] px-2.5 py-1.5 ${classTone[item.type]}`}
+                                  >
+                                    <div className="min-w-0 flex-1 text-[11px] font-semibold leading-4">
+                                      <span className="block truncate">{item.title}</span>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      aria-label={copy.remove}
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        removeClass(item.id);
+                                      }}
+                                      className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-white/20 transition hover:bg-white/30"
+                                    >
+                                      <X className="size-3" />
+                                    </button>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <article className="surface-panel w-full min-w-0 rounded-[2rem] p-4 sm:p-4 xl:sticky xl:top-24">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h3 className="font-display text-[1.65rem] tracking-tight text-[var(--ink)]">{copy.deadlinesTitle}</h3>
+              <p className="mt-1 text-sm text-[var(--ink-soft)]">{copy.deadlineHint}</p>
+            </div>
+          </div>
+
+          <div className="mt-4 grid max-h-[26rem] gap-3 overflow-y-auto pr-1">
+            {preferences.deadlines.length === 0 ? (
+              <EmptyHint text={copy.noDeadlines} />
+            ) : (
+              [...preferences.deadlines]
+                .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
+                .map((item) => (
+                  <EditableDeadlineRow
+                    key={item.id}
+                    item={item}
+                    locale={locale}
+                    removeLabel={copy.remove}
+                    onRemove={() => removeDeadline(item.id)}
+                    onSave={(partial) => updateDeadline(item.id, partial)}
+                  />
+                ))
+            )}
+          </div>
+
+          <div className="mt-4 rounded-[1.15rem] border border-[rgba(20,50,75,0.08)] bg-white/72 p-3">
+            <div className="grid gap-2.5">
+              <input
+                value={deadlineDraft.title}
+                onChange={(event) => setDeadlineDraft((current) => ({ ...current, title: event.target.value }))}
+                placeholder={copy.deadlineNamePlaceholder}
+                className={compactInputCls}
+              />
+              <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-1">
+                <input
+                  type="date"
+                  value={deadlineDraft.dueDate}
+                  onChange={(event) => setDeadlineDraft((current) => ({ ...current, dueDate: event.target.value }))}
+                  className={compactInputCls}
+                />
+                <select
+                  value={deadlineDraft.skill}
+                  onChange={(event) => setDeadlineDraft((current) => ({ ...current, skill: event.target.value as TrackedSkill }))}
+                  className={compactInputCls}
+                >
+                  {TRACKED_SKILLS.map((skill) => (
+                    <option key={skill} value={skill}>
+                      {skillMeta[skill].label[locale]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button type="button" onClick={addDeadline} className="inline-flex items-center justify-center gap-2 rounded-full border border-[rgba(20,50,75,0.14)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:bg-[rgba(20,50,75,0.06)]">
+                <CalendarClock className="size-4" />
+                {copy.addDeadline}
+              </button>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      {isClassEditorOpen ? (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-[rgba(20,50,75,0.22)] p-4 backdrop-blur-[2px]"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) cancelClassEdit();
+          }}
+        >
+          <div className="w-full max-w-2xl rounded-[1.4rem] border border-[rgba(20,50,75,0.12)] bg-[#fbf8f2] p-4 shadow-[0_28px_80px_rgba(20,50,75,0.18)] sm:p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h4 className="font-display text-2xl tracking-tight text-[var(--ink)]">
+                  {classDraft.id ? copy.updateClass : copy.addClass}
+                </h4>
+                <p className="mt-1 text-sm text-[var(--ink-soft)]">
+                  {dayLabels[locale][classDraft.day]} · {activeSlotLabel}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={cancelClassEdit}
+                className="inline-flex size-9 items-center justify-center rounded-full border border-[rgba(20,50,75,0.12)] bg-white/82 text-[var(--ink-soft)] transition hover:text-[var(--ink)]"
+                aria-label={copy.cancelEdit}
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <input
+                value={classDraft.title}
+                onChange={(event) => setClassDraft((current) => ({ ...current, title: event.target.value }))}
+                placeholder={copy.classNamePlaceholder}
+                className={`${compactInputCls} sm:col-span-2`}
+                autoFocus
+              />
+              <select
+                value={classDraft.day}
+                onChange={(event) => setClassDraft((current) => ({ ...current, day: Number(event.target.value) }))}
+                className={compactInputCls}
+              >
+                {dayLabels[locale].map((label, index) => (
+                  <option key={label} value={index}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={classDraft.slot}
+                onChange={(event) =>
+                  setClassDraft((current) => ({
+                    ...current,
+                    slot: event.target.value as ScheduleSlotId,
+                    time: getScheduleSlotDefaultTime(event.target.value as ScheduleSlotId),
+                  }))
+                }
+                className={compactInputCls}
+              >
+                {SCHEDULE_TIME_SLOTS.map((slot) => (
+                  <option key={slot.id} value={slot.id}>
+                    {slot.label[locale]}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={classDraft.type}
+                onChange={(event) =>
+                  setClassDraft((current) => ({ ...current, type: event.target.value as ScheduleClassType }))
+                }
+                className={compactInputCls}
+              >
+                {classTypeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label[locale]}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="time"
+                value={classDraft.time}
+                onChange={(event) => setClassDraft((current) => ({ ...current, time: event.target.value }))}
+                className={compactInputCls}
+              />
+            </div>
+
+            <div className="mt-5 flex items-center justify-between gap-3">
+              <div>
+                {classDraft.id ? (
+                  <button
+                    type="button"
+                    onClick={() => removeClass(classDraft.id as string)}
+                    className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-100"
+                  >
+                    <Trash2 className="size-4" />
+                    {copy.remove}
+                  </button>
+                ) : null}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={cancelClassEdit}
+                  className="rounded-full border border-[rgba(20,50,75,0.12)] bg-white/88 px-4 py-2 text-sm font-semibold text-[var(--ink-soft)] transition hover:text-[var(--ink)]"
+                >
+                  {copy.cancelEdit}
+                </button>
+                <button
+                  type="button"
+                  onClick={submitClass}
+                  className="inline-flex items-center gap-2 rounded-full bg-[var(--navy)] px-4 py-2 text-sm font-semibold text-[#f7efe3] transition hover:translate-y-[-1px]"
+                >
+                  <Plus className="size-4" />
+                  {classDraft.id ? copy.updateClass : copy.addClass}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       ) : null}
 
       <article className="surface-panel rounded-[2rem] p-4 sm:p-5">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h3 className="font-display text-[1.85rem] tracking-tight text-[var(--ink)]">{copy.timetableTitle}</h3>
-            <p className="mt-1 text-sm text-[var(--ink-soft)]">{copy.timetableHint}</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => imageInputRef.current?.click()}
-              className="inline-flex items-center gap-2 rounded-full bg-[var(--navy)] px-4 py-2.5 text-sm font-semibold text-[#f7efe3] transition hover:translate-y-[-1px] disabled:opacity-60"
-              disabled={imageLoading}
-            >
-              <ImageUp className="size-4" />
-              {copy.imageImport}
-            </button>
-            <button
-              type="button"
-              onClick={() => excelInputRef.current?.click()}
-              className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.14)] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:bg-[rgba(20,50,75,0.06)] disabled:opacity-60"
-              disabled={excelLoading}
-            >
-              <FileSpreadsheet className="size-4" />
-              {copy.excelImport}
-            </button>
-          </div>
-        </div>
-
-        {importState.message ? <ImportNotice state={importState} /> : null}
-
-        <div className="mt-4 overflow-x-auto rounded-[1.35rem] border border-[rgba(20,50,75,0.08)] bg-white/82">
-          <table className="min-w-[760px] w-full border-collapse text-sm">
-            <thead>
-              <tr className="bg-[rgba(20,50,75,0.05)] text-[var(--ink)]">
-                <th className="border-b border-r border-[rgba(20,50,75,0.08)] px-3 py-2.5 text-left font-semibold">
-                  {copy.slotLabel}
-                </th>
-                {WEEKDAY_ORDER.map((day) => (
-                  <th key={day} className="border-b border-[rgba(20,50,75,0.08)] px-3 py-2.5 text-left font-semibold">
-                    {dayLabels[locale][day]}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {SCHEDULE_TIME_SLOTS.map((slot) => (
-                <tr key={slot.id}>
-                  <td className="border-r border-t border-[rgba(20,50,75,0.08)] px-3 py-3 font-semibold text-[var(--ink)]">
-                    {slot.label[locale]}
-                  </td>
-                  {WEEKDAY_ORDER.map((day) => {
-                    const cellItems = timetableMap.get(`${day}-${slot.id}`) ?? [];
-                    return (
-                      <td key={`${day}-${slot.id}`} className="border-t border-[rgba(20,50,75,0.08)] p-1.5 align-top">
-                        <div
-                          className={`min-h-[72px] rounded-[0.95rem] border p-1.5 transition ${
-                            classDraft.day === day && classDraft.slot === slot.id
-                              ? "border-[rgba(28,78,149,0.24)] bg-[rgba(28,78,149,0.06)]"
-                              : "border-transparent bg-[rgba(20,50,75,0.02)] hover:border-[rgba(20,50,75,0.12)]"
-                          }`}
-                          onClick={() => beginCreateClass(day, slot.id)}
-                        >
-                          <div className="grid gap-2">
-                            {cellItems.length === 0 ? (
-                              <span className="text-xs text-[var(--ink-soft)]">{copy.noClassInCell}</span>
-                            ) : (
-                              cellItems.map((item) => (
-                                <div
-                                  key={item.id}
-                                  className={`flex items-start gap-2 rounded-[0.85rem] px-2.5 py-1.5 ${classTone[item.type]}`}
-                                >
-                                  <button type="button" className="min-w-0 flex-1 text-left text-xs font-semibold leading-5" onClick={(event) => { event.stopPropagation(); beginEditClass(item); }}>
-                                    <span className="block truncate">{item.title}</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    aria-label={copy.remove}
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      removeClass(item.id);
-                                    }}
-                                    className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-white/20 transition hover:bg-white/30"
-                                  >
-                                    <X className="size-3" />
-                                  </button>
-                                </div>
-                              ))
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="mt-4 rounded-[1.35rem] border border-[rgba(20,50,75,0.08)] bg-white/72 p-3.5">
-          <div className="flex items-center justify-between gap-3">
-            <h4 className="text-sm font-semibold uppercase tracking-[0.12em] text-[var(--ink)]">{copy.manualEdit}</h4>
-            {classDraft.id ? (
-              <button type="button" onClick={cancelClassEdit} className="text-sm font-semibold text-[var(--ink-soft)] transition hover:text-[var(--ink)]">
-                {copy.cancelEdit}
-              </button>
-            ) : null}
-          </div>
-          <div className="mt-3 grid gap-2.5 lg:grid-cols-[1.4fr_repeat(4,minmax(0,0.72fr))_auto]">
-            <input
-              value={classDraft.title}
-              onChange={(event) => setClassDraft((current) => ({ ...current, title: event.target.value }))}
-              placeholder={copy.classNamePlaceholder}
-              className={compactInputCls}
-            />
-            <select
-              value={classDraft.day}
-              onChange={(event) => setClassDraft((current) => ({ ...current, day: Number(event.target.value) }))}
-              className={compactInputCls}
-            >
-              {dayLabels[locale].map((label, index) => (
-                <option key={label} value={index}>
-                  {label}
-                </option>
-              ))}
-            </select>
-            <select
-              value={classDraft.slot}
-              onChange={(event) =>
-                setClassDraft((current) => ({
-                  ...current,
-                  slot: event.target.value as ScheduleSlotId,
-                  time: getScheduleSlotDefaultTime(event.target.value as ScheduleSlotId),
-                }))
-              }
-              className={compactInputCls}
-            >
-              {SCHEDULE_TIME_SLOTS.map((slot) => (
-                <option key={slot.id} value={slot.id}>
-                  {slot.label[locale]}
-                </option>
-              ))}
-            </select>
-            <select
-              value={classDraft.type}
-              onChange={(event) => setClassDraft((current) => ({ ...current, type: event.target.value as ScheduleClassType }))}
-              className={compactInputCls}
-            >
-              {classTypeOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label[locale]}
-                </option>
-              ))}
-            </select>
-            <input
-              type="time"
-              value={classDraft.time}
-              onChange={(event) => setClassDraft((current) => ({ ...current, time: event.target.value }))}
-              className={compactInputCls}
-            />
-            <button type="button" onClick={submitClass} className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--navy)] px-4 py-2.5 text-sm font-semibold text-[#f7efe3] transition hover:translate-y-[-1px]">
-              <Plus className="size-4" />
-              {classDraft.id ? copy.updateClass : copy.addClass}
-            </button>
-          </div>
-        </div>
-      </article>
-
-      <article className="surface-panel rounded-[2rem] p-4 sm:p-5">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h3 className="font-display text-[1.85rem] tracking-tight text-[var(--ink)]">{copy.deadlinesTitle}</h3>
-            <p className="mt-1 text-sm text-[var(--ink-soft)]">{copy.deadlineHint}</p>
-          </div>
-        </div>
-
-        <div className="mt-5 grid gap-3">
-          {preferences.deadlines.length === 0 ? (
-            <EmptyHint text={copy.noDeadlines} />
-          ) : (
-            [...preferences.deadlines]
-              .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
-              .map((item) => (
-                <EditableDeadlineRow
-                  key={item.id}
-                  item={item}
-                  locale={locale}
-                  removeLabel={copy.remove}
-                  onRemove={() => removeDeadline(item.id)}
-                  onSave={(partial) => updateDeadline(item.id, partial)}
-                />
-              ))
-          )}
-        </div>
-
-        <div className="mt-4 rounded-[1.35rem] border border-[rgba(20,50,75,0.08)] bg-white/72 p-3.5">
-          <div className="grid gap-2.5 lg:grid-cols-[1.6fr_1fr_1fr_auto]">
-            <input
-              value={deadlineDraft.title}
-              onChange={(event) => setDeadlineDraft((current) => ({ ...current, title: event.target.value }))}
-              placeholder={copy.deadlineNamePlaceholder}
-              className={compactInputCls}
-            />
-            <input
-              type="date"
-              value={deadlineDraft.dueDate}
-              onChange={(event) => setDeadlineDraft((current) => ({ ...current, dueDate: event.target.value }))}
-              className={compactInputCls}
-            />
-            <select
-              value={deadlineDraft.skill}
-              onChange={(event) => setDeadlineDraft((current) => ({ ...current, skill: event.target.value as TrackedSkill }))}
-              className={compactInputCls}
-            >
-              {TRACKED_SKILLS.map((skill) => (
-                <option key={skill} value={skill}>
-                  {skillMeta[skill].label[locale]}
-                </option>
-              ))}
-            </select>
-            <button type="button" onClick={addDeadline} className="inline-flex items-center justify-center gap-2 rounded-full border border-[rgba(20,50,75,0.14)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:bg-[rgba(20,50,75,0.06)]">
-              <CalendarClock className="size-4" />
-              {copy.addDeadline}
-            </button>
-          </div>
-        </div>
-      </article>
-
-      <article className="surface-panel rounded-[2rem] p-4 sm:p-5">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
             <h3 className="font-display text-[1.85rem] tracking-tight text-[var(--ink)]">{copy.weekTitle}</h3>
-            <p className="mt-1 text-sm text-[var(--ink-soft)]">{copy.weekHint}</p>
+            <p className="mt-1 text-sm text-[var(--ink-soft)]">
+              {hasAppliedWeekPlan ? plannerText.appliedHint : plannerText.weekEmpty}
+            </p>
           </div>
           <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-white/80 px-3 py-1 text-xs font-semibold text-[var(--ink-soft)]">
-            {copy.autoPlan}
+            {hasAppliedWeekPlan ? plannerText.appliedBadge : scheduleText.manualPlan}
           </span>
         </div>
 
@@ -1045,61 +1382,65 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
                       <InlineMeta label={copy.weekTarget} value={`${day.targetMinutes} ${copy.minuteShort}`} />
                       <InlineMeta label={copy.classesCount} value={String(day.classes.length)} />
                       <InlineMeta label={copy.deadlinesCount} value={String(day.deadlines.length)} />
-                      <InlineMeta label={copy.weekTitle} value={day.isManual ? scheduleText.manualPlan : copy.autoPlan} />
+                      <InlineMeta label={copy.weekTitle} value={day.blocks.length > 0 ? plannerText.appliedBadge : scheduleText.manualPlan} />
                     </div>
 
                     <div className="mt-4 grid gap-3 xl:grid-cols-[minmax(0,1fr)_19rem]">
                       <div className="grid gap-2.5">
-                        {day.blocks.map((block) => {
-                        const meta = skillMeta[block.skill];
-                        const Icon = meta.Icon;
-                        return (
-                          <article
-                            key={block.id}
-                            className={`rounded-[1.15rem] border p-3 transition ${isEditingDay && blockDraft.id === block.id ? "border-[rgba(28,78,149,0.2)] bg-[rgba(28,78,149,0.06)]" : "border-[rgba(20,50,75,0.08)] bg-white/88"}`}
-                          >
-                            <div className="flex items-center justify-between gap-3">
-                              <span className="inline-flex items-center gap-2 rounded-full bg-[rgba(20,50,75,0.06)] px-2.5 py-1 text-[11px] font-semibold text-[var(--ink)]">
-                                <Icon className="size-3.5" />
-                                {meta.label[locale]}
-                              </span>
-                              <div className="flex items-center gap-2">
-                                <span className="text-[11px] font-semibold text-[var(--ink-soft)]">{block.timeLabel}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => beginEditBlock(day.day, block)}
-                                  className="rounded-full border border-[rgba(20,50,75,0.12)] px-2.5 py-1 text-[11px] font-semibold text-[var(--ink)] transition hover:border-[var(--navy)] hover:text-[var(--navy)]"
-                                >
-                                  {scheduleText.editPlan}
-                                </button>
-                              </div>
-                            </div>
-                            <div className="mt-2.5 flex items-start justify-between gap-3">
-                              <div>
-                                <h4 className="text-sm font-semibold text-[var(--ink)]">{block.title}</h4>
-                                <p className="mt-1 text-sm leading-6 text-[var(--ink-soft)]">{block.reason}</p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Link
-                                  href={block.href}
-                                  className="inline-flex items-center gap-1 rounded-full bg-[rgba(20,50,75,0.06)] px-2.5 py-1 text-[11px] font-semibold text-[var(--navy)]"
-                                >
-                                  {copy.start}
-                                  <ArrowRight className="size-3.5" />
-                                </Link>
-                                <button
-                                  type="button"
-                                  onClick={() => removeDayBlock(day, block.id)}
-                                  className="inline-flex size-8 items-center justify-center rounded-full border border-[rgba(20,50,75,0.12)] text-[var(--ink-soft)] transition hover:border-red-300 hover:text-red-500"
-                                  aria-label={copy.remove}
-                                >
-                                  <Trash2 className="size-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          </article>
-                        );
-                      })}
+                        {day.blocks.length === 0 ? (
+                          <EmptyHint text={plannerText.dayEmpty} />
+                        ) : (
+                          day.blocks.map((block) => {
+                            const meta = skillMeta[block.skill];
+                            const Icon = meta.Icon;
+                            return (
+                              <article
+                                key={block.id}
+                                className={`rounded-[1.15rem] border p-3 transition ${isEditingDay && blockDraft.id === block.id ? "border-[rgba(28,78,149,0.2)] bg-[rgba(28,78,149,0.06)]" : "border-[rgba(20,50,75,0.08)] bg-white/88"}`}
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <span className="inline-flex items-center gap-2 rounded-full bg-[rgba(20,50,75,0.06)] px-2.5 py-1 text-[11px] font-semibold text-[var(--ink)]">
+                                    <Icon className="size-3.5" />
+                                    {meta.label[locale]}
+                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[11px] font-semibold text-[var(--ink-soft)]">{block.timeLabel}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => beginEditBlock(day.day, block)}
+                                      className="rounded-full border border-[rgba(20,50,75,0.12)] px-2.5 py-1 text-[11px] font-semibold text-[var(--ink)] transition hover:border-[var(--navy)] hover:text-[var(--navy)]"
+                                    >
+                                      {scheduleText.editPlan}
+                                    </button>
+                                  </div>
+                                </div>
+                                <div className="mt-2.5 flex items-start justify-between gap-3">
+                                  <div>
+                                    <h4 className="text-sm font-semibold text-[var(--ink)]">{block.title}</h4>
+                                    <p className="mt-1 text-sm leading-6 text-[var(--ink-soft)]">{block.reason}</p>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Link
+                                      href={block.href}
+                                      className="inline-flex items-center gap-1 rounded-full bg-[rgba(20,50,75,0.06)] px-2.5 py-1 text-[11px] font-semibold text-[var(--navy)]"
+                                    >
+                                      {copy.start}
+                                      <ArrowRight className="size-3.5" />
+                                    </Link>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeDayBlock(day, block.id)}
+                                      className="inline-flex size-8 items-center justify-center rounded-full border border-[rgba(20,50,75,0.12)] text-[var(--ink-soft)] transition hover:border-red-300 hover:text-red-500"
+                                      aria-label={copy.remove}
+                                    >
+                                      <Trash2 className="size-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              </article>
+                            );
+                          })
+                        )}
                       </div>
 
                       <div className="rounded-[1.15rem] border border-[rgba(20,50,75,0.08)] bg-white/84 p-3.5">
@@ -1298,19 +1639,45 @@ function EditableDeadlineRow({
   }
 
   return (
-    <div className="grid gap-2.5 rounded-[1rem] border border-[rgba(20,50,75,0.08)] bg-white/85 p-3.5 lg:grid-cols-[1.6fr_1fr_1fr_auto]">
-      <input value={title} onChange={(event) => setTitle(event.target.value)} onBlur={commitTitle} onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }} className={compactInputCls} />
-      <input type="date" value={item.dueDate} onChange={(event) => onSave({ dueDate: event.target.value })} className={compactInputCls} />
-      <select value={item.skill} onChange={(event) => onSave({ skill: event.target.value as TrackedSkill })} className={compactInputCls}>
-        {TRACKED_SKILLS.map((skill) => (
-          <option key={skill} value={skill}>
-            {skillMeta[skill].label[locale]}
-          </option>
-        ))}
-      </select>
-      <button type="button" onClick={onRemove} aria-label={removeLabel} className="inline-flex size-11 items-center justify-center rounded-full border border-[rgba(20,50,75,0.12)] bg-white text-[var(--ink-soft)] transition hover:border-red-300 hover:text-red-500">
-        <Trash2 className="size-4" />
-      </button>
+    <div className="rounded-[1rem] border border-[rgba(20,50,75,0.08)] bg-white/85 p-3">
+      <div className="grid gap-2.5">
+        <input
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          onBlur={commitTitle}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") event.currentTarget.blur();
+          }}
+          className={compactInputCls}
+        />
+        <div className="grid gap-2.5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] xl:grid-cols-1">
+          <input
+            type="date"
+            value={item.dueDate}
+            onChange={(event) => onSave({ dueDate: event.target.value })}
+            className={compactInputCls}
+          />
+          <select
+            value={item.skill}
+            onChange={(event) => onSave({ skill: event.target.value as TrackedSkill })}
+            className={compactInputCls}
+          >
+            {TRACKED_SKILLS.map((skill) => (
+              <option key={skill} value={skill}>
+                {skillMeta[skill].label[locale]}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={onRemove}
+            aria-label={removeLabel}
+            className="inline-flex h-11 items-center justify-center rounded-full border border-[rgba(20,50,75,0.12)] bg-white px-4 text-[var(--ink-soft)] transition hover:border-red-300 hover:text-red-500 xl:w-full"
+          >
+            <Trash2 className="size-4" />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

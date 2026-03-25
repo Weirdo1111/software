@@ -13,6 +13,8 @@ import {
 } from "@/lib/learning-tracker";
 import {
   generateWeeklySchedule,
+  getActiveWeekPlanOverrides,
+  hydrateSchedulePreferencesFromServer,
   loadSchedulePreferencesFromStorage,
   saveSchedulePreferencesToStorage,
   subscribeSchedulePreferences,
@@ -135,6 +137,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     ...copy.blockType,
     custom: locale === "zh" ? "\u624b\u52a8" : "Custom",
   };
+  const scheduleJumpLabel = locale === "zh" ? "\u5728\u8ba1\u5212\u9875\u6253\u5f00" : "Open in schedule";
 
   useEffect(() => {
     const refresh = () => {
@@ -146,6 +149,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     };
 
     refresh();
+    void hydrateSchedulePreferencesFromServer(locale);
     const unsubTracker = subscribeLearningTracker(refresh);
     const unsubPrefs = subscribeSchedulePreferences(refresh);
 
@@ -163,12 +167,15 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   }, [locale]);
 
   const weeklySchedule = useMemo(() => {
+    const appliedPlans = getActiveWeekPlanOverrides(preferences, new Date());
     return generateWeeklySchedule({
       preferences,
       snapshot,
       reviewDue: 0,
       locale,
       level: levelPrefix,
+      planOverrides: appliedPlans,
+      useGeneratedFallback: false,
     });
   }, [preferences, snapshot, locale, levelPrefix]);
 
@@ -182,6 +189,8 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   const totalCompleted = useMemo(() => {
     return Object.values(snapshot.skills).reduce((sum, s) => sum + s.completed, 0);
   }, [snapshot]);
+
+  const getScheduleDayHref = (dateISO: string) => `/schedule?lang=${locale}&focus=${encodeURIComponent(dateISO)}#schedule-week`;
 
   if (!isLoggedIn) {
     return (
@@ -361,7 +370,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                     <p className="text-sm font-semibold text-[var(--ink)]">{block.title}</p>
                   </div>
                   <p className="mt-1 text-xs text-[var(--ink-soft)]">
-                    {skillLabelMap[block.skill]?.[locale] ?? block.skill} · {block.minutes} {copy.minuteShort} · {block.timeLabel.split("/")[0]?.trim()}
+                    {skillLabelMap[block.skill]?.[locale] ?? block.skill} · {block.minutes} {copy.minuteShort} · {block.timeLabel}
                   </p>
                   <p className="mt-0.5 text-xs text-[var(--ink-soft)]">{block.reason}</p>
                 </div>
@@ -425,15 +434,23 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
           const dayNames = locale === "zh" ? DAY_NAMES_ZH : DAY_NAMES_EN;
           return (
             <div className="mt-4 rounded-[1.2rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.88)] p-4">
-              <div className="mb-3 flex items-center justify-between">
+              <div className="mb-3 flex items-center justify-between gap-2">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
                   {dayNames[day.day]} · {day.dateISO}
                 </p>
-                {day.deadlines.length > 0 && (
-                  <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-600">
-                    {copy.deadlineLabel}: {day.deadlines.map((d) => d.title).join(", ")}
-                  </span>
-                )}
+                <div className="flex items-center gap-2">
+                  {day.deadlines.length > 0 && (
+                    <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-600">
+                      {copy.deadlineLabel}: {day.deadlines.map((d) => d.title).join(", ")}
+                    </span>
+                  )}
+                  <Link
+                    href={getScheduleDayHref(day.dateISO)}
+                    className="rounded-full border border-[rgba(20,50,75,0.12)] bg-white/85 px-3 py-1 text-[10px] font-semibold text-[var(--navy)] transition hover:bg-[rgba(20,50,75,0.06)]"
+                  >
+                    {scheduleJumpLabel}
+                  </Link>
+                </div>
               </div>
               <div className="grid gap-2">
                 {day.blocks.map((block) => (
