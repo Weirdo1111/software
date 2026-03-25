@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { jsonError } from "@/lib/api";
 import { createAIClient, getAIConfig, hasAIConfig } from "@/lib/ai/client";
+import { tryRecognizeKnownTimetableScreenshot } from "@/lib/schedule-image-template";
 import { normalizeImportedClasses } from "@/lib/schedule-import";
 
 export const runtime = "nodejs";
@@ -26,10 +27,6 @@ function getMessageText(
 
 export async function POST(request: Request) {
   try {
-    if (!hasAIConfig()) {
-      return jsonError("Image recognition is not configured yet.", 503);
-    }
-
     const formData = await request.formData();
     const file = formData.get("file");
 
@@ -37,12 +34,27 @@ export async function POST(request: Request) {
       return jsonError("Please upload a timetable image.", 422);
     }
 
+    const bytes = Buffer.from(await file.arrayBuffer());
+    const templateClasses = await tryRecognizeKnownTimetableScreenshot(bytes);
+    if (templateClasses) {
+      return NextResponse.json(
+        {
+          classes: templateClasses,
+          warnings: [],
+        },
+        { status: 200 },
+      );
+    }
+
+    if (!hasAIConfig()) {
+      return jsonError("This timetable screenshot layout is not supported yet.", 422);
+    }
+
     const client = createAIClient();
     if (!client) {
       return jsonError("Image recognition is not configured yet.", 503);
     }
 
-    const bytes = Buffer.from(await file.arrayBuffer());
     const dataUrl = `data:${file.type || "image/png"};base64,${bytes.toString("base64")}`;
     const { model } = getAIConfig();
 
@@ -55,7 +67,7 @@ export async function POST(request: Request) {
         {
           role: "system",
           content:
-            "Extract timetable data from the image and return valid JSON only. Use the shape {\"classes\":[{\"title\":\"...\",\"day\":0,\"slot\":\"01-02\",\"type\":\"lecture\",\"time\":\"08:00\"}],\"warnings\":[\"...\"]}. Days use Monday=0 through Sunday=6. slot must be one of 01-02, 03-04, 05-06, 07-08, 09-10, 11-12. If type is unclear, use lecture.",
+            "Extract timetable data from the image and return valid JSON only. Use the shape {\"classes\":[{\"title\":\"...\",\"day\":0,\"slot\":\"01-02\",\"type\":\"lecture\",\"time\":\"08:00\"}],\"warnings\":[\"...\"]}. Days use Monday=0 through Sunday=6. slot must be one of 01-02, 03-04, 05-06, 07-08, 09-10. If type is unclear, use lecture.",
         },
         {
           role: "user",
