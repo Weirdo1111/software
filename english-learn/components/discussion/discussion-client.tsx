@@ -9,80 +9,13 @@ import type {
   DiscussionPost,
   Locale,
 } from "@/components/discussion/types";
-
-const STORAGE_KEY = "discussion_posts_v1";
-
-const defaultPosts: DiscussionPost[] = [
-  {
-    id: "p1",
-    title: "How should I prepare for reassessment next week?",
-    content:
-      "My current band is Medium. I want to know whether I should spend more time on speaking or reading before the next reassessment window opens.",
-    author: "Shengze",
-    tag: "Assessment",
-    likes: 8,
-    liked: false,
-    pinned: true,
-    createdAt: "2026-03-20 09:30",
-    comments: [
-      {
-        id: "c1",
-        author: "Tutor Team",
-        content:
-          "If speaking is lagging behind your reading metrics, prioritize one output task each day before reassessment.",
-        createdAt: "2026-03-20 10:10",
-      },
-    ],
-  },
-  {
-    id: "p2",
-    title: "Useful strategy for academic listening note-taking",
-    content:
-      "I started splitting notes into keywords, argument flow, and evidence. It reduced overload during longer listening tasks.",
-    author: "Mia",
-    tag: "Listening",
-    likes: 5,
-    liked: false,
-    pinned: false,
-    createdAt: "2026-03-19 18:20",
-    comments: [],
-  },
-];
-
-const defaultPostsString = JSON.stringify(defaultPosts);
-
-function subscribePosts(onStoreChange: () => void) {
-  const handler = () => onStoreChange();
-
-  window.addEventListener("storage", handler);
-  window.addEventListener(
-    "discussion-posts-changed",
-    handler as EventListener
-  );
-
-  return () => {
-    window.removeEventListener("storage", handler);
-    window.removeEventListener(
-      "discussion-posts-changed",
-      handler as EventListener
-    );
-  };
-}
-
-function getPostsSnapshot() {
-  if (typeof window === "undefined") return defaultPostsString;
-  return window.localStorage.getItem(STORAGE_KEY) ?? defaultPostsString;
-}
-
-function getPostsServerSnapshot() {
-  return defaultPostsString;
-}
-
-function writePosts(nextPosts: DiscussionPost[]) {
-  const serialized = JSON.stringify(nextPosts);
-  window.localStorage.setItem(STORAGE_KEY, serialized);
-  window.dispatchEvent(new Event("discussion-posts-changed"));
-}
+import {
+  getDiscussionPostsServerSnapshot,
+  getDiscussionPostsSnapshot,
+  parseDiscussionPosts,
+  subscribeDiscussionPosts,
+  writeDiscussionPosts,
+} from "@/lib/discussion-store";
 
 export function DiscussionClient({ locale }: { locale: Locale }) {
   const [openComposer, setOpenComposer] = useState(false);
@@ -93,17 +26,13 @@ export function DiscussionClient({ locale }: { locale: Locale }) {
   );
 
   const postsRaw = useSyncExternalStore(
-    subscribePosts,
-    getPostsSnapshot,
-    getPostsServerSnapshot
+    subscribeDiscussionPosts,
+    getDiscussionPostsSnapshot,
+    getDiscussionPostsServerSnapshot
   );
 
   const posts = useMemo<DiscussionPost[]>(() => {
-    try {
-      return JSON.parse(postsRaw) as DiscussionPost[];
-    } catch {
-      return defaultPosts;
-    }
+    return parseDiscussionPosts(postsRaw);
   }, [postsRaw]);
 
   const copy = useMemo(
@@ -156,7 +85,7 @@ export function DiscussionClient({ locale }: { locale: Locale }) {
       comments: [],
     };
 
-    writePosts([newPost, ...posts]);
+    writeDiscussionPosts([newPost, ...posts]);
 
     setTitle("");
     setContent("");
@@ -176,7 +105,7 @@ export function DiscussionClient({ locale }: { locale: Locale }) {
       };
     });
 
-    writePosts(nextPosts);
+    writeDiscussionPosts(nextPosts);
   };
 
   const handleAddComment = (postId: string, commentText: string) => {
@@ -196,7 +125,7 @@ export function DiscussionClient({ locale }: { locale: Locale }) {
         : post
     );
 
-    writePosts(nextPosts);
+    writeDiscussionPosts(nextPosts);
   };
 
   return (

@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
 import { AIAnalysisState } from "@/components/forms/ai-analysis-state";
+import { ContextDock } from "@/components/context-comments/context-dock";
 import { SaveToDeckButton } from "@/components/forms/save-to-deck-button";
 import { getWritingPromptById, getWritingPromptsForLevel } from "@/lib/writing-prompts";
 import type { CEFRLevel, WritingFeedback } from "@/types/learning";
@@ -66,6 +67,65 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: CE
   const availablePrompts = getWritingPromptsForLevel(targetLevel);
   const selectedPrompt =
     getWritingPromptById(selectedPromptId) ?? availablePrompts[0] ?? getWritingPromptById("b1-english-medium-support");
+  const discussionContext = {
+    module: "writing" as const,
+    targetId: selectedPromptId,
+    title: selectedPrompt?.title ?? wc.label,
+    subtitle: wc.label,
+    plazaTag: locale === "zh" ? "写作" : "Writing",
+    topics:
+      locale === "zh"
+        ? ["论点", "衔接", "例子", "语法"]
+        : ["Thesis", "Cohesion", "Example", "Grammar"],
+    starters:
+      locale === "zh"
+        ? [
+            "我这一句 thesis 还可以怎么写",
+            "这个例子不够具体的地方是",
+            "这里最需要改的衔接是",
+          ]
+        : [
+            "A clearer thesis sentence could be",
+            "The example becomes specific when",
+            "The transition I should fix here is",
+          ],
+    seedComments:
+      locale === "zh"
+        ? [
+            {
+              author: "Tutor note",
+              topic: "论点",
+              content: "先把立场写得直接一点，再补解释，整段会更稳。",
+              createdAt: "2026-03-24T08:05:00.000Z",
+              likes: 4,
+            },
+            {
+              author: "Rina",
+              topic: "例子",
+              content: "我发现例子只要写到具体场景，AI 反馈会更聚焦。",
+              createdAt: "2026-03-24T11:15:00.000Z",
+              likes: 3,
+            },
+          ]
+        : [
+            {
+              author: "Tutor note",
+              topic: "Thesis",
+              content:
+                "State the position more directly before you explain it. The whole paragraph reads stronger.",
+              createdAt: "2026-03-24T08:05:00.000Z",
+              likes: 4,
+            },
+            {
+              author: "Rina",
+              topic: "Example",
+              content:
+                "Once I make the example concrete, the AI feedback becomes much more useful.",
+              createdAt: "2026-03-24T11:15:00.000Z",
+              likes: 3,
+            },
+          ],
+  };
 
   if (!selectedPrompt) return null;
 
@@ -237,6 +297,12 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: CE
           />
         </div>
       ) : null}
+
+      <ContextDock
+        key={`writing:${discussionContext.targetId}`}
+        locale={locale}
+        context={discussionContext}
+      />
     </form>
   );
 }

@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, LoaderCircle, Mic } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { AIAnalysisState } from "@/components/forms/ai-analysis-state";
+import { ContextDock } from "@/components/context-comments/context-dock";
 import { exportAudioBlobAsWavBase64 } from "@/components/forms/speaking/audio-export";
 import { SpeakingDraftPanel } from "@/components/forms/speaking/draft-panel";
 import { SpeakingPartnerPanel } from "@/components/forms/speaking/partner-panel";
@@ -55,6 +56,68 @@ export function SpeakingFeedbackForm({
     getSpeakingPromptById(selectedPromptId) ?? availablePrompts[0] ?? getSpeakingPromptById("b1-language-support");
   const isReady = transcript.trim().length >= 20;
   const moduleCopy = speakingModuleCopy[module];
+  const discussionContext = useMemo(
+    () => ({
+      module: "speaking" as const,
+      targetId: `${module}:${selectedPromptId}`,
+      title: selectedPrompt?.title ?? moduleCopy.label,
+      subtitle: moduleCopy.label,
+      plazaTag: locale === "zh" ? "口语" : "Speaking",
+      topics:
+        locale === "zh"
+          ? ["开场", "例子", "发音", "流利度"]
+          : ["Opening", "Example", "Pronunciation", "Fluency"],
+      starters:
+        locale === "zh"
+          ? [
+              "我这一句更自然的说法可以是",
+              "这个 prompt 最难展开的地方是",
+              "我觉得自己卡顿最多的是",
+            ]
+          : [
+              "A more natural way to say this is",
+              "The hardest part of this prompt is",
+              "The place I lose fluency is",
+            ],
+      seedComments:
+        locale === "zh"
+          ? [
+              {
+                author: "Tutor note",
+                topic: "开场",
+                content: "先亮出立场，再给一个理由，会让回答更稳。",
+                createdAt: "2026-03-24T08:40:00.000Z",
+                likes: 5,
+              },
+              {
+                author: "Leo",
+                topic: "流利度",
+                content: "我把答案先分成 claim 和 example 两段，录音会顺很多。",
+                createdAt: "2026-03-24T10:25:00.000Z",
+                likes: 3,
+              },
+            ]
+          : [
+              {
+                author: "Tutor note",
+                topic: "Opening",
+                content:
+                  "Lead with your position first, then add one reason. The whole response feels stronger.",
+                createdAt: "2026-03-24T08:40:00.000Z",
+                likes: 5,
+              },
+              {
+                author: "Leo",
+                topic: "Fluency",
+                content:
+                  "I split my answer into a claim and an example before recording. It reduces hesitation.",
+                createdAt: "2026-03-24T10:25:00.000Z",
+                likes: 3,
+              },
+            ],
+    }),
+    [locale, module, moduleCopy.label, selectedPrompt?.title, selectedPromptId],
+  );
   const backLabel = locale === "zh" ? "返回口语入口" : "Back to speaking modes";
 
   if (!selectedPrompt) return null;
@@ -337,6 +400,12 @@ export function SpeakingFeedbackForm({
           />
         ) : null}
       </form>
+
+      <ContextDock
+        key={`speaking:${discussionContext.targetId}`}
+        locale={locale}
+        context={discussionContext}
+      />
     </section>
   );
 }
