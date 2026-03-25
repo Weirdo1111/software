@@ -116,7 +116,10 @@ type BlockDraft = {
   skill: ScheduleSkill;
   minutes: number;
   reason: string;
+  timeLabel: string;
 };
+
+type PlannerMode = "manual" | "auto";
 
 type ImportState = {
   tone: "idle" | "success" | "error";
@@ -170,6 +173,7 @@ function toEditableBlock(block: ScheduleBlock): EditableScheduleBlock {
     skill: block.skill,
     minutes: block.minutes,
     reason: block.reason,
+    timeLabel: block.timeLabel,
   };
 }
 
@@ -182,6 +186,7 @@ function createEmptyBlockDraft(day = 0): BlockDraft {
     skill: "reading",
     minutes: 15,
     reason: "",
+    timeLabel: "",
   };
 }
 
@@ -229,6 +234,8 @@ export function ScheduleShell({
   const [imageLoading, setImageLoading] = useState(false);
   const [generatedSchedule, setGeneratedSchedule] = useState<WeeklySchedule | null>(null);
   const [generatedExpandedDay, setGeneratedExpandedDay] = useState<number | null>(null);
+  const [plannerMode, setPlannerMode] = useState<PlannerMode>("manual");
+  const [isPlannerOpen, setIsPlannerOpen] = useState(false);
 
   const excelInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -436,6 +443,7 @@ export function ScheduleShell({
           editPlan: "\u7f16\u8f91\u8ba1\u5212",
           taskTitlePlaceholder: "\u4efb\u52a1\u6807\u9898",
           taskReasonPlaceholder: "\u5b89\u6392\u539f\u56e0",
+          taskTimeLabel: "\u65f6\u95f4",
           taskMinutesLabel: "\u65f6\u957f",
           taskSkillLabel: "\u6280\u80fd",
           saveTask: "\u4fdd\u5b58",
@@ -447,6 +455,7 @@ export function ScheduleShell({
           editPlan: "Edit plan",
           taskTitlePlaceholder: "Task title",
           taskReasonPlaceholder: "Why this task",
+          taskTimeLabel: "Time",
           taskMinutesLabel: "Minutes",
           taskSkillLabel: "Skill",
           saveTask: "Save",
@@ -456,8 +465,11 @@ export function ScheduleShell({
   const plannerText =
     locale === "zh"
       ? {
+          panelTitle: "\u5b89\u6392\u65b9\u5f0f",
+          panelHint: "\u53ef\u4ee5\u76f4\u63a5\u624b\u52a8\u5b89\u6392\uff0c\u4e5f\u53ef\u4ee5\u5c55\u5f00\u4e0b\u65b9\u81ea\u52a8\u751f\u6210\u3002",
           builderTitle: "\u667a\u80fd\u751f\u6210",
           builderHint: "\u5148\u8bbe\u5b9a\u76ee\u6807\u3001\u65f6\u957f\u3001\u5f3a\u5ea6\u548c\u5b66\u4e60\u65f6\u6bb5\uff0c\u7cfb\u7edf\u4f1a\u7ed3\u5408\u8bfe\u8868\u548c\u622a\u6b62\u4efb\u52a1\u751f\u6210\u672c\u5468\u5b89\u6392\u9884\u89c8\u3002",
+          manualHint: "\u76f4\u63a5\u5728\u4e0a\u65b9\u7684\u672c\u5468\u5b89\u6392\u91cc\u65b0\u589e\u3001\u7f16\u8f91\u6216\u8c03\u6574\u6bcf\u5929\u7684\u4efb\u52a1\u3002",
           generate: "\u751f\u6210\u672c\u5468\u5b89\u6392",
           regenerate: "\u91cd\u65b0\u751f\u6210",
           apply: "\u5e94\u7528\u5230\u672c\u5468\u5b89\u6392",
@@ -476,8 +488,11 @@ export function ScheduleShell({
           clearDone: "\u672c\u5468\u5b89\u6392\u5df2\u6e05\u7a7a\u3002",
         }
       : {
+          panelTitle: "Planning mode",
+          panelHint: "You can arrange the week manually or expand this section to generate a plan first.",
           builderTitle: "Smart Builder",
           builderHint: "Set your goal, daily time, intensity, and study window first. The system will generate a weekly plan preview from your timetable and deadlines.",
+          manualHint: "Add or edit tasks directly in the weekly plan above whenever you want full manual control.",
           generate: "Generate this week",
           regenerate: "Regenerate",
           apply: "Apply to this week",
@@ -639,10 +654,12 @@ export function ScheduleShell({
   }
 
   function beginCreateBlock(day: number) {
+    setPlannerMode("manual");
     setBlockDraft(createEmptyBlockDraft(day));
   }
 
   function beginEditBlock(day: number, block: ScheduleBlock) {
+    setPlannerMode("manual");
     setBlockDraft({
       id: block.id,
       day,
@@ -651,6 +668,7 @@ export function ScheduleShell({
       skill: block.skill,
       minutes: block.minutes,
       reason: block.reason,
+      timeLabel: block.timeLabel,
     });
   }
 
@@ -673,6 +691,7 @@ export function ScheduleShell({
                 skill: blockDraft.skill,
                 minutes: blockDraft.minutes,
                 reason,
+                timeLabel: blockDraft.timeLabel,
               }
             : item,
         )
@@ -684,6 +703,7 @@ export function ScheduleShell({
             skill: blockDraft.skill,
             minutes: blockDraft.minutes,
             reason,
+            timeLabel: blockDraft.timeLabel,
           }),
         ];
 
@@ -710,6 +730,8 @@ export function ScheduleShell({
   }
 
   function generatePlanPreview() {
+    setPlannerMode("auto");
+    setIsPlannerOpen(true);
     setGeneratedSchedule(suggestedWeeklySchedule);
     setGeneratedExpandedDay(suggestedWeeklySchedule.days.find((day) => day.isToday)?.day ?? 0);
   }
@@ -717,6 +739,7 @@ export function ScheduleShell({
   function applyGeneratedPlan() {
     if (!generatedSchedule) return;
 
+    setPlannerMode("auto");
     updatePreferences({
       planWeekStartISO: currentWeekStartISO,
       planOverrides: generatedSchedule.days
@@ -886,120 +909,6 @@ export function ScheduleShell({
             ))}
           </PrefRow>
         </div>
-
-        <div className="mt-5 rounded-[1.4rem] border border-[rgba(20,50,75,0.08)] bg-white/72 p-4">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h3 className="text-base font-semibold text-[var(--ink)]">{plannerText.builderTitle}</h3>
-              <p className="mt-1 text-sm text-[var(--ink-soft)]">{plannerText.builderHint}</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={generatePlanPreview}
-                className="inline-flex items-center gap-2 rounded-full bg-[var(--navy)] px-4 py-2 text-sm font-semibold text-[#f7efe3] transition hover:translate-y-[-1px]"
-              >
-                <Sparkles className="size-4" />
-                {generatedSchedule ? plannerText.regenerate : plannerText.generate}
-              </button>
-              <button
-                type="button"
-                onClick={applyGeneratedPlan}
-                disabled={!generatedSchedule}
-                className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.14)] bg-white px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:bg-[rgba(20,50,75,0.06)] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {plannerText.apply}
-              </button>
-              <button
-                type="button"
-                onClick={clearWeekPlan}
-                disabled={!hasAppliedWeekPlan}
-                className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.14)] bg-white px-4 py-2 text-sm font-semibold text-[var(--ink-soft)] transition hover:text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {plannerText.clearWeek}
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-4 rounded-[1.2rem] border border-[rgba(20,50,75,0.08)] bg-[rgba(20,50,75,0.03)] p-3.5">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-[rgba(20,50,75,0.08)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">
-                {generatedSchedule ? plannerText.previewReady : plannerText.previewTitle}
-              </span>
-              {hasAppliedWeekPlan ? (
-                <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                  {plannerText.appliedBadge}
-                </span>
-              ) : null}
-              {generatedSchedule ? (
-                <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">
-                  {plannerText.generatedBadge}
-                </span>
-              ) : null}
-            </div>
-
-            {generatedSchedule ? (
-              <>
-                <p className="mt-3 text-sm text-[var(--ink-soft)]">{plannerText.previewHint}</p>
-                <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-7">
-                  {generatedSchedule.days.map((day) => {
-                    const isPreviewExpanded = generatedExpandedDay === day.day;
-                    return (
-                      <button
-                        key={day.dateISO}
-                        type="button"
-                        onClick={() => setGeneratedExpandedDay(isPreviewExpanded ? null : day.day)}
-                        className={`rounded-[1rem] border px-3 py-3 text-left transition ${
-                          isPreviewExpanded
-                            ? "border-[rgba(28,78,149,0.2)] bg-[rgba(28,78,149,0.06)]"
-                            : "border-[rgba(20,50,75,0.08)] bg-white/78 hover:bg-white"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-sm font-semibold text-[var(--ink)]">{dayLabels[locale][day.day]}</span>
-                          <span className="text-[11px] font-semibold text-[var(--ink-soft)]">
-                            {day.blocks.length} {plannerText.dayItems}
-                          </span>
-                        </div>
-                        <p className="mt-2 text-[11px] text-[var(--ink-soft)]">{day.blocks.map((block) => block.timeLabel).join(" · ")}</p>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {typeof generatedExpandedDay === "number" ? (
-                  <div className="mt-3 rounded-[1rem] border border-[rgba(20,50,75,0.08)] bg-white/82 p-3">
-                    <div className="grid gap-2">
-                      {generatedSchedule.days
-                        .find((day) => day.day === generatedExpandedDay)
-                        ?.blocks.map((block) => {
-                          const meta = skillMeta[block.skill];
-                          const Icon = meta.Icon;
-                          return (
-                            <div key={block.id} className="rounded-[0.9rem] border border-[rgba(20,50,75,0.08)] bg-white px-3 py-3">
-                              <div className="flex items-center justify-between gap-3">
-                                <span className="inline-flex items-center gap-2 rounded-full bg-[rgba(20,50,75,0.06)] px-2.5 py-1 text-[11px] font-semibold text-[var(--ink)]">
-                                  <Icon className="size-3.5" />
-                                  {meta.label[locale]}
-                                </span>
-                                <span className="text-[11px] font-semibold text-[var(--ink-soft)]">{block.timeLabel}</span>
-                              </div>
-                              <p className="mt-2 text-sm font-semibold text-[var(--ink)]">{block.title}</p>
-                              <p className="mt-1 text-sm text-[var(--ink-soft)]">{block.reason}</p>
-                            </div>
-                          );
-                        })}
-                    </div>
-                  </div>
-                ) : null}
-              </>
-            ) : (
-              <div className="mt-3">
-                <EmptyHint text={plannerText.previewEmpty} />
-              </div>
-            )}
-          </div>
-        </div>
       </article>
 
       {todaySchedule ? (
@@ -1030,7 +939,7 @@ export function ScheduleShell({
                           <Icon className="size-3.5" />
                           {meta.label[locale]}
                         </span>
-                        <span className="text-xs font-semibold text-[var(--ink-soft)]">{block.timeLabel}</span>
+                        {block.timeLabel ? <span className="text-xs font-semibold text-[var(--ink-soft)]">{block.timeLabel}</span> : null}
                       </div>
                       <h4 className="mt-4 text-lg font-semibold text-[var(--ink)]">{block.title}</h4>
                       <p className="mt-1 text-sm text-[var(--ink-soft)]">{block.reason}</p>
@@ -1047,8 +956,8 @@ export function ScheduleShell({
         </article>
       ) : null}
 
-      <div className="grid w-full min-w-0 gap-4 xl:grid-cols-[minmax(0,1.75fr)_minmax(18rem,0.95fr)] xl:items-start">
-        <article className="surface-panel w-full min-w-0 rounded-[2rem] p-4 sm:p-5">
+      <div className="grid w-full min-w-0 gap-4 xl:grid-cols-[minmax(0,1.95fr)_minmax(16.5rem,0.82fr)] xl:items-stretch">
+        <article className="surface-panel flex h-full w-full min-w-0 flex-col rounded-[2rem] p-4 sm:p-5">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h3 className="font-display text-[1.85rem] tracking-tight text-[var(--ink)]">{copy.timetableTitle}</h3>
@@ -1087,15 +996,18 @@ export function ScheduleShell({
 
           {importState.message ? <ImportNotice state={importState} /> : null}
 
-          <div className="mt-4 overflow-x-auto rounded-[1.2rem] border border-[rgba(20,50,75,0.08)] bg-white/82">
-            <table className="min-w-[680px] w-full border-collapse text-xs sm:text-sm">
+          <div className="mt-4 overflow-hidden rounded-[1.2rem] border border-[rgba(20,50,75,0.08)] bg-white/82">
+            <table className="w-full table-fixed border-collapse text-[11px] sm:text-xs">
               <thead>
                 <tr className="bg-[rgba(20,50,75,0.05)] text-[var(--ink)]">
-                  <th className="border-b border-r border-[rgba(20,50,75,0.08)] px-2.5 py-2 text-left font-semibold">
+                  <th className="w-14 border-b border-r border-[rgba(20,50,75,0.08)] px-1.5 py-2 text-center font-semibold sm:w-16">
                     {copy.slotLabel}
                   </th>
                   {WEEKDAY_ORDER.map((day) => (
-                    <th key={day} className="border-b border-[rgba(20,50,75,0.08)] px-2.5 py-2 text-left font-semibold">
+                    <th
+                      key={day}
+                      className="border-b border-[rgba(20,50,75,0.08)] px-1.5 py-2 text-center font-semibold"
+                    >
                       {dayLabels[locale][day]}
                     </th>
                   ))}
@@ -1104,53 +1016,62 @@ export function ScheduleShell({
               <tbody>
                 {SCHEDULE_TIME_SLOTS.map((slot) => (
                   <tr key={slot.id}>
-                    <td className="w-16 border-r border-t border-[rgba(20,50,75,0.08)] px-2.5 py-2.5 font-semibold text-[var(--ink)]">
+                    <td className="w-14 border-r border-t border-[rgba(20,50,75,0.08)] px-1.5 py-2 text-center font-semibold text-[var(--ink)] sm:w-16">
                       {slot.label[locale]}
                     </td>
                     {WEEKDAY_ORDER.map((day) => {
                       const cellItems = timetableMap.get(`${day}-${slot.id}`) ?? [];
+                      const visibleItems = cellItems.slice(0, 2);
+                      const hiddenCount = cellItems.length - visibleItems.length;
                       return (
                         <td key={`${day}-${slot.id}`} className="border-t border-[rgba(20,50,75,0.08)] p-1 align-top">
                           <div
-                            className={`group min-h-[76px] rounded-[0.85rem] border p-1.5 transition cursor-pointer ${
+                            className={`group h-[84px] rounded-[0.85rem] border p-1 transition cursor-pointer ${
                               isClassEditorOpen && classDraft.day === day && classDraft.slot === slot.id
                                 ? "border-[rgba(28,78,149,0.24)] bg-[rgba(28,78,149,0.06)]"
                                 : "border-transparent bg-[rgba(20,50,75,0.02)] hover:border-[rgba(20,50,75,0.12)]"
                             }`}
                             onDoubleClick={() => beginCreateClass(day, slot.id)}
                           >
-                            <div className="grid gap-1.5">
+                            <div className="grid h-full content-start gap-1 overflow-hidden">
                               {cellItems.length === 0 ? (
-                                <div className="flex min-h-[60px] items-center justify-center rounded-[0.8rem] border border-dashed border-[rgba(20,50,75,0.10)] bg-white/55 text-center text-[11px] font-medium text-[var(--ink-soft)]">
+                                <div className="flex h-full items-center justify-center rounded-[0.8rem] border border-dashed border-[rgba(20,50,75,0.10)] bg-white/55 px-1 text-center text-[11px] font-medium text-[var(--ink-soft)]">
                                   {copy.noClassInCell}
                                 </div>
                               ) : (
-                                cellItems.map((item) => (
-                                  <div
-                                    key={item.id}
-                                    onDoubleClick={(event) => {
-                                      event.stopPropagation();
-                                      beginEditClass(item);
-                                    }}
-                                    title={item.title}
-                                    className={`flex w-full min-h-[36px] cursor-pointer items-center gap-2 rounded-[0.8rem] px-2.5 py-1.5 ${classTone[item.type]}`}
-                                  >
-                                    <div className="min-w-0 flex-1 text-[11px] font-semibold leading-4">
-                                      <span className="block truncate">{item.title}</span>
-                                    </div>
-                                    <button
-                                      type="button"
-                                      aria-label={copy.remove}
-                                      onClick={(event) => {
+                                <>
+                                  {visibleItems.map((item) => (
+                                    <div
+                                      key={item.id}
+                                      onDoubleClick={(event) => {
                                         event.stopPropagation();
-                                        removeClass(item.id);
+                                        beginEditClass(item);
                                       }}
-                                      className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-white/20 transition hover:bg-white/30"
+                                      title={item.title}
+                                      className={`flex h-[30px] w-full cursor-pointer items-center gap-1.5 rounded-[0.8rem] px-2 ${classTone[item.type]}`}
                                     >
-                                      <X className="size-3" />
-                                    </button>
-                                  </div>
-                                ))
+                                      <div className="min-w-0 flex-1 text-[11px] font-semibold leading-none">
+                                        <span className="block truncate">{item.title}</span>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        aria-label={copy.remove}
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          removeClass(item.id);
+                                        }}
+                                        className="inline-flex size-4.5 shrink-0 items-center justify-center rounded-full bg-white/20 transition hover:bg-white/30"
+                                      >
+                                        <X className="size-2.5" />
+                                      </button>
+                                    </div>
+                                  ))}
+                                  {hiddenCount > 0 ? (
+                                    <span className="inline-flex h-5 items-center justify-center self-start rounded-full bg-[rgba(20,50,75,0.08)] px-2 text-[10px] font-semibold text-[var(--ink-soft)]">
+                                      +{hiddenCount}
+                                    </span>
+                                  ) : null}
+                                </>
                               )}
                             </div>
                           </div>
@@ -1164,7 +1085,7 @@ export function ScheduleShell({
           </div>
         </article>
 
-        <article className="surface-panel w-full min-w-0 rounded-[2rem] p-4 sm:p-4 xl:sticky xl:top-24">
+        <article className="surface-panel flex h-full min-w-0 flex-col rounded-[2rem] p-4 sm:p-4">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h3 className="font-display text-[1.65rem] tracking-tight text-[var(--ink)]">{copy.deadlinesTitle}</h3>
@@ -1172,7 +1093,7 @@ export function ScheduleShell({
             </div>
           </div>
 
-          <div className="mt-4 grid max-h-[26rem] gap-3 overflow-y-auto pr-1">
+          <div className="mt-4 grid min-h-0 flex-1 gap-3 overflow-y-auto pr-1">
             {preferences.deadlines.length === 0 ? (
               <EmptyHint text={copy.noDeadlines} />
             ) : (
@@ -1379,7 +1300,6 @@ export function ScheduleShell({
                     <div className="flex flex-wrap items-center gap-2">
                       <InlineMeta label={copy.dateLabel} value={formatDateLabel(day.dateISO, locale)} />
                       <InlineMeta label={copy.pressureLabel} value={String(day.pressure)} toneClass={pressure.pill} />
-                      <InlineMeta label={copy.weekTarget} value={`${day.targetMinutes} ${copy.minuteShort}`} />
                       <InlineMeta label={copy.classesCount} value={String(day.classes.length)} />
                       <InlineMeta label={copy.deadlinesCount} value={String(day.deadlines.length)} />
                       <InlineMeta label={copy.weekTitle} value={day.blocks.length > 0 ? plannerText.appliedBadge : scheduleText.manualPlan} />
@@ -1404,7 +1324,7 @@ export function ScheduleShell({
                                     {meta.label[locale]}
                                   </span>
                                   <div className="flex items-center gap-2">
-                                    <span className="text-[11px] font-semibold text-[var(--ink-soft)]">{block.timeLabel}</span>
+                                    {block.timeLabel ? <span className="text-[11px] font-semibold text-[var(--ink-soft)]">{block.timeLabel}</span> : null}
                                     <button
                                       type="button"
                                       onClick={() => beginEditBlock(day.day, block)}
@@ -1475,7 +1395,7 @@ export function ScheduleShell({
                             placeholder={scheduleText.taskTitlePlaceholder}
                             className={compactInputCls}
                           />
-                          <div className="grid gap-2.5 sm:grid-cols-[1fr_6.5rem]">
+                          <div className="grid gap-2.5 sm:grid-cols-[minmax(0,1fr)_6.5rem_8rem]">
                             <select
                               value={isEditingDay ? blockDraft.skill : "reading"}
                               onChange={(event) =>
@@ -1506,6 +1426,19 @@ export function ScheduleShell({
                                   minutes: Number(event.target.value || 15),
                                 }))
                               }
+                              className={compactInputCls}
+                            />
+                            <input
+                              type="time"
+                              value={isEditingDay ? blockDraft.timeLabel : ""}
+                              onChange={(event) =>
+                                setBlockDraft((current) => ({
+                                  ...current,
+                                  day: day.day,
+                                  timeLabel: event.target.value,
+                                }))
+                              }
+                              aria-label={scheduleText.taskTimeLabel}
                               className={compactInputCls}
                             />
                           </div>
@@ -1551,6 +1484,151 @@ export function ScheduleShell({
             );
           })}
         </div>
+      </article>
+
+      <article className="surface-panel rounded-[2rem] p-4 sm:p-5">
+        <button
+          type="button"
+          onClick={() => setIsPlannerOpen((current) => !current)}
+          className="flex w-full items-start justify-between gap-4 text-left"
+        >
+          <div>
+            <h3 className="font-display text-[1.85rem] tracking-tight text-[var(--ink)]">{plannerText.panelTitle}</h3>
+            <p className="mt-1 text-sm text-[var(--ink-soft)]">{plannerText.panelHint}</p>
+          </div>
+          <ChevronDown className={`mt-2 size-5 text-[var(--ink-soft)] transition ${isPlannerOpen ? "rotate-180" : ""}`} />
+        </button>
+
+        {isPlannerOpen ? (
+          <div className="mt-4 rounded-[1.4rem] border border-[rgba(20,50,75,0.08)] bg-white/72 p-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" onClick={() => setPlannerMode("manual")} className={chip(plannerMode === "manual")}>
+                {scheduleText.manualPlan}
+              </button>
+              <button type="button" onClick={() => setPlannerMode("auto")} className={chip(plannerMode === "auto")}>
+                {copy.autoPlan}
+              </button>
+            </div>
+
+            {plannerMode === "manual" ? (
+              <div className="mt-4 rounded-[1.2rem] border border-[rgba(20,50,75,0.08)] bg-[rgba(20,50,75,0.03)] p-4">
+                <p className="text-sm text-[var(--ink-soft)]">{plannerText.manualHint}</p>
+              </div>
+            ) : (
+              <div className="mt-4 rounded-[1.2rem] border border-[rgba(20,50,75,0.08)] bg-[rgba(20,50,75,0.03)] p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-semibold text-[var(--ink)]">{plannerText.builderTitle}</h3>
+                    <p className="mt-1 text-sm text-[var(--ink-soft)]">{plannerText.builderHint}</p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={generatePlanPreview}
+                      className="inline-flex items-center gap-2 rounded-full bg-[var(--navy)] px-4 py-2 text-sm font-semibold text-[#f7efe3] transition hover:translate-y-[-1px]"
+                    >
+                      <Sparkles className="size-4" />
+                      {generatedSchedule ? plannerText.regenerate : plannerText.generate}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={applyGeneratedPlan}
+                      disabled={!generatedSchedule}
+                      className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.14)] bg-white px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:bg-[rgba(20,50,75,0.06)] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {plannerText.apply}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={clearWeekPlan}
+                      disabled={!hasAppliedWeekPlan}
+                      className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.14)] bg-white px-4 py-2 text-sm font-semibold text-[var(--ink-soft)] transition hover:text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {plannerText.clearWeek}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-[1.2rem] border border-[rgba(20,50,75,0.08)] bg-white/82 p-3.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-[rgba(20,50,75,0.08)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">
+                      {generatedSchedule ? plannerText.previewReady : plannerText.previewTitle}
+                    </span>
+                    {hasAppliedWeekPlan ? (
+                      <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                        {plannerText.appliedBadge}
+                      </span>
+                    ) : null}
+                    {generatedSchedule ? (
+                      <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">
+                        {plannerText.generatedBadge}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  {generatedSchedule ? (
+                    <>
+                      <p className="mt-3 text-sm text-[var(--ink-soft)]">{plannerText.previewHint}</p>
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-7">
+                        {generatedSchedule.days.map((day) => {
+                          const isPreviewExpanded = generatedExpandedDay === day.day;
+                          return (
+                            <button
+                              key={day.dateISO}
+                              type="button"
+                              onClick={() => setGeneratedExpandedDay(isPreviewExpanded ? null : day.day)}
+                              className={`rounded-[1rem] border px-3 py-3 text-left transition ${
+                                isPreviewExpanded
+                                  ? "border-[rgba(28,78,149,0.2)] bg-[rgba(28,78,149,0.06)]"
+                                  : "border-[rgba(20,50,75,0.08)] bg-white/78 hover:bg-white"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-sm font-semibold text-[var(--ink)]">{dayLabels[locale][day.day]}</span>
+                                <span className="text-[11px] font-semibold text-[var(--ink-soft)]">
+                                  {day.blocks.length} {plannerText.dayItems}
+                                </span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {typeof generatedExpandedDay === "number" ? (
+                        <div className="mt-3 rounded-[1rem] border border-[rgba(20,50,75,0.08)] bg-white/82 p-3">
+                          <div className="grid gap-2">
+                            {generatedSchedule.days
+                              .find((day) => day.day === generatedExpandedDay)
+                              ?.blocks.map((block) => {
+                                const meta = skillMeta[block.skill];
+                                const Icon = meta.Icon;
+                                return (
+                                  <div key={block.id} className="rounded-[0.9rem] border border-[rgba(20,50,75,0.08)] bg-white px-3 py-3">
+                                    <div className="flex items-center justify-between gap-3">
+                                      <span className="inline-flex items-center gap-2 rounded-full bg-[rgba(20,50,75,0.06)] px-2.5 py-1 text-[11px] font-semibold text-[var(--ink)]">
+                                        <Icon className="size-3.5" />
+                                        {meta.label[locale]}
+                                      </span>
+                                    </div>
+                                    <p className="mt-2 text-sm font-semibold text-[var(--ink)]">{block.title}</p>
+                                    <p className="mt-1 text-sm text-[var(--ink-soft)]">{block.reason}</p>
+                                  </div>
+                                );
+                              })}
+                          </div>
+                        </div>
+                      ) : null}
+                    </>
+                  ) : (
+                    <div className="mt-3">
+                      <EmptyHint text={plannerText.previewEmpty} />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : null}
       </article>
     </section>
   );

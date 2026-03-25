@@ -25,16 +25,6 @@ export const SCHEDULE_TIME_SLOTS: ReadonlyArray<{
   { id: "09-10", defaultTime: "18:00", label: { zh: "09-10", en: "09-10" } },
 ] as const;
 
-type PlanWindowCandidateKind = "free-slot" | "after-class" | "after-day";
-
-type PlanWindowCandidate = {
-  key: string;
-  slot: ScheduleSlotId;
-  kind: PlanWindowCandidateKind;
-  label: string;
-  sortOrder: number;
-};
-
 export interface ScheduleClassSession {
   id: string;
   title: string;
@@ -58,6 +48,7 @@ export interface EditableScheduleBlock {
   skill: ScheduleSkill;
   minutes: number;
   reason: string;
+  timeLabel: string;
 }
 
 export interface ScheduleDayPlanOverride {
@@ -302,6 +293,9 @@ function normalizeEditableBlock(value: unknown): EditableScheduleBlock | null {
   const title = String(next.title ?? "").trim();
   const reason = String(next.reason ?? "").trim();
   const minutes = clamp(Math.round(Number(next.minutes ?? 12)), 5, 90);
+  const timeLabel = /^\d{2}:\d{2}$/.test(String(next.timeLabel ?? "").trim())
+    ? String(next.timeLabel ?? "").trim()
+    : "";
 
   if (!title || !reason || !isScheduleSkill(String(next.skill ?? ""))) {
     return null;
@@ -314,6 +308,7 @@ function normalizeEditableBlock(value: unknown): EditableScheduleBlock | null {
     skill: String(next.skill ?? "review") as ScheduleSkill,
     minutes,
     reason,
+    timeLabel,
   };
 }
 
@@ -505,6 +500,9 @@ export function createEditableScheduleBlock(
     ...input,
     id: createId("plan"),
     minutes: clamp(Math.round(input.minutes), 5, 90),
+    timeLabel: /^\d{2}:\d{2}$/.test(String(input.timeLabel ?? "").trim())
+      ? String(input.timeLabel ?? "").trim()
+      : "",
   };
 }
 
@@ -560,204 +558,6 @@ function chooseSupportSkill(anchorSkill: TrackedSkill, orderedSkills: TrackedSki
   if (preferred) return preferred;
   if (rotationSkill !== anchorSkill) return rotationSkill;
   return SKILLS.find((skill) => skill !== anchorSkill) ?? anchorSkill;
-}
-
-function getAfterSlotLabel(slot: ScheduleSlotId, locale: Locale) {
-  return locale === "zh" ? `${slot}\u540e` : `After ${slot}`;
-}
-
-function buildPlanWindowCandidates(classes: ScheduleClassSession[], locale: Locale) {
-  const occupiedSlots = new Set(classes.map((item) => item.slot));
-  const candidates: PlanWindowCandidate[] = [];
-
-  SCHEDULE_TIME_SLOTS.forEach((slot, index) => {
-    if (occupiedSlots.has(slot.id)) {
-      candidates.push({
-        key: `after-${slot.id}`,
-        slot: slot.id,
-        kind: slot.id === "09-10" ? "after-day" : "after-class",
-        label: getAfterSlotLabel(slot.id, locale),
-        sortOrder: index * 2 + 1,
-      });
-      return;
-    }
-
-    candidates.push({
-      key: `slot-${slot.id}`,
-      slot: slot.id,
-      kind: "free-slot",
-      label: slot.label[locale],
-      sortOrder: index * 2,
-    });
-  });
-
-  if (!occupiedSlots.has("09-10")) {
-    candidates.push({
-      key: "after-09-10",
-      slot: "09-10",
-      kind: "after-day",
-      label: getAfterSlotLabel("09-10", locale),
-      sortOrder: SCHEDULE_TIME_SLOTS.length * 2 + 1,
-    });
-  }
-
-  return candidates.sort((a, b) => a.sortOrder - b.sortOrder);
-}
-
-function getRelevantClassSlot(skill: ScheduleSkill, classes: ScheduleClassSession[]) {
-  const ordered = [...classes].sort(compareScheduleClasses);
-  const findSlot = (type: ScheduleClassType) => ordered.find((item) => item.type === type)?.slot ?? null;
-  const lastSlot = ordered.length > 0 ? ordered[ordered.length - 1]?.slot ?? null : null;
-
-  if (skill === "speaking") return findSlot("seminar") ?? findSlot("lecture") ?? lastSlot;
-  if (skill === "listening") return findSlot("lecture") ?? lastSlot;
-  if (skill === "reading") return findSlot("lab") ?? findSlot("lecture") ?? lastSlot;
-  return lastSlot;
-}
-
-function getPreferenceTargetOrder(studyWindow: StudyWindow, includeAfterDay: boolean) {
-  if (studyWindow === "early") return 0;
-  if (studyWindow === "midday") return 4;
-  return includeAfterDay ? SCHEDULE_TIME_SLOTS.length * 2 + 1 : 8;
-}
-
-function pickWindowNearTarget(
-  windows: PlanWindowCandidate[],
-  targetOrder: number,
-  preferLater: boolean,
-) {
-  return [...windows].sort((a, b) => {
-    const distanceDiff = Math.abs(a.sortOrder - targetOrder) - Math.abs(b.sortOrder - targetOrder);
-    if (distanceDiff !== 0) return distanceDiff;
-    return preferLater ? b.sortOrder - a.sortOrder : a.sortOrder - b.sortOrder;
-  })[0];
-}
-
-function pickFallbackWindow(args: {
-  candidates: PlanWindowCandidate[];
-  used: Set<string>;
-  studyWindow: StudyWindow;
-  preferAfterDay?: boolean;
-  preferLate?: boolean;
-  skipAfterDay?: boolean;
-}) {
-  const available = args.candidates.filter((item) => !args.used.has(item.key));
-  if (available.length === 0) {
-    return args.candidates[args.candidates.length - 1];
-  }
-
-  if (args.preferAfterDay) {
-    const afterDay = available.find((item) => item.kind === "after-day");
-    if (afterDay) return afterDay;
-  }
-
-  let filtered = available;
-  if (args.skipAfterDay) {
-    filtered = filtered.filter((item) => item.kind !== "after-day");
-  }
-  if (filtered.length === 0) filtered = available;
-
-  if (args.preferLate) {
-    return [...filtered].sort((a, b) => b.sortOrder - a.sortOrder)[0];
-  }
-
-  return (
-    pickWindowNearTarget(
-      filtered,
-      getPreferenceTargetOrder(args.studyWindow, !args.skipAfterDay),
-      args.studyWindow === "evening",
-    ) ?? filtered[0]
-  );
-}
-
-function choosePlanWindow(args: {
-  block: EditableScheduleBlock;
-  classes: ScheduleClassSession[];
-  candidates: PlanWindowCandidate[];
-  used: Set<string>;
-  studyWindow: StudyWindow;
-  deadlineSoon: boolean;
-}) {
-  const available = args.candidates.filter((item) => !args.used.has(item.key));
-  if (available.length === 0) {
-    return args.candidates[args.candidates.length - 1];
-  }
-
-  const relevantSlot = getRelevantClassSlot(args.block.skill, args.classes);
-  if (relevantSlot && args.block.type !== "memory") {
-    const alignedWindow =
-      available.find(
-        (item) =>
-          item.slot === relevantSlot &&
-          (item.kind === "after-class" || item.kind === "after-day"),
-      ) ?? available.find((item) => item.slot === relevantSlot && item.kind === "free-slot");
-
-    if (alignedWindow) return alignedWindow;
-  }
-
-  if (args.block.type === "memory") {
-    return pickFallbackWindow({
-      candidates: args.candidates,
-      used: args.used,
-      studyWindow: args.studyWindow,
-      preferAfterDay: true,
-      preferLate: true,
-    });
-  }
-
-  if (args.block.type === "anchor" && args.deadlineSoon) {
-    return pickFallbackWindow({
-      candidates: args.candidates,
-      used: args.used,
-      studyWindow: args.studyWindow,
-      preferLate: true,
-    });
-  }
-
-  if (args.block.type === "support") {
-    return pickFallbackWindow({
-      candidates: args.candidates,
-      used: args.used,
-      studyWindow: args.studyWindow,
-      skipAfterDay: true,
-    });
-  }
-
-  return pickFallbackWindow({
-    candidates: args.candidates,
-    used: args.used,
-    studyWindow: args.studyWindow,
-  });
-}
-
-function assignPlanWindowLabels(args: {
-  blocks: EditableScheduleBlock[];
-  classes: ScheduleClassSession[];
-  locale: Locale;
-  studyWindow: StudyWindow;
-  deadlineSoon: boolean;
-}) {
-  const candidates = buildPlanWindowCandidates(args.classes, args.locale);
-  const used = new Set<string>();
-
-  return args.blocks.map((block) => {
-    const chosen =
-      choosePlanWindow({
-        block,
-        classes: args.classes,
-        candidates,
-        used,
-        studyWindow: args.studyWindow,
-        deadlineSoon: args.deadlineSoon,
-      }) ?? candidates[candidates.length - 1];
-
-    if (!chosen) {
-      return getAfterSlotLabel("09-10", args.locale);
-    }
-
-    used.add(chosen.key);
-    return chosen.label;
-  });
 }
 
 function getAnchorTitle(skill: TrackedSkill, locale: Locale, classType?: ScheduleClassType | null, deadlineSoon = false) {
@@ -988,6 +788,7 @@ export function generateWeeklySchedule(input: {
         skill: anchorSkill,
         minutes: anchorMinutes,
         reason: anchorReason,
+        timeLabel: "",
       },
       {
         id: `${dateISO}-support`,
@@ -996,6 +797,7 @@ export function generateWeeklySchedule(input: {
         skill: supportSkill,
         minutes: supportMinutes,
         reason: getSupportReason(supportSkill === weakestSkill, input.locale),
+        timeLabel: "",
       },
       {
         id: `${dateISO}-memory`,
@@ -1004,18 +806,12 @@ export function generateWeeklySchedule(input: {
         skill: "review",
         minutes: memoryMinutes,
         reason: getReviewReason(input.reviewDue, input.locale),
+        timeLabel: "",
       },
     ];
     const blockTemplates =
       planOverrideMap.get(day) ?? (input.useGeneratedFallback === false ? [] : autoBlocks);
-    const timeLabels = assignPlanWindowLabels({
-      blocks: blockTemplates,
-      classes,
-      locale: input.locale,
-      studyWindow: input.preferences.studyWindow,
-      deadlineSoon: Boolean(soonestDeadline),
-    });
-    const blocks: ScheduleBlock[] = blockTemplates.map((block, index) =>
+    const blocks: ScheduleBlock[] = blockTemplates.map((block) =>
       createBlock({
         id: block.id,
         type: block.type,
@@ -1025,7 +821,7 @@ export function generateWeeklySchedule(input: {
         reason: block.reason,
         level,
         locale: input.locale,
-        timeLabel: timeLabels[index] ?? getAfterSlotLabel("09-10", input.locale),
+        timeLabel: block.timeLabel,
       }),
     );
 
@@ -1051,7 +847,7 @@ export function generateWeeklySchedule(input: {
     };
   });
 
-  const weeklyTargetMinutes = days.reduce((sum, day) => sum + day.targetMinutes, 0);
+  const weeklyTargetMinutes = input.preferences.dailyMinutes * 7;
   const shockIndex = clamp(
     Math.round(
       days.reduce((sum, day) => sum + day.pressure, 0) / days.length +

@@ -27,6 +27,7 @@ const blockSchema = z.object({
   skill: z.enum(["listening", "speaking", "reading", "writing", "review"]),
   minutes: z.number().int().min(5).max(90),
   reason: z.string().min(1),
+  timeLabel: z.string().regex(/^$|^\d{2}:\d{2}$/).default(""),
 });
 
 const planOverrideSchema = z.object({
