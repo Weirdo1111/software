@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Settings, X, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowRight, Settings, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -48,17 +48,11 @@ function pressureColor(pressure: number) {
   return "bg-red-400/80";
 }
 
-function pressureBorder(pressure: number) {
-  if (pressure <= 35) return "border-emerald-300/60";
-  if (pressure <= 55) return "border-amber-300/60";
-  if (pressure <= 72) return "border-orange-300/60";
-  return "border-red-300/60";
-}
-
 const blockTypeBadge = {
   anchor: "bg-[rgba(20,50,75,0.10)] text-[var(--ink)]",
   support: "bg-[rgba(20,50,75,0.06)] text-[var(--ink-soft)]",
   memory: "bg-violet-50 text-violet-700",
+  custom: "bg-sky-50 text-sky-700",
 } as const;
 
 const skillLabelMap: Record<string, { en: string; zh: string }> = {
@@ -137,6 +131,10 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
           minuteShort: "min",
           atGlanceCompleted: "Completed",
         };
+  const blockTypeText = {
+    ...copy.blockType,
+    custom: locale === "zh" ? "\u624b\u52a8" : "Custom",
+  };
 
   useEffect(() => {
     const refresh = () => {
@@ -358,7 +356,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${blockTypeBadge[block.type]}`}>
-                      {copy.blockType[block.type]}
+                      {blockTypeText[block.type]}
                     </span>
                     <p className="text-sm font-semibold text-[var(--ink)]">{block.title}</p>
                   </div>
@@ -441,7 +439,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                 {day.blocks.map((block) => (
                   <div key={block.id} className="flex items-center gap-3">
                     <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${blockTypeBadge[block.type]}`}>
-                      {copy.blockType[block.type]}
+                      {blockTypeText[block.type]}
                     </span>
                     <div className="min-w-0 flex-1">
                       <span className="text-xs font-semibold text-[var(--ink)]">{block.title}</span>

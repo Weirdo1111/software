@@ -29,6 +29,7 @@ import {
 } from "@/lib/learning-tracker";
 import {
   compareScheduleClasses,
+  createEditableScheduleBlock,
   createDefaultSchedulePreferences,
   createScheduleClassSession,
   createScheduleDeadline,
@@ -38,18 +39,23 @@ import {
   saveSchedulePreferencesToStorage,
   SCHEDULE_TIME_SLOTS,
   subscribeSchedulePreferences,
+  type EditableScheduleBlock,
+  type ScheduleBlock,
+  type ScheduleBlockType,
   type ScheduleClassSession,
   type ScheduleClassType,
   type ScheduleDeadline,
   type ScheduleGoal,
   type ScheduleMode,
   type SchedulePreferences,
+  type ScheduleSkill,
   type ScheduleSlotId,
   type ScheduleWeekMode,
   type StudyWindow,
 } from "@/lib/schedule";
 
 const TRACKED_SKILLS: TrackedSkill[] = ["listening", "speaking", "reading", "writing"];
+const PLAN_SKILLS: ScheduleSkill[] = ["listening", "speaking", "reading", "writing", "review"];
 const WEEKDAY_ORDER = [6, 0, 1, 2, 3, 4, 5] as const;
 const dayLabels = {
   zh: ["周一", "周二", "周三", "周四", "周五", "周六", "周日"],
@@ -98,6 +104,16 @@ type DeadlineDraft = {
   skill: TrackedSkill;
 };
 
+type BlockDraft = {
+  id: string | null;
+  day: number;
+  type: ScheduleBlockType;
+  title: string;
+  skill: ScheduleSkill;
+  minutes: number;
+  reason: string;
+};
+
 type ImportState = {
   tone: "idle" | "success" | "error";
   message: string;
@@ -142,6 +158,29 @@ function createEmptyDeadlineDraft(): DeadlineDraft {
   };
 }
 
+function toEditableBlock(block: ScheduleBlock): EditableScheduleBlock {
+  return {
+    id: block.id,
+    type: block.type,
+    title: block.title,
+    skill: block.skill,
+    minutes: block.minutes,
+    reason: block.reason,
+  };
+}
+
+function createEmptyBlockDraft(day = 0): BlockDraft {
+  return {
+    id: null,
+    day,
+    type: "custom",
+    title: "",
+    skill: "reading",
+    minutes: 15,
+    reason: "",
+  };
+}
+
 function formatDateLabel(dateISO: string, locale: Locale) {
   return new Intl.DateTimeFormat(locale === "zh" ? "zh-CN" : "en-US", {
     month: locale === "zh" ? "numeric" : "short",
@@ -173,6 +212,7 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
   const [classDraft, setClassDraft] = useState<ClassDraft>(() => createEmptyClassDraft());
   const [deadlineDraft, setDeadlineDraft] = useState<DeadlineDraft>(() => createEmptyDeadlineDraft());
+  const [blockDraft, setBlockDraft] = useState<BlockDraft>(() => createEmptyBlockDraft());
   const [importState, setImportState] = useState<ImportState>(() => buildImportState("idle", "", []));
   const [excelLoading, setExcelLoading] = useState(false);
   const [imageLoading, setImageLoading] = useState(false);
@@ -274,8 +314,17 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
           addDeadline: "Add deadline",
           remove: "Remove",
           weekTitle: "This week",
-          weekHint: "The schedule is generated automatically. Open a weekday to inspect the details.",
+          weekHint: "The schedule is generated automatically. Open a weekday to inspect and edit the plan.",
           autoPlan: "Auto plan",
+          manualPlan: "Manual",
+          editPlan: "Edit plan",
+          taskTitlePlaceholder: "Task title",
+          taskReasonPlaceholder: "Why this task",
+          taskMinutesLabel: "Minutes",
+          taskSkillLabel: "Skill",
+          saveTask: "Save",
+          addTask: "Add task",
+          resetDay: "Reset day",
           dateLabel: "Date",
           pressureLabel: "Pressure",
           classesCount: "Classes",
@@ -331,6 +380,35 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
     }
     return next;
   }, [preferences.classes]);
+  const scheduleText =
+    locale === "zh"
+      ? {
+          manualPlan: "\u624b\u52a8\u8c03\u6574",
+          editPlan: "\u7f16\u8f91\u8ba1\u5212",
+          taskTitlePlaceholder: "\u4efb\u52a1\u6807\u9898",
+          taskReasonPlaceholder: "\u5b89\u6392\u539f\u56e0",
+          taskMinutesLabel: "\u65f6\u957f",
+          taskSkillLabel: "\u6280\u80fd",
+          saveTask: "\u4fdd\u5b58",
+          addTask: "\u65b0\u589e\u4efb\u52a1",
+          resetDay: "\u6062\u590d\u81ea\u52a8",
+        }
+      : {
+          manualPlan: "Manual",
+          editPlan: "Edit plan",
+          taskTitlePlaceholder: "Task title",
+          taskReasonPlaceholder: "Why this task",
+          taskMinutesLabel: "Minutes",
+          taskSkillLabel: "Skill",
+          saveTask: "Save",
+          addTask: "Add task",
+          resetDay: "Reset day",
+        };
+
+  function getDayPlanBlocks(daySchedule: (typeof weeklySchedule.days)[number]) {
+    const override = preferences.planOverrides.find((item) => item.day === daySchedule.day);
+    return override?.blocks ?? daySchedule.blocks.map(toEditableBlock);
+  }
 
   function updatePreferences(partial: Partial<SchedulePreferences>) {
     setPreferences((current) =>
@@ -340,6 +418,17 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
         updatedAt: new Date().toISOString(),
       }),
     );
+  }
+
+  function saveDayPlanBlocks(day: number, blocks: EditableScheduleBlock[]) {
+    const nextOverrides = preferences.planOverrides.filter((item) => item.day !== day);
+    if (blocks.length > 0) {
+      nextOverrides.push({ day, blocks });
+    }
+
+    updatePreferences({
+      planOverrides: nextOverrides.sort((a, b) => a.day - b.day),
+    });
   }
 
   function beginCreateClass(day: number, slot: ScheduleSlotId) {
@@ -434,6 +523,76 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
       ],
     });
     setDeadlineDraft(createEmptyDeadlineDraft());
+  }
+
+  function beginCreateBlock(day: number) {
+    setBlockDraft(createEmptyBlockDraft(day));
+  }
+
+  function beginEditBlock(day: number, block: ScheduleBlock) {
+    setBlockDraft({
+      id: block.id,
+      day,
+      type: block.type,
+      title: block.title,
+      skill: block.skill,
+      minutes: block.minutes,
+      reason: block.reason,
+    });
+  }
+
+  function cancelBlockEdit(day = blockDraft.day) {
+    setBlockDraft(createEmptyBlockDraft(day));
+  }
+
+  function submitBlock(daySchedule: (typeof weeklySchedule.days)[number]) {
+    const title = blockDraft.title.trim();
+    const reason = blockDraft.reason.trim();
+    if (!title || !reason) return;
+
+    const currentBlocks = getDayPlanBlocks(daySchedule);
+    const nextBlocks = blockDraft.id
+      ? currentBlocks.map((item) =>
+          item.id === blockDraft.id
+            ? {
+                ...item,
+                title,
+                skill: blockDraft.skill,
+                minutes: blockDraft.minutes,
+                reason,
+              }
+            : item,
+        )
+      : [
+          ...currentBlocks,
+          createEditableScheduleBlock({
+            type: blockDraft.type,
+            title,
+            skill: blockDraft.skill,
+            minutes: blockDraft.minutes,
+            reason,
+          }),
+        ];
+
+    saveDayPlanBlocks(daySchedule.day, nextBlocks);
+    setBlockDraft(createEmptyBlockDraft(daySchedule.day));
+  }
+
+  function removeDayBlock(daySchedule: (typeof weeklySchedule.days)[number], blockId: string) {
+    const nextBlocks = getDayPlanBlocks(daySchedule).filter((item) => item.id !== blockId);
+    saveDayPlanBlocks(daySchedule.day, nextBlocks);
+    if (blockDraft.id === blockId || blockDraft.day === daySchedule.day) {
+      setBlockDraft(createEmptyBlockDraft(daySchedule.day));
+    }
+  }
+
+  function resetDayPlan(day: number) {
+    updatePreferences({
+      planOverrides: preferences.planOverrides.filter((item) => item.day !== day),
+    });
+    if (blockDraft.day === day) {
+      setBlockDraft(createEmptyBlockDraft(day));
+    }
   }
 
   async function applyImportedClasses(file: File, endpoint: string, loadingKind: "image" | "excel") {
@@ -532,7 +691,7 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
         onChange={onExcelFileChange}
       />
 
-      <article className="surface-panel rounded-[2rem] p-5 sm:p-6">
+      <article className="surface-panel rounded-[2rem] p-4 sm:p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="font-display text-4xl tracking-tight text-[var(--ink)] sm:text-5xl">{copy.title}</h2>
@@ -624,10 +783,10 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
         </article>
       ) : null}
 
-      <article className="surface-panel rounded-[2rem] p-5 sm:p-6">
+      <article className="surface-panel rounded-[2rem] p-4 sm:p-5">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h3 className="font-display text-3xl tracking-tight text-[var(--ink)]">{copy.timetableTitle}</h3>
+            <h3 className="font-display text-[1.85rem] tracking-tight text-[var(--ink)]">{copy.timetableTitle}</h3>
             <p className="mt-1 text-sm text-[var(--ink-soft)]">{copy.timetableHint}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -654,15 +813,15 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
 
         {importState.message ? <ImportNotice state={importState} /> : null}
 
-        <div className="mt-5 overflow-x-auto rounded-[1.5rem] border border-[rgba(20,50,75,0.08)] bg-white/82">
-          <table className="min-w-[860px] w-full border-collapse text-sm">
+        <div className="mt-4 overflow-x-auto rounded-[1.35rem] border border-[rgba(20,50,75,0.08)] bg-white/82">
+          <table className="min-w-[760px] w-full border-collapse text-sm">
             <thead>
               <tr className="bg-[rgba(20,50,75,0.05)] text-[var(--ink)]">
-                <th className="border-b border-r border-[rgba(20,50,75,0.08)] px-4 py-3 text-left font-semibold">
+                <th className="border-b border-r border-[rgba(20,50,75,0.08)] px-3 py-2.5 text-left font-semibold">
                   {copy.slotLabel}
                 </th>
                 {WEEKDAY_ORDER.map((day) => (
-                  <th key={day} className="border-b border-[rgba(20,50,75,0.08)] px-4 py-3 text-left font-semibold">
+                  <th key={day} className="border-b border-[rgba(20,50,75,0.08)] px-3 py-2.5 text-left font-semibold">
                     {dayLabels[locale][day]}
                   </th>
                 ))}
@@ -671,15 +830,15 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
             <tbody>
               {SCHEDULE_TIME_SLOTS.map((slot) => (
                 <tr key={slot.id}>
-                  <td className="border-r border-t border-[rgba(20,50,75,0.08)] px-4 py-4 font-semibold text-[var(--ink)]">
+                  <td className="border-r border-t border-[rgba(20,50,75,0.08)] px-3 py-3 font-semibold text-[var(--ink)]">
                     {slot.label[locale]}
                   </td>
                   {WEEKDAY_ORDER.map((day) => {
                     const cellItems = timetableMap.get(`${day}-${slot.id}`) ?? [];
                     return (
-                      <td key={`${day}-${slot.id}`} className="border-t border-[rgba(20,50,75,0.08)] p-2 align-top">
+                      <td key={`${day}-${slot.id}`} className="border-t border-[rgba(20,50,75,0.08)] p-1.5 align-top">
                         <div
-                          className={`min-h-[88px] rounded-[1rem] border p-2 transition ${
+                          className={`min-h-[72px] rounded-[0.95rem] border p-1.5 transition ${
                             classDraft.day === day && classDraft.slot === slot.id
                               ? "border-[rgba(28,78,149,0.24)] bg-[rgba(28,78,149,0.06)]"
                               : "border-transparent bg-[rgba(20,50,75,0.02)] hover:border-[rgba(20,50,75,0.12)]"
@@ -693,7 +852,7 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
                               cellItems.map((item) => (
                                 <div
                                   key={item.id}
-                                  className={`flex items-start gap-2 rounded-[0.9rem] px-3 py-2 ${classTone[item.type]}`}
+                                  className={`flex items-start gap-2 rounded-[0.85rem] px-2.5 py-1.5 ${classTone[item.type]}`}
                                 >
                                   <button type="button" className="min-w-0 flex-1 text-left text-xs font-semibold leading-5" onClick={(event) => { event.stopPropagation(); beginEditClass(item); }}>
                                     <span className="block truncate">{item.title}</span>
@@ -723,7 +882,7 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
           </table>
         </div>
 
-        <div className="mt-5 rounded-[1.5rem] border border-[rgba(20,50,75,0.08)] bg-white/72 p-4">
+        <div className="mt-4 rounded-[1.35rem] border border-[rgba(20,50,75,0.08)] bg-white/72 p-3.5">
           <div className="flex items-center justify-between gap-3">
             <h4 className="text-sm font-semibold uppercase tracking-[0.12em] text-[var(--ink)]">{copy.manualEdit}</h4>
             {classDraft.id ? (
@@ -732,7 +891,7 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
               </button>
             ) : null}
           </div>
-          <div className="mt-3 grid gap-3 lg:grid-cols-[1.5fr_repeat(4,minmax(0,0.75fr))_auto]">
+          <div className="mt-3 grid gap-2.5 lg:grid-cols-[1.4fr_repeat(4,minmax(0,0.72fr))_auto]">
             <input
               value={classDraft.title}
               onChange={(event) => setClassDraft((current) => ({ ...current, title: event.target.value }))}
@@ -792,10 +951,10 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
         </div>
       </article>
 
-      <article className="surface-panel rounded-[2rem] p-5 sm:p-6">
+      <article className="surface-panel rounded-[2rem] p-4 sm:p-5">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h3 className="font-display text-3xl tracking-tight text-[var(--ink)]">{copy.deadlinesTitle}</h3>
+            <h3 className="font-display text-[1.85rem] tracking-tight text-[var(--ink)]">{copy.deadlinesTitle}</h3>
             <p className="mt-1 text-sm text-[var(--ink-soft)]">{copy.deadlineHint}</p>
           </div>
         </div>
@@ -819,8 +978,8 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
           )}
         </div>
 
-        <div className="mt-5 rounded-[1.5rem] border border-[rgba(20,50,75,0.08)] bg-white/72 p-4">
-          <div className="grid gap-3 lg:grid-cols-[1.6fr_1fr_1fr_auto]">
+        <div className="mt-4 rounded-[1.35rem] border border-[rgba(20,50,75,0.08)] bg-white/72 p-3.5">
+          <div className="grid gap-2.5 lg:grid-cols-[1.6fr_1fr_1fr_auto]">
             <input
               value={deadlineDraft.title}
               onChange={(event) => setDeadlineDraft((current) => ({ ...current, title: event.target.value }))}
@@ -852,10 +1011,10 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
         </div>
       </article>
 
-      <article className="surface-panel rounded-[2rem] p-5 sm:p-6">
+      <article className="surface-panel rounded-[2rem] p-4 sm:p-5">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h3 className="font-display text-3xl tracking-tight text-[var(--ink)]">{copy.weekTitle}</h3>
+            <h3 className="font-display text-[1.85rem] tracking-tight text-[var(--ink)]">{copy.weekTitle}</h3>
             <p className="mt-1 text-sm text-[var(--ink-soft)]">{copy.weekHint}</p>
           </div>
           <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-white/80 px-3 py-1 text-xs font-semibold text-[var(--ink-soft)]">
@@ -867,6 +1026,7 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
           {weeklySchedule.days.map((day) => {
             const isExpanded = expandedDay === day.day;
             const pressure = pressureTone(day.pressure);
+            const isEditingDay = blockDraft.day === day.day;
             return (
               <article key={day.dateISO} className={`rounded-[1.4rem] border transition ${isExpanded ? "border-[rgba(28,78,149,0.2)] bg-[rgba(28,78,149,0.05)]" : "border-[rgba(20,50,75,0.1)] bg-white/78"}`}>
                 <button type="button" onClick={() => setExpandedDay(isExpanded ? null : day.day)} className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left">
@@ -885,31 +1045,164 @@ export function ScheduleShell({ locale }: { locale: Locale }) {
                       <InlineMeta label={copy.weekTarget} value={`${day.targetMinutes} ${copy.minuteShort}`} />
                       <InlineMeta label={copy.classesCount} value={String(day.classes.length)} />
                       <InlineMeta label={copy.deadlinesCount} value={String(day.deadlines.length)} />
+                      <InlineMeta label={copy.weekTitle} value={day.isManual ? scheduleText.manualPlan : copy.autoPlan} />
                     </div>
 
-                    <div className="mt-4 grid gap-3 lg:grid-cols-3">
-                      {day.blocks.map((block) => {
+                    <div className="mt-4 grid gap-3 xl:grid-cols-[minmax(0,1fr)_19rem]">
+                      <div className="grid gap-2.5">
+                        {day.blocks.map((block) => {
                         const meta = skillMeta[block.skill];
                         const Icon = meta.Icon;
                         return (
-                          <Link key={block.id} href={block.href} className="rounded-[1.2rem] border border-[rgba(20,50,75,0.08)] bg-white/88 p-4 transition hover:bg-white">
+                          <article
+                            key={block.id}
+                            className={`rounded-[1.15rem] border p-3 transition ${isEditingDay && blockDraft.id === block.id ? "border-[rgba(28,78,149,0.2)] bg-[rgba(28,78,149,0.06)]" : "border-[rgba(20,50,75,0.08)] bg-white/88"}`}
+                          >
                             <div className="flex items-center justify-between gap-3">
-                              <span className="inline-flex items-center gap-2 rounded-full bg-[rgba(20,50,75,0.06)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">
+                              <span className="inline-flex items-center gap-2 rounded-full bg-[rgba(20,50,75,0.06)] px-2.5 py-1 text-[11px] font-semibold text-[var(--ink)]">
                                 <Icon className="size-3.5" />
                                 {meta.label[locale]}
                               </span>
-                              <span className="text-xs font-semibold text-[var(--ink-soft)]">{block.timeLabel}</span>
-                            </div>
-                            <div className="mt-3 flex items-center justify-between gap-3">
-                              <div>
-                                <h4 className="text-base font-semibold text-[var(--ink)]">{block.title}</h4>
-                                <p className="mt-1 text-sm text-[var(--ink-soft)]">{block.reason}</p>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[11px] font-semibold text-[var(--ink-soft)]">{block.timeLabel}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => beginEditBlock(day.day, block)}
+                                  className="rounded-full border border-[rgba(20,50,75,0.12)] px-2.5 py-1 text-[11px] font-semibold text-[var(--ink)] transition hover:border-[var(--navy)] hover:text-[var(--navy)]"
+                                >
+                                  {scheduleText.editPlan}
+                                </button>
                               </div>
-                              <ArrowRight className="size-4 shrink-0 text-[var(--navy)]" />
                             </div>
-                          </Link>
+                            <div className="mt-2.5 flex items-start justify-between gap-3">
+                              <div>
+                                <h4 className="text-sm font-semibold text-[var(--ink)]">{block.title}</h4>
+                                <p className="mt-1 text-sm leading-6 text-[var(--ink-soft)]">{block.reason}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Link
+                                  href={block.href}
+                                  className="inline-flex items-center gap-1 rounded-full bg-[rgba(20,50,75,0.06)] px-2.5 py-1 text-[11px] font-semibold text-[var(--navy)]"
+                                >
+                                  {copy.start}
+                                  <ArrowRight className="size-3.5" />
+                                </Link>
+                                <button
+                                  type="button"
+                                  onClick={() => removeDayBlock(day, block.id)}
+                                  className="inline-flex size-8 items-center justify-center rounded-full border border-[rgba(20,50,75,0.12)] text-[var(--ink-soft)] transition hover:border-red-300 hover:text-red-500"
+                                  aria-label={copy.remove}
+                                >
+                                  <Trash2 className="size-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          </article>
                         );
                       })}
+                      </div>
+
+                      <div className="rounded-[1.15rem] border border-[rgba(20,50,75,0.08)] bg-white/84 p-3.5">
+                        <div className="flex items-center justify-between gap-3">
+                          <h4 className="text-sm font-semibold uppercase tracking-[0.12em] text-[var(--ink)]">
+                            {scheduleText.editPlan}
+                          </h4>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => beginCreateBlock(day.day)}
+                              className="rounded-full border border-[rgba(20,50,75,0.12)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] transition hover:border-[var(--navy)] hover:text-[var(--navy)]"
+                            >
+                              {scheduleText.addTask}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => resetDayPlan(day.day)}
+                              className="rounded-full border border-[rgba(20,50,75,0.12)] px-3 py-1.5 text-xs font-semibold text-[var(--ink-soft)] transition hover:text-[var(--ink)]"
+                            >
+                              {scheduleText.resetDay}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 grid gap-2.5">
+                          <input
+                            value={isEditingDay ? blockDraft.title : ""}
+                            onChange={(event) =>
+                              setBlockDraft((current) => ({ ...current, day: day.day, title: event.target.value }))
+                            }
+                            placeholder={scheduleText.taskTitlePlaceholder}
+                            className={compactInputCls}
+                          />
+                          <div className="grid gap-2.5 sm:grid-cols-[1fr_6.5rem]">
+                            <select
+                              value={isEditingDay ? blockDraft.skill : "reading"}
+                              onChange={(event) =>
+                                setBlockDraft((current) => ({
+                                  ...current,
+                                  day: day.day,
+                                  skill: event.target.value as ScheduleSkill,
+                                }))
+                              }
+                              className={compactInputCls}
+                            >
+                              {PLAN_SKILLS.map((skill) => (
+                                <option key={skill} value={skill}>
+                                  {skillMeta[skill].label[locale]}
+                                </option>
+                              ))}
+                            </select>
+                            <input
+                              type="number"
+                              min={5}
+                              max={90}
+                              step={5}
+                              value={isEditingDay ? blockDraft.minutes : 15}
+                              onChange={(event) =>
+                                setBlockDraft((current) => ({
+                                  ...current,
+                                  day: day.day,
+                                  minutes: Number(event.target.value || 15),
+                                }))
+                              }
+                              className={compactInputCls}
+                            />
+                          </div>
+                          <textarea
+                            rows={4}
+                            value={isEditingDay ? blockDraft.reason : ""}
+                            onChange={(event) =>
+                              setBlockDraft((current) => ({ ...current, day: day.day, reason: event.target.value }))
+                            }
+                            placeholder={scheduleText.taskReasonPlaceholder}
+                            className={`${compactInputCls} min-h-[110px] resize-none py-3`}
+                          />
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-xs font-semibold text-[var(--ink-soft)]">
+                              {scheduleText.taskMinutesLabel}: {isEditingDay ? blockDraft.minutes : 15}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              {isEditingDay ? (
+                                <button
+                                  type="button"
+                                  onClick={() => cancelBlockEdit(day.day)}
+                                  className="rounded-full border border-[rgba(20,50,75,0.12)] px-3 py-1.5 text-xs font-semibold text-[var(--ink-soft)] transition hover:text-[var(--ink)]"
+                                >
+                                  {copy.cancelEdit}
+                                </button>
+                              ) : null}
+                              <button
+                                type="button"
+                                onClick={() => submitBlock(day)}
+                                className="inline-flex items-center gap-2 rounded-full bg-[var(--navy)] px-4 py-2 text-sm font-semibold text-[#f7efe3] transition hover:translate-y-[-1px]"
+                              >
+                                <Plus className="size-4" />
+                                {blockDraft.id && isEditingDay ? scheduleText.saveTask : scheduleText.addTask}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ) : null}
@@ -1005,7 +1298,7 @@ function EditableDeadlineRow({
   }
 
   return (
-    <div className="grid gap-3 rounded-[1rem] border border-[rgba(20,50,75,0.08)] bg-white/85 p-4 lg:grid-cols-[1.6fr_1fr_1fr_auto]">
+    <div className="grid gap-2.5 rounded-[1rem] border border-[rgba(20,50,75,0.08)] bg-white/85 p-3.5 lg:grid-cols-[1.6fr_1fr_1fr_auto]">
       <input value={title} onChange={(event) => setTitle(event.target.value)} onBlur={commitTitle} onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }} className={compactInputCls} />
       <input type="date" value={item.dueDate} onChange={(event) => onSave({ dueDate: event.target.value })} className={compactInputCls} />
       <select value={item.skill} onChange={(event) => onSave({ skill: event.target.value as TrackedSkill })} className={compactInputCls}>

@@ -7,7 +7,8 @@ export type StudyWindow = "early" | "midday" | "evening";
 export type ScheduleClassType = "lecture" | "seminar" | "lab";
 export type ScheduleWeekMode = "normal" | "heavy-reading" | "presentation" | "deadline-rescue" | "recovery";
 export type ScheduleSkill = TrackedSkill | "review";
-export type ScheduleSlotId = "01-02" | "03-04" | "05-06" | "07-08" | "09-10" | "11-12";
+export type ScheduleSlotId = "01-02" | "03-04" | "05-06" | "07-08" | "09-10";
+export type ScheduleBlockType = "anchor" | "support" | "memory" | "custom";
 
 export const SCHEDULE_TIME_SLOTS: ReadonlyArray<{
   id: ScheduleSlotId;
@@ -22,7 +23,6 @@ export const SCHEDULE_TIME_SLOTS: ReadonlyArray<{
   { id: "05-06", defaultTime: "13:30", label: { zh: "05-06", en: "05-06" } },
   { id: "07-08", defaultTime: "15:30", label: { zh: "07-08", en: "07-08" } },
   { id: "09-10", defaultTime: "18:00", label: { zh: "09-10", en: "09-10" } },
-  { id: "11-12", defaultTime: "20:00", label: { zh: "11-12", en: "11-12" } },
 ] as const;
 
 export interface ScheduleClassSession {
@@ -41,6 +41,20 @@ export interface ScheduleDeadline {
   skill: TrackedSkill;
 }
 
+export interface EditableScheduleBlock {
+  id: string;
+  type: ScheduleBlockType;
+  title: string;
+  skill: ScheduleSkill;
+  minutes: number;
+  reason: string;
+}
+
+export interface ScheduleDayPlanOverride {
+  day: number;
+  blocks: EditableScheduleBlock[];
+}
+
 export interface SchedulePreferences {
   version: 1;
   goal: ScheduleGoal;
@@ -49,12 +63,13 @@ export interface SchedulePreferences {
   studyWindow: StudyWindow;
   classes: ScheduleClassSession[];
   deadlines: ScheduleDeadline[];
+  planOverrides: ScheduleDayPlanOverride[];
   updatedAt: string;
 }
 
 export interface ScheduleBlock {
   id: string;
-  type: "anchor" | "support" | "memory";
+  type: ScheduleBlockType;
   title: string;
   skill: ScheduleSkill;
   minutes: number;
@@ -71,6 +86,7 @@ export interface DailySchedule {
   isToday: boolean;
   classes: ScheduleClassSession[];
   deadlines: ScheduleDeadline[];
+  isManual: boolean;
   blocks: ScheduleBlock[];
 }
 
@@ -149,6 +165,18 @@ function isTrackedSkill(value: string | null | undefined): value is TrackedSkill
   return value === "listening" || value === "speaking" || value === "reading" || value === "writing";
 }
 
+function isScheduleSkill(value: string | null | undefined): value is ScheduleSkill {
+  return isTrackedSkill(value) || value === "review";
+}
+
+function normalizeBlockType(value: string | null | undefined): ScheduleBlockType {
+  if (value === "anchor" || value === "support" || value === "memory" || value === "custom") {
+    return value;
+  }
+
+  return "custom";
+}
+
 function normalizeDay(value: number) {
   if (!Number.isFinite(value)) return 0;
   return clamp(Math.round(value), 0, 6);
@@ -176,8 +204,7 @@ function inferSlotFromTime(time: string): ScheduleSlotId {
   if (hour < 12) return "03-04";
   if (hour < 15) return "05-06";
   if (hour < 17) return "07-08";
-  if (hour < 20) return "09-10";
-  return "11-12";
+  return "09-10";
 }
 
 function normalizeSlot(value: string | null | undefined, fallbackTime?: string | null) {
@@ -244,6 +271,44 @@ function normalizeDeadline(value: unknown): ScheduleDeadline | null {
   };
 }
 
+function normalizeEditableBlock(value: unknown): EditableScheduleBlock | null {
+  if (!value || typeof value !== "object") return null;
+
+  const next = value as Partial<EditableScheduleBlock>;
+  const title = String(next.title ?? "").trim();
+  const reason = String(next.reason ?? "").trim();
+  const minutes = clamp(Math.round(Number(next.minutes ?? 12)), 5, 90);
+
+  if (!title || !reason || !isScheduleSkill(String(next.skill ?? ""))) {
+    return null;
+  }
+
+  return {
+    id: String(next.id ?? createId("plan")),
+    type: normalizeBlockType(next.type),
+    title,
+    skill: String(next.skill ?? "review") as ScheduleSkill,
+    minutes,
+    reason,
+  };
+}
+
+function normalizeDayPlanOverride(value: unknown): ScheduleDayPlanOverride | null {
+  if (!value || typeof value !== "object") return null;
+
+  const next = value as Partial<ScheduleDayPlanOverride>;
+  const blocks = Array.isArray(next.blocks)
+    ? (next.blocks.map(normalizeEditableBlock).filter(Boolean) as EditableScheduleBlock[])
+    : [];
+
+  if (blocks.length === 0) return null;
+
+  return {
+    day: normalizeDay(Number(next.day ?? 0)),
+    blocks,
+  };
+}
+
 export function createDefaultSchedulePreferences(referenceDate = new Date(), locale: Locale = "en"): SchedulePreferences {
   const today = toDateAtStart(referenceDate);
   const copy = getDefaultPreferenceCopy(locale);
@@ -266,6 +331,7 @@ export function createDefaultSchedulePreferences(referenceDate = new Date(), loc
         skill: "writing",
       },
     ],
+    planOverrides: [],
     updatedAt: new Date().toISOString(),
   };
 }
@@ -281,6 +347,11 @@ function normalizePreferences(value: unknown, locale: Locale = "en"): SchedulePr
   const deadlines = Array.isArray(next.deadlines)
     ? (next.deadlines.map(normalizeDeadline).filter(Boolean) as ScheduleDeadline[])
     : fallback.deadlines;
+  const planOverrides = Array.isArray(next.planOverrides)
+    ? (next.planOverrides
+        .map(normalizeDayPlanOverride)
+        .filter(Boolean) as ScheduleDayPlanOverride[])
+    : [];
 
   return {
     version: 1,
@@ -290,6 +361,7 @@ function normalizePreferences(value: unknown, locale: Locale = "en"): SchedulePr
     studyWindow: normalizeWindow(next.studyWindow),
     classes,
     deadlines,
+    planOverrides,
     updatedAt: typeof next.updatedAt === "string" ? next.updatedAt : fallback.updatedAt,
   };
 }
@@ -353,6 +425,16 @@ export function createScheduleDeadline(input: Omit<ScheduleDeadline, "id">): Sch
   return {
     ...input,
     id: createId("deadline"),
+  };
+}
+
+export function createEditableScheduleBlock(
+  input: Omit<EditableScheduleBlock, "id">,
+): EditableScheduleBlock {
+  return {
+    ...input,
+    id: createId("plan"),
+    minutes: clamp(Math.round(input.minutes), 5, 90),
   };
 }
 
@@ -499,7 +581,7 @@ function determineWeekMode(preferences: SchedulePreferences, reviewDue: number, 
 
 function createBlock(args: {
   id: string;
-  type: "anchor" | "support" | "memory";
+  type: ScheduleBlockType;
   title: string;
   skill: ScheduleSkill;
   minutes: number;
@@ -580,6 +662,9 @@ export function generateWeeklySchedule(input: {
   const weakestSkill = orderedSkills[0] ?? "speaking";
   const rotation = getRotation(input.preferences.goal);
   const weekMode = determineWeekMode(input.preferences, input.reviewDue, referenceDate);
+  const planOverrideMap = new Map(
+    input.preferences.planOverrides.map((item) => [item.day, item.blocks]),
+  );
 
   const days: DailySchedule[] = Array.from({ length: 7 }, (_, day) => {
     const currentDate = addDays(weekStart, day);
@@ -640,44 +725,47 @@ export function generateWeeklySchedule(input: {
     const supportMinutes = clamp(Math.round(targetMinutes * 0.27), 8, 18);
     const memoryMinutes = clamp(targetMinutes - anchorMinutes - supportMinutes, 8, 16);
 
-    const blocks: ScheduleBlock[] = [
-      createBlock({
+    const autoBlocks: EditableScheduleBlock[] = [
+      {
         id: `${dateISO}-anchor`,
         type: "anchor",
         title: getAnchorTitle(anchorSkill, input.locale, classes[0]?.type, Boolean(soonestDeadline)),
         skill: anchorSkill,
         minutes: anchorMinutes,
         reason: anchorReason,
-        order: 0,
-        level,
-        locale: input.locale,
-        studyWindow: input.preferences.studyWindow,
-      }),
-      createBlock({
+      },
+      {
         id: `${dateISO}-support`,
         type: "support",
         title: getSupportTitle(supportSkill, input.locale),
         skill: supportSkill,
         minutes: supportMinutes,
         reason: getSupportReason(supportSkill === weakestSkill, input.locale),
-        order: 1,
-        level,
-        locale: input.locale,
-        studyWindow: input.preferences.studyWindow,
-      }),
-      createBlock({
+      },
+      {
         id: `${dateISO}-memory`,
         type: "memory",
         title: getMemoryTitle(input.locale),
         skill: "review",
         minutes: memoryMinutes,
         reason: getReviewReason(input.reviewDue, input.locale),
-        order: 2,
+      },
+    ];
+    const blockTemplates = planOverrideMap.get(day) ?? autoBlocks;
+    const blocks: ScheduleBlock[] = blockTemplates.map((block, index) =>
+      createBlock({
+        id: block.id,
+        type: block.type,
+        title: block.title,
+        skill: block.skill,
+        minutes: block.minutes,
+        reason: block.reason,
+        order: index,
         level,
         locale: input.locale,
         studyWindow: input.preferences.studyWindow,
       }),
-    ];
+    );
 
     return {
       dateISO,
@@ -696,6 +784,7 @@ export function generateWeeklySchedule(input: {
       isToday: dateISO === formatISODate(referenceDate),
       classes,
       deadlines,
+      isManual: planOverrideMap.has(day),
       blocks,
     };
   });
