@@ -7,12 +7,30 @@ export type StudyWindow = "early" | "midday" | "evening";
 export type ScheduleClassType = "lecture" | "seminar" | "lab";
 export type ScheduleWeekMode = "normal" | "heavy-reading" | "presentation" | "deadline-rescue" | "recovery";
 export type ScheduleSkill = TrackedSkill | "review";
+export type ScheduleSlotId = "01-02" | "03-04" | "05-06" | "07-08" | "09-10" | "11-12";
+
+export const SCHEDULE_TIME_SLOTS: ReadonlyArray<{
+  id: ScheduleSlotId;
+  defaultTime: string;
+  label: {
+    zh: string;
+    en: string;
+  };
+}> = [
+  { id: "01-02", defaultTime: "08:00", label: { zh: "01-02", en: "01-02" } },
+  { id: "03-04", defaultTime: "10:00", label: { zh: "03-04", en: "03-04" } },
+  { id: "05-06", defaultTime: "13:30", label: { zh: "05-06", en: "05-06" } },
+  { id: "07-08", defaultTime: "15:30", label: { zh: "07-08", en: "07-08" } },
+  { id: "09-10", defaultTime: "18:00", label: { zh: "09-10", en: "09-10" } },
+  { id: "11-12", defaultTime: "20:00", label: { zh: "11-12", en: "11-12" } },
+] as const;
 
 export interface ScheduleClassSession {
   id: string;
   title: string;
   type: ScheduleClassType;
   day: number;
+  slot: ScheduleSlotId;
   time: string;
 }
 
@@ -142,6 +160,39 @@ function normalizeTime(value: string | null | undefined) {
   return "09:00";
 }
 
+export function isScheduleSlotId(value: string | null | undefined): value is ScheduleSlotId {
+  return SCHEDULE_TIME_SLOTS.some((slot) => slot.id === value);
+}
+
+export function getScheduleSlotDefaultTime(slot: ScheduleSlotId) {
+  return SCHEDULE_TIME_SLOTS.find((item) => item.id === slot)?.defaultTime ?? "09:00";
+}
+
+function inferSlotFromTime(time: string): ScheduleSlotId {
+  const [hourString] = time.split(":");
+  const hour = Number(hourString);
+  if (!Number.isFinite(hour)) return "03-04";
+  if (hour < 9) return "01-02";
+  if (hour < 12) return "03-04";
+  if (hour < 15) return "05-06";
+  if (hour < 17) return "07-08";
+  if (hour < 20) return "09-10";
+  return "11-12";
+}
+
+function normalizeSlot(value: string | null | undefined, fallbackTime?: string | null) {
+  if (isScheduleSlotId(value)) return value;
+  if (fallbackTime) return inferSlotFromTime(normalizeTime(fallbackTime));
+  return "03-04";
+}
+
+export function compareScheduleClasses(a: ScheduleClassSession, b: ScheduleClassSession) {
+  const slotIndexA = SCHEDULE_TIME_SLOTS.findIndex((slot) => slot.id === a.slot);
+  const slotIndexB = SCHEDULE_TIME_SLOTS.findIndex((slot) => slot.id === b.slot);
+  if (slotIndexA !== slotIndexB) return slotIndexA - slotIndexB;
+  return a.time.localeCompare(b.time);
+}
+
 function getDefaultPreferenceCopy(locale: Locale) {
   return locale === "zh"
     ? {
@@ -170,7 +221,8 @@ function normalizeClass(value: unknown): ScheduleClassSession | null {
     title,
     type,
     day: normalizeDay(Number(next.day ?? 0)),
-    time: normalizeTime(next.time),
+    slot: normalizeSlot(typeof next.slot === "string" ? next.slot : null, next.time),
+    time: normalizeTime(next.time ?? getScheduleSlotDefaultTime(normalizeSlot(typeof next.slot === "string" ? next.slot : null, next.time))),
   };
 }
 
@@ -203,8 +255,8 @@ export function createDefaultSchedulePreferences(referenceDate = new Date(), loc
     mode: "standard",
     studyWindow: "evening",
     classes: [
-      { id: createId("class"), title: copy.lecture, type: "lecture", day: 0, time: "09:00" },
-      { id: createId("class"), title: copy.seminar, type: "seminar", day: 3, time: "14:00" },
+      { id: createId("class"), title: copy.lecture, type: "lecture", day: 0, slot: "03-04", time: "10:00" },
+      { id: createId("class"), title: copy.seminar, type: "seminar", day: 3, slot: "07-08", time: "15:30" },
     ],
     deadlines: [
       {
@@ -291,6 +343,8 @@ export function subscribeSchedulePreferences(callback: () => void) {
 export function createScheduleClassSession(input: Omit<ScheduleClassSession, "id">): ScheduleClassSession {
   return {
     ...input,
+    slot: normalizeSlot(input.slot, input.time),
+    time: normalizeTime(input.time ?? getScheduleSlotDefaultTime(normalizeSlot(input.slot, input.time))),
     id: createId("class"),
   };
 }
@@ -532,7 +586,7 @@ export function generateWeeklySchedule(input: {
     const dateISO = formatISODate(currentDate);
     const classes = input.preferences.classes
       .filter((item) => item.day === day)
-      .sort((a, b) => a.time.localeCompare(b.time));
+      .sort(compareScheduleClasses);
     const deadlines = input.preferences.deadlines
       .filter((item) => item.dueDate === dateISO)
       .sort((a, b) => a.title.localeCompare(b.title));

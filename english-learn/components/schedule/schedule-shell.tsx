@@ -6,13 +6,18 @@ import {
   BookOpenText,
   BrainCircuit,
   CalendarClock,
+  ChevronDown,
+  FileSpreadsheet,
   Headphones,
+  ImageUp,
   Mic,
   PenTool,
   Plus,
+  Sparkles,
   Trash2,
+  X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { type Locale } from "@/lib/i18n/dictionaries";
@@ -23,79 +28,86 @@ import {
   type TrackedSkill,
 } from "@/lib/learning-tracker";
 import {
+  compareScheduleClasses,
   createDefaultSchedulePreferences,
   createScheduleClassSession,
   createScheduleDeadline,
   generateWeeklySchedule,
+  getScheduleSlotDefaultTime,
   loadSchedulePreferencesFromStorage,
   saveSchedulePreferencesToStorage,
+  SCHEDULE_TIME_SLOTS,
   subscribeSchedulePreferences,
+  type ScheduleClassSession,
   type ScheduleClassType,
   type ScheduleDeadline,
   type ScheduleGoal,
   type ScheduleMode,
   type SchedulePreferences,
+  type ScheduleSlotId,
+  type ScheduleWeekMode,
   type StudyWindow,
 } from "@/lib/schedule";
 
-// ─── constants ───────────────────────────────────────────────────────────────
-
-const MANUAL_KEY = "english-learn:schedule-manual-skills";
-
-type ManualSkills = { [day: number]: TrackedSkill | "auto" };
-
+const TRACKED_SKILLS: TrackedSkill[] = ["listening", "speaking", "reading", "writing"];
+const WEEKDAY_ORDER = [6, 0, 1, 2, 3, 4, 5] as const;
+const dayLabels = {
+  zh: ["周一", "周二", "周三", "周四", "周五", "周六", "周日"],
+  en: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+} as const;
+const classTypeOptions = [
+  { value: "lecture", label: { zh: "课程", en: "Lecture" } },
+  { value: "seminar", label: { zh: "研讨", en: "Seminar" } },
+  { value: "lab", label: { zh: "实验", en: "Lab" } },
+] as const;
+const weekModeLabels: Record<ScheduleWeekMode, { zh: string; en: string }> = {
+  normal: { zh: "常规周", en: "Normal week" },
+  "heavy-reading": { zh: "阅读周", en: "Reading week" },
+  presentation: { zh: "展示周", en: "Presentation week" },
+  "deadline-rescue": { zh: "赶 due 周", en: "Deadline week" },
+  recovery: { zh: "缓冲周", en: "Recovery week" },
+};
+const classTone = {
+  lecture: "bg-[#ff8a3d] text-white",
+  seminar: "bg-[#6b58d6] text-white",
+  lab: "bg-[#21b7c8] text-white",
+} satisfies Record<ScheduleClassType, string>;
 const skillMeta = {
-  listening: { label: { zh: "听力", en: "Listening" }, Icon: Headphones, href: (l: Locale) => `/listening?lang=${l}` },
-  speaking:  { label: { zh: "口语", en: "Speaking"  }, Icon: Mic,       href: (level: string, l: Locale) => `/lesson/${level}-speaking-starter?lang=${l}` },
-  reading:   { label: { zh: "阅读", en: "Reading"   }, Icon: BookOpenText, href: (l: Locale) => `/reading?lang=${l}` },
-  writing:   { label: { zh: "写作", en: "Writing"   }, Icon: PenTool,    href: (level: string, l: Locale) => `/lesson/${level}-writing-starter?lang=${l}` },
-  review:    { label: { zh: "复习", en: "Review"    }, Icon: BrainCircuit, href: (l: Locale) => `/review?lang=${l}` },
+  listening: { label: { zh: "听力", en: "Listening" }, Icon: Headphones },
+  speaking: { label: { zh: "口语", en: "Speaking" }, Icon: Mic },
+  reading: { label: { zh: "阅读", en: "Reading" }, Icon: BookOpenText },
+  writing: { label: { zh: "写作", en: "Writing" }, Icon: PenTool },
+  review: { label: { zh: "复习", en: "Review" }, Icon: BrainCircuit },
 } as const;
 
-const TRACKED_SKILLS: TrackedSkill[] = ["listening", "speaking", "reading", "writing"];
+const compactInputCls =
+  "w-full rounded-[0.9rem] border border-[rgba(20,50,75,0.14)] bg-white/90 px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[rgba(28,78,149,0.28)] focus:ring-2 focus:ring-[rgba(28,78,149,0.08)]";
 
-const classTypeOptions = [
-  { value: "lecture", label: { zh: "课程",   en: "Lecture" } },
-  { value: "seminar", label: { zh: "研讨课", en: "Seminar" } },
-  { value: "lab",     label: { zh: "实验课", en: "Lab"     } },
-] as const;
+type ClassDraft = {
+  id: string | null;
+  title: string;
+  day: number;
+  slot: ScheduleSlotId;
+  type: ScheduleClassType;
+  time: string;
+};
 
-const dayLabels = {
-  zh: ["周一","周二","周三","周四","周五","周六","周日"],
-  en: ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
+type DeadlineDraft = {
+  title: string;
+  dueDate: string;
+  skill: TrackedSkill;
+};
+
+type ImportState = {
+  tone: "idle" | "success" | "error";
+  message: string;
+  warnings: string[];
 };
 
 function normalizeLevel(raw: string | null) {
   const next = String(raw ?? "A2").toUpperCase();
-  return ["A1","A2","B1","B2","C1","C2"].includes(next) ? next : "A2";
+  return ["A1", "A2", "B1", "B2", "C1", "C2"].includes(next) ? next : "A2";
 }
-
-function getDefaultDeadlineDate() {
-  const d = new Date();
-  d.setDate(d.getDate() + 3);
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-}
-
-function pressureColor(p: number) {
-  if (p <= 35) return "bg-emerald-400/80";
-  if (p <= 55) return "bg-amber-400/80";
-  if (p <= 72) return "bg-orange-400/80";
-  return "bg-red-400/80";
-}
-
-function loadManualSkills(): ManualSkills {
-  try {
-    const raw = localStorage.getItem(MANUAL_KEY);
-    return raw ? (JSON.parse(raw) as ManualSkills) : {};
-  } catch { return {}; }
-}
-
-function saveManualSkills(v: ManualSkills) {
-  localStorage.setItem(MANUAL_KEY, JSON.stringify(v));
-}
-
-const inputCls =
-  "w-full rounded-[1rem] border border-[rgba(20,50,75,0.14)] bg-white/90 px-4 py-3 text-sm text-[var(--ink)] outline-none transition focus:border-[rgba(28,78,149,0.28)] focus:ring-2 focus:ring-[rgba(28,78,149,0.08)]";
 
 function chip(active: boolean) {
   return `rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
@@ -105,495 +117,812 @@ function chip(active: boolean) {
   }`;
 }
 
-// ─── main component ──────────────────────────────────────────────────────────
+function getDefaultDeadlineDate() {
+  const next = new Date();
+  next.setDate(next.getDate() + 3);
+  return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-${String(next.getDate()).padStart(2, "0")}`;
+}
+
+function createEmptyClassDraft(day = 0, slot: ScheduleSlotId = "03-04"): ClassDraft {
+  return {
+    id: null,
+    title: "",
+    day,
+    slot,
+    type: "lecture",
+    time: getScheduleSlotDefaultTime(slot),
+  };
+}
+
+function createEmptyDeadlineDraft(): DeadlineDraft {
+  return {
+    title: "",
+    dueDate: getDefaultDeadlineDate(),
+    skill: "writing",
+  };
+}
+
+function formatDateLabel(dateISO: string, locale: Locale) {
+  return new Intl.DateTimeFormat(locale === "zh" ? "zh-CN" : "en-US", {
+    month: locale === "zh" ? "numeric" : "short",
+    day: "numeric",
+  }).format(new Date(`${dateISO}T00:00:00`));
+}
+
+function pressureTone(pressure: number) {
+  if (pressure <= 35) return { dot: "bg-emerald-400", pill: "bg-emerald-50 text-emerald-700" };
+  if (pressure <= 55) return { dot: "bg-amber-400", pill: "bg-amber-50 text-amber-700" };
+  if (pressure <= 72) return { dot: "bg-orange-400", pill: "bg-orange-50 text-orange-700" };
+  return { dot: "bg-red-400", pill: "bg-red-50 text-red-700" };
+}
+
+function buildImportState(
+  tone: ImportState["tone"],
+  message: string,
+  warnings: string[] = [],
+): ImportState {
+  return { tone, message, warnings };
+}
 
 export function ScheduleShell({ locale }: { locale: Locale }) {
-  const [level, setLevel]           = useState("A2");
-  const [snapshot, setSnapshot]     = useState(() => createEmptyLearningTrackerSnapshot());
+  const [level, setLevel] = useState("A2");
+  const [snapshot, setSnapshot] = useState(() => createEmptyLearningTrackerSnapshot());
   const [preferences, setPreferences] = useState<SchedulePreferences>(() =>
-    createDefaultSchedulePreferences(new Date(), locale)
+    createDefaultSchedulePreferences(new Date(), locale),
   );
-  const [mode, setMode]             = useState<"auto" | "manual">("auto");
-  const [manualSkills, setManualSkills] = useState<ManualSkills>({});
+  const [expandedDay, setExpandedDay] = useState<number | null>(null);
+  const [classDraft, setClassDraft] = useState<ClassDraft>(() => createEmptyClassDraft());
+  const [deadlineDraft, setDeadlineDraft] = useState<DeadlineDraft>(() => createEmptyDeadlineDraft());
+  const [importState, setImportState] = useState<ImportState>(() => buildImportState("idle", "", []));
+  const [excelLoading, setExcelLoading] = useState(false);
+  const [imageLoading, setImageLoading] = useState(false);
 
-  const [classDraft, setClassDraft] = useState({
-    title: "", day: 0, type: "lecture" as ScheduleClassType, time: "09:00",
-  });
-  const [deadlineDraft, setDeadlineDraft] = useState({
-    title: "", dueDate: getDefaultDeadlineDate(), skill: "writing" as TrackedSkill,
-  });
+  const excelInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
-  const c = locale === "zh"
-    ? {
-        title:           "学习计划",
-        langNote:        "浏览器本地保存",
-        prefsTitle:      "学习偏好",
-        goalLabel:       "目标",
-        goals:           { coursework:"课程作业", research:"学术研究", seminar:"研讨课" },
-        minutesLabel:    "每日时长",
-        modeLabel:       "强度",
-        modes:           { light:"轻松", standard:"标准", intensive:"强化" },
-        windowLabel:     "学习时段",
-        windows:         { early:"早晨", midday:"中午", evening:"晚上" },
-        classesTitle:    "课程表",
-        noClasses:       "还没有课程，点下方添加",
-        classNamePh:     "课程名称",
-        classTimePh:     "时间",
-        addClass:        "添加课程",
-        deadlinesTitle:  "截止任务",
-        noDeadlines:     "还没有截止任务，点下方添加",
-        deadlineNamePh:  "任务名称",
-        addDeadline:     "添加任务",
-        remove:          "删除",
-        scheduleTitle:   "本周安排",
-        autoMode:        "自动安排",
-        manualMode:      "自己安排",
-        autoHint:        "系统根据课程表和截止任务自动分配每日任务。",
-        manualHint:      "为每天选择一个主练技能，系统生成对应任务。",
-        skillAuto:       "自动",
-        startTask:       "开始",
-        minShort:        "分",
-        today:           "今天",
-      }
-    : {
-        title:           "Schedule",
-        langNote:        "Saved in browser",
-        prefsTitle:      "Preferences",
-        goalLabel:       "Goal",
-        goals:           { coursework:"Coursework", research:"Research", seminar:"Seminar" },
-        minutesLabel:    "Daily time",
-        modeLabel:       "Intensity",
-        modes:           { light:"Light", standard:"Standard", intensive:"Intensive" },
-        windowLabel:     "Study window",
-        windows:         { early:"Morning", midday:"Midday", evening:"Evening" },
-        classesTitle:    "Classes",
-        noClasses:       "No classes yet — add one below",
-        classNamePh:     "Class name",
-        classTimePh:     "Time",
-        addClass:        "Add class",
-        deadlinesTitle:  "Deadlines",
-        noDeadlines:     "No deadlines yet — add one below",
-        deadlineNamePh:  "Task name",
-        addDeadline:     "Add deadline",
-        remove:          "Remove",
-        scheduleTitle:   "This week",
-        autoMode:        "Auto",
-        manualMode:      "Manual",
-        autoHint:        "System allocates daily tasks based on your classes and deadlines.",
-        manualHint:      "Pick a focus skill for each day; the system builds your tasks around it.",
-        skillAuto:       "Auto",
-        startTask:       "Start",
-        minShort:        "min",
-        today:           "Today",
-      };
-
-  // ── effects ────────────────────────────────────────────────────────────────
+  const copy =
+    locale === "zh"
+      ? {
+          title: "学习计划",
+          savedLabel: "本地保存",
+          goalLabel: "目标",
+          goals: { coursework: "课程作业", research: "学术研究", seminar: "研讨发言" },
+          minutesLabel: "每日时长",
+          modeLabel: "强度",
+          modes: { light: "轻量", standard: "标准", intensive: "强化" },
+          windowLabel: "学习时段",
+          windows: { early: "早晨", midday: "中午", evening: "晚上" },
+          weekTarget: "本周总量",
+          weekMode: "周模式",
+          weekFocus: "当前重点",
+          todayTitle: "今天重点",
+          todayBadge: "今天",
+          timetableTitle: "课表",
+          timetableHint: "点击单元格可快速录入课程，也可以直接导入图片或 Excel。",
+          imageImport: "图片识别课程表",
+          excelImport: "Excel 导入",
+          importReady: "已导入课程表。",
+          importFailed: "导入失败，请检查文件内容。",
+          importRunningImage: "正在识别图片课程表…",
+          importRunningExcel: "正在导入 Excel 课程表…",
+          manualEdit: "手动编辑",
+          classNamePlaceholder: "课程名称",
+          classTimeLabel: "时间",
+          classTypeLabel: "类型",
+          weekdayLabel: "星期",
+          slotLabel: "节次",
+          addClass: "添加课程",
+          updateClass: "更新课程",
+          cancelEdit: "取消",
+          noClassInCell: "空",
+          deadlinesTitle: "截止任务",
+          deadlineHint: "截止任务会直接影响系统给出的本周自动安排。",
+          deadlineNamePlaceholder: "任务名称",
+          deadlineDateLabel: "截止日期",
+          deadlineSkillLabel: "关联技能",
+          addDeadline: "添加任务",
+          remove: "删除",
+          weekTitle: "本周安排",
+          weekHint: "系统会自动生成安排，默认只显示星期，点击当天后展开详情。",
+          autoPlan: "自动生成",
+          dateLabel: "日期",
+          pressureLabel: "压力",
+          classesCount: "课程",
+          deadlinesCount: "任务",
+          start: "开始",
+          minuteShort: "分钟",
+          noDeadlines: "还没有截止任务",
+        }
+      : {
+          title: "Schedule",
+          savedLabel: "Saved locally",
+          goalLabel: "Goal",
+          goals: { coursework: "Coursework", research: "Research", seminar: "Seminar" },
+          minutesLabel: "Daily time",
+          modeLabel: "Intensity",
+          modes: { light: "Light", standard: "Standard", intensive: "Intensive" },
+          windowLabel: "Study window",
+          windows: { early: "Morning", midday: "Midday", evening: "Evening" },
+          weekTarget: "Weekly target",
+          weekMode: "Week mode",
+          weekFocus: "Current focus",
+          todayTitle: "Today focus",
+          todayBadge: "Today",
+          timetableTitle: "Timetable",
+          timetableHint: "Click a cell to add a class, or import the whole timetable from an image or Excel file.",
+          imageImport: "Recognize from image",
+          excelImport: "Import Excel",
+          importReady: "Timetable imported.",
+          importFailed: "Import failed. Please check the file contents.",
+          importRunningImage: "Recognizing timetable image...",
+          importRunningExcel: "Importing Excel timetable...",
+          manualEdit: "Manual edit",
+          classNamePlaceholder: "Class name",
+          classTimeLabel: "Time",
+          classTypeLabel: "Type",
+          weekdayLabel: "Weekday",
+          slotLabel: "Slot",
+          addClass: "Add class",
+          updateClass: "Update class",
+          cancelEdit: "Cancel",
+          noClassInCell: "Empty",
+          deadlinesTitle: "Deadlines",
+          deadlineHint: "Deadlines feed directly into the auto-generated weekly plan.",
+          deadlineNamePlaceholder: "Task name",
+          deadlineDateLabel: "Due date",
+          deadlineSkillLabel: "Skill",
+          addDeadline: "Add deadline",
+          remove: "Remove",
+          weekTitle: "This week",
+          weekHint: "The schedule is generated automatically. Open a weekday to inspect the details.",
+          autoPlan: "Auto plan",
+          dateLabel: "Date",
+          pressureLabel: "Pressure",
+          classesCount: "Classes",
+          deadlinesCount: "Tasks",
+          start: "Start",
+          minuteShort: "min",
+          noDeadlines: "No deadlines yet",
+        };
 
   useEffect(() => {
     const refreshProfile = () => {
       setLevel(normalizeLevel(localStorage.getItem("demo_level")));
       setSnapshot(loadLearningTrackerSnapshotFromStorage());
     };
-    const refreshPrefs = () => setPreferences(loadSchedulePreferencesFromStorage(locale));
+    const refreshPreferences = () => setPreferences(loadSchedulePreferencesFromStorage(locale));
 
     refreshProfile();
-    refreshPrefs();
-    setManualSkills(loadManualSkills());
+    refreshPreferences();
 
-    const u1 = subscribeLearningTracker(refreshProfile);
-    const u2 = subscribeSchedulePreferences(refreshPrefs);
+    const offTracker = subscribeLearningTracker(refreshProfile);
+    const offSchedule = subscribeSchedulePreferences(refreshPreferences);
+
     window.addEventListener("storage", refreshProfile);
     window.addEventListener("demo-placement-changed", refreshProfile as EventListener);
+
     return () => {
-      u1(); u2();
+      offTracker();
+      offSchedule();
       window.removeEventListener("storage", refreshProfile);
       window.removeEventListener("demo-placement-changed", refreshProfile as EventListener);
     };
   }, [locale]);
 
-  // ── schedule ───────────────────────────────────────────────────────────────
-
-  const weeklySchedule = useMemo(() =>
-    generateWeeklySchedule({ preferences, snapshot, reviewDue: 0, locale, level }),
-    [preferences, snapshot, locale, level]
+  const weeklySchedule = useMemo(
+    () =>
+      generateWeeklySchedule({
+        preferences,
+        snapshot,
+        reviewDue: 0,
+        locale,
+        level,
+      }),
+    [preferences, snapshot, locale, level],
   );
 
-  // ── preference helpers ─────────────────────────────────────────────────────
+  const todaySchedule = weeklySchedule.days.find((day) => day.isToday) ?? weeklySchedule.days[0];
 
-  const updatePrefs = (partial: Partial<SchedulePreferences>) => {
-    setPreferences((cur) => saveSchedulePreferencesToStorage({ ...cur, ...partial, updatedAt: new Date().toISOString() }));
-  };
+  const timetableMap = useMemo(() => {
+    const next = new Map<string, ScheduleClassSession[]>();
+    for (const item of [...preferences.classes].sort(compareScheduleClasses)) {
+      const key = `${item.day}-${item.slot}`;
+      next.set(key, [...(next.get(key) ?? []), item]);
+    }
+    return next;
+  }, [preferences.classes]);
 
-  // ── class CRUD ─────────────────────────────────────────────────────────────
+  function updatePreferences(partial: Partial<SchedulePreferences>) {
+    setPreferences((current) =>
+      saveSchedulePreferencesToStorage({
+        ...current,
+        ...partial,
+        updatedAt: new Date().toISOString(),
+      }),
+    );
+  }
 
-  function addClass() {
-    if (!classDraft.title.trim()) return;
-    updatePrefs({
-      classes: [...preferences.classes, createScheduleClassSession({
-        title: classDraft.title.trim(), day: classDraft.day,
-        type: classDraft.type, time: classDraft.time,
-      })],
+  function beginCreateClass(day: number, slot: ScheduleSlotId) {
+    setClassDraft(createEmptyClassDraft(day, slot));
+  }
+
+  function beginEditClass(item: ScheduleClassSession) {
+    setClassDraft({
+      id: item.id,
+      title: item.title,
+      day: item.day,
+      slot: item.slot,
+      type: item.type,
+      time: item.time,
     });
-    setClassDraft((c) => ({ ...c, title: "" }));
+  }
+
+  function cancelClassEdit() {
+    setClassDraft(createEmptyClassDraft(classDraft.day, classDraft.slot));
+  }
+
+  function submitClass() {
+    const title = classDraft.title.trim();
+    if (!title) return;
+
+    if (classDraft.id) {
+      updatePreferences({
+        classes: preferences.classes.map((item) =>
+          item.id === classDraft.id
+            ? {
+                ...item,
+                title,
+                day: classDraft.day,
+                slot: classDraft.slot,
+                type: classDraft.type,
+                time: classDraft.time,
+              }
+            : item,
+        ),
+      });
+    } else {
+      updatePreferences({
+        classes: [
+          ...preferences.classes,
+          createScheduleClassSession({
+            title,
+            day: classDraft.day,
+            slot: classDraft.slot,
+            type: classDraft.type,
+            time: classDraft.time,
+          }),
+        ],
+      });
+    }
+
+    setClassDraft(createEmptyClassDraft(classDraft.day, classDraft.slot));
   }
 
   function removeClass(id: string) {
-    updatePrefs({ classes: preferences.classes.filter((c) => c.id !== id) });
+    updatePreferences({
+      classes: preferences.classes.filter((item) => item.id !== id),
+    });
+    if (classDraft.id === id) {
+      setClassDraft(createEmptyClassDraft(classDraft.day, classDraft.slot));
+    }
   }
 
-  // ── deadline CRUD ──────────────────────────────────────────────────────────
-
-  function addDeadline() {
-    if (!deadlineDraft.title.trim()) return;
-    updatePrefs({
-      deadlines: [...preferences.deadlines, createScheduleDeadline({
-        title: deadlineDraft.title.trim(),
-        dueDate: deadlineDraft.dueDate,
-        skill: deadlineDraft.skill,
-      })],
+  function updateDeadline(id: string, partial: Partial<ScheduleDeadline>) {
+    updatePreferences({
+      deadlines: preferences.deadlines.map((item) => (item.id === id ? { ...item, ...partial } : item)),
     });
-    setDeadlineDraft((d) => ({ ...d, title: "" }));
   }
 
   function removeDeadline(id: string) {
-    updatePrefs({ deadlines: preferences.deadlines.filter((d) => d.id !== id) });
+    updatePreferences({
+      deadlines: preferences.deadlines.filter((item) => item.id !== id),
+    });
   }
 
-  // ── manual skill picker ────────────────────────────────────────────────────
+  function addDeadline() {
+    const title = deadlineDraft.title.trim();
+    if (!title) return;
 
-  function setManualSkill(day: number, skill: TrackedSkill | "auto") {
-    const next = { ...manualSkills, [day]: skill };
-    setManualSkills(next);
-    saveManualSkills(next);
+    updatePreferences({
+      deadlines: [
+        ...preferences.deadlines,
+        createScheduleDeadline({
+          title,
+          dueDate: deadlineDraft.dueDate,
+          skill: deadlineDraft.skill,
+        }),
+      ],
+    });
+    setDeadlineDraft(createEmptyDeadlineDraft());
   }
 
-  // ── render ─────────────────────────────────────────────────────────────────
+  async function applyImportedClasses(file: File, endpoint: string, loadingKind: "image" | "excel") {
+    if (loadingKind === "image") {
+      setImageLoading(true);
+      setImportState(buildImportState("idle", copy.importRunningImage));
+    } else {
+      setExcelLoading(true);
+      setImportState(buildImportState("idle", copy.importRunningExcel));
+    }
+
+    try {
+      const formData = new FormData();
+      formData.set("file", file);
+      const response = await fetch(endpoint, {
+        method: "POST",
+        body: formData,
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | {
+            error?: string;
+            classes?: Array<{
+              title: string;
+              day: number;
+              slot: ScheduleSlotId;
+              type: ScheduleClassType;
+              time?: string;
+            }>;
+            warnings?: string[];
+          }
+        | null;
+
+      if (!response.ok || !payload || !Array.isArray(payload.classes) || payload.classes.length === 0) {
+        setImportState(
+          buildImportState("error", payload?.error || copy.importFailed, Array.isArray(payload?.warnings) ? payload.warnings : []),
+        );
+        return;
+      }
+
+      updatePreferences({
+        classes: payload.classes.map((item) =>
+          createScheduleClassSession({
+            title: item.title,
+            day: item.day,
+            slot: item.slot,
+            type: item.type,
+            time: item.time || getScheduleSlotDefaultTime(item.slot),
+          }),
+        ),
+      });
+
+      setImportState(
+        buildImportState("success", copy.importReady, Array.isArray(payload.warnings) ? payload.warnings : []),
+      );
+      const first = payload.classes[0];
+      setClassDraft(createEmptyClassDraft(first.day, first.slot));
+    } catch {
+      setImportState(buildImportState("error", copy.importFailed));
+    } finally {
+      if (loadingKind === "image") {
+        setImageLoading(false);
+      } else {
+        setExcelLoading(false);
+      }
+    }
+  }
+
+  async function onExcelFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    await applyImportedClasses(file, "/api/schedule/import-excel", "excel");
+    event.target.value = "";
+  }
+
+  async function onImageFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    await applyImportedClasses(file, "/api/schedule/import-image", "image");
+    event.target.value = "";
+  }
 
   return (
     <section className="mt-6 grid gap-5 reveal-up">
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={onImageFileChange}
+      />
+      <input
+        ref={excelInputRef}
+        type="file"
+        accept=".xlsx,.xls,.csv"
+        className="hidden"
+        onChange={onExcelFileChange}
+      />
 
-      {/* ── header ── */}
       <article className="surface-panel rounded-[2rem] p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
-          <h2 className="font-display text-4xl tracking-tight text-[var(--ink)] sm:text-5xl">{c.title}</h2>
+          <div>
+            <h2 className="font-display text-4xl tracking-tight text-[var(--ink)] sm:text-5xl">{copy.title}</h2>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <StatPill label={copy.weekTarget} value={`${weeklySchedule.weeklyTargetMinutes} ${copy.minuteShort}`} />
+              <StatPill label={copy.weekMode} value={weekModeLabels[weeklySchedule.weekMode][locale]} />
+              <StatPill
+                label={copy.weekFocus}
+                value={`${skillMeta[weeklySchedule.primarySkill].label[locale]} / ${skillMeta[weeklySchedule.weakestSkill].label[locale]}`}
+              />
+            </div>
+          </div>
           <div className="flex items-center gap-3">
             <span className="hidden rounded-full border border-[rgba(20,50,75,0.12)] bg-white/80 px-3 py-1 text-xs font-semibold text-[var(--ink-soft)] sm:inline-flex">
-              {c.langNote}
+              {copy.savedLabel}
             </span>
             <LanguageSwitcher locale={locale} />
           </div>
         </div>
 
-        {/* preferences strip */}
         <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <PrefRow label={c.goalLabel}>
-            {(["coursework","research","seminar"] as ScheduleGoal[]).map((g) => (
-              <button key={g} className={chip(preferences.goal === g)} onClick={() => updatePrefs({ goal: g })}>
-                {c.goals[g]}
+          <PrefRow label={copy.goalLabel}>
+            {(["coursework", "research", "seminar"] as ScheduleGoal[]).map((goal) => (
+              <button key={goal} className={chip(preferences.goal === goal)} onClick={() => updatePreferences({ goal })} type="button">
+                {copy.goals[goal]}
               </button>
             ))}
           </PrefRow>
-          <PrefRow label={c.minutesLabel}>
-            {([20,35,50] as const).map((m) => (
-              <button key={m} className={chip(preferences.dailyMinutes === m)} onClick={() => updatePrefs({ dailyMinutes: m })}>
-                {m} {c.minShort}
+          <PrefRow label={copy.minutesLabel}>
+            {[20, 35, 50].map((minutes) => (
+              <button key={minutes} className={chip(preferences.dailyMinutes === minutes)} onClick={() => updatePreferences({ dailyMinutes: minutes })} type="button">
+                {minutes} {copy.minuteShort}
               </button>
             ))}
           </PrefRow>
-          <PrefRow label={c.modeLabel}>
-            {(["light","standard","intensive"] as ScheduleMode[]).map((m) => (
-              <button key={m} className={chip(preferences.mode === m)} onClick={() => updatePrefs({ mode: m })}>
-                {c.modes[m]}
+          <PrefRow label={copy.modeLabel}>
+            {(["light", "standard", "intensive"] as ScheduleMode[]).map((mode) => (
+              <button key={mode} className={chip(preferences.mode === mode)} onClick={() => updatePreferences({ mode })} type="button">
+                {copy.modes[mode]}
               </button>
             ))}
           </PrefRow>
-          <PrefRow label={c.windowLabel}>
-            {(["early","midday","evening"] as StudyWindow[]).map((w) => (
-              <button key={w} className={chip(preferences.studyWindow === w)} onClick={() => updatePrefs({ studyWindow: w })}>
-                {c.windows[w]}
+          <PrefRow label={copy.windowLabel}>
+            {(["early", "midday", "evening"] as StudyWindow[]).map((windowOption) => (
+              <button key={windowOption} className={chip(preferences.studyWindow === windowOption)} onClick={() => updatePreferences({ studyWindow: windowOption })} type="button">
+                {copy.windows[windowOption]}
               </button>
             ))}
           </PrefRow>
         </div>
       </article>
 
-      {/* ── classes + deadlines ── */}
-      <div className="grid gap-5 lg:grid-cols-2">
-
-        {/* classes */}
+      {todaySchedule ? (
         <article className="surface-panel rounded-[2rem] p-5 sm:p-6">
-          <h3 className="font-display text-3xl tracking-tight text-[var(--ink)]">{c.classesTitle}</h3>
-
-          <div className="mt-4 grid gap-2">
-            {preferences.classes.length === 0 ? (
-              <EmptyHint text={c.noClasses} />
-            ) : (
-              preferences.classes.map((item) => (
-                <ItemRow
-                  key={item.id}
-                  title={item.title}
-                  subtitle={`${dayLabels[locale][item.day]} · ${item.time}`}
-                  tag={classTypeOptions.find((o) => o.value === item.type)?.label[locale] ?? item.type}
-                  onRemove={() => removeClass(item.id)}
-                  removeLabel={c.remove}
-                />
-              ))
-            )}
-          </div>
-
-          {/* add form */}
-          <div className="mt-4 grid gap-2">
-            <input
-              value={classDraft.title}
-              onChange={(e) => setClassDraft((d) => ({ ...d, title: e.target.value }))}
-              onKeyDown={(e) => e.key === "Enter" && addClass()}
-              placeholder={c.classNamePh}
-              className={inputCls}
-            />
-            <div className="grid grid-cols-3 gap-2">
-              <select
-                value={classDraft.day}
-                onChange={(e) => setClassDraft((d) => ({ ...d, day: Number(e.target.value) }))}
-                className={inputCls}
-              >
-                {dayLabels[locale].map((label, i) => (
-                  <option key={i} value={i}>{label}</option>
-                ))}
-              </select>
-              <select
-                value={classDraft.type}
-                onChange={(e) => setClassDraft((d) => ({ ...d, type: e.target.value as ScheduleClassType }))}
-                className={inputCls}
-              >
-                {classTypeOptions.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label[locale]}</option>
-                ))}
-              </select>
-              <input
-                value={classDraft.time}
-                onChange={(e) => setClassDraft((d) => ({ ...d, time: e.target.value }))}
-                placeholder={c.classTimePh}
-                type="time"
-                className={inputCls}
-              />
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="font-display text-3xl tracking-tight text-[var(--ink)]">{copy.todayTitle}</h3>
+              <p className="mt-1 text-sm text-[var(--ink-soft)]">
+                {dayLabels[locale][todaySchedule.day]} · {formatDateLabel(todaySchedule.dateISO, locale)}
+              </p>
             </div>
-            <button
-              onClick={addClass}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--navy)] px-4 py-2.5 text-sm font-semibold text-[#f7efe3] transition hover:translate-y-[-1px]"
-            >
-              <Plus className="size-4" />
-              {c.addClass}
-            </button>
+            <span className="rounded-full bg-[var(--navy)] px-3 py-1 text-xs font-semibold text-[#f7efe3]">
+              {copy.todayBadge}
+            </span>
+          </div>
+          <div className="mt-5 grid gap-3 lg:grid-cols-3">
+            {todaySchedule.blocks.map((block) => {
+              const meta = skillMeta[block.skill];
+              const Icon = meta.Icon;
+              return (
+                <Link key={block.id} href={block.href} className="rounded-[1.4rem] border border-[rgba(20,50,75,0.1)] bg-white/82 p-4 transition hover:translate-y-[-2px] hover:bg-white">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-[rgba(20,50,75,0.06)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">
+                      <Icon className="size-3.5" />
+                      {meta.label[locale]}
+                    </span>
+                    <span className="text-xs font-semibold text-[var(--ink-soft)]">{block.timeLabel}</span>
+                  </div>
+                  <h4 className="mt-4 text-lg font-semibold text-[var(--ink)]">{block.title}</h4>
+                  <p className="mt-1 text-sm text-[var(--ink-soft)]">{block.reason}</p>
+                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[var(--navy)]">
+                    {copy.start}
+                    <ArrowRight className="size-4" />
+                  </span>
+                </Link>
+              );
+            })}
           </div>
         </article>
+      ) : null}
 
-        {/* deadlines */}
-        <article className="surface-panel rounded-[2rem] p-5 sm:p-6">
-          <h3 className="font-display text-3xl tracking-tight text-[var(--ink)]">{c.deadlinesTitle}</h3>
-
-          <div className="mt-4 grid gap-2">
-            {preferences.deadlines.length === 0 ? (
-              <EmptyHint text={c.noDeadlines} />
-            ) : (
-              preferences.deadlines
-                .slice()
-                .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
-                .map((item) => (
-                  <ItemRow
-                    key={item.id}
-                    title={item.title}
-                    subtitle={item.dueDate}
-                    tag={skillMeta[item.skill].label[locale]}
-                    onRemove={() => removeDeadline(item.id)}
-                    removeLabel={c.remove}
-                  />
-                ))
-            )}
-          </div>
-
-          {/* add form */}
-          <div className="mt-4 grid gap-2">
-            <input
-              value={deadlineDraft.title}
-              onChange={(e) => setDeadlineDraft((d) => ({ ...d, title: e.target.value }))}
-              onKeyDown={(e) => e.key === "Enter" && addDeadline()}
-              placeholder={c.deadlineNamePh}
-              className={inputCls}
-            />
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                type="date"
-                value={deadlineDraft.dueDate}
-                onChange={(e) => setDeadlineDraft((d) => ({ ...d, dueDate: e.target.value }))}
-                className={inputCls}
-              />
-              <select
-                value={deadlineDraft.skill}
-                onChange={(e) => setDeadlineDraft((d) => ({ ...d, skill: e.target.value as TrackedSkill }))}
-                className={inputCls}
-              >
-                {TRACKED_SKILLS.map((s) => (
-                  <option key={s} value={s}>{skillMeta[s].label[locale]}</option>
-                ))}
-              </select>
-            </div>
-            <button
-              onClick={addDeadline}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-[rgba(20,50,75,0.14)] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:bg-[rgba(20,50,75,0.06)]"
-            >
-              <CalendarClock className="size-4" />
-              {c.addDeadline}
-            </button>
-          </div>
-        </article>
-      </div>
-
-      {/* ── weekly schedule ── */}
       <article className="surface-panel rounded-[2rem] p-5 sm:p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 className="font-display text-3xl tracking-tight text-[var(--ink)]">{c.scheduleTitle}</h3>
-          <div className="flex items-center gap-1 rounded-full border border-[rgba(20,50,75,0.14)] bg-white/80 p-1">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h3 className="font-display text-3xl tracking-tight text-[var(--ink)]">{copy.timetableTitle}</h3>
+            <p className="mt-1 text-sm text-[var(--ink-soft)]">{copy.timetableHint}</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
             <button
-              onClick={() => setMode("auto")}
-              className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${mode === "auto" ? "bg-[var(--navy)] text-[#f7efe3]" : "text-[var(--ink)] hover:bg-[rgba(20,50,75,0.06)]"}`}
+              type="button"
+              onClick={() => imageInputRef.current?.click()}
+              className="inline-flex items-center gap-2 rounded-full bg-[var(--navy)] px-4 py-2.5 text-sm font-semibold text-[#f7efe3] transition hover:translate-y-[-1px] disabled:opacity-60"
+              disabled={imageLoading}
             >
-              {c.autoMode}
+              <ImageUp className="size-4" />
+              {copy.imageImport}
             </button>
             <button
-              onClick={() => setMode("manual")}
-              className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${mode === "manual" ? "bg-[var(--navy)] text-[#f7efe3]" : "text-[var(--ink)] hover:bg-[rgba(20,50,75,0.06)]"}`}
+              type="button"
+              onClick={() => excelInputRef.current?.click()}
+              className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.14)] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:bg-[rgba(20,50,75,0.06)] disabled:opacity-60"
+              disabled={excelLoading}
             >
-              {c.manualMode}
+              <FileSpreadsheet className="size-4" />
+              {copy.excelImport}
             </button>
           </div>
         </div>
-        <p className="mt-1 text-sm text-[var(--ink-soft)]">{mode === "auto" ? c.autoHint : c.manualHint}</p>
 
-        {/* AUTO mode */}
-        {mode === "auto" && (
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            {weeklySchedule.days.map((day) => {
-              const dl = dayLabels[locale][day.day];
-              return (
-                <div
-                  key={day.dateISO}
-                  className={`rounded-[1.4rem] border p-4 ${
-                    day.isToday
-                      ? "border-[rgba(28,78,149,0.22)] bg-[rgba(28,78,149,0.06)]"
-                      : "border-[rgba(20,50,75,0.10)] bg-white/72"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">{dl}</span>
-                    <div className="flex items-center gap-1.5">
-                      {day.isToday && (
-                        <span className="rounded-full bg-[var(--navy)] px-2 py-0.5 text-[10px] font-bold text-[#f7efe3]">{c.today}</span>
-                      )}
-                      {day.deadlines.length > 0 && (
-                        <span className="size-2 rounded-full bg-red-500" title="deadline" />
-                      )}
-                      <span className={`size-2.5 rounded-full ${pressureColor(day.pressure)}`} />
+        {importState.message ? <ImportNotice state={importState} /> : null}
+
+        <div className="mt-5 overflow-x-auto rounded-[1.5rem] border border-[rgba(20,50,75,0.08)] bg-white/82">
+          <table className="min-w-[860px] w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-[rgba(20,50,75,0.05)] text-[var(--ink)]">
+                <th className="border-b border-r border-[rgba(20,50,75,0.08)] px-4 py-3 text-left font-semibold">
+                  {copy.slotLabel}
+                </th>
+                {WEEKDAY_ORDER.map((day) => (
+                  <th key={day} className="border-b border-[rgba(20,50,75,0.08)] px-4 py-3 text-left font-semibold">
+                    {dayLabels[locale][day]}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {SCHEDULE_TIME_SLOTS.map((slot) => (
+                <tr key={slot.id}>
+                  <td className="border-r border-t border-[rgba(20,50,75,0.08)] px-4 py-4 font-semibold text-[var(--ink)]">
+                    {slot.label[locale]}
+                  </td>
+                  {WEEKDAY_ORDER.map((day) => {
+                    const cellItems = timetableMap.get(`${day}-${slot.id}`) ?? [];
+                    return (
+                      <td key={`${day}-${slot.id}`} className="border-t border-[rgba(20,50,75,0.08)] p-2 align-top">
+                        <div
+                          className={`min-h-[88px] rounded-[1rem] border p-2 transition ${
+                            classDraft.day === day && classDraft.slot === slot.id
+                              ? "border-[rgba(28,78,149,0.24)] bg-[rgba(28,78,149,0.06)]"
+                              : "border-transparent bg-[rgba(20,50,75,0.02)] hover:border-[rgba(20,50,75,0.12)]"
+                          }`}
+                          onClick={() => beginCreateClass(day, slot.id)}
+                        >
+                          <div className="grid gap-2">
+                            {cellItems.length === 0 ? (
+                              <span className="text-xs text-[var(--ink-soft)]">{copy.noClassInCell}</span>
+                            ) : (
+                              cellItems.map((item) => (
+                                <div
+                                  key={item.id}
+                                  className={`flex items-start gap-2 rounded-[0.9rem] px-3 py-2 ${classTone[item.type]}`}
+                                >
+                                  <button type="button" className="min-w-0 flex-1 text-left text-xs font-semibold leading-5" onClick={(event) => { event.stopPropagation(); beginEditClass(item); }}>
+                                    <span className="block truncate">{item.title}</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    aria-label={copy.remove}
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      removeClass(item.id);
+                                    }}
+                                    className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-white/20 transition hover:bg-white/30"
+                                  >
+                                    <X className="size-3" />
+                                  </button>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-5 rounded-[1.5rem] border border-[rgba(20,50,75,0.08)] bg-white/72 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <h4 className="text-sm font-semibold uppercase tracking-[0.12em] text-[var(--ink)]">{copy.manualEdit}</h4>
+            {classDraft.id ? (
+              <button type="button" onClick={cancelClassEdit} className="text-sm font-semibold text-[var(--ink-soft)] transition hover:text-[var(--ink)]">
+                {copy.cancelEdit}
+              </button>
+            ) : null}
+          </div>
+          <div className="mt-3 grid gap-3 lg:grid-cols-[1.5fr_repeat(4,minmax(0,0.75fr))_auto]">
+            <input
+              value={classDraft.title}
+              onChange={(event) => setClassDraft((current) => ({ ...current, title: event.target.value }))}
+              placeholder={copy.classNamePlaceholder}
+              className={compactInputCls}
+            />
+            <select
+              value={classDraft.day}
+              onChange={(event) => setClassDraft((current) => ({ ...current, day: Number(event.target.value) }))}
+              className={compactInputCls}
+            >
+              {dayLabels[locale].map((label, index) => (
+                <option key={label} value={index}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            <select
+              value={classDraft.slot}
+              onChange={(event) =>
+                setClassDraft((current) => ({
+                  ...current,
+                  slot: event.target.value as ScheduleSlotId,
+                  time: getScheduleSlotDefaultTime(event.target.value as ScheduleSlotId),
+                }))
+              }
+              className={compactInputCls}
+            >
+              {SCHEDULE_TIME_SLOTS.map((slot) => (
+                <option key={slot.id} value={slot.id}>
+                  {slot.label[locale]}
+                </option>
+              ))}
+            </select>
+            <select
+              value={classDraft.type}
+              onChange={(event) => setClassDraft((current) => ({ ...current, type: event.target.value as ScheduleClassType }))}
+              className={compactInputCls}
+            >
+              {classTypeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label[locale]}
+                </option>
+              ))}
+            </select>
+            <input
+              type="time"
+              value={classDraft.time}
+              onChange={(event) => setClassDraft((current) => ({ ...current, time: event.target.value }))}
+              className={compactInputCls}
+            />
+            <button type="button" onClick={submitClass} className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--navy)] px-4 py-2.5 text-sm font-semibold text-[#f7efe3] transition hover:translate-y-[-1px]">
+              <Plus className="size-4" />
+              {classDraft.id ? copy.updateClass : copy.addClass}
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <article className="surface-panel rounded-[2rem] p-5 sm:p-6">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h3 className="font-display text-3xl tracking-tight text-[var(--ink)]">{copy.deadlinesTitle}</h3>
+            <p className="mt-1 text-sm text-[var(--ink-soft)]">{copy.deadlineHint}</p>
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-3">
+          {preferences.deadlines.length === 0 ? (
+            <EmptyHint text={copy.noDeadlines} />
+          ) : (
+            [...preferences.deadlines]
+              .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
+              .map((item) => (
+                <EditableDeadlineRow
+                  key={item.id}
+                  item={item}
+                  locale={locale}
+                  removeLabel={copy.remove}
+                  onRemove={() => removeDeadline(item.id)}
+                  onSave={(partial) => updateDeadline(item.id, partial)}
+                />
+              ))
+          )}
+        </div>
+
+        <div className="mt-5 rounded-[1.5rem] border border-[rgba(20,50,75,0.08)] bg-white/72 p-4">
+          <div className="grid gap-3 lg:grid-cols-[1.6fr_1fr_1fr_auto]">
+            <input
+              value={deadlineDraft.title}
+              onChange={(event) => setDeadlineDraft((current) => ({ ...current, title: event.target.value }))}
+              placeholder={copy.deadlineNamePlaceholder}
+              className={compactInputCls}
+            />
+            <input
+              type="date"
+              value={deadlineDraft.dueDate}
+              onChange={(event) => setDeadlineDraft((current) => ({ ...current, dueDate: event.target.value }))}
+              className={compactInputCls}
+            />
+            <select
+              value={deadlineDraft.skill}
+              onChange={(event) => setDeadlineDraft((current) => ({ ...current, skill: event.target.value as TrackedSkill }))}
+              className={compactInputCls}
+            >
+              {TRACKED_SKILLS.map((skill) => (
+                <option key={skill} value={skill}>
+                  {skillMeta[skill].label[locale]}
+                </option>
+              ))}
+            </select>
+            <button type="button" onClick={addDeadline} className="inline-flex items-center justify-center gap-2 rounded-full border border-[rgba(20,50,75,0.14)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:bg-[rgba(20,50,75,0.06)]">
+              <CalendarClock className="size-4" />
+              {copy.addDeadline}
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <article className="surface-panel rounded-[2rem] p-5 sm:p-6">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h3 className="font-display text-3xl tracking-tight text-[var(--ink)]">{copy.weekTitle}</h3>
+            <p className="mt-1 text-sm text-[var(--ink-soft)]">{copy.weekHint}</p>
+          </div>
+          <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-white/80 px-3 py-1 text-xs font-semibold text-[var(--ink-soft)]">
+            {copy.autoPlan}
+          </span>
+        </div>
+
+        <div className="mt-5 grid gap-3">
+          {weeklySchedule.days.map((day) => {
+            const isExpanded = expandedDay === day.day;
+            const pressure = pressureTone(day.pressure);
+            return (
+              <article key={day.dateISO} className={`rounded-[1.4rem] border transition ${isExpanded ? "border-[rgba(28,78,149,0.2)] bg-[rgba(28,78,149,0.05)]" : "border-[rgba(20,50,75,0.1)] bg-white/78"}`}>
+                <button type="button" onClick={() => setExpandedDay(isExpanded ? null : day.day)} className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left">
+                  <div className="flex items-center gap-3">
+                    <span className={`size-2.5 rounded-full ${pressure.dot}`} />
+                    <span className="font-display text-2xl tracking-tight text-[var(--ink)]">{dayLabels[locale][day.day]}</span>
+                    {day.isToday ? <span className="rounded-full bg-[var(--navy)] px-2.5 py-1 text-[10px] font-semibold text-[#f7efe3]">{copy.todayBadge}</span> : null}
+                  </div>
+                  <ChevronDown className={`size-5 text-[var(--ink-soft)] transition ${isExpanded ? "rotate-180" : ""}`} />
+                </button>
+                {isExpanded ? (
+                  <div className="border-t border-[rgba(20,50,75,0.08)] px-4 pb-4 pt-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <InlineMeta label={copy.dateLabel} value={formatDateLabel(day.dateISO, locale)} />
+                      <InlineMeta label={copy.pressureLabel} value={String(day.pressure)} toneClass={pressure.pill} />
+                      <InlineMeta label={copy.weekTarget} value={`${day.targetMinutes} ${copy.minuteShort}`} />
+                      <InlineMeta label={copy.classesCount} value={String(day.classes.length)} />
+                      <InlineMeta label={copy.deadlinesCount} value={String(day.deadlines.length)} />
+                    </div>
+
+                    <div className="mt-4 grid gap-3 lg:grid-cols-3">
+                      {day.blocks.map((block) => {
+                        const meta = skillMeta[block.skill];
+                        const Icon = meta.Icon;
+                        return (
+                          <Link key={block.id} href={block.href} className="rounded-[1.2rem] border border-[rgba(20,50,75,0.08)] bg-white/88 p-4 transition hover:bg-white">
+                            <div className="flex items-center justify-between gap-3">
+                              <span className="inline-flex items-center gap-2 rounded-full bg-[rgba(20,50,75,0.06)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">
+                                <Icon className="size-3.5" />
+                                {meta.label[locale]}
+                              </span>
+                              <span className="text-xs font-semibold text-[var(--ink-soft)]">{block.timeLabel}</span>
+                            </div>
+                            <div className="mt-3 flex items-center justify-between gap-3">
+                              <div>
+                                <h4 className="text-base font-semibold text-[var(--ink)]">{block.title}</h4>
+                                <p className="mt-1 text-sm text-[var(--ink-soft)]">{block.reason}</p>
+                              </div>
+                              <ArrowRight className="size-4 shrink-0 text-[var(--navy)]" />
+                            </div>
+                          </Link>
+                        );
+                      })}
                     </div>
                   </div>
-                  <div className="mt-3 grid gap-1.5">
-                    {day.blocks.map((block) => {
-                      const meta = skillMeta[block.skill];
-                      const Icon = meta.Icon;
-                      return (
-                        <Link
-                          key={block.id}
-                          href={block.href}
-                          className="flex items-center gap-2 rounded-[0.8rem] border border-[rgba(20,50,75,0.08)] bg-white/80 px-3 py-2 transition hover:bg-[rgba(20,50,75,0.06)]"
-                        >
-                          <Icon className="size-3.5 shrink-0 text-[var(--ink-soft)]" />
-                          <span className="min-w-0 flex-1 truncate text-xs font-semibold text-[var(--ink)]">{block.title}</span>
-                          <span className="shrink-0 text-[10px] text-[var(--ink-soft)]">{block.minutes}{c.minShort}</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* MANUAL mode */}
-        {mode === "manual" && (
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            {weeklySchedule.days.map((day) => {
-              const dl = dayLabels[locale][day.day];
-              const chosen = manualSkills[day.day] ?? "auto";
-              const activeSkill = chosen === "auto"
-                ? day.blocks[0]?.skill
-                : chosen;
-
-              const skillHref = activeSkill && activeSkill !== "review"
-                ? (activeSkill === "listening"
-                    ? `/listening?lang=${locale}`
-                    : activeSkill === "reading"
-                      ? `/reading?lang=${locale}`
-                      : `/lesson/${level}-${activeSkill}-starter?lang=${locale}`)
-                : null;
-
-              return (
-                <div
-                  key={day.dateISO}
-                  className={`rounded-[1.4rem] border p-4 ${
-                    day.isToday
-                      ? "border-[rgba(28,78,149,0.22)] bg-[rgba(28,78,149,0.06)]"
-                      : "border-[rgba(20,50,75,0.10)] bg-white/72"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">{dl}</span>
-                    {day.isToday && (
-                      <span className="rounded-full bg-[var(--navy)] px-2 py-0.5 text-[10px] font-bold text-[#f7efe3]">{c.today}</span>
-                    )}
-                  </div>
-
-                  {/* skill picker */}
-                  <div className="mt-3 flex flex-wrap gap-1">
-                    <button
-                      onClick={() => setManualSkill(day.day, "auto")}
-                      className={chip(chosen === "auto") + " !text-[10px] !px-2 !py-1"}
-                    >
-                      {c.skillAuto}
-                    </button>
-                    {TRACKED_SKILLS.map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => setManualSkill(day.day, s)}
-                        className={chip(chosen === s) + " !text-[10px] !px-2 !py-1"}
-                      >
-                        {skillMeta[s].label[locale]}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* go button */}
-                  {skillHref && (
-                    <Link
-                      href={skillHref}
-                      className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-[var(--navy)] px-3 py-2 text-xs font-semibold text-[#f7efe3] transition hover:translate-y-[-1px]"
-                    >
-                      {activeSkill && skillMeta[activeSkill as keyof typeof skillMeta]?.label[locale]}
-                      <ArrowRight className="size-3" />
-                    </Link>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
+                ) : null}
+              </article>
+            );
+          })}
+        </div>
       </article>
     </section>
   );
 }
 
-// ─── sub-components ───────────────────────────────────────────────────────────
-
-function PrefRow({ label, children }: { label: string; children: React.ReactNode }) {
+function PrefRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
       <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">{label}</p>
@@ -602,30 +931,92 @@ function PrefRow({ label, children }: { label: string; children: React.ReactNode
   );
 }
 
-function EmptyHint({ text }: { text: string }) {
+function StatPill({ label, value }: { label: string; value: string }) {
   return (
-    <p className="rounded-[1rem] border border-dashed border-[rgba(20,50,75,0.14)] bg-white/60 px-4 py-3 text-sm text-[var(--ink-soft)]">
-      {text}
-    </p>
+    <div className="rounded-full border border-[rgba(20,50,75,0.12)] bg-white/82 px-4 py-2">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-[var(--ink)]">{value}</p>
+    </div>
   );
 }
 
-function ItemRow({
-  title, subtitle, tag, onRemove, removeLabel,
-}: { title: string; subtitle: string; tag: string; onRemove: () => void; removeLabel: string }) {
+function InlineMeta({ label, value, toneClass }: { label: string; value: string; toneClass?: string }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-[1rem] border border-[rgba(20,50,75,0.08)] bg-white/85 px-4 py-3">
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-[var(--ink)]">{title}</p>
-        <p className="mt-0.5 text-xs text-[var(--ink-soft)]">{subtitle}</p>
+    <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${toneClass ?? "bg-white/80 text-[var(--ink)]"}`}>
+      <span className="text-[var(--ink-soft)]">{label}</span>
+      <span>{value}</span>
+    </span>
+  );
+}
+
+function EmptyHint({ text }: { text: string }) {
+  return <p className="rounded-[1rem] border border-dashed border-[rgba(20,50,75,0.14)] bg-white/60 px-4 py-3 text-sm text-[var(--ink-soft)]">{text}</p>;
+}
+
+function ImportNotice({ state }: { state: ImportState }) {
+  if (!state.message) return null;
+
+  const toneClass =
+    state.tone === "success"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+      : state.tone === "error"
+        ? "border-red-200 bg-red-50 text-red-700"
+        : "border-[rgba(20,50,75,0.12)] bg-[rgba(20,50,75,0.04)] text-[var(--ink)]";
+
+  return (
+    <div className={`mt-4 rounded-[1rem] border px-4 py-3 ${toneClass}`}>
+      <div className="flex items-center gap-2 text-sm font-semibold">
+        <Sparkles className="size-4" />
+        {state.message}
       </div>
-      <span className="shrink-0 rounded-full bg-[rgba(20,50,75,0.06)] px-2.5 py-1 text-xs font-semibold text-[var(--ink)]">{tag}</span>
-      <button
-        onClick={onRemove}
-        aria-label={removeLabel}
-        className="inline-flex size-7 shrink-0 items-center justify-center rounded-full border border-[rgba(20,50,75,0.12)] bg-white text-[var(--ink-soft)] transition hover:border-red-300 hover:text-red-500"
-      >
-        <Trash2 className="size-3.5" />
+      {state.warnings.length > 0 ? (
+        <div className="mt-2 grid gap-1 text-xs">
+          {state.warnings.map((warning) => (
+            <p key={warning}>{warning}</p>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function EditableDeadlineRow({
+  item,
+  locale,
+  removeLabel,
+  onSave,
+  onRemove,
+}: {
+  item: ScheduleDeadline;
+  locale: Locale;
+  removeLabel: string;
+  onSave: (partial: Partial<ScheduleDeadline>) => void;
+  onRemove: () => void;
+}) {
+  const [title, setTitle] = useState(item.title);
+
+  function commitTitle() {
+    const next = title.trim();
+    if (!next) {
+      setTitle(item.title);
+      return;
+    }
+    if (next !== item.title) onSave({ title: next });
+  }
+
+  return (
+    <div className="grid gap-3 rounded-[1rem] border border-[rgba(20,50,75,0.08)] bg-white/85 p-4 lg:grid-cols-[1.6fr_1fr_1fr_auto]">
+      <input value={title} onChange={(event) => setTitle(event.target.value)} onBlur={commitTitle} onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }} className={compactInputCls} />
+      <input type="date" value={item.dueDate} onChange={(event) => onSave({ dueDate: event.target.value })} className={compactInputCls} />
+      <select value={item.skill} onChange={(event) => onSave({ skill: event.target.value as TrackedSkill })} className={compactInputCls}>
+        {TRACKED_SKILLS.map((skill) => (
+          <option key={skill} value={skill}>
+            {skillMeta[skill].label[locale]}
+          </option>
+        ))}
+      </select>
+      <button type="button" onClick={onRemove} aria-label={removeLabel} className="inline-flex size-11 items-center justify-center rounded-full border border-[rgba(20,50,75,0.12)] bg-white text-[var(--ink-soft)] transition hover:border-red-300 hover:text-red-500">
+        <Trash2 className="size-4" />
       </button>
     </div>
   );
