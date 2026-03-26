@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   BookMarked,
@@ -18,8 +18,10 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { AIAnalysisState } from "@/components/forms/ai-analysis-state";
+import { ContextDock } from "@/components/context-comments/context-dock";
 import { SaveToDeckButton } from "@/components/forms/save-to-deck-button";
 import {
   listeningMajors,
@@ -69,7 +71,7 @@ function getMaterialThumbnail(material: ListeningMaterial) {
   return material.thumbnailUrl ?? tedThumbnailFallbackMap.get(material.materialGroupId) ?? null;
 }
 
-/** Image with graceful fallback — hides alt text when load fails */
+/** Image with graceful fallback 鈥?hides alt text when load fails */
 function TedThumbnail({ src, alt, className }: { src: string; alt: string; className?: string }) {
   const [failed, setFailed] = useState(false);
 
@@ -94,6 +96,8 @@ export function ListeningFeedbackForm({
   defaultLevel?: CEFRLevel;
   materials?: ListeningMaterial[];
 }) {
+  const searchParams = useSearchParams();
+  const locale = searchParams.get("lang") === "zh" ? "zh" : "en";
   const catalog = materials && materials.length > 0 ? materials : listeningMaterials;
   const tedCatalog = useMemo(
     () =>
@@ -248,7 +252,37 @@ export function ListeningFeedbackForm({
     (question) => (answers[question.id] ?? "").trim().length >= 2,
   ).length;
   const noteWordCount = countWords(notes);
-
+  const discussionContext = {
+    module: "listening" as const,
+    targetId: activeMaterial.materialGroupId,
+    title: activeMaterial.title,
+    subtitle: activeMaterial.majorLabel,
+    plazaTag: "Listening",
+    topics: ["Notes", "Accent", "Terms", "Answers"],
+    starters: [
+      "The part I missed was",
+      "The key term in this talk is",
+      "The question I keep missing is",
+    ],
+    seedComments: [
+      {
+        author: "Tutor note",
+        topic: "Notes",
+        content:
+          "Capture the main claim and one supporting example first, then fill in the detail.",
+        createdAt: "2026-03-24T09:20:00.000Z",
+        likes: 4,
+      },
+      {
+        author: "Yuna",
+        topic: "Accent",
+        content:
+          "The pace is manageable, but the signposts are soft. Track the transitions first.",
+        createdAt: "2026-03-24T11:05:00.000Z",
+        likes: 2,
+      },
+    ],
+  };
   function handleMaterialSelect(groupId: string) {
     setSelectedMaterialGroupId(groupId);
   }
@@ -459,7 +493,7 @@ export function ListeningFeedbackForm({
             </h3>
             <p className="mt-1 text-sm text-[var(--ink-soft)]">
               {activeMaterial.speakerName
-                ? `${activeMaterial.speakerName} · ${activeMaterial.durationLabel}`
+                ? `${activeMaterial.speakerName} 路 ${activeMaterial.durationLabel}`
                 : activeMaterial.durationLabel}
             </p>
           </div>
@@ -563,7 +597,7 @@ export function ListeningFeedbackForm({
                       {material.title}
                     </h4>
                     <p className="mt-1 text-xs text-[var(--ink-soft)]">
-                      {material.speakerName} · {material.majorLabel} · {material.recommendedLevel}
+                      {material.speakerName} 路 {material.majorLabel} 路 {material.recommendedLevel}
                     </p>
                     {completion ? (
                       <p className="mt-1 text-xs font-semibold text-[#315f4f]">
@@ -608,7 +642,7 @@ export function ListeningFeedbackForm({
                       {activeMaterial.title}
                     </h4>
                     <p className="mt-2 text-sm leading-6 text-white/80">
-                      {activeMaterial.speakerName} · {activeMaterial.durationLabel}
+                      {activeMaterial.speakerName} 路 {activeMaterial.durationLabel}
                     </p>
                   </div>
                 </div>
@@ -675,7 +709,7 @@ export function ListeningFeedbackForm({
               Listening check
             </p>
             <p className="text-sm font-semibold text-[var(--ink-soft)]">
-              {answeredCount}/{activeMaterial.questions.length} · {defaultLevel}
+              {answeredCount}/{activeMaterial.questions.length} 路 {defaultLevel}
             </p>
           </div>
 
@@ -816,7 +850,7 @@ export function ListeningFeedbackForm({
                 ))}
               </div>
 
-              {/* AI feedback button — appears after local scoring */}
+              {/* AI feedback button 鈥?appears after local scoring */}
               <div className="mt-5 flex flex-wrap gap-3">
                 <button
                   type="button"
@@ -906,6 +940,13 @@ export function ListeningFeedbackForm({
           ) : null}
         </article>
       </section>
+
+      <ContextDock
+        key={`listening:${discussionContext.targetId}`}
+        locale={locale}
+        context={discussionContext}
+      />
     </section>
   );
 }
+

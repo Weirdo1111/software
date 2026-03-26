@@ -37,6 +37,17 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string");
 }
 
+function inferResourceType(row: ListeningMaterialRow): ListeningMaterial["resourceType"] {
+  if (row.content_mode === "ted") return "real-talk";
+
+  const normalizedSource = `${row.source_name ?? ""} ${row.source}`.toLowerCase();
+
+  if (normalizedSource.includes("podcast")) return "podcast";
+  if (normalizedSource.includes("interview")) return "interview";
+
+  return "lecture";
+}
+
 function mapRowToListeningMaterial(row: ListeningMaterialRow): ListeningMaterial | null {
   if (
     !isStringArray(row.note_prompts) ||
@@ -55,6 +66,7 @@ function mapRowToListeningMaterial(row: ListeningMaterialRow): ListeningMaterial
   return {
     id: row.code,
     contentMode: row.content_mode as ListeningMaterial["contentMode"],
+    resourceType: inferResourceType(row),
     materialGroupId: row.material_group_id ?? row.code,
     materialGroupLabel: row.material_group_label ?? row.title,
     majorId: row.major_id as ListeningMaterial["majorId"],
@@ -115,6 +127,7 @@ export async function getListeningMaterialsCatalog() {
     .select(
       "code, content_mode, material_group_id, material_group_label, major_id, major_label, accent, accent_label, accent_hint, title, source, source_name, speaker_role, speaker_name, scenario, transcript, transcript_url, official_url, embed_url, recommended_level, duration_label, support_focus, note_prompts, vocabulary, questions, follow_up_task, audio_src, audio_voice, voice_locales",
     )
+    .neq("content_mode", "practice")
     .order("content_mode", { ascending: true })
     .order("major_label", { ascending: true })
     .order("material_group_label", { ascending: true })

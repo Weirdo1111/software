@@ -1,10 +1,12 @@
 import { Ear, FileText, Mic, PenLine, Target } from "lucide-react";
 
-import { ListeningFeedbackForm } from "@/components/forms/listening-feedback-form";
 import { ReadingFeedbackForm } from "@/components/forms/reading-feedback-form";
 import { SpeakingFeedbackForm } from "@/components/forms/speaking-feedback-form";
 import { SpeakingHub } from "@/components/forms/speaking-hub";
+import { TedLibrary } from "@/components/ted/ted-library";
 import { WritingFeedbackForm } from "@/components/forms/writing-feedback-form";
+import { WritingHub } from "@/components/forms/writing-hub";
+import { WritingLanguageLab } from "@/components/forms/writing-language-lab";
 import { PageFrame } from "@/components/page-frame";
 import type { Locale } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/get-locale";
@@ -12,6 +14,7 @@ import { getListeningMaterialsCatalog } from "@/lib/listening-materials-reposito
 import { buildPracticePassageFromArticle, getReadingArticleById } from "@/lib/reading-articles";
 import { getPassageForLevel } from "@/lib/reading-passages";
 import { isSpeakingModuleRouteId, normalizeSpeakingModuleId } from "@/lib/speaking-modules";
+import { isWritingModuleId } from "@/lib/writing-modules";
 import type { CEFRLevel } from "@/types/learning";
 
 type LessonMode = "listening" | "speaking" | "reading" | "writing";
@@ -23,7 +26,6 @@ function detectMode(id: string): LessonMode {
   return "writing";
 }
 
-/** Extract the CEFR level prefix from a lesson id like "B1-reading-starter" */
 function extractLevel(id: string): CEFRLevel {
   const match = id.match(/^(A1|A2|B1|B2)/i);
   return (match ? match[1].toUpperCase() : "B1") as CEFRLevel;
@@ -31,19 +33,19 @@ function extractLevel(id: string): CEFRLevel {
 
 const modeMeta = {
   listening: {
-    label: "TED Listening Library",
+    label: "Listening Library",
     icon: Ear,
-    focus: "Browse official TED talks matched to DIICSU majors, then turn each video into focused note-taking and listening-check practice.",
-    source: "Official TED talks with major-matched prompts, vocabulary, and listening checks for five undergraduate disciplines",
-    output: "Structured notes + TED listening check + saved technical vocabulary + major-matched academic listening practice",
-    coach: "Filter by major or level, preview the talk in the page, then open the official TED page when you want the best playback quality.",
+    focus: "Browse TED talks, public lectures, expert interviews, and podcasts matched to DIICSU majors, then turn each source into focused note-taking and listening-check practice.",
+    source: "Official TED talks, university lectures, engineering interviews, and podcast sources curated for five undergraduate disciplines",
+    output: "Structured notes + listening check + saved technical vocabulary + major-matched academic listening practice",
+    coach: "Filter by major, source type, accent, or level, then open one source and work through the notes and listening questions.",
     tasks: [
-      "Choose a TED talk by major, level, or topic.",
-      "Preview the video or open the official TED page, then take structured notes.",
+      "Choose a listening item by major, level, source type, or accent.",
+      "Preview the source if available, or open the official source page, then take structured notes.",
       "Answer the listening questions and save useful technical terms to the deck.",
     ],
     checkpoints: [
-      "What is the main claim or recommendation in the talk?",
+      "What is the main claim or recommendation in the source?",
       "Which exact detail should appear in your notes?",
       "Which specialist term or idea helped you track the speaker?",
     ],
@@ -111,24 +113,22 @@ const modeMeta = {
 function renderWorkbench(
   mode: LessonMode,
   lessonId: string,
-  locale: Locale,
-  speakingModule: string | undefined,
   listeningMaterials: Awaited<ReturnType<typeof getListeningMaterialsCatalog>> | null,
+  locale: Locale,
+  module: string | undefined,
   articleId?: string,
 ) {
   const level = extractLevel(lessonId);
 
   if (mode === "speaking") {
-    if (!isSpeakingModuleRouteId(speakingModule)) {
+    if (!isSpeakingModuleRouteId(module)) {
       return <SpeakingHub locale={locale} lessonId={lessonId} />;
     }
-
-    const normalizedSpeakingModule = normalizeSpeakingModuleId(speakingModule);
 
     return (
       <SpeakingFeedbackForm
         defaultLevel={level}
-        module={normalizedSpeakingModule}
+        module={normalizeSpeakingModuleId(module)}
         locale={locale}
         hubHref={`/lesson/${lessonId}?lang=${locale}`}
       />
@@ -136,10 +136,18 @@ function renderWorkbench(
   }
 
   if (mode === "listening") {
-    return <ListeningFeedbackForm defaultLevel={level} materials={listeningMaterials ?? undefined} />;
+    return <TedLibrary materials={listeningMaterials ?? undefined} locale={locale} />;
   }
 
   if (mode === "writing") {
+    if (!isWritingModuleId(module)) {
+      return <WritingHub locale={locale} lessonId={lessonId} />;
+    }
+
+    if (module === "language-lab") {
+      return <WritingLanguageLab defaultLevel={level} />;
+    }
+
     return <WritingFeedbackForm defaultLevel={level} />;
   }
 
@@ -191,11 +199,8 @@ export default async function LessonPage({
     isWritingMode || isReadingMode ? "mt-6 grid gap-5" : "mt-6 grid gap-5 lg:grid-cols-[1.02fr_0.98fr]";
   const listeningMaterials = isListeningMode ? await getListeningMaterialsCatalog() : null;
   const showStandaloneLessonBrief = mode !== "speaking" && mode !== "writing" && mode !== "listening";
-  const showLowerPanels = mode !== "speaking" && mode !== "listening";
-  const showPageHeader = mode === "listening";
-  // Date: 2026/3/18
-  // Author: Tianbo Cao
-  // Keep speaking and writing focused on their core workspaces by hiding the shared page header and extra lesson framing panels.
+  const showLowerPanels = mode !== "speaking" && mode !== "listening" && mode !== "writing";
+  const showPageHeader = false;
 
   return (
     <PageFrame locale={locale} title={meta.label} description={description} showHeader={showPageHeader}>
@@ -239,11 +244,25 @@ export default async function LessonPage({
               </div>
             </article>
 
-            {renderWorkbench(mode, resolvedParams.id, locale, resolvedSearchParams.module, listeningMaterials, linkedArticle?.id)}
+            {renderWorkbench(
+              mode,
+              resolvedParams.id,
+              listeningMaterials,
+              locale,
+              resolvedSearchParams.module,
+              linkedArticle?.id,
+            )}
           </div>
         </>
       ) : (
-        renderWorkbench(mode, resolvedParams.id, locale, resolvedSearchParams.module, listeningMaterials, linkedArticle?.id)
+        renderWorkbench(
+          mode,
+          resolvedParams.id,
+          listeningMaterials,
+          locale,
+          resolvedSearchParams.module,
+          linkedArticle?.id,
+        )
       )}
 
       {showLowerPanels ? (

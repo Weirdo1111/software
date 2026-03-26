@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  authenticListeningMaterials,
   buildListeningSentenceSegments,
   findEvidenceSentence,
-  getListeningMaterial,
-  getListeningMaterialOptions,
   getTedListeningMaterial,
+  hasStableInlinePreview,
   listeningMaterials,
   listeningMajors,
   practiceListeningMaterials,
@@ -15,113 +15,125 @@ import {
 } from "@/lib/listening-materials";
 
 describe("listening materials", () => {
-  it("covers all five DIICSU majors with two practice sets, three accent variants each, and four TED talks each", () => {
+  it("keeps a real-source listening library for all five DIICSU majors", () => {
     expect(listeningMajors).toHaveLength(5);
-    expect(practiceListeningMaterials).toHaveLength(30);
-    expect(tedListeningMaterials).toHaveLength(20);
-    expect(listeningMaterials).toHaveLength(50);
+    expect(practiceListeningMaterials).toHaveLength(0);
+    expect(tedListeningMaterials).toHaveLength(30);
+    expect(authenticListeningMaterials).toHaveLength(10);
+    expect(listeningMaterials).toHaveLength(40);
 
     for (const major of listeningMajors) {
-      const variants = practiceListeningMaterials.filter((item) => item.majorId === major.id);
-      const options = getListeningMaterialOptions(practiceListeningMaterials, "practice", major.id);
-      const tedVariants = tedListeningMaterials.filter((item) => item.majorId === major.id);
+      const majorMaterials = listeningMaterials.filter((item) => item.majorId === major.id);
+      const tedForMajor = tedListeningMaterials.filter((item) => item.majorId === major.id);
+      const authenticForMajor = authenticListeningMaterials.filter(
+        (item) => item.majorId === major.id,
+      );
 
-      expect(variants).toHaveLength(6);
-      expect(options).toHaveLength(2);
-      expect(new Set(variants.map((item) => item.materialGroupId)).size).toBe(2);
-      expect(
-        variants.every((item) => typeof item.audioSrc === "string" && item.audioSrc.endsWith(".m4a")),
-      ).toBe(true);
-
-      expect(tedVariants).toHaveLength(4);
-      expect(new Set(tedVariants.map((item) => item.materialGroupId)).size).toBe(4);
-      expect(tedVariants.every((item) => item.contentMode === "ted")).toBe(true);
-      expect(tedVariants.every((item) => item.embedUrl?.includes("embed.ted.com/talks/"))).toBe(true);
-      expect(tedVariants.every((item) => item.officialUrl?.includes("ted.com/talks/"))).toBe(true);
-      expect(tedVariants.every((item) => item.thumbnailUrl?.startsWith("https://"))).toBe(true);
-      expect(tedVariants.every((item) => item.audioSrc === null)).toBe(true);
+      expect(majorMaterials).toHaveLength(8);
+      expect(tedForMajor).toHaveLength(6);
+      expect(authenticForMajor).toHaveLength(2);
+      expect(majorMaterials.every((item) => item.contentMode !== "practice")).toBe(true);
+      expect(majorMaterials.every((item) => item.audioSrc === null)).toBe(true);
     }
+
+    expect(authenticListeningMaterials.some((item) => item.resourceType === "lecture")).toBe(true);
+    expect(authenticListeningMaterials.some((item) => item.resourceType === "interview")).toBe(true);
+    expect(authenticListeningMaterials.some((item) => item.resourceType === "podcast")).toBe(true);
+    expect(tedListeningMaterials.filter((item) => item.isCrossDisciplinary).length).toBe(12);
   });
 
-  it("scores strong civil-engineering answers correctly", () => {
-    const material = getListeningMaterial("civil-engineering", "british");
+  it("keeps TED items retrievable for each major", () => {
+    const tedMaterial = getTedListeningMaterial("computing-science");
+
+    expect(tedMaterial.contentMode).toBe("ted");
+    expect(tedMaterial.resourceType).toBe("real-talk");
+    expect(tedMaterial.speakerName).toBe("Joseph Redmon");
+    expect(tedMaterial.transcriptUrl).toContain("/transcript");
+    expect(tedMaterial.audioVoice).toBeNull();
+  });
+
+  it("keeps official cover images for all TED listening cards", () => {
+    expect(
+      tedListeningMaterials.every(
+        (item) =>
+          typeof item.thumbnailUrl === "string" && item.thumbnailUrl.startsWith("https://"),
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps only stable inline previews for the main listening gallery", () => {
+    const tedMaterial = listeningMaterials.find(
+      (item) => item.materialGroupId === "ted-civil-climate-resilient-buildings",
+    );
+    const youtubeMaterial = listeningMaterials.find(
+      (item) => item.materialGroupId === "civil-bridge-maintenance-cambridge",
+    );
+
+    expect(tedMaterial).toBeTruthy();
+    expect(youtubeMaterial).toBeTruthy();
+    expect(hasStableInlinePreview(tedMaterial!)).toBe(true);
+    expect(hasStableInlinePreview(youtubeMaterial!)).toBe(false);
+  });
+
+  it("scores a strong authentic-source answer correctly", () => {
+    const material = listeningMaterials.find(
+      (item) => item.materialGroupId === "civil-bridge-maintenance-cambridge",
+    );
+
+    expect(material).toBeTruthy();
+
     const result = scoreListeningMaterial(
-      material,
+      material!,
       {
-        gist: "It is a drainage inspection plan after heavy rain.",
-        detail: "The east retaining wall should be checked first.",
-        signpost: "The key point is",
-        term: "runoff",
+        gist: "The lecture says bridge maintenance should be planned with data and prioritisation.",
+        detail: "Inspection records and monitoring data support the decisions.",
+        signpost: "Earlier action improves safety and limited budgets.",
+        term: "asset management",
       },
-      "Drainage check at east retaining wall. Runoff and blocked channels matter.",
+      "Bridge maintenance should be data-led with better prioritisation and asset management.",
       "B1",
     );
 
     expect(result.correctCount).toBe(4);
     expect(result.passed).toBe(true);
     expect(result.overallScore).toBe(10);
-    expect(result.questionFeedback[0]?.evidenceSentence).toContain("drainage");
   });
 
-  it("returns a TED material for each DIICSU major", () => {
-    const tedMaterial = getTedListeningMaterial("computing-science");
-    const tedOptions = getListeningMaterialOptions(listeningMaterials, "ted");
-
-    expect(tedMaterial.contentMode).toBe("ted");
-    expect(tedMaterial.speakerName).toBe("Joseph Redmon");
-    expect(tedMaterial.transcriptUrl).toContain("/transcript");
-    expect(tedMaterial.audioVoice).toBeNull();
-    expect(tedOptions).toHaveLength(20);
-  });
-
-  it("can retrieve a specific TED material group for a major", () => {
-    const tedMaterial = getTedListeningMaterial(
-      "mechanical-engineering-transportation",
-      "ted-transport-walkable-4-ways",
+  it("builds sentence segments for authentic materials with study transcripts", () => {
+    const material = listeningMaterials.find(
+      (item) => item.materialGroupId === "mechanical-nature-3d-printer",
     );
 
-    expect(tedMaterial.materialGroupLabel).toBe("4 ways to make a city more walkable");
-    expect(tedMaterial.speakerName).toBe("Jeff Speck");
-    expect(tedMaterial.officialUrl).toContain("jeff_speck_4_ways_to_make_a_city_more_walkable");
-  });
+    expect(material).toBeTruthy();
 
-  it("can retrieve a specific practice material group for a major", () => {
-    const material = getListeningMaterial(
-      "computing-science",
-      "american",
-      "computing-science-deployment-rollback",
-    );
+    const segments = buildListeningSentenceSegments(material!);
 
-    expect(material.materialGroupLabel).toBe("Deployment rollback");
-    expect(material.id).toBe("computing-science-deployment-rollback-american");
-    expect(material.title).toContain("rollback");
-  });
-
-  it("builds sentence segments with stable ordering for practice clips", () => {
-    const material = getListeningMaterial("mechanical-engineering", "american");
-    const segments = buildListeningSentenceSegments(material);
-
-    expect(segments.length).toBeGreaterThan(3);
+    expect(segments.length).toBeGreaterThan(2);
     expect(segments[0]?.startRatio).toBe(0);
     expect(segments.at(-1)?.endRatio).toBe(1);
   });
 
-  it("finds an evidence sentence for the retaining-wall detail question", () => {
-    const material = getListeningMaterial("civil-engineering", "british");
-    const detailQuestion = material.questions.find((question) => question.id === "detail");
-
-    expect(detailQuestion).toBeTruthy();
-    expect(findEvidenceSentence(material, detailQuestion!)).toContain("east retaining wall");
-  });
-
-  it("scores shadowing attempts based on keyword coverage", () => {
-    const score = scoreShadowingAttempt(
-      "Record the slope, the drain outlet, and any blocked channels.",
-      "Record the slope and the drain outlet before blocked channels.",
+  it("finds an evidence sentence from an authentic-source study transcript", () => {
+    const material = listeningMaterials.find(
+      (item) => item.materialGroupId === "computing-software-changing-stanford",
     );
 
-    expect(score.overallScore).toBeGreaterThan(70);
-    expect(score.matchedKeywords).toContain("slope");
-    expect(score.missingKeywords.length).toBeLessThan(score.matchedKeywords.length + 1);
+    expect(material).toBeTruthy();
+
+    const detailQuestion = material?.questions.find((question) => question.id === "detail");
+
+    expect(detailQuestion).toBeTruthy();
+    expect(findEvidenceSentence(material!, detailQuestion!)).toContain("prompting");
+  });
+
+  it("scores shadowing attempts based on authentic listening prompts", () => {
+    const score = scoreShadowingAttempt(
+      "The interview looks at how additive manufacturing is used inside a hypercar programme.",
+      "The interview explains how additive manufacturing is used in a hypercar program.",
+    );
+
+    expect(score.overallScore).toBeGreaterThan(65);
+    expect(score.matchedKeywords).toContain("additive");
+    expect(score.matchedKeywords).toContain("hypercar");
   });
 });

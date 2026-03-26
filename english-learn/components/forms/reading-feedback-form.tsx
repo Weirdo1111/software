@@ -1,9 +1,11 @@
 "use client";
 
 import { ArrowRight, BookMarked, BookOpen, CheckCircle2, LoaderCircle } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { AIAnalysisState } from "@/components/forms/ai-analysis-state";
+import { ContextDock } from "@/components/context-comments/context-dock";
 import { getPassageForLevel, type ReadingPracticePassage } from "@/lib/reading-passages";
 import type { ReadingFeedback } from "@/types/learning";
 
@@ -22,6 +24,8 @@ export function ReadingFeedbackForm({
   lessonId: string;
   syncPassageWithTargetLevel?: boolean;
 }) {
+  const searchParams = useSearchParams();
+  const locale = searchParams.get("lang") === "zh" ? "zh" : "en";
   const [targetLevel, setTargetLevel] = useState<ReadingLevel>(defaultLevel);
   const [claim, setClaim] = useState("");
   const [evidence, setEvidence] = useState("");
@@ -35,6 +39,68 @@ export function ReadingFeedbackForm({
   const activePassage = syncPassageWithTargetLevel ? getPassageForLevel(targetLevel) : passage;
   const activeLessonId = syncPassageWithTargetLevel ? getLessonIdForLevel(targetLevel) : lessonId;
   const isReady = claim.trim().length > 5 && evidence.trim().length > 5 && contrastSignal.trim().length > 0;
+  const discussionContext = useMemo(
+    () => ({
+      module: "reading" as const,
+      targetId: `feedback:${activeLessonId}`,
+      title: activePassage.title,
+      subtitle: locale === "zh" ? "阅读反馈" : "Reading feedback",
+      plazaTag: locale === "zh" ? "阅读" : "Reading",
+      topics:
+        locale === "zh"
+          ? ["主张", "证据", "转折", "词汇"]
+          : ["Claim", "Evidence", "Contrast", "Vocabulary"],
+      starters:
+        locale === "zh"
+          ? [
+              "我认为主张最清楚的句子是",
+              "这条证据真正支持观点的原因是",
+              "这里最值得记住的学术词是",
+            ]
+          : [
+              "The clearest claim sentence is",
+              "This detail works as evidence because",
+              "The academic word worth saving here is",
+            ],
+      seedComments:
+        locale === "zh"
+          ? [
+              {
+                author: "Tutor note",
+                topic: "主张",
+                content: "先找最能概括全文的句子，再看其他句子是不是在解释它。",
+                createdAt: "2026-03-24T07:55:00.000Z",
+                likes: 4,
+              },
+              {
+                author: "Mia",
+                topic: "词汇",
+                content: "我会先选能在 seminar 里复用的词，不只挑最难的词。",
+                createdAt: "2026-03-24T10:10:00.000Z",
+                likes: 2,
+              },
+            ]
+          : [
+              {
+                author: "Tutor note",
+                topic: "Claim",
+                content:
+                  "Find the sentence that can summarize the whole passage before you judge the details.",
+                createdAt: "2026-03-24T07:55:00.000Z",
+                likes: 4,
+              },
+              {
+                author: "Mia",
+                topic: "Vocabulary",
+                content:
+                  "I save terms that I can reuse in seminars, not only the hardest words in the text.",
+                createdAt: "2026-03-24T10:10:00.000Z",
+                likes: 2,
+              },
+            ],
+    }),
+    [activeLessonId, activePassage.title, locale],
+  );
 
   function handleTargetLevelChange(nextLevel: ReadingLevel) {
     setTargetLevel(nextLevel);
@@ -323,6 +389,12 @@ export function ReadingFeedbackForm({
           ) : null}
         </div>
       ) : null}
+
+      <ContextDock
+        key={`reading:${discussionContext.targetId}`}
+        locale={locale}
+        context={discussionContext}
+      />
     </form>
   );
 }

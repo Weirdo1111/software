@@ -12,6 +12,7 @@ import {
   difficultyStyle,
   examReferenceLabel,
 } from "@/components/reading/article-card";
+import { ContextDock } from "@/components/context-comments/context-dock";
 import { ParagraphNote } from "@/components/reading/paragraph-note";
 import { useReadingLibrary } from "@/components/reading/use-reading-library";
 import { WordLookupLayer } from "@/components/reading/word-lookup-layer";
@@ -36,6 +37,66 @@ export function ReadingArticleShell({
   lang?: string;
 }) {
   const { favoriteIds, history, hydrated, toggleFavorite, pushHistory } = useReadingLibrary();
+  const locale = lang === "zh" ? "zh" : "en";
+  const discussionContext = {
+    module: "reading" as const,
+    targetId: `article:${article.id}`,
+    title: article.title,
+    subtitle: article.category,
+    plazaTag: locale === "zh" ? "阅读" : "Reading",
+    topics:
+      locale === "zh"
+        ? ["观点", "段落", "证据", "词汇"]
+        : ["Argument", "Paragraph", "Evidence", "Vocabulary"],
+    starters:
+      locale === "zh"
+        ? [
+            "我最想讨论的段落是",
+            "这篇文章最有力的证据是",
+            "这个表达在学术写作里可以怎么复用",
+          ]
+        : [
+            "The paragraph I want to discuss is",
+            "The strongest evidence in this article is",
+            "A phrase I could reuse in academic writing is",
+          ],
+    seedComments:
+      locale === "zh"
+        ? [
+            {
+              author: "Tutor note",
+              topic: "段落",
+              content: "读长段落时，先判断它是在给观点、例子还是解释。",
+              createdAt: "2026-03-24T08:30:00.000Z",
+              likes: 4,
+            },
+            {
+              author: "Aiden",
+              topic: "词汇",
+              content: "我会先记 section 标题里的关键词，再读正文，速度会快一些。",
+              createdAt: "2026-03-24T09:55:00.000Z",
+              likes: 2,
+            },
+          ]
+        : [
+            {
+              author: "Tutor note",
+              topic: "Paragraph",
+              content:
+                "When a paragraph feels dense, decide whether it is giving a claim, an example, or an explanation first.",
+              createdAt: "2026-03-24T08:30:00.000Z",
+              likes: 4,
+            },
+            {
+              author: "Aiden",
+              topic: "Vocabulary",
+              content:
+                "I save the keywords from the section headings first, then the body is easier to follow.",
+              createdAt: "2026-03-24T09:55:00.000Z",
+              likes: 2,
+            },
+          ],
+  };
 
   useEffect(() => {
     if (!hydrated) return;
@@ -145,6 +206,12 @@ export function ReadingArticleShell({
             <ArrowRight className="size-4" />
           </Link>
         </article>
+
+        <ContextDock
+          key={`reading:${discussionContext.targetId}`}
+          locale={locale}
+          context={discussionContext}
+        />
       </section>
 
       {/* Related articles */}

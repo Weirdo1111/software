@@ -44,6 +44,7 @@ function useCopy(locale: Locale) {
         listenTitle: "听力练习",
         scenario: "场景",
         speed: "速度",
+        verySlow: "极慢",
         slow: "慢速",
         normal: "正常",
         showTranscript: "显示文本",
@@ -62,6 +63,7 @@ function useCopy(locale: Locale) {
         listenTitle: "Listening practice",
         scenario: "Scenario",
         speed: "Speed",
+        verySlow: "Very Slow",
         slow: "Slow",
         normal: "Normal",
         showTranscript: "Show transcript",
@@ -136,7 +138,7 @@ function PickStep({
   onStart: () => void;
 }) {
   return (
-    <section className="mx-auto max-w-3xl space-y-5 reveal-up">
+    <section className="space-y-5 reveal-up">
       {/* Header */}
       <article className="surface-panel rounded-[1.8rem] p-5 sm:p-6">
         <h2 className="font-display text-2xl tracking-tight text-[var(--ink)] sm:text-3xl">{copy.pickTitle}</h2>
@@ -245,10 +247,10 @@ function ListenStep({
     if (audioRef.current) audioRef.current.playbackRate = next;
   };
 
-  const rateLabel = rate === 1 ? copy.normal : rate === 0.85 ? copy.slow : `0.75×`;
+  const rateLabel = rate === 1 ? copy.normal : rate === 0.85 ? copy.slow : copy.verySlow;
 
   return (
-    <section className="mx-auto max-w-3xl space-y-5 reveal-up">
+    <section className="space-y-5 reveal-up">
       {/* Header with back */}
       <div className="flex items-center gap-3">
         <button type="button" onClick={onBack} className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--ink-soft)] transition hover:text-[var(--ink)]">

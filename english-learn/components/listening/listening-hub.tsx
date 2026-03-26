@@ -1,24 +1,11 @@
-"use client";
-
 import Link from "next/link";
+import { Suspense } from "react";
 import { ArrowRight, Globe, Music } from "lucide-react";
-import { useEffect, useState } from "react";
 
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { type Locale } from "@/lib/i18n/dictionaries";
 
-function useLevel() {
-  const [level, setLevel] = useState("B1");
-  useEffect(() => {
-    const raw = localStorage.getItem("demo_level");
-    const val = String(raw ?? "B1").toUpperCase();
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR-safe: must read localStorage after hydration
-    if (["A1", "A2", "B1", "B2", "C1", "C2"].includes(val)) setLevel(val);
-  }, []);
-  return level;
-}
-
 export function ListeningHub({ locale }: { locale: Locale }) {
-  const level = useLevel();
   const copy =
     locale === "zh"
       ? {
@@ -43,10 +30,17 @@ export function ListeningHub({ locale }: { locale: Locale }) {
         };
 
   return (
-    <section className="mx-auto max-w-3xl space-y-5 reveal-up">
+    <section className="space-y-5 reveal-up">
       <article className="surface-panel rounded-[1.8rem] p-5 sm:p-6">
-        <h2 className="font-display text-2xl tracking-tight text-[var(--ink)] sm:text-3xl">{copy.title}</h2>
-        <p className="mt-1 text-sm text-[var(--ink-soft)]">{copy.subtitle}</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="font-display text-2xl tracking-tight text-[var(--ink)] sm:text-3xl">{copy.title}</h2>
+            <p className="mt-1 text-sm text-[var(--ink-soft)]">{copy.subtitle}</p>
+          </div>
+          <Suspense fallback={<div className="h-9 w-28 rounded-full bg-black/10" />}>
+            <LanguageSwitcher locale={locale} />
+          </Suspense>
+        </div>
       </article>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -68,7 +62,7 @@ export function ListeningHub({ locale }: { locale: Locale }) {
 
         {/* TED Listening */}
         <Link
-          href={`/lesson/${level}-listening-starter?lang=${locale}`}
+          href={`/listening/ted?lang=${locale}`}
           className="group surface-panel rounded-[1.8rem] p-5 sm:p-6 transition hover:translate-y-[-2px] hover:shadow-[0_20px_50px_rgba(28,78,149,0.14)]"
         >
           <div className="inline-flex size-11 items-center justify-center rounded-2xl bg-[var(--coral)] text-white shadow-[0_8px_20px_rgba(195,109,89,0.25)]">

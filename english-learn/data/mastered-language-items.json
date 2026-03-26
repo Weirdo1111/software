@@ -1,0 +1,19 @@
+{
+  "mastered": [
+    {
+      "userKey": "admin",
+      "itemId": "e1e3cda5-7a03-45d9-8a4b-44cc3a3f05c3",
+      "masteredAt": "2026-03-24T10:10:39.457Z"
+    },
+    {
+      "userKey": "admin",
+      "itemId": "3ed2f83f-0ec0-4174-baa5-3b383d8ff7fa",
+      "masteredAt": "2026-03-24T10:10:44.084Z"
+    },
+    {
+      "userKey": "admin",
+      "itemId": "543ba3cb-8a50-4f38-beef-c894c2c358de",
+      "masteredAt": "2026-03-24T10:10:46.709Z"
+    }
+  ]
+}

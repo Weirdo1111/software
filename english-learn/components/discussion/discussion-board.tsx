@@ -1,414 +1,414 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
 import {
+  Bell,
+  BookOpen,
+  Grid2x2,
+  Headphones,
   Heart,
   MessageCircle,
-  Send,
+  Mic,
   Pin,
-  Clock3,
+  Plus,
+  Search,
+  SquarePen,
   TrendingUp,
 } from "lucide-react";
 
-type Locale = "zh" | "en";
+import type {
+  DiscussionCategory,
+  DiscussionNotification,
+  DiscussionPost,
+  Locale,
+} from "@/components/discussion/types";
 
-type DiscussionComment = {
-  id: string;
-  author: string;
-  content: string;
-  createdAt: string;
-};
+type ViewMode = "all" | "latest" | "popular";
 
-type DiscussionPost = {
-  id: string;
-  title: string;
-  content: string;
-  author: string;
-  tag: string;
-  likes: number;
-  liked: boolean;
-  pinned: boolean;
-  createdAt: string;
-  comments: DiscussionComment[];
-};
+interface DiscussionBoardProps {
+  locale: Locale;
+  posts: DiscussionPost[];
+  notifications: DiscussionNotification[];
+  onOpenComposer: () => void;
+  onToggleLike?: (postId: string) => void;
+}
 
-const STORAGE_KEY = "discussion_posts_v1";
+function formatRelativeDate(dateString: string, locale: Locale) {
+  const date = new Date(dateString.replace(" ", "T"));
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
 
-const defaultPosts: DiscussionPost[] = [
-  {
-    id: "p1",
-    title: "How should I prepare for reassessment next week?",
-    content:
-      "My current band is Medium. I want to know whether I should spend more time on speaking or reading before the next reassessment window opens.",
-    author: "Shengze",
-    tag: "Assessment",
-    likes: 8,
-    liked: false,
-    pinned: true,
-    createdAt: "2026-03-20 09:30",
-    comments: [
-      {
-        id: "c1",
-        author: "Tutor Team",
-        content:
-          "If speaking is lagging behind your reading metrics, prioritize one output task each day before reassessment.",
-        createdAt: "2026-03-20 10:10",
-      },
-    ],
-  },
-  {
-    id: "p2",
-    title: "Useful strategy for academic listening note-taking",
-    content:
-      "I started splitting notes into keywords, argument flow, and evidence. It reduced overload during longer listening tasks.",
-    author: "Mia",
-    tag: "Listening",
-    likes: 5,
-    liked: false,
-    pinned: false,
-    createdAt: "2026-03-19 18:20",
-    comments: [],
-  },
-];
-
-function loadPosts(): DiscussionPost[] {
-  if (typeof window === "undefined") return defaultPosts;
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return defaultPosts;
-
-  try {
-    return JSON.parse(raw) as DiscussionPost[];
-  } catch {
-    return defaultPosts;
+  if (diff < hour) {
+    const value = Math.max(1, Math.floor(diff / minute));
+    return locale === "zh" ? `${value} 分钟前` : `${value}m ago`;
   }
+
+  if (diff < day) {
+    const value = Math.floor(diff / hour);
+    return locale === "zh" ? `${value} 小时前` : `${value}h ago`;
+  }
+
+  const value = Math.floor(diff / day);
+  return locale === "zh" ? `${value} 天前` : `${value}d ago`;
 }
 
-function savePosts(posts: DiscussionPost[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+function getCategoryLabel(tag: DiscussionCategory, locale: Locale) {
+  const map = {
+    grammar: { zh: "语法", en: "Grammar" },
+    listening: { zh: "听力", en: "Listening" },
+    writing: { zh: "写作", en: "Writing" },
+    experience: { zh: "经验分享", en: "Experience" },
+    speaking: { zh: "口语", en: "Speaking" },
+  };
+
+  return map[tag][locale];
 }
 
-export function DiscussionBoard({ locale }: { locale: Locale }) {
-  const [posts, setPosts] = useState<DiscussionPost[]>(() => loadPosts());
-  const [sort, setSort] = useState<"latest" | "popular">("latest");
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [tag, setTag] = useState("General");
-  const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
+function getCategoryIcon(tag: DiscussionCategory | "all") {
+  const iconMap = {
+    all: Grid2x2,
+    grammar: BookOpen,
+    listening: Headphones,
+    writing: SquarePen,
+    speaking: Mic,
+    experience: TrendingUp,
+  };
 
-  useEffect(() => {
-    if (posts.length > 0) savePosts(posts);
-  }, [posts]);
+  return iconMap[tag];
+}
 
-  const sortedPosts = useMemo(() => {
-    const arr = [...posts];
-    arr.sort((a, b) => {
-      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
-      if (sort === "popular") return b.likes - a.likes;
-      return b.createdAt.localeCompare(a.createdAt);
-    });
-    return arr;
-  }, [posts, sort]);
+function getInitial(name: string) {
+  const trimmed = name.trim();
+  if (!trimmed) return "U";
+  return trimmed.charAt(0).toUpperCase();
+}
+
+function getLastActivityText(post: DiscussionPost, locale: Locale) {
+  if (post.comments.length > 0) {
+    const lastComment = post.comments[post.comments.length - 1];
+    return locale === "zh"
+      ? `${lastComment.author} 回复于 ${formatRelativeDate(lastComment.createdAt, locale)}`
+      : `${lastComment.author} replied ${formatRelativeDate(lastComment.createdAt, locale)}`;
+  }
+
+  return locale === "zh"
+    ? `${post.author} 发布于 ${formatRelativeDate(post.createdAt, locale)}`
+    : `${post.author} posted ${formatRelativeDate(post.createdAt, locale)}`;
+}
+
+export function DiscussionBoard({
+  locale,
+  posts,
+  notifications,
+  onOpenComposer,
+  onToggleLike,
+}: DiscussionBoardProps) {
+  const [view, setView] = useState<ViewMode>("all");
+  const [search, setSearch] = useState("");
+  const [selectedTag, setSelectedTag] = useState<DiscussionCategory | "all">("all");
+
+  const unreadCount = notifications.filter((item) => !item.read).length;
 
   const text = {
     zh: {
-      createPost: "发布讨论",
-      title: "标题",
-      content: "内容",
-      tag: "标签",
-      publish: "发布",
+      sideTitle: "论坛分类",
+      heroTitle: "学习讨论论坛",
+      start: "Start New Discussion",
+      search: "Search discussion topics...",
+      all: "全部",
       latest: "最新",
       popular: "热门",
-      comments: "评论",
-      addComment: "发表评论",
-      commentPlaceholder: "写下你的想法...",
-      titlePlaceholder: "例如：如何准备下一次分级测评？",
-      contentPlaceholder: "请输入你想讨论的问题、经验或建议。",
-      empty: "当前还没有帖子，试着发布第一条讨论。",
+      pinned: "置顶",
+      empty: "当前没有可展示的讨论主题。",
+      activity: "消息中心",
+      replies: "回复",
+      likes: "点赞",
+      views: "浏览",
+      forumCn: "学术论坛",
     },
     en: {
-      createPost: "Create discussion",
-      title: "Title",
-      content: "Content",
-      tag: "Tag",
-      publish: "Publish",
+      sideTitle: "Forum Categories",
+      heroTitle: "Academic Discussion Forum",
+      start: "Start New Discussion",
+      search: "Search discussion topics...",
+      all: "All",
       latest: "Latest",
       popular: "Popular",
-      comments: "Comments",
-      addComment: "Add comment",
-      commentPlaceholder: "Write your reply...",
-      titlePlaceholder: "Example: How should I prepare for my next reassessment?",
-      contentPlaceholder: "Share your question, strategy, or insight.",
-      empty: "No discussions yet. Create the first one.",
+      pinned: "Pinned",
+      empty: "No discussion threads available.",
+      activity: "Activity",
+      replies: "Replies",
+      likes: "Likes",
+      views: "Views",
+      forumCn: "Academic Forum",
     },
   }[locale];
 
-  const handleCreatePost = () => {
-    const trimmedTitle = title.trim();
-    const trimmedContent = content.trim();
-    if (!trimmedTitle || !trimmedContent) return;
+  const categories: DiscussionCategory[] = [
+    "grammar",
+    "listening",
+    "writing",
+    "speaking",
+    "experience",
+  ];
 
-    const next: DiscussionPost = {
-      id: crypto.randomUUID(),
-      title: trimmedTitle,
-      content: trimmedContent,
-      author: "You",
-      tag,
-      likes: 0,
-      liked: false,
-      pinned: false,
-      createdAt: new Date().toISOString().slice(0, 16).replace("T", " "),
-      comments: [],
-    };
+  const filteredPosts = useMemo(() => {
+    const keyword = search.trim().toLowerCase();
+    let list = [...posts];
 
-    setPosts((prev) => [next, ...prev]);
-    setTitle("");
-    setContent("");
-    setTag("General");
-  };
+    if (keyword) {
+      list = list.filter((post) => {
+        const haystack = [post.title, post.content, post.author, post.excerpt ?? ""]
+          .join(" ")
+          .toLowerCase();
 
-  const handleLike = (postId: string) => {
-    setPosts((prev) =>
-      prev.map((post) => {
-        if (post.id !== postId) return post;
-        const liked = !post.liked;
-        return {
-          ...post,
-          liked,
-          likes: liked ? post.likes + 1 : Math.max(0, post.likes - 1),
-        };
-      })
-    );
-  };
+        return haystack.includes(keyword);
+      });
+    }
 
-  const handleAddComment = (postId: string) => {
-    const draft = (commentDrafts[postId] || "").trim();
-    if (!draft) return;
+    if (selectedTag !== "all") {
+      list = list.filter((post) => post.tag === selectedTag);
+    }
 
-    const comment: DiscussionComment = {
-      id: crypto.randomUUID(),
-      author: "You",
-      content: draft,
-      createdAt: new Date().toISOString().slice(0, 16).replace("T", " "),
-    };
+    if (view === "latest") {
+      list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      return list;
+    }
 
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === postId
-          ? { ...post, comments: [...post.comments, comment] }
-          : post
-      )
-    );
+    if (view === "popular") {
+      list.sort(
+        (a, b) =>
+          b.comments.length * 2 + b.views + b.likes * 3 -
+          (a.comments.length * 2 + a.views + a.likes * 3),
+      );
+      return list;
+    }
 
-    setCommentDrafts((prev) => ({ ...prev, [postId]: "" }));
-  };
+    list.sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      return b.createdAt.localeCompare(a.createdAt);
+    });
+
+    return list;
+  }, [posts, search, selectedTag, view]);
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-      <section className="surface-panel rounded-[2rem] p-6 sm:p-7">
-        <div className="flex items-center justify-between gap-3">
-          <h3 className="font-display text-2xl tracking-tight text-[var(--ink)]">
-            {text.createPost}
-          </h3>
+    <div className="min-h-screen bg-[#f7f9fc] text-[#1b2430]">
+      <header className="sticky top-0 z-50 border-b border-[#e9eef5] bg-[rgba(255,255,255,0.9)] backdrop-blur-xl">
+        <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-6 px-6 py-4 lg:px-8">
+          <div className="min-w-[220px]">
+            <div className="flex items-center gap-2 text-[28px] font-semibold tracking-[-0.02em] text-[#111827]">
+              <span>LearnEnglishRight</span>
+              <span className="text-[#9aa4b2]">|</span>
+              <span className="text-[#111827]">{text.forumCn}</span>
+            </div>
+          </div>
 
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setSort("latest")}
-              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                sort === "latest"
-                  ? "bg-[var(--navy)] text-[#f7efe3]"
-                  : "border border-[rgba(20,50,75,0.14)] bg-white text-[var(--ink)]"
-              }`}
+          <div className="hidden flex-1 justify-center lg:flex">
+            <div className="flex w-full max-w-[460px] items-center rounded-full border border-[#d8e1ee] bg-white px-4 py-3 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+              <Search className="mr-3 size-4 text-[#8b97a8]" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full border-none bg-transparent text-sm text-[#111827] outline-none placeholder:text-[#9aa4b2]"
+                placeholder={text.search}
+              />
+            </div>
+          </div>
+
+          <div className="flex min-w-[220px] items-center justify-end gap-3">
+            <Link
+              href="/activity"
+              className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#e3eaf4] bg-white text-[#1f2937] shadow-sm transition hover:bg-[#f8fbff]"
             >
-              <Clock3 className="size-4" />
-              {text.latest}
-            </button>
+              <Bell className="size-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#ef4444] px-1 text-[10px] font-bold text-white">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </Link>
 
             <button
-              type="button"
-              onClick={() => setSort("popular")}
-              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                sort === "popular"
-                  ? "bg-[var(--navy)] text-[#f7efe3]"
-                  : "border border-[rgba(20,50,75,0.14)] bg-white text-[var(--ink)]"
-              }`}
+              onClick={onOpenComposer}
+              className="inline-flex items-center gap-2 rounded-full bg-[#2f6df6] px-5 py-3 text-sm font-medium text-white shadow-[0_10px_20px_rgba(47,109,246,0.22)] transition hover:bg-[#255fe0]"
             >
-              <TrendingUp className="size-4" />
-              {text.popular}
+              <Plus className="size-4" />
+              {text.start}
             </button>
           </div>
         </div>
 
-        <div className="mt-6 grid gap-4">
-          <Field
-            label={text.title}
-            value={title}
-            onChange={setTitle}
-            placeholder={text.titlePlaceholder}
-          />
-
-          <Field
-            label={text.tag}
-            value={tag}
-            onChange={setTag}
-            placeholder="General"
-          />
-
-          <div className="grid gap-2">
-            <label className="text-sm font-medium text-[var(--ink)]">
-              {text.content}
-            </label>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder={text.contentPlaceholder}
-              rows={6}
-              className="rounded-[1.3rem] border border-[rgba(20,50,75,0.14)] bg-white/80 px-4 py-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--navy)]"
+        <div className="px-6 pb-4 lg:hidden">
+          <div className="flex items-center rounded-full border border-[#d8e1ee] bg-white px-4 py-3 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+            <Search className="mr-3 size-4 text-[#8b97a8]" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full border-none bg-transparent text-sm text-[#111827] outline-none placeholder:text-[#9aa4b2]"
+              placeholder={text.search}
             />
           </div>
-
-          <button
-            type="button"
-            onClick={handleCreatePost}
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--navy)] px-5 py-3 text-sm font-semibold text-[#f7efe3] transition hover:translate-y-[-1px]"
-          >
-            <Send className="size-4" />
-            {text.publish}
-          </button>
         </div>
-      </section>
+      </header>
 
-      <section className="grid gap-4">
-        {sortedPosts.length === 0 ? (
-          <div className="surface-panel rounded-[2rem] p-6 text-sm text-[var(--ink-soft)]">
-            {text.empty}
-          </div>
-        ) : null}
+      <div className="mx-auto flex max-w-[1600px]">
+        <aside className="hidden min-h-[calc(100vh-81px)] w-[250px] shrink-0 bg-[#eef2ff] px-5 py-8 md:block">
+          <h2 className="mb-6 px-2 text-lg font-semibold text-[#1f2937]">{text.sideTitle}</h2>
 
-        {sortedPosts.map((post) => (
-          <article
-            key={post.id}
-            className="surface-panel rounded-[2rem] p-6 sm:p-7"
-          >
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <div className="mb-3 flex flex-wrap items-center gap-2">
-                  {post.pinned ? (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-[rgba(20,50,75,0.14)] bg-[rgba(20,50,75,0.06)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">
-                      <Pin className="size-3.5" />
-                      Pinned
-                    </span>
-                  ) : null}
+          <nav className="space-y-2">
+            <button
+              onClick={() => setSelectedTag("all")}
+              className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-medium transition ${
+                selectedTag === "all"
+                  ? "bg-white text-[#111827] shadow-sm"
+                  : "text-[#4b5563] hover:bg-[#e5ecff]"
+              }`}
+            >
+              <Grid2x2 className="size-4" />
+              {text.all}
+            </button>
 
-                  <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-white px-3 py-1 text-xs font-semibold text-[var(--ink-soft)]">
-                    {post.tag}
-                  </span>
-                </div>
+            {categories.map((category) => {
+              const Icon = getCategoryIcon(category);
 
-                <h3 className="font-display text-2xl tracking-tight text-[var(--ink)]">
-                  {post.title}
-                </h3>
-
-                <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">
-                  {post.content}
-                </p>
-              </div>
-
-              <div className="text-right text-xs text-[var(--ink-soft)]">
-                <div>{post.author}</div>
-                <div className="mt-1">{post.createdAt}</div>
-              </div>
-            </div>
-
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={() => handleLike(post.id)}
-                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  post.liked
-                    ? "bg-[rgba(195,109,89,0.12)] text-[var(--coral)]"
-                    : "border border-[rgba(20,50,75,0.14)] bg-white text-[var(--ink)]"
-                }`}
-              >
-                <Heart className="size-4" />
-                {post.likes}
-              </button>
-
-              <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.14)] bg-white px-4 py-2 text-sm font-semibold text-[var(--ink)]">
-                <MessageCircle className="size-4" />
-                {post.comments.length} {text.comments}
-              </div>
-            </div>
-
-            <div className="mt-6 grid gap-3">
-              {post.comments.map((comment) => (
-                <div
-                  key={comment.id}
-                  className="rounded-[1.3rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.72)] p-4"
+              return (
+                <button
+                  key={category}
+                  onClick={() => setSelectedTag(category)}
+                  className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-medium transition ${
+                    selectedTag === category
+                      ? "bg-white text-[#111827] shadow-sm"
+                      : "text-[#4b5563] hover:bg-[#e5ecff]"
+                  }`}
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm font-semibold text-[var(--ink)]">
-                      {comment.author}
-                    </span>
-                    <span className="text-xs text-[var(--ink-soft)]">
-                      {comment.createdAt}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
-                    {comment.content}
-                  </p>
-                </div>
-              ))}
-            </div>
+                  <Icon className="size-4" />
+                  {getCategoryLabel(category, locale)}
+                </button>
+              );
+            })}
+          </nav>
+        </aside>
 
-            <div className="mt-5 flex gap-3">
-              <input
-                value={commentDrafts[post.id] || ""}
-                onChange={(e) =>
-                  setCommentDrafts((prev) => ({
-                    ...prev,
-                    [post.id]: e.target.value,
-                  }))
-                }
-                placeholder={text.commentPlaceholder}
-                className="h-12 flex-1 rounded-full border border-[rgba(20,50,75,0.14)] bg-white px-4 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--navy)]"
-              />
+        <main className="flex-1 px-6 py-8 lg:px-10">
+          <section className="mb-8">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-center gap-4">
+                <div className="h-14 w-[4px] rounded-full bg-[#2f6df6]" />
+                <h1 className="text-[36px] font-medium leading-none tracking-[-0.03em] text-[#1f2937] md:text-[42px]">
+                  {text.heroTitle}
+                </h1>
+              </div>
 
-              <button
-                type="button"
-                onClick={() => handleAddComment(post.id)}
-                className="inline-flex h-12 items-center justify-center rounded-full bg-[var(--navy)] px-5 text-sm font-semibold text-[#f7efe3] transition hover:translate-y-[-1px]"
-              >
-                {text.addComment}
-              </button>
+              <div className="flex flex-wrap items-center gap-3">
+                {(["all", "latest", "popular"] as ViewMode[]).map((item) => (
+                  <button
+                    key={item}
+                    onClick={() => setView(item)}
+                    className={`rounded-full border px-6 py-2.5 text-sm font-medium transition ${
+                      view === item
+                        ? "border-[#2f6df6] bg-[#eef4ff] text-[#2f6df6]"
+                        : "border-[#d6deea] bg-white text-[#4b5563] hover:bg-[#f8fbff]"
+                    }`}
+                  >
+                    {item === "all"
+                      ? text.all
+                      : item === "latest"
+                        ? text.latest
+                        : text.popular}
+                  </button>
+                ))}
+              </div>
             </div>
-          </article>
-        ))}
-      </section>
+          </section>
+
+          <section>
+            {filteredPosts.length === 0 ? (
+              <div className="bg-white px-6 py-10 text-sm text-[#4b5563] shadow-sm">
+                {text.empty}
+              </div>
+            ) : (
+              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                {filteredPosts.map((post) => (
+                  <Link
+                    key={post.id}
+                    href={`/posts/${post.id}`}
+                    className="group flex min-h-[300px] flex-col border border-[#edf1f6] bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.05)] transition hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(15,23,42,0.08)]"
+                  >
+                    <div className="mb-4 flex items-start justify-between gap-3">
+                      <span className="inline-flex rounded-full bg-[#edf2f8] px-3 py-1 text-[11px] font-semibold text-[#5b6574]">
+                        {getCategoryLabel(post.tag, locale)}
+                      </span>
+
+                      {post.pinned ? (
+                        <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#f6e8c7] text-[#8a6a2f]">
+                          <Pin className="size-4" />
+                        </span>
+                      ) : (
+                        <span className="h-9 w-9" />
+                      )}
+                    </div>
+
+                    <h3 className="line-clamp-4 text-[24px] font-medium leading-[1.35] tracking-[-0.02em] text-[#111827] transition-colors group-hover:text-[#2f6df6]">
+                      {post.title}
+                    </h3>
+
+                    <div className="mt-4 text-sm leading-6 text-[#8a94a6]">
+                      {getLastActivityText(post, locale)}
+                    </div>
+
+                    <div className="mt-auto pt-10">
+                      <div className="flex items-end justify-between gap-4">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#2f6df6] text-sm font-bold text-white">
+                            {getInitial(post.author)}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="truncate text-sm font-semibold text-[#1f2937]">
+                              {post.author}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex shrink-0 items-center gap-5 text-sm text-[#6b7280]">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              onToggleLike?.(post.id);
+                            }}
+                            className={`inline-flex items-center gap-1.5 transition ${
+                              post.liked ? "text-rose-600" : "text-[#6b7280] hover:text-[#2f6df6]"
+                            }`}
+                            aria-pressed={post.liked}
+                          >
+                            <Heart
+                              className={`size-4 ${post.liked ? "fill-current text-rose-600" : ""}`}
+                            />
+                            <span>{post.likes}</span>
+                          </button>
+
+                          <div className="inline-flex items-center gap-1.5">
+                            <MessageCircle className="size-4" />
+                            <span>{post.comments.length}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+        </main>
+      </div>
     </div>
   );
 }
 
-function Field({
-  label,
-  value,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-}) {
-  return (
-    <div className="grid gap-2">
-      <label className="text-sm font-medium text-[var(--ink)]">{label}</label>
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="h-12 rounded-[1.2rem] border border-[rgba(20,50,75,0.14)] bg-white/80 px-4 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--navy)]"
-      />
-    </div>
-  );
-}
+export default DiscussionBoard;

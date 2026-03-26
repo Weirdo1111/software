@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 function formatSpeechText(text: string) {
   return text.replace(/\n+/g, " ").replace(/Follow-up:/g, "Follow-up question:").trim();
@@ -20,7 +20,7 @@ export function useBrowserSpeech() {
   const [playbackStatus, setPlaybackStatus] = useState("");
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  function stopPlayback() {
+  const stopPlayback = useCallback(() => {
     if (typeof window === "undefined" || typeof window.speechSynthesis === "undefined") {
       return;
     }
@@ -28,9 +28,9 @@ export function useBrowserSpeech() {
     window.speechSynthesis.cancel();
     utteranceRef.current = null;
     setPlayingId(null);
-  }
+  }, []);
 
-  function playMessage(messageId: string, text: string) {
+  const playMessage = useCallback((messageId: string, text: string) => {
     if (
       typeof window === "undefined" ||
       typeof window.speechSynthesis === "undefined" ||
@@ -68,7 +68,7 @@ export function useBrowserSpeech() {
     setPlaybackStatus("");
     setPlayingId(messageId);
     window.speechSynthesis.speak(utterance);
-  }
+  }, []);
 
   useEffect(() => {
     return () => {

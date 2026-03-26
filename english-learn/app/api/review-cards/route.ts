@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getRequestUserId, jsonError } from "@/lib/api";
+import {
+  createLocalReviewCards,
+  deleteLocalReviewCard,
+  listLocalReviewCards,
+  listLocalReviewHistory,
+  updateLocalReviewCard,
+} from "@/lib/local-review-cards";
 import { calculateNextReview } from "@/lib/srs";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 
@@ -29,19 +36,32 @@ export async function POST(request: Request) {
     const supabase = createSupabaseServiceClient();
 
     if (!supabase) {
-      return NextResponse.json({ saved: 0, persisted: false, message: "Database not configured." });
+      const result = await createLocalReviewCards(userId, payload.words);
+      return NextResponse.json({
+        saved: result.saved,
+        skipped: result.skipped,
+        persisted: true,
+        message:
+          result.skipped > 0
+            ? `${result.saved} card(s) added, ${result.skipped} duplicate(s) skipped.`
+            : `${result.saved} card(s) added to review deck.`,
+      });
     }
 
     // Dedup: check which words already exist for this user
     const fronts = payload.words.map((w) => w.front.toLowerCase());
     const { data: existing } = await supabase
       .from("review_cards")
-      .select("front")
+      .select("front, back")
       .eq("user_id", userId)
       .in("front", fronts);
 
-    const existingSet = new Set((existing ?? []).map((r) => r.front.toLowerCase()));
-    const newWords = payload.words.filter((w) => !existingSet.has(w.front.toLowerCase()));
+    const existingSet = new Set(
+      (existing ?? []).map((r) => `${r.front.toLowerCase()}::${String(r.back ?? "").toLowerCase()}`),
+    );
+    const newWords = payload.words.filter((w) => {
+      return !existingSet.has(`${w.front.toLowerCase()}::${w.back.toLowerCase()}`);
+    });
 
     if (newWords.length === 0) {
       const skipped = payload.words.length;
@@ -99,13 +119,20 @@ export async function GET(request: Request) {
     const supabase = createSupabaseServiceClient();
 
     if (!supabase) {
-      // Return mock cards when DB is not configured so the review page still works
-      const filtered = tag ? mockCards.filter((c) => c.tag === tag) : mockCards;
+      const cards = await listLocalReviewCards(userId, {
+        dueOnly: filter === "due",
+        tag,
+      });
+      const reviewHistory = await listLocalReviewHistory(userId);
+      const now = new Date();
+      const due = cards.filter((c) => new Date(c.due_at) <= now).length;
+      const mature = cards.filter((c) => c.stability >= 10).length;
+      const atRisk = cards.filter((c) => c.lapses >= 3).length;
       return NextResponse.json({
-        cards: filtered,
-        stats: { due: filtered.length, total: filtered.length, mature: 0, at_risk: 0 },
-        review_history: [],
-        persisted: false,
+        cards,
+        stats: { due, total: cards.length, mature, at_risk: atRisk },
+        review_history: reviewHistory,
+        persisted: true,
       });
     }
 
@@ -192,13 +219,36 @@ export async function PATCH(request: Request) {
     const supabase = createSupabaseServiceClient();
 
     if (!supabase) {
-      // Simulate SRS response for demo without DB using provided or default values
+      const currentCards = await listLocalReviewCards(userId);
+      const card = currentCards.find((entry) => entry.id === payload.card_id);
+      if (!card) {
+        return jsonError("Card not found", 404);
+      }
+
       const result = calculateNextReview({
-        stability: payload.stability ?? 2,
-        difficulty: payload.difficulty ?? 5,
+        stability: Number(card.stability),
+        difficulty: Number(card.difficulty),
         rating: payload.rating,
       });
-      return NextResponse.json({ ...result, persisted: false });
+      const nextLapses = payload.rating <= 1 ? card.lapses + 1 : card.lapses;
+
+      await updateLocalReviewCard(
+        userId,
+        payload.card_id,
+        {
+          stability: result.next_stability,
+          difficulty: result.next_difficulty,
+          due_at: result.next_due_at,
+          last_reviewed_at: new Date().toISOString(),
+          lapses: nextLapses,
+        },
+        {
+          rating: payload.rating,
+          next_due_at: result.next_due_at,
+        },
+      );
+
+      return NextResponse.json({ ...result, persisted: true });
     }
 
     // Fetch current card state
@@ -271,7 +321,11 @@ export async function DELETE(request: Request) {
     const supabase = createSupabaseServiceClient();
 
     if (!supabase) {
-      return NextResponse.json({ deleted: true, persisted: false });
+      const deleted = await deleteLocalReviewCard(userId, payload.card_id);
+      if (!deleted) {
+        return jsonError("Card not found", 404);
+      }
+      return NextResponse.json({ deleted: true, persisted: true });
     }
 
     const { error } = await supabase
@@ -292,44 +346,3 @@ export async function DELETE(request: Request) {
     return jsonError("Failed to delete card", 500);
   }
 }
-
-/* ── Mock data for no-DB demo ─────────────────────────────────── */
-
-const mockCards = [
-  {
-    id: "mock-1",
-    front: "synthesize evidence",
-    back: "To combine findings from multiple sources into a single coherent argument.",
-    tag: "Writing",
-    stability: 2,
-    difficulty: 5,
-    due_at: new Date().toISOString(),
-    last_reviewed_at: null,
-    lapses: 0,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: "mock-2",
-    front: "counterargument",
-    back: "A reason or set of reasons given in opposition to the main claim.",
-    tag: "Reading",
-    stability: 4,
-    difficulty: 4.85,
-    due_at: new Date().toISOString(),
-    last_reviewed_at: null,
-    lapses: 0,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: "mock-3",
-    front: "signpost phrase",
-    back: "Language that indicates the structure or direction of a spoken or written text (e.g. 'firstly', 'in contrast').",
-    tag: "Listening",
-    stability: 6,
-    difficulty: 3.5,
-    due_at: new Date().toISOString(),
-    last_reviewed_at: null,
-    lapses: 0,
-    created_at: new Date().toISOString(),
-  },
-];

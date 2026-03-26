@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          BigInt   @id @default(autoincrement())
+  username    String   @unique @db.VarChar(50)
+  authProvider String  @default("local-file") @db.VarChar(30)
+  authUserId   String  @db.VarChar(191)
+  email        String? @db.VarChar(191)
+  displayName String   @db.VarChar(100)
+  createdAt   DateTime @default(now())
+
+  posts      DiscussionPost[]         @relation("PostAuthor")
+  comments   DiscussionComment[]
+  likes      DiscussionPostLike[]
+  sentNotifs DiscussionNotification[] @relation("NotificationActor")
+  recvNotifs DiscussionNotification[] @relation("NotificationReceiver")
+  activities DiscussionPost[]         @relation("PostLastActivity")
+
+  @@unique([authProvider, authUserId])
+  @@map("users")
+}
+
+model DiscussionPost {
+  id                 BigInt   @id @default(autoincrement())
+  authorId           BigInt
+  title              String   @db.VarChar(255)
+  content            String   @db.Text
+  excerpt            String?  @db.VarChar(300)
+  category           String   @db.VarChar(50)
+  pinned             Boolean  @default(false)
+  viewsCount         Int      @default(0)
+  likesCount         Int      @default(0)
+  commentsCount      Int      @default(0)
+  lastActivityType   String   @default("posted") @db.VarChar(20)
+  lastActivityUserId BigInt?
+  lastActivityAt     DateTime @default(now())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  author           User                     @relation("PostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  comments         DiscussionComment[]
+  likes            DiscussionPostLike[]
+  notifications    DiscussionNotification[]
+  lastActivityUser User?                    @relation("PostLastActivity", fields: [lastActivityUserId], references: [id], onDelete: SetNull)
+
+  @@index([authorId])
+  @@index([category])
+  @@index([lastActivityAt])
+  @@map("discussion_posts")
+}
+
+model DiscussionComment {
+  id        BigInt   @id @default(autoincrement())
+  postId    BigInt
+  authorId  BigInt
+  content   String   @db.Text
+  audioData String?  @db.LongText
+  audioMimeType String? @db.VarChar(100)
+  audioDurationSec Int?
+  createdAt DateTime @default(now())
+
+  post          DiscussionPost           @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author        User                     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  notifications DiscussionNotification[]
+
+  @@index([postId])
+  @@index([authorId])
+  @@map("discussion_comments")
+}
+
+model DiscussionPostLike {
+  postId    BigInt
+  userId    BigInt
+  createdAt DateTime @default(now())
+
+  post DiscussionPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId])
+  @@index([userId])
+  @@map("discussion_post_likes")
+}
+
+model DiscussionNotification {
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt
+  actorId   BigInt?
+  postId    BigInt?
+  commentId BigInt?
+  type      String   @db.VarChar(20)
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user    User               @relation("NotificationReceiver", fields: [userId], references: [id], onDelete: Cascade)
+  actor   User?              @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+  post    DiscussionPost?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment DiscussionComment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([postId])
+  @@map("discussion_notifications")
+}
