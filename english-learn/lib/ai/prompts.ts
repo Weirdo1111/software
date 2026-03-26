@@ -29,11 +29,7 @@ ${transcript}`;
 }
 
 export function speakingPartnerPrompt(
-<<<<<<< Updated upstream
-  targetLevel: CEFRLevel,
-=======
   targetLevel: SpeakingDifficulty,
->>>>>>> Stashed changes
   prompt: SpeakingPrompt,
   learnerTurn: string,
   history: Array<{ role: "user" | "assistant"; content: string }>,
@@ -43,15 +39,9 @@ export function speakingPartnerPrompt(
       ? history.map((message) => `${message.role === "user" ? "Learner" : "Partner"}: ${message.content}`).join("\n")
       : "No previous turns.";
 
-<<<<<<< Updated upstream
-  return `You are a natural academic conversation partner for non-native university students at ${targetLevel}.
-Stay in role as the learner's ${prompt.partner_role}.
-Your job is to respond like a real person in a short spoken exchange: warm, concise, and easy to answer.
-=======
   return `You are acting as ${prompt.partner_role} in a DIICSU university speaking rehearsal.
 Keep the exchange inside the selected task. Do not switch to open-topic chat.
 Respond like a natural partner in a short academic or campus conversation for a learner working at the ${targetLevel} difficulty band.
->>>>>>> Stashed changes
 Return strict JSON with keys: reply, follow_up, coaching_note.
 reply should be 1-2 short natural sentences in character, without labels, bullet points, or markdown.
 follow_up should be exactly one short natural question that feels like part of the same conversation.

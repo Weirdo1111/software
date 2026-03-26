@@ -110,121 +110,24 @@ export function SpeakingShadowingPanel({
   }
 
   return (
-<<<<<<< Updated upstream
-    <section className="grid gap-5">
-      <article className="rounded-[1.85rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.84)] p-5 shadow-[0_18px_48px_rgba(18,32,52,0.06)]">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="section-label">
-              <Waves className="size-3.5" /> Sentence trainer
-            </p>
-            <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
-              Practice one speaking sentence at a time.
-            </h3>
-            <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">
-              This trainer uses your current Transcript as the source script, so you can shadow the exact answer you are building.
-            </p>
-=======
     <section className="grid gap-3">
       <article className="rounded-[1.45rem] border border-[rgba(20,50,75,0.12)] bg-[linear-gradient(145deg,rgba(21,32,59,0.98),rgba(24,41,72,0.96))] p-4 text-[#f7efe3] shadow-[0_18px_48px_rgba(12,20,34,0.24)]">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="section-label border-white/12 bg-white/8 text-[#efe5d6]">Shadowing studio</p>
             <h3 className="font-display mt-3 text-xl tracking-tight">Repeat the active script aloud.</h3>
->>>>>>> Stashed changes
           </div>
           <div className="rounded-full border border-[rgba(20,50,75,0.12)] bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
             {canUseSentenceTrainer ? "Active" : "Draft first"}
           </div>
         </div>
 
-<<<<<<< Updated upstream
-        {canUseSentenceTrainer ? (
-          <div className="mt-5 grid max-h-[36rem] gap-3 overflow-y-auto pr-1">
-            {sentenceSegments.map((sentence, index) => {
-              const isSelectedSentence = index === selectedSentenceIndex;
-              const isPlayingSentence = playingId === sentence.id;
-
-              return (
-                <div
-                  key={sentence.id}
-                  className={cn(
-                    "grid gap-3 rounded-[1.25rem] border p-4 transition-colors",
-                    isSelectedSentence
-                      ? "border-[var(--navy)] bg-[rgba(226,237,249,0.86)]"
-                      : "border-[rgba(20,50,75,0.12)] bg-white/88",
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3">
-                      <div className="inline-flex size-8 items-center justify-center rounded-2xl bg-[var(--navy)] text-xs font-semibold text-[#f7efe3]">
-                        {index + 1}
-                      </div>
-                      <div>
-                        <p className="text-sm leading-7 text-[var(--ink)]">{sentence.text}</p>
-                        <p className="mt-1 text-xs leading-6 text-[var(--ink-soft)]">
-                          Target sentence from your current speaking draft.
-                        </p>
-                      </div>
-                    </div>
-                    <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
-                      {isPlayingSentence ? "Playing" : isSelectedSentence ? "Selected" : "Ready"}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleSentencePlayback(index)}
-                      className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white px-4 py-2 text-sm font-semibold text-[var(--ink)]"
-                    >
-                      <PlayCircle className="size-4" />
-                      Play sentence
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedSentenceIndex(index)}
-                      className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white px-4 py-2 text-sm font-semibold text-[var(--ink)]"
-                    >
-                      <Target className="size-4" />
-                      Select
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="mt-5 rounded-[1.3rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.86)] p-4">
-            <p className="text-sm leading-7 text-[var(--ink)]">
-              Add at least one sentence in Transcript first, then this sentence trainer will split it into shadowing targets.
-            </p>
-          </div>
-        )}
-      </article>
-
-      <article className="rounded-[1.85rem] border border-[rgba(20,50,75,0.12)] bg-[linear-gradient(145deg,rgba(21,32,59,0.98),rgba(24,41,72,0.96))] p-5 text-[#f7efe3] shadow-[0_18px_48px_rgba(12,20,34,0.24)]">
-        <p className="section-label border-white/12 bg-white/8 text-[#efe5d6]">Shadowing studio</p>
-        <h3 className="font-display mt-4 text-3xl tracking-tight">
-          Repeat the selected sentence aloud.
-        </h3>
-
-        {selectedSentence ? (
-          <div className="mt-5 rounded-[1.25rem] border border-white/10 bg-white/6 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#f2d9ae]">
-              Target sentence
-            </p>
-            <p className="mt-2 text-sm leading-7 text-[#f7efe3]">{selectedSentence.text}</p>
-          </div>
-        ) : null}
-=======
         <div className="mt-3 rounded-[1.1rem] border border-white/10 bg-white/6 p-3">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#f2d9ae]">Target script</p>
           <p className="mt-2 max-h-32 overflow-y-auto pr-1 text-sm leading-6 text-[#f7efe3]">
             {practiceScript || "Add a draft in Speaking studio first to create a shadowing target."}
           </p>
         </div>
->>>>>>> Stashed changes
 
         <div className="mt-3 flex flex-wrap gap-2">
           <button
@@ -276,31 +179,6 @@ export function SpeakingShadowingPanel({
           </p>
         ) : null}
 
-<<<<<<< Updated upstream
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-[1.25rem] border border-white/10 bg-white/6 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#f2d9ae]">
-              Your shadowing
-            </p>
-            <p className="mt-2 min-h-28 text-sm leading-7 text-[#f7efe3]">
-              {shadowingTranscript || "Press Start shadowing and repeat the selected sentence aloud."}
-            </p>
-          </div>
-          <div className="rounded-[1.25rem] border border-white/10 bg-white/6 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#f2d9ae]">
-              Score
-            </p>
-            {shadowingScore ? (
-              <>
-                <p className="mt-2 text-4xl font-semibold text-[#f7efe3]">
-                  {shadowingScore.overallScore}%
-                </p>
-                <p className="mt-2 text-sm leading-7 text-[#efe5d6]/82">{shadowingScore.note}</p>
-              </>
-            ) : (
-              <p className="mt-2 text-sm leading-7 text-[#efe5d6]/82">
-                The browser will compare your spoken keywords after one attempt.
-=======
         <div className="mt-3 grid gap-3 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="rounded-[1.1rem] border border-white/10 bg-white/6 p-3">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#f2d9ae]">Your shadowing</p>
@@ -318,7 +196,6 @@ export function SpeakingShadowingPanel({
             ) : (
               <p className="mt-2 text-sm leading-6 text-[#efe5d6]/82">
                 The browser will compare your recognised keywords after one attempt.
->>>>>>> Stashed changes
               </p>
             )}
           </div>
@@ -343,32 +220,6 @@ export function SpeakingShadowingPanel({
         ) : null}
 
         {shadowingScore ? (
-<<<<<<< Updated upstream
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-[1.15rem] border border-white/10 bg-white/6 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#f2d9ae]">
-                Matched
-              </p>
-              <p className="mt-2 text-sm leading-7 text-[#f7efe3]">
-                {shadowingScore.matchedKeywords.join(", ") || "None yet"}
-              </p>
-            </div>
-            <div className="rounded-[1.15rem] border border-white/10 bg-white/6 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#f2d9ae]">
-                Missing
-              </p>
-              <p className="mt-2 text-sm leading-7 text-[#f7efe3]">
-                {shadowingScore.missingKeywords.join(", ") || "No major misses"}
-              </p>
-            </div>
-            <div className="rounded-[1.15rem] border border-white/10 bg-white/6 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#f2d9ae]">
-                Extra
-              </p>
-              <p className="mt-2 text-sm leading-7 text-[#f7efe3]">
-                {shadowingScore.extraKeywords.join(", ") || "None"}
-              </p>
-=======
           <div className="mt-3 grid gap-2 sm:grid-cols-3">
             <div className="rounded-[1rem] border border-white/10 bg-white/6 p-3">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#f2d9ae]">Matched</p>
@@ -381,7 +232,6 @@ export function SpeakingShadowingPanel({
             <div className="rounded-[1rem] border border-white/10 bg-white/6 p-3">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#f2d9ae]">Extra</p>
               <p className="mt-2 text-sm leading-6 text-[#f7efe3]">{shadowingScore.extraKeywords.join(", ") || "None"}</p>
->>>>>>> Stashed changes
             </div>
           </div>
         ) : null}

@@ -12,9 +12,6 @@ import { getSpeakingPromptById } from "@/lib/speaking-prompts";
 // Added a text-based AI speaking partner so learners can rehearse academic turns before scoring.
 const schema = z.object({
   prompt_id: z.string().min(1),
-<<<<<<< Updated upstream
-  target_level: z.enum(["A1", "A2", "B1", "B2"]),
-=======
   target_level: z.enum(["low", "medium", "high"]),
   task_context: z.object({
     title: z.string().min(1),
@@ -24,7 +21,6 @@ const schema = z.object({
     partner_role: z.string().min(1),
     partner_goal: z.string().min(1),
   }),
->>>>>>> Stashed changes
   learner_turn: z.string().min(3),
   history: z
     .array(
@@ -43,17 +39,6 @@ export async function POST(request: Request) {
     const payload = schema.parse(body);
     const speakingPrompt = getSpeakingPromptById(payload.prompt_id);
 
-<<<<<<< Updated upstream
-    const speakingPrompt = getSpeakingPromptById(payload.prompt_id);
-    if (!speakingPrompt) {
-      return jsonError("Invalid speaking prompt", 422);
-    }
-
-    if (!hasAIConfig()) {
-      return NextResponse.json(buildMockSpeakingPartnerReply(payload.learner_turn));
-    }
-
-=======
     if (!speakingPrompt) {
       return jsonError("Invalid speaking prompt", 422);
     }
@@ -73,7 +58,6 @@ export async function POST(request: Request) {
       return NextResponse.json(buildMockSpeakingPartnerReply(payload.learner_turn, speakingPrompt));
     }
 
->>>>>>> Stashed changes
     const output = await generateStructuredJSON(
       speakingPartnerPrompt(payload.target_level, speakingPrompt, payload.learner_turn, payload.history),
     );

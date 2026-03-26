@@ -72,22 +72,6 @@ export function buildMockSpeakingFeedback(transcript: string, checkpoints: strin
   };
 }
 
-<<<<<<< Updated upstream
-export function buildMockSpeakingPartnerReply(learnerTurn: string): SpeakingPartnerReply {
-  const hasExample = /\bfor example|for instance|such as\b/i.test(learnerTurn);
-  const hasReason = /\bbecause|since|therefore|so\b/i.test(learnerTurn);
-
-  return {
-    reply: hasReason
-      ? "Your idea is clear, and I can follow your main reason. The response already sounds more like a seminar contribution than a short classroom answer."
-      : "I understand your main idea, but the answer still feels a little brief for an academic discussion. Add one reason so the position sounds more convincing.",
-    follow_up: hasExample
-      ? "Can you explain why that example matters for university learning?"
-      : "Can you add one specific example from class, campus life, or independent study?",
-    coaching_note: hasReason
-      ? "Use a transition phrase at the start of the next sentence so the response sounds more controlled."
-      : "Start the next turn with one reason is that or this is important because.",
-=======
 export function buildMockSpeakingPartnerReply(learnerTurn: string, prompt: SpeakingPrompt): SpeakingPartnerReply {
   const normalizedTurn = learnerTurn.trim().toLowerCase();
   const asksQuestion = normalizedTurn.includes("?");
@@ -131,7 +115,6 @@ export function buildMockSpeakingPartnerReply(learnerTurn: string, prompt: Speak
     reply: `Your answer is moving in the right direction for ${prompt.scenario.toLowerCase()}.`,
     follow_up: "Can you make the ending more direct and controlled?",
     coaching_note: "Keep the next turn concise and tie it back to the task goal.",
->>>>>>> Stashed changes
   };
 }
 

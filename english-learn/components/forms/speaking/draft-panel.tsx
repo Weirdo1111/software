@@ -18,13 +18,7 @@ export function SpeakingDraftPanel({
           {wordCount} words
         </span>
       </div>
-<<<<<<< Updated upstream
-      <p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">Keep only the version you want the AI to judge.</p>
-      <label className="mt-4 grid gap-2 text-sm font-medium text-[var(--ink)]">
-        Transcript
-=======
       <label className="mt-3 grid gap-2 text-sm font-medium text-[var(--ink)]">
->>>>>>> Stashed changes
         <textarea
           value={transcript}
           onChange={(event) => onTranscriptChange(event.target.value)}

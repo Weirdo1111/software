@@ -8,17 +8,11 @@ import {
 } from "@/lib/speaking-prompts";
 
 describe("speaking prompts", () => {
-<<<<<<< Updated upstream
-  it("maps CEFR access to prompts in the matching difficulty band", () => {
-=======
   it("maps CEFR access to the matching difficulty band", () => {
->>>>>>> Stashed changes
     const prompts = getSpeakingPromptsForLevel("B1");
 
     expect(prompts.length).toBeGreaterThan(0);
     expect(prompts.every((prompt) => prompt.difficulty === "medium")).toBe(true);
-<<<<<<< Updated upstream
-=======
   });
 
   it("filters prompts by major and difficulty", () => {
@@ -36,7 +30,6 @@ describe("speaking prompts", () => {
     expect(mapCEFRToSpeakingDifficulty("A2")).toBe("low");
     expect(mapCEFRToSpeakingDifficulty("B1")).toBe("medium");
     expect(mapCEFRToSpeakingDifficulty("B2")).toBe("high");
->>>>>>> Stashed changes
   });
 
   it("looks up a prompt by id", () => {

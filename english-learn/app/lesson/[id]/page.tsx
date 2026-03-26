@@ -3,17 +3,15 @@ import { Ear, FileText, Mic, PenLine, Target } from "lucide-react";
 import { ListeningFeedbackForm } from "@/components/forms/listening-feedback-form";
 import { ReadingFeedbackForm } from "@/components/forms/reading-feedback-form";
 import { SpeakingFeedbackForm } from "@/components/forms/speaking-feedback-form";
+import { SpeakingHub } from "@/components/forms/speaking-hub";
 import { WritingFeedbackForm } from "@/components/forms/writing-feedback-form";
 import { PageFrame } from "@/components/page-frame";
+import type { Locale } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { getListeningMaterialsCatalog } from "@/lib/listening-materials-repository";
 import { buildPracticePassageFromArticle, getReadingArticleById } from "@/lib/reading-articles";
 import { getPassageForLevel } from "@/lib/reading-passages";
-<<<<<<< Updated upstream
-=======
 import { isSpeakingModuleRouteId, normalizeSpeakingModuleId } from "@/lib/speaking-modules";
-import { isWritingModuleId } from "@/lib/writing-modules";
->>>>>>> Stashed changes
 import type { CEFRLevel } from "@/types/learning";
 
 type LessonMode = "listening" | "speaking" | "reading" | "writing";
@@ -113,15 +111,14 @@ const modeMeta = {
 function renderWorkbench(
   mode: LessonMode,
   lessonId: string,
+  locale: Locale,
+  speakingModule: string | undefined,
   listeningMaterials: Awaited<ReturnType<typeof getListeningMaterialsCatalog>> | null,
   articleId?: string,
 ) {
   const level = extractLevel(lessonId);
 
   if (mode === "speaking") {
-<<<<<<< Updated upstream
-    return <SpeakingFeedbackForm defaultLevel={level} />;
-=======
     if (!isSpeakingModuleRouteId(speakingModule)) {
       return <SpeakingHub locale={locale} lessonId={lessonId} />;
     }
@@ -136,7 +133,6 @@ function renderWorkbench(
         hubHref={`/lesson/${lessonId}?lang=${locale}`}
       />
     );
->>>>>>> Stashed changes
   }
 
   if (mode === "listening") {
@@ -163,7 +159,7 @@ export default async function LessonPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ lang?: string; articleId?: string }>;
+  searchParams: Promise<{ lang?: string; articleId?: string; module?: string }>;
 }) {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
@@ -243,11 +239,11 @@ export default async function LessonPage({
               </div>
             </article>
 
-            {renderWorkbench(mode, resolvedParams.id, listeningMaterials, linkedArticle?.id)}
+            {renderWorkbench(mode, resolvedParams.id, locale, resolvedSearchParams.module, listeningMaterials, linkedArticle?.id)}
           </div>
         </>
       ) : (
-        renderWorkbench(mode, resolvedParams.id, listeningMaterials, linkedArticle?.id)
+        renderWorkbench(mode, resolvedParams.id, locale, resolvedSearchParams.module, listeningMaterials, linkedArticle?.id)
       )}
 
       {showLowerPanels ? (
