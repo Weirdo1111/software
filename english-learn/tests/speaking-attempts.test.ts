@@ -6,9 +6,11 @@ import type { SpeakingAttemptRecord } from "@/types/learning";
 function createAttempt(id: string, createdAt: string): SpeakingAttemptRecord {
   return {
     id,
-    prompt_id: "b1-language-support",
-    prompt_title: "University language support",
-    target_level: "B1",
+    prompt_id: "cs-medium-bug-update",
+    prompt_title: "Explain a bug fix plan",
+    target_level: "medium",
+    major_id: "computing-science",
+    category: "major-study",
     transcript: "Sample transcript",
     overall_score: 7,
     task_response_score: 7,

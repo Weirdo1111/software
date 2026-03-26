@@ -11,6 +11,14 @@ import { SpeakingPromptBank } from "@/components/forms/speaking/prompt-bank";
 import { SpeakingRecorderPanel } from "@/components/forms/speaking/recorder-panel";
 import { SpeakingScorePanel } from "@/components/forms/speaking/score-panel";
 import { SpeakingShadowingPanel } from "@/components/forms/speaking/shadowing-panel";
+<<<<<<< Updated upstream
+=======
+import type { PartnerMessage, SpeakingLevel, SpeakingModuleId } from "@/components/forms/speaking/types";
+import { type Locale } from "@/lib/i18n/dictionaries";
+import { speakingModuleCopy } from "@/lib/speaking-modules";
+import { appendSpeakingAttemptInStorage } from "@/lib/speaking-attempts";
+import { getSpeakingPromptById, getSpeakingPromptsForLevel, mapCEFRToSpeakingDifficulty } from "@/lib/speaking-prompts";
+>>>>>>> Stashed changes
 import { useAudioRecorder } from "@/components/forms/speaking/use-audio-recorder";
 import { appendSpeakingAttemptInStorage } from "@/lib/speaking-attempts";
 import type { PartnerMessage, SpeakingLevel } from "@/components/forms/speaking/types";
@@ -19,11 +27,28 @@ import type { SpeakingAttemptRecord, SpeakingFeedback, SpeakingPartnerReply } fr
 
 // Date: 2026/3/18
 // Author: Tianbo Cao
+<<<<<<< Updated upstream
 // Kept this file as the stateful container so UI sections can stay modular and easy to extend.
 export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: SpeakingLevel }) {
   const initialPrompt = getSpeakingPromptsForLevel(defaultLevel)[0] ?? getSpeakingPromptById("b1-language-support");
+=======
+// Kept this file as the stateful container for one speaking workspace, while routing decides which workspace to open.
+export function SpeakingFeedbackForm({
+  defaultLevel = "B1",
+  module,
+  locale,
+  hubHref,
+}: {
+  defaultLevel?: SpeakingLevel;
+  module: SpeakingModuleId;
+  locale: Locale;
+  hubHref: string;
+}) {
+  const fallbackPrompt = getSpeakingPromptsForLevel("B1")[0] ?? getSpeakingPromptsForLevel("A2")[0] ?? null;
+  const initialPrompt = getSpeakingPromptsForLevel(defaultLevel)[0] ?? fallbackPrompt;
+>>>>>>> Stashed changes
   const [targetLevel, setTargetLevel] = useState<SpeakingLevel>(defaultLevel);
-  const [selectedPromptId, setSelectedPromptId] = useState(initialPrompt?.id ?? "b1-language-support");
+  const [selectedPromptId, setSelectedPromptId] = useState(initialPrompt?.id ?? "");
   const [transcript, setTranscript] = useState(initialPrompt?.sample_opening ?? "");
   const [partnerTurn, setPartnerTurn] = useState("");
   const [partnerMessages, setPartnerMessages] = useState<PartnerMessage[]>([]);
@@ -38,8 +63,7 @@ export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: S
   const recorder = useAudioRecorder();
 
   const availablePrompts = getSpeakingPromptsForLevel(targetLevel);
-  const selectedPrompt =
-    getSpeakingPromptById(selectedPromptId) ?? availablePrompts[0] ?? getSpeakingPromptById("b1-language-support");
+  const selectedPrompt = getSpeakingPromptById(selectedPromptId) ?? availablePrompts[0] ?? fallbackPrompt;
   const isReady = transcript.trim().length >= 20;
 
   if (!selectedPrompt) return null;
@@ -61,7 +85,7 @@ export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: S
 
   function handleTargetLevelChange(nextLevel: SpeakingLevel) {
     const nextPrompts = getSpeakingPromptsForLevel(nextLevel);
-    const nextPrompt = nextPrompts[0] ?? getSpeakingPromptById("b1-language-support");
+    const nextPrompt = nextPrompts[0] ?? fallbackPrompt;
 
     setTargetLevel(nextLevel);
     if (nextPrompt) {
@@ -102,7 +126,9 @@ export function SpeakingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: S
         id: globalThis.crypto?.randomUUID?.() ?? `${selectedPrompt.id}-${Date.now()}`,
         prompt_id: selectedPrompt.id,
         prompt_title: selectedPrompt.title,
-        target_level: targetLevel,
+        target_level: mapCEFRToSpeakingDifficulty(targetLevel),
+        major_id: selectedPrompt.major_id,
+        category: selectedPrompt.category,
         transcript,
         overall_score: (data as SpeakingFeedback).overall_score,
         task_response_score: (data as SpeakingFeedback).task_response_score,

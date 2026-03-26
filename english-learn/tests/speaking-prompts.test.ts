@@ -3,17 +3,17 @@ import { describe, expect, it } from "vitest";
 import { getSpeakingPromptById, getSpeakingPromptsForLevel } from "@/lib/speaking-prompts";
 
 describe("speaking prompts", () => {
-  it("returns only prompts that match the selected CEFR level", () => {
+  it("maps CEFR access to prompts in the matching difficulty band", () => {
     const prompts = getSpeakingPromptsForLevel("B1");
 
     expect(prompts.length).toBeGreaterThan(0);
-    expect(prompts.every((prompt) => prompt.level === "B1")).toBe(true);
+    expect(prompts.every((prompt) => prompt.difficulty === "medium")).toBe(true);
   });
 
   it("looks up a prompt by id", () => {
-    const prompt = getSpeakingPromptById("b2-policy-debate");
+    const prompt = getSpeakingPromptById("transport-high-mobility-policy");
 
-    expect(prompt?.title).toBe("Attendance policy debate");
-    expect(prompt?.partner_role).toBe("debate opponent");
+    expect(prompt?.title).toBe("Respond to a mobility policy");
+    expect(prompt?.partner_role).toBe("policy tutor");
   });
 });
