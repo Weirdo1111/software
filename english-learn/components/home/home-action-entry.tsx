@@ -5,6 +5,7 @@ import { ArrowRight, Settings, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { getDifficultyLabel } from "@/lib/level-labels";
 import { type Locale } from "@/lib/i18n/dictionaries";
 import {
   createEmptyLearningTrackerSnapshot,
@@ -30,10 +31,13 @@ function normalizeLevel(raw: string | null) {
 }
 
 function getStage(level: string, locale: Locale) {
-  const upper = level.toUpperCase();
-  if (upper === "A1" || upper === "A2") return locale === "zh" ? "基础阶段" : "Foundation stage";
-  if (upper === "B1" || upper === "B2") return locale === "zh" ? "进阶阶段" : "Developing stage";
-  return locale === "zh" ? "提升阶段" : "Advanced stage";
+  const difficulty = getDifficultyLabel(level);
+  if (locale === "zh") {
+    if (difficulty === "Easy") return "基础阶段";
+    if (difficulty === "Medium") return "进阶阶段";
+    return "提升阶段";
+  }
+  return difficulty;
 }
 
 function toDisplayName(raw: string | null) {
@@ -220,7 +224,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
               {copy.welcome}, {displayName}
             </h2>
             <p className="mt-1 text-sm text-[var(--ink-soft)]">
-              {getStage(levelPrefix, locale)} · {levelPrefix} · {copy.atGlanceCompleted}: {totalCompleted}
+              {getStage(levelPrefix, locale)} · {copy.atGlanceCompleted}: {totalCompleted}
             </p>
           </div>
           <LanguageSwitcher locale={locale} />

@@ -25,6 +25,7 @@ import {
   recordListeningCompletionInStorage,
   recordListeningHistoryInStorage,
 } from "@/lib/listening-library";
+import { getDifficultyLabel } from "@/lib/level-labels";
 import { cn } from "@/lib/utils";
 import type { CEFRLevel, ListeningAIFeedback } from "@/types/learning";
 
@@ -215,7 +216,7 @@ export function TedDetail({
               {material.majorLabel}
             </span>
             <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
-              Level {material.recommendedLevel}
+              {getDifficultyLabel(material.recommendedLevel)}
             </span>
           </div>
         </div>
@@ -353,7 +354,7 @@ export function TedDetail({
               Listening check
             </p>
             <p className="text-sm font-semibold text-[var(--ink-soft)]">
-              {answeredCount}/{material.questions.length} · {defaultLevel}
+              {answeredCount}/{material.questions.length} · {getDifficultyLabel(defaultLevel)}
             </p>
           </div>
 

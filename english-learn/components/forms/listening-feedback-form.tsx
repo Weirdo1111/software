@@ -41,6 +41,7 @@ import {
   subscribeListeningLibrary,
 } from "@/lib/listening-library";
 import { cn } from "@/lib/utils";
+import { getDifficultyLabel } from "@/lib/level-labels";
 import type { CEFRLevel, ListeningAIFeedback } from "@/types/learning";
 
 type MajorFilter = "all" | DIICSUMajorId;
@@ -407,7 +408,7 @@ export function ListeningFeedbackForm({
           </label>
 
           <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-            <span className="sr-only">Level</span>
+            <span className="sr-only">Difficulty</span>
             <select
               value={selectedLevelFilter}
               onChange={(event) => setSelectedLevelFilter(event.target.value as LevelFilter)}
@@ -415,7 +416,7 @@ export function ListeningFeedbackForm({
             >
               {levelOptions.map((level) => (
                 <option key={level} value={level}>
-                  {level === "all" ? "All levels" : `Level ${level}`}
+                  {level === "all" ? "All difficulties" : getDifficultyLabel(level)}
                 </option>
               ))}
             </select>
@@ -503,7 +504,7 @@ export function ListeningFeedbackForm({
               {activeMaterial.majorLabel}
             </span>
             <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
-              Level {activeMaterial.recommendedLevel}
+              {getDifficultyLabel(activeMaterial.recommendedLevel)}
             </span>
             {activeCompletion ? (
               <span className="rounded-full border border-[#6a9483]/35 bg-[#edf6f1] px-3 py-1.5 text-[#315f4f]">
@@ -597,7 +598,7 @@ export function ListeningFeedbackForm({
                       {material.title}
                     </h4>
                     <p className="mt-1 text-xs text-[var(--ink-soft)]">
-                      {material.speakerName} 路 {material.majorLabel} 路 {material.recommendedLevel}
+                      {material.speakerName} 路 {material.majorLabel} 路 {getDifficultyLabel(material.recommendedLevel)}
                     </p>
                     {completion ? (
                       <p className="mt-1 text-xs font-semibold text-[#315f4f]">
@@ -709,7 +710,7 @@ export function ListeningFeedbackForm({
               Listening check
             </p>
             <p className="text-sm font-semibold text-[var(--ink-soft)]">
-              {answeredCount}/{activeMaterial.questions.length} 路 {defaultLevel}
+              {answeredCount}/{activeMaterial.questions.length} 路 {getDifficultyLabel(defaultLevel)}
             </p>
           </div>
 

@@ -19,6 +19,11 @@ import { speakingModuleCopy } from "@/lib/speaking-modules";
 import { appendSpeakingAttemptInStorage } from "@/lib/speaking-attempts";
 import { getSpeakingPromptById, getSpeakingPromptsForLevel } from "@/lib/speaking-prompts";
 import { useAudioRecorder } from "@/components/forms/speaking/use-audio-recorder";
+import {
+  getDifficultyLabel,
+  getLevelForDifficulty,
+  type DifficultyLabel,
+} from "@/lib/level-labels";
 import type { SpeakingAttemptRecord, SpeakingFeedback, SpeakingPartnerReply } from "@/types/learning";
 
 // Date: 2026/3/18
@@ -35,8 +40,10 @@ export function SpeakingFeedbackForm({
   locale: Locale;
   hubHref: string;
 }) {
-  const initialPrompt = getSpeakingPromptsForLevel(defaultLevel)[0] ?? getSpeakingPromptById("b1-language-support");
-  const [targetLevel, setTargetLevel] = useState<SpeakingLevel>(defaultLevel);
+  const easyBaseline: "A1" | "A2" = defaultLevel === "A1" ? "A1" : "A2";
+  const [targetDifficulty, setTargetDifficulty] = useState<DifficultyLabel>(getDifficultyLabel(defaultLevel));
+  const targetLevel = getLevelForDifficulty(targetDifficulty, easyBaseline) as SpeakingLevel;
+  const initialPrompt = getSpeakingPromptsForLevel(targetLevel)[0] ?? getSpeakingPromptById("b1-language-support");
   const [selectedPromptId, setSelectedPromptId] = useState(initialPrompt?.id ?? "b1-language-support");
   const [transcript, setTranscript] = useState(initialPrompt?.sample_opening ?? "");
   const [partnerTurn, setPartnerTurn] = useState("");
@@ -137,11 +144,12 @@ export function SpeakingFeedbackForm({
     await recorder.resetRecording();
   }
 
-  function handleTargetLevelChange(nextLevel: SpeakingLevel) {
+  function handleTargetDifficultyChange(nextDifficulty: DifficultyLabel) {
+    const nextLevel = getLevelForDifficulty(nextDifficulty, easyBaseline) as SpeakingLevel;
     const nextPrompts = getSpeakingPromptsForLevel(nextLevel);
     const nextPrompt = nextPrompts[0] ?? getSpeakingPromptById("b1-language-support");
 
-    setTargetLevel(nextLevel);
+    setTargetDifficulty(nextDifficulty);
     if (nextPrompt) {
       void resetPracticeState(nextPrompt.id);
     }
@@ -323,10 +331,10 @@ export function SpeakingFeedbackForm({
 
         {module !== "partner" ? (
           <SpeakingPromptBank
-            targetLevel={targetLevel}
+            targetDifficulty={targetDifficulty}
             availablePrompts={availablePrompts}
             selectedPrompt={selectedPrompt}
-            onTargetLevelChange={handleTargetLevelChange}
+            onTargetDifficultyChange={handleTargetDifficultyChange}
             onPromptChange={handlePromptChange}
           />
         ) : null}

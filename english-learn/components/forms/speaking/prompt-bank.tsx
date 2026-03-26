@@ -1,20 +1,21 @@
-import type { SpeakingLevel } from "@/components/forms/speaking/types";
+import type { DifficultyLabel } from "@/lib/level-labels";
+import { difficultyOptions } from "@/lib/level-labels";
 import type { SpeakingPrompt } from "@/types/learning";
 
 // Date: 2026/3/18
 // Author: Tianbo Cao
 // Reduced the prompt bank to the minimum context needed before the learner starts recording.
 export function SpeakingPromptBank({
-  targetLevel,
+  targetDifficulty,
   availablePrompts,
   selectedPrompt,
-  onTargetLevelChange,
+  onTargetDifficultyChange,
   onPromptChange,
 }: {
-  targetLevel: SpeakingLevel;
+  targetDifficulty: DifficultyLabel;
   availablePrompts: SpeakingPrompt[];
   selectedPrompt: SpeakingPrompt;
-  onTargetLevelChange: (level: SpeakingLevel) => void;
+  onTargetDifficultyChange: (difficulty: DifficultyLabel) => void;
   onPromptChange: (promptId: string) => void;
 }) {
   return (
@@ -27,16 +28,17 @@ export function SpeakingPromptBank({
         </div>
 
         <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-          Target level
+          Target difficulty
           <select
-            value={targetLevel}
-            onChange={(event) => onTargetLevelChange(event.target.value as SpeakingLevel)}
+            value={targetDifficulty}
+            onChange={(event) => onTargetDifficultyChange(event.target.value as DifficultyLabel)}
             className="rounded-[1rem] border border-[rgba(20,50,75,0.16)] bg-white/88 px-4 py-3 text-sm outline-none"
           >
-            <option value="A1">A1</option>
-            <option value="A2">A2</option>
-            <option value="B1">B1</option>
-            <option value="B2">B2</option>
+            {difficultyOptions.map((difficulty) => (
+              <option key={difficulty} value={difficulty}>
+                {difficulty}
+              </option>
+            ))}
           </select>
         </label>
       </div>

@@ -27,6 +27,7 @@ import {
   getListeningLibrarySnapshot,
   subscribeListeningLibrary,
 } from "@/lib/listening-library";
+import { getDifficultyLabel } from "@/lib/level-labels";
 import { cn } from "@/lib/utils";
 import type { CEFRLevel } from "@/types/learning";
 
@@ -176,7 +177,7 @@ export function TedLibrary({
           </label>
 
           <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-            <span className="sr-only">Level</span>
+            <span className="sr-only">Difficulty</span>
             <select
               value={selectedLevelFilter}
               onChange={(event) => setSelectedLevelFilter(event.target.value as LevelFilter)}
@@ -184,7 +185,7 @@ export function TedLibrary({
             >
               {levelOptions.map((level) => (
                 <option key={level} value={level}>
-                  {level === "all" ? "All levels" : `Level ${level}`}
+                  {level === "all" ? "All difficulties" : getDifficultyLabel(level)}
                 </option>
               ))}
             </select>
@@ -294,7 +295,7 @@ export function TedLibrary({
                       {material.title}
                     </h4>
                     <p className="mt-1 text-xs text-[var(--ink-soft)]">
-                      {material.speakerName} · {material.majorLabel} · {material.recommendedLevel}
+                      {material.speakerName} · {material.majorLabel} · {getDifficultyLabel(material.recommendedLevel)}
                     </p>
                     {completion ? (
                       <p className="mt-1 flex items-center gap-1 text-xs font-semibold text-[#315f4f]">

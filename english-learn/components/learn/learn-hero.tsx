@@ -12,7 +12,7 @@ export function LearnHero({ locale }: { locale: Locale }) {
         <h2 className="font-display mt-4 text-4xl tracking-tight text-[var(--ink)] sm:text-5xl">Medium band is the launch baseline.</h2>
         <p className="mt-4 max-w-3xl text-sm leading-7 text-[var(--ink-soft)] sm:text-base">
           The main target audience is intermediate university learners, so the first visible path should feel optimized for Medium while still
-          showing how Low and High versions expand or simplify the same learning structure.
+          showing how Easy and Difficult versions expand or simplify the same learning structure.
         </p>
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
           {levelBands.map((band) => (

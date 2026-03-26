@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUp, CheckCircle2, Compass, LoaderCircle, RefreshCcw, Send } from "lucide-react";
 
+import { getDifficultyLabel } from "@/lib/level-labels";
 import { cn } from "@/lib/utils";
 
 interface PlacementQuestion {
@@ -38,15 +39,16 @@ const skillLabels: Record<string, string> = {
 const choiceLabels = ["A", "B", "C", "D", "E", "F"];
 
 function mapBand(level: string) {
-  if (["A1", "A2"].includes(level)) {
-    return "Low";
-  }
+  return getDifficultyLabel(level);
+}
 
-  if (level === "B1") {
-    return "Medium";
-  }
-
-  return "High";
+function normalizeBandLabel(label?: string) {
+  if (!label) return "";
+  const next = label.trim().toLowerCase();
+  if (next === "low") return "Easy";
+  if (next === "high") return "Difficult";
+  if (next === "medium") return "Medium";
+  return label;
 }
 
 function formatSkillName(skill: string) {
@@ -282,7 +284,7 @@ export function PlacementForm({ locale }: { locale: string }) {
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--ink-soft)]">
                   Q{index + 1} • {skillLabels[question.skill ?? ""] ?? question.skill ?? "Assessment"}
-                  {question.level ? ` • ${question.level}` : ""}
+                  {question.level ? ` • ${getDifficultyLabel(question.level)}` : ""}
                 </p>
                 {question.context ? (
                   <p className="mt-3 rounded-[1.1rem] bg-[rgba(20,50,75,0.06)] px-4 py-3 text-sm leading-6 text-[var(--ink-soft)]">
@@ -350,7 +352,7 @@ export function PlacementForm({ locale }: { locale: string }) {
             <div className="rounded-[1.4rem] border border-[rgba(42,105,88,0.16)] bg-[rgba(237,246,241,0.88)] p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--teal)]">Placement result</p>
               <h4 className="font-display mt-2 text-3xl tracking-tight text-[var(--ink)]">
-                {result.band_label || mapBand(result.cefr_level)} band • {result.cefr_level}
+                {normalizeBandLabel(result.band_label) || mapBand(result.cefr_level)} • {mapBand(result.cefr_level)}
               </h4>
               <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
                 Score: {result.score} / {result.total_questions || questions.length}. The dashboard and learning hub can now route this learner into a

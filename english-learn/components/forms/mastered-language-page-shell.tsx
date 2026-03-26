@@ -5,6 +5,7 @@ import { BookMarked, Lightbulb, Tags } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 
 import { writingDisciplineLabels, type WritingDiscipline } from "@/lib/writing-language-bank";
+import { getDifficultyLabel } from "@/lib/level-labels";
 import type { CEFRLevel } from "@/types/learning";
 
 type MasteredItem = {
@@ -119,7 +120,7 @@ export function MasteredLanguagePageShell() {
                   {writingDisciplineLabels[item.discipline]}
                 </span>
                 <span className="rounded-full bg-[rgba(186,122,47,0.1)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8f5c1b]">
-                  {item.level}
+                  {getDifficultyLabel(item.level)}
                 </span>
               </div>
               <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">{item.detail}</p>
@@ -148,7 +149,7 @@ export function MasteredLanguagePageShell() {
                   {writingDisciplineLabels[item.discipline]}
                 </span>
                 <span className="rounded-full bg-[rgba(186,122,47,0.1)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8f5c1b]">
-                  {item.level}
+                  {getDifficultyLabel(item.level)}
                 </span>
                 <span className="rounded-full bg-[rgba(20,50,75,0.08)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
                   {item.detail}
