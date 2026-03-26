@@ -12,7 +12,19 @@ import { getSpeakingPromptById } from "@/lib/speaking-prompts";
 // Added a text-based AI speaking partner so learners can rehearse academic turns before scoring.
 const schema = z.object({
   prompt_id: z.string().min(1),
+<<<<<<< Updated upstream
   target_level: z.enum(["A1", "A2", "B1", "B2"]),
+=======
+  target_level: z.enum(["low", "medium", "high"]),
+  task_context: z.object({
+    title: z.string().min(1),
+    major_label: z.string().min(1),
+    category_label: z.string().min(1),
+    scenario: z.string().min(1),
+    partner_role: z.string().min(1),
+    partner_goal: z.string().min(1),
+  }),
+>>>>>>> Stashed changes
   learner_turn: z.string().min(3),
   history: z
     .array(
@@ -29,7 +41,9 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const payload = schema.parse(body);
+    const speakingPrompt = getSpeakingPromptById(payload.prompt_id);
 
+<<<<<<< Updated upstream
     const speakingPrompt = getSpeakingPromptById(payload.prompt_id);
     if (!speakingPrompt) {
       return jsonError("Invalid speaking prompt", 422);
@@ -39,6 +53,27 @@ export async function POST(request: Request) {
       return NextResponse.json(buildMockSpeakingPartnerReply(payload.learner_turn));
     }
 
+=======
+    if (!speakingPrompt) {
+      return jsonError("Invalid speaking prompt", 422);
+    }
+
+    if (
+      payload.task_context.title !== speakingPrompt.title ||
+      payload.task_context.major_label !== speakingPrompt.major_label ||
+      payload.task_context.category_label !== speakingPrompt.category_label ||
+      payload.task_context.scenario !== speakingPrompt.scenario ||
+      payload.task_context.partner_role !== speakingPrompt.partner_role ||
+      payload.task_context.partner_goal !== speakingPrompt.partner_goal
+    ) {
+      return jsonError("Speaking task context is out of sync", 422);
+    }
+
+    if (!hasAIConfig()) {
+      return NextResponse.json(buildMockSpeakingPartnerReply(payload.learner_turn, speakingPrompt));
+    }
+
+>>>>>>> Stashed changes
     const output = await generateStructuredJSON(
       speakingPartnerPrompt(payload.target_level, speakingPrompt, payload.learner_turn, payload.history),
     );

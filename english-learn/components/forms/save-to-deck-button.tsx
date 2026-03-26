@@ -6,10 +6,12 @@ import { useState } from "react";
 export function SaveToDeckButton({
   items,
   tag,
+  itemLabel = "tip",
 }: {
   /** Array of { front, back } entries to save as review cards */
   items: { front: string; back: string }[];
   tag: string;
+  itemLabel?: string;
 }) {
   const [status, setStatus] = useState<"idle" | "saving" | "done" | "no-db">("idle");
 
@@ -59,10 +61,10 @@ export function SaveToDeckButton({
         <BookPlus className="size-3.5" />
       )}
       {status === "done"
-        ? `${items.length} tip${items.length > 1 ? "s" : ""} added to review deck`
+        ? `${items.length} ${itemLabel}${items.length > 1 ? "s" : ""} added to review deck`
         : status === "no-db"
           ? "Database not configured — not saved"
-          : `Save ${items.length} tip${items.length > 1 ? "s" : ""} to review deck`}
+          : `Save ${items.length} ${itemLabel}${items.length > 1 ? "s" : ""} to review deck`}
     </button>
   );
 }

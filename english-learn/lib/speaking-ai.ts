@@ -1,4 +1,4 @@
-import type { SpeakingFeedback, SpeakingPartnerReply } from "@/types/learning";
+import type { SpeakingFeedback, SpeakingPartnerReply, SpeakingPrompt } from "@/types/learning";
 
 // Date: 2026/3/18
 // Author: Tianbo Cao
@@ -72,6 +72,7 @@ export function buildMockSpeakingFeedback(transcript: string, checkpoints: strin
   };
 }
 
+<<<<<<< Updated upstream
 export function buildMockSpeakingPartnerReply(learnerTurn: string): SpeakingPartnerReply {
   const hasExample = /\bfor example|for instance|such as\b/i.test(learnerTurn);
   const hasReason = /\bbecause|since|therefore|so\b/i.test(learnerTurn);
@@ -86,6 +87,51 @@ export function buildMockSpeakingPartnerReply(learnerTurn: string): SpeakingPart
     coaching_note: hasReason
       ? "Use a transition phrase at the start of the next sentence so the response sounds more controlled."
       : "Start the next turn with one reason is that or this is important because.",
+=======
+export function buildMockSpeakingPartnerReply(learnerTurn: string, prompt: SpeakingPrompt): SpeakingPartnerReply {
+  const normalizedTurn = learnerTurn.trim().toLowerCase();
+  const asksQuestion = normalizedTurn.includes("?");
+  const isGreeting = /\bhello\b|\bhi\b|\bhey\b/.test(normalizedTurn);
+  const mentionsReason = /\bbecause|so|therefore|reason\b/.test(normalizedTurn);
+  const mentionsExample = /\bfor example|for instance|such as|example\b/.test(normalizedTurn);
+
+  if (isGreeting) {
+    return {
+      reply: `Hi, I am your ${prompt.partner_role}, and I am ready to hear your idea.`,
+      follow_up: `What is your main point for ${prompt.title.toLowerCase()}?`,
+      coaching_note: "Start with one direct position before you add support.",
+    };
+  }
+
+  if (asksQuestion) {
+    return {
+      reply: "That is a fair question, but I want to hear your position first.",
+      follow_up: "What would you recommend in this situation?",
+      coaching_note: "Answer the question, then add one short reason tied to the task.",
+    };
+  }
+
+  if (!mentionsReason) {
+    return {
+      reply: "Your idea is understandable, but it still needs a clearer reason.",
+      follow_up: "Why do you think that is the best choice here?",
+      coaching_note: "Use one reason marker such as because or one reason is that.",
+    };
+  }
+
+  if (!mentionsExample) {
+    return {
+      reply: "That reason works. Now the answer needs one more concrete detail.",
+      follow_up: "Can you add one example from class, campus life, or your major?",
+      coaching_note: "Add one brief example so the response sounds more convincing.",
+    };
+  }
+
+  return {
+    reply: `Your answer is moving in the right direction for ${prompt.scenario.toLowerCase()}.`,
+    follow_up: "Can you make the ending more direct and controlled?",
+    coaching_note: "Keep the next turn concise and tie it back to the task goal.",
+>>>>>>> Stashed changes
   };
 }
 

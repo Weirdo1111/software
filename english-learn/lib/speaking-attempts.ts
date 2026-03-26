@@ -21,6 +21,8 @@ function isSpeakingAttemptRecord(value: unknown): value is SpeakingAttemptRecord
     typeof (value as SpeakingAttemptRecord).prompt_id === "string" &&
     typeof (value as SpeakingAttemptRecord).prompt_title === "string" &&
     typeof (value as SpeakingAttemptRecord).target_level === "string" &&
+    typeof (value as SpeakingAttemptRecord).major_id === "string" &&
+    typeof (value as SpeakingAttemptRecord).category === "string" &&
     typeof (value as SpeakingAttemptRecord).transcript === "string" &&
     typeof (value as SpeakingAttemptRecord).overall_score === "number" &&
     typeof (value as SpeakingAttemptRecord).task_response_score === "number" &&

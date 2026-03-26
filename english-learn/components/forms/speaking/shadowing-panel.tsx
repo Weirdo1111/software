@@ -110,6 +110,7 @@ export function SpeakingShadowingPanel({
   }
 
   return (
+<<<<<<< Updated upstream
     <section className="grid gap-5">
       <article className="rounded-[1.85rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.84)] p-5 shadow-[0_18px_48px_rgba(18,32,52,0.06)]">
         <div className="flex items-start justify-between gap-3">
@@ -123,12 +124,21 @@ export function SpeakingShadowingPanel({
             <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">
               This trainer uses your current Transcript as the source script, so you can shadow the exact answer you are building.
             </p>
+=======
+    <section className="grid gap-3">
+      <article className="rounded-[1.45rem] border border-[rgba(20,50,75,0.12)] bg-[linear-gradient(145deg,rgba(21,32,59,0.98),rgba(24,41,72,0.96))] p-4 text-[#f7efe3] shadow-[0_18px_48px_rgba(12,20,34,0.24)]">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="section-label border-white/12 bg-white/8 text-[#efe5d6]">Shadowing studio</p>
+            <h3 className="font-display mt-3 text-xl tracking-tight">Repeat the active script aloud.</h3>
+>>>>>>> Stashed changes
           </div>
           <div className="rounded-full border border-[rgba(20,50,75,0.12)] bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
             {canUseSentenceTrainer ? "Active" : "Draft first"}
           </div>
         </div>
 
+<<<<<<< Updated upstream
         {canUseSentenceTrainer ? (
           <div className="mt-5 grid max-h-[36rem] gap-3 overflow-y-auto pr-1">
             {sentenceSegments.map((sentence, index) => {
@@ -207,8 +217,16 @@ export function SpeakingShadowingPanel({
             <p className="mt-2 text-sm leading-7 text-[#f7efe3]">{selectedSentence.text}</p>
           </div>
         ) : null}
+=======
+        <div className="mt-3 rounded-[1.1rem] border border-white/10 bg-white/6 p-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#f2d9ae]">Target script</p>
+          <p className="mt-2 max-h-32 overflow-y-auto pr-1 text-sm leading-6 text-[#f7efe3]">
+            {practiceScript || "Add a draft in Speaking studio first to create a shadowing target."}
+          </p>
+        </div>
+>>>>>>> Stashed changes
 
-        <div className="mt-5 flex flex-wrap gap-3">
+        <div className="mt-3 flex flex-wrap gap-2">
           <button
             type="button"
             onClick={handleReplayTarget}
@@ -242,7 +260,7 @@ export function SpeakingShadowingPanel({
           </button>
         </div>
 
-        <div className="mt-5 flex items-center gap-3">
+        <div className="mt-3 flex items-center gap-3">
           <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#f2d9ae]">dB</span>
           <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/10">
             <div
@@ -258,6 +276,7 @@ export function SpeakingShadowingPanel({
           </p>
         ) : null}
 
+<<<<<<< Updated upstream
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           <div className="rounded-[1.25rem] border border-white/10 bg-white/6 p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#f2d9ae]">
@@ -281,6 +300,25 @@ export function SpeakingShadowingPanel({
             ) : (
               <p className="mt-2 text-sm leading-7 text-[#efe5d6]/82">
                 The browser will compare your spoken keywords after one attempt.
+=======
+        <div className="mt-3 grid gap-3 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="rounded-[1.1rem] border border-white/10 bg-white/6 p-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#f2d9ae]">Your shadowing</p>
+            <p className="mt-2 min-h-24 text-sm leading-6 text-[#f7efe3]">
+              {shadowingTranscript || "Press Start shadowing and repeat the full target script aloud."}
+            </p>
+          </div>
+          <div className="rounded-[1.1rem] border border-white/10 bg-white/6 p-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#f2d9ae]">Score</p>
+            {shadowingScore ? (
+              <>
+                <p className="mt-2 text-4xl font-semibold text-[#f7efe3]">{shadowingScore.overallScore}%</p>
+                <p className="mt-2 text-sm leading-6 text-[#efe5d6]/82">{shadowingScore.note}</p>
+              </>
+            ) : (
+              <p className="mt-2 text-sm leading-6 text-[#efe5d6]/82">
+                The browser will compare your recognised keywords after one attempt.
+>>>>>>> Stashed changes
               </p>
             )}
           </div>
@@ -305,6 +343,7 @@ export function SpeakingShadowingPanel({
         ) : null}
 
         {shadowingScore ? (
+<<<<<<< Updated upstream
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <div className="rounded-[1.15rem] border border-white/10 bg-white/6 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#f2d9ae]">
@@ -329,6 +368,20 @@ export function SpeakingShadowingPanel({
               <p className="mt-2 text-sm leading-7 text-[#f7efe3]">
                 {shadowingScore.extraKeywords.join(", ") || "None"}
               </p>
+=======
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            <div className="rounded-[1rem] border border-white/10 bg-white/6 p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#f2d9ae]">Matched</p>
+              <p className="mt-2 text-sm leading-6 text-[#f7efe3]">{shadowingScore.matchedKeywords.join(", ") || "None yet"}</p>
+            </div>
+            <div className="rounded-[1rem] border border-white/10 bg-white/6 p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#f2d9ae]">Missing</p>
+              <p className="mt-2 text-sm leading-6 text-[#f7efe3]">{shadowingScore.missingKeywords.join(", ") || "No major misses"}</p>
+            </div>
+            <div className="rounded-[1rem] border border-white/10 bg-white/6 p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#f2d9ae]">Extra</p>
+              <p className="mt-2 text-sm leading-6 text-[#f7efe3]">{shadowingScore.extraKeywords.join(", ") || "None"}</p>
+>>>>>>> Stashed changes
             </div>
           </div>
         ) : null}

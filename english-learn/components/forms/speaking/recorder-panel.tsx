@@ -69,13 +69,9 @@ export function SpeakingRecorderPanel({
   const levelWidth = `${Math.max(6, Math.round(audioLevel * 100))}%`;
 
   return (
-    <div className="rounded-[1.6rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.76)] p-5 sm:p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Recorder</p>
-          <p className="mt-3 text-lg font-semibold text-[var(--ink)]">Record one full take.</p>
-          <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">The clip stays in your browser and can be reviewed before scoring.</p>
-        </div>
+    <div className="rounded-[1.45rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.76)] p-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Recorder</p>
         <span
           className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${
             !isSupported
@@ -91,29 +87,27 @@ export function SpeakingRecorderPanel({
         </span>
       </div>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-[auto_1fr] lg:items-center">
-        <div className="flex h-32 w-32 flex-col items-center justify-center rounded-[1.9rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(20,50,75,0.04)]">
-          <Mic className={`size-8 ${isRecording ? "text-[var(--coral)]" : "text-[var(--navy)]"}`} />
-          <p className="mt-3 font-display text-2xl tracking-tight text-[var(--ink)]">{formatRecordingTime(elapsedMs)}</p>
+      <div className="mt-3 grid gap-3 sm:grid-cols-[auto_1fr] sm:items-center">
+        <div className="flex min-w-[7rem] flex-col items-center justify-center rounded-[1.2rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(20,50,75,0.04)] px-4 py-4">
+          <Mic className={`size-6 ${isRecording ? "text-[var(--coral)]" : "text-[var(--navy)]"}`} />
+          <p className="mt-2 font-display text-xl tracking-tight text-[var(--ink)]">{formatRecordingTime(elapsedMs)}</p>
         </div>
 
-        <div className="grid gap-3">
-          <div className="rounded-[1.2rem] border border-[rgba(20,50,75,0.08)] bg-white/84 px-4 py-4">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Live mic level</p>
-              <p className="text-xs text-[var(--ink-soft)]">{isRecording ? "Listening..." : "Waiting"}</p>
-            </div>
-            <div className="mt-3 h-3 overflow-hidden rounded-full bg-[rgba(20,50,75,0.08)]">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-[#2a6958] via-[#d88e34] to-[#c36d59] transition-all duration-150"
-                style={{ width: levelWidth }}
-              />
-            </div>
+        <div className="rounded-[1.1rem] border border-[rgba(20,50,75,0.08)] bg-white/84 px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Live mic level</p>
+            <p className="text-xs text-[var(--ink-soft)]">{isRecording ? "Listening..." : "Waiting"}</p>
+          </div>
+          <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-[rgba(20,50,75,0.08)]">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-[#2a6958] via-[#d88e34] to-[#c36d59] transition-all duration-150"
+              style={{ width: levelWidth }}
+            />
           </div>
         </div>
       </div>
 
-      <div className="mt-5 flex flex-wrap gap-3">
+      <div className="mt-3 flex flex-wrap gap-2">
         <button
           type="button"
           onClick={onStart}
@@ -169,7 +163,7 @@ export function SpeakingRecorderPanel({
       ) : null}
 
       {audioClip ? (
-        <div className="mt-5 rounded-[1.25rem] border border-[rgba(20,50,75,0.12)] bg-white/84 p-4">
+        <div className="mt-3 rounded-[1.1rem] border border-[rgba(20,50,75,0.12)] bg-white/84 p-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Latest take</p>
@@ -181,8 +175,8 @@ export function SpeakingRecorderPanel({
               Local preview ready
             </span>
           </div>
-          <audio controls src={audioClip.url} className="mt-4 w-full" />
-          <div className="mt-4 flex flex-wrap items-center gap-3">
+          <audio controls src={audioClip.url} className="mt-3 w-full" />
+          <div className="mt-3 flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={onTranscribe}
@@ -192,11 +186,10 @@ export function SpeakingRecorderPanel({
               {isTranscribing ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
               {isTranscribing ? "Transcribing..." : "AI transcribe latest take"}
             </button>
-            <p className="text-sm leading-6 text-[var(--ink-soft)]">Use Doubao ASR to turn the recording into a draft.</p>
           </div>
           {transcribeStatus ? (
             <p
-              className={`mt-4 rounded-[1rem] px-4 py-3 text-sm font-medium ${
+              className={`mt-3 rounded-[0.95rem] px-4 py-3 text-sm font-medium ${
                 transcribeStatus.toLowerCase().includes("failed") ||
                 transcribeStatus.toLowerCase().includes("not configured") ||
                 transcribeStatus.toLowerCase().includes("could not")

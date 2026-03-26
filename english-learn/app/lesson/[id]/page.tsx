@@ -9,6 +9,11 @@ import { getLocale } from "@/lib/i18n/get-locale";
 import { getListeningMaterialsCatalog } from "@/lib/listening-materials-repository";
 import { buildPracticePassageFromArticle, getReadingArticleById } from "@/lib/reading-articles";
 import { getPassageForLevel } from "@/lib/reading-passages";
+<<<<<<< Updated upstream
+=======
+import { isSpeakingModuleRouteId, normalizeSpeakingModuleId } from "@/lib/speaking-modules";
+import { isWritingModuleId } from "@/lib/writing-modules";
+>>>>>>> Stashed changes
 import type { CEFRLevel } from "@/types/learning";
 
 type LessonMode = "listening" | "speaking" | "reading" | "writing";
@@ -114,7 +119,24 @@ function renderWorkbench(
   const level = extractLevel(lessonId);
 
   if (mode === "speaking") {
+<<<<<<< Updated upstream
     return <SpeakingFeedbackForm defaultLevel={level} />;
+=======
+    if (!isSpeakingModuleRouteId(speakingModule)) {
+      return <SpeakingHub locale={locale} lessonId={lessonId} />;
+    }
+
+    const normalizedSpeakingModule = normalizeSpeakingModuleId(speakingModule);
+
+    return (
+      <SpeakingFeedbackForm
+        defaultLevel={level}
+        module={normalizedSpeakingModule}
+        locale={locale}
+        hubHref={`/lesson/${lessonId}?lang=${locale}`}
+      />
+    );
+>>>>>>> Stashed changes
   }
 
   if (mode === "listening") {
