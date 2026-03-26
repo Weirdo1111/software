@@ -31,6 +31,12 @@ function formatCommentTime(locale: Locale, value: string) {
   }).format(date);
 }
 
+function formatCommentTimeFallback(value: string) {
+  const [datePart, timePart] = value.split("T");
+  if (!datePart || !timePart) return value;
+  return `${datePart} ${timePart.slice(0, 5)}`;
+}
+
 function buildSummaryTopics(comments: ContextComment[], fallbackTopics: string[]) {
   const activeTopics = Array.from(
     new Set(comments.map((comment) => comment.topic).filter(Boolean)),
@@ -57,6 +63,7 @@ export function ContextDock({
   const [draft, setDraft] = useState("");
   const [selectedTopic, setSelectedTopic] = useState(context.topics[0] ?? "");
   const [status, setStatus] = useState("");
+  const [hasMounted, setHasMounted] = useState(false);
 
   const copy =
     locale === "zh"
@@ -101,12 +108,18 @@ export function ContextDock({
     [comments, context.topics],
   );
   const lastActive = comments[0]?.createdAt
-    ? formatCommentTime(locale, comments[0].createdAt)
+    ? hasMounted
+      ? formatCommentTime(locale, comments[0].createdAt)
+      : formatCommentTimeFallback(comments[0].createdAt)
     : null;
 
   useEffect(() => {
     void hydrateContextThreadFromServer(context);
   }, [context]);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   function handlePublish(promoteToDiscussion: boolean) {
     const trimmed = draft.trim();
@@ -273,7 +286,9 @@ export function ContextDock({
                         ) : null}
                       </div>
                       <p className="mt-1 text-xs text-[var(--ink-soft)]">
-                        {formatCommentTime(locale, comment.createdAt)}
+                        {hasMounted
+                          ? formatCommentTime(locale, comment.createdAt)
+                          : formatCommentTimeFallback(comment.createdAt)}
                       </p>
                     </div>
                     <button
