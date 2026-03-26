@@ -1,6 +1,6 @@
+import { DiscussionClient } from "@/components/discussion/discussion-client";
 import { PageFrame } from "@/components/page-frame";
 import { getLocale } from "@/lib/i18n/get-locale";
-import { DiscussionClient } from "@/components/discussion/discussion-client";
 
 export default async function DiscussionPage({
   searchParams,

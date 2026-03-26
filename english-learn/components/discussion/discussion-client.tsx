@@ -1,307 +1,315 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
-import { Plus, Send, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Send, X } from "lucide-react";
 
 import { DiscussionBoard } from "@/components/discussion/discussion-board";
 import type {
-  DiscussionComment,
+  DiscussionCategory,
+  DiscussionNotification,
   DiscussionPost,
   Locale,
 } from "@/components/discussion/types";
 
-const STORAGE_KEY = "discussion_posts_v1";
+async function readJsonOrFallback<T>(response: Response, fallback: T): Promise<T> {
+  const text = await response.text();
+  if (!text.trim()) return fallback;
 
-const defaultPosts: DiscussionPost[] = [
-  {
-    id: "p1",
-    title: "How should I prepare for reassessment next week?",
-    content:
-      "My current band is Medium. I want to know whether I should spend more time on speaking or reading before the next reassessment window opens.",
-    author: "Shengze",
-    tag: "Assessment",
-    likes: 8,
-    liked: false,
-    pinned: true,
-    createdAt: "2026-03-20 09:30",
-    comments: [
-      {
-        id: "c1",
-        author: "Tutor Team",
-        content:
-          "If speaking is lagging behind your reading metrics, prioritize one output task each day before reassessment.",
-        createdAt: "2026-03-20 10:10",
-      },
-    ],
-  },
-  {
-    id: "p2",
-    title: "Useful strategy for academic listening note-taking",
-    content:
-      "I started splitting notes into keywords, argument flow, and evidence. It reduced overload during longer listening tasks.",
-    author: "Mia",
-    tag: "Listening",
-    likes: 5,
-    liked: false,
-    pinned: false,
-    createdAt: "2026-03-19 18:20",
-    comments: [],
-  },
-];
-
-const defaultPostsString = JSON.stringify(defaultPosts);
-
-function subscribePosts(onStoreChange: () => void) {
-  const handler = () => onStoreChange();
-
-  window.addEventListener("storage", handler);
-  window.addEventListener(
-    "discussion-posts-changed",
-    handler as EventListener
-  );
-
-  return () => {
-    window.removeEventListener("storage", handler);
-    window.removeEventListener(
-      "discussion-posts-changed",
-      handler as EventListener
-    );
-  };
-}
-
-function getPostsSnapshot() {
-  if (typeof window === "undefined") return defaultPostsString;
-  return window.localStorage.getItem(STORAGE_KEY) ?? defaultPostsString;
-}
-
-function getPostsServerSnapshot() {
-  return defaultPostsString;
-}
-
-function writePosts(nextPosts: DiscussionPost[]) {
-  const serialized = JSON.stringify(nextPosts);
-  window.localStorage.setItem(STORAGE_KEY, serialized);
-  window.dispatchEvent(new Event("discussion-posts-changed"));
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return fallback;
+  }
 }
 
 export function DiscussionClient({ locale }: { locale: Locale }) {
   const [openComposer, setOpenComposer] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [category, setCategory] = useState(
-    locale === "zh" ? "学习讨论" : "Discussion"
-  );
+  const [category, setCategory] = useState<DiscussionCategory>("grammar");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState<DiscussionPost[]>([]);
+  const [notifications, setNotifications] = useState<DiscussionNotification[]>([]);
 
-  const postsRaw = useSyncExternalStore(
-    subscribePosts,
-    getPostsSnapshot,
-    getPostsServerSnapshot
-  );
+  const text = {
+    zh: {
+      dialogTitle: "发起新讨论",
+      dialogSubtitle: "首页只展示摘要，完整内容会在帖子详情页中展示。",
+      category: "分类",
+      title: "标题",
+      content: "正文",
+      cancel: "取消",
+      publish: "发布",
+      placeholderTitle: "请输入一个清晰的帖子标题",
+      placeholderContent: "写下你的问题、背景、分析或经验分享……",
+      titleRequired: "标题和正文不能为空",
+      titleShort: "标题至少 6 个字符",
+      contentShort: "正文至少 20 个字符",
+      categories: {
+        grammar: "语法",
+        listening: "听力",
+        writing: "写作",
+        speaking: "口语",
+        experience: "经验分享",
+      },
+    },
+    en: {
+      dialogTitle: "Start New Discussion",
+      dialogSubtitle:
+        "The homepage shows summaries only; full content appears on the detail page.",
+      category: "Category",
+      title: "Title",
+      content: "Content",
+      cancel: "Cancel",
+      publish: "Publish",
+      placeholderTitle: "Enter a clear topic title",
+      placeholderContent:
+        "Write your question, context, analysis, or learning experience...",
+      titleRequired: "Title and content are required",
+      titleShort: "Title must be at least 6 characters",
+      contentShort: "Content must be at least 20 characters",
+      categories: {
+        grammar: "Grammar",
+        listening: "Listening",
+        writing: "Writing",
+        speaking: "Speaking",
+        experience: "Experience",
+      },
+    },
+  }[locale];
 
-  const posts = useMemo<DiscussionPost[]>(() => {
-    try {
-      return JSON.parse(postsRaw) as DiscussionPost[];
-    } catch {
-      return defaultPosts;
-    }
-  }, [postsRaw]);
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
 
-  const copy = useMemo(
-    () => ({
-      postTitle: locale === "zh" ? "发布帖子" : "Create a Post",
-      postSubtitle:
-        locale === "zh"
-          ? "写下你的问题、经验或学习反馈。"
-          : "Share your question, experience, or learning feedback.",
-      inputTitle: locale === "zh" ? "帖子标题" : "Post Title",
-      inputContent: locale === "zh" ? "帖子内容" : "Post Content",
-      inputCategory: locale === "zh" ? "帖子分类" : "Category",
-      titlePlaceholder:
-        locale === "zh" ? "请输入一个清晰的标题" : "Write a clear title",
-      contentPlaceholder:
-        locale === "zh"
-          ? "请输入帖子内容，例如你的问题、背景、练习反馈或经验分享"
-          : "Write your content, question, feedback, or learning notes",
-      cancel: locale === "zh" ? "取消" : "Cancel",
-      submit: locale === "zh" ? "发送" : "Submit",
-      emptyTitle:
-        locale === "zh" ? "标题和内容不能为空" : "Title and content are required",
-      categories:
-        locale === "zh"
-          ? ["学习讨论", "练习反馈", "测评分析", "经验分享"]
-          : ["Discussion", "Feedback", "Assessment", "Experience"],
-    }),
-    [locale]
-  );
+      try {
+        const [postsRes, activityRes] = await Promise.all([
+          fetch("/api/discussion/posts", { cache: "no-store" }),
+          fetch("/api/discussion/activity", { cache: "no-store" }),
+        ]);
 
-  const handleSubmit = () => {
+        const [postsJson, activityJson] = await Promise.all([
+          readJsonOrFallback<DiscussionPost[]>(postsRes, []),
+          readJsonOrFallback<{ notifications?: DiscussionNotification[] }>(activityRes, {}),
+        ]);
+
+        setPosts(postsJson);
+        setNotifications(activityJson.notifications ?? []);
+      } catch {
+        setPosts([]);
+        setNotifications([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void loadData();
+  }, []);
+
+  const handleSubmit = async () => {
     const trimmedTitle = title.trim();
     const trimmedContent = content.trim();
 
     if (!trimmedTitle || !trimmedContent) {
-      alert(copy.emptyTitle);
+      setError(text.titleRequired);
       return;
     }
 
-    const newPost: DiscussionPost = {
-      id: crypto.randomUUID(),
-      title: trimmedTitle,
-      content: trimmedContent,
-      author: "You",
-      tag: category,
-      likes: 0,
-      liked: false,
-      pinned: false,
-      createdAt: new Date().toISOString().slice(0, 16).replace("T", " "),
-      comments: [],
-    };
+    if (trimmedTitle.length < 6) {
+      setError(text.titleShort);
+      return;
+    }
 
-    writePosts([newPost, ...posts]);
+    if (trimmedContent.length < 20) {
+      setError(text.contentShort);
+      return;
+    }
 
+    const res = await fetch("/api/discussion/posts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ title: trimmedTitle, content: trimmedContent, category }),
+    });
+
+    const result = await readJsonOrFallback<DiscussionPost | { error?: string } | null>(
+      res,
+      null
+    );
+
+    if (!res.ok) {
+      const message =
+        result && typeof result === "object" && "error" in result
+          ? result.error
+          : undefined;
+      setError(message || "Failed to create post");
+      return;
+    }
+
+    const created =
+      result && typeof result === "object" && "id" in result ? (result as DiscussionPost) : null;
+    if (!created) {
+      setError("Failed to create post");
+      return;
+    }
+
+    setPosts((prev) => [created, ...prev]);
     setTitle("");
     setContent("");
-    setCategory(copy.categories[0]);
+    setCategory("grammar");
+    setError("");
     setOpenComposer(false);
   };
 
-  const handleLike = (postId: string) => {
-    const nextPosts = posts.map((post) => {
-      if (post.id !== postId) return post;
-      const liked = !post.liked;
-
-      return {
-        ...post,
-        liked,
-        likes: liked ? post.likes + 1 : Math.max(0, post.likes - 1),
-      };
+  const handleToggleLike = async (postId: string) => {
+    const res = await fetch(`/api/discussion/posts/${postId}/like`, {
+      method: "POST",
     });
 
-    writePosts(nextPosts);
-  };
-
-  const handleAddComment = (postId: string, commentText: string) => {
-    const trimmed = commentText.trim();
-    if (!trimmed) return;
-
-    const newComment: DiscussionComment = {
-      id: crypto.randomUUID(),
-      author: "You",
-      content: trimmed,
-      createdAt: new Date().toISOString().slice(0, 16).replace("T", " "),
-    };
-
-    const nextPosts = posts.map((post) =>
-      post.id === postId
-        ? { ...post, comments: [...post.comments, newComment] }
-        : post
+    const data = await readJsonOrFallback<
+      { liked: boolean; likes: number } | { error?: string } | null
+    >(
+      res,
+      null
     );
 
-    writePosts(nextPosts);
+    if (!res.ok || !data || !("liked" in data)) return;
+
+    setPosts((prev) =>
+      prev.map((post) =>
+        post.id === postId
+          ? { ...post, liked: data.liked, likes: data.likes }
+          : post
+      )
+    );
+
+    const activityRes = await fetch("/api/discussion/activity", { cache: "no-store" });
+    const activityJson = await readJsonOrFallback<{ notifications?: DiscussionNotification[] }>(
+      activityRes,
+      {}
+    );
+    setNotifications(activityJson.notifications ?? []);
   };
+
+  if (loading) {
+    return <div className="p-8 text-sm text-slate-500">Loading...</div>;
+  }
 
   return (
     <>
       <DiscussionBoard
         locale={locale}
         posts={posts}
-        onLike={handleLike}
-        onAddComment={handleAddComment}
+        notifications={notifications}
         onOpenComposer={() => setOpenComposer(true)}
+        onToggleLike={handleToggleLike}
       />
 
-      <button
-        type="button"
-        onClick={() => setOpenComposer(true)}
-        className="fixed bottom-6 right-6 z-40 inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--navy)] text-[#f7efe3] shadow-[0_12px_28px_rgba(23,32,51,0.2)] transition hover:scale-[1.03] hover:opacity-95 active:scale-[0.98]"
-        aria-label={copy.postTitle}
-      >
-        <Plus className="size-4.5" />
-      </button>
-
       {openComposer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 px-4 backdrop-blur-[2px]">
-          <div className="w-full max-w-xl rounded-[1.6rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,251,246,0.98)] shadow-[0_22px_50px_rgba(23,32,51,0.14)]">
-            <div className="flex items-start justify-between border-b border-[rgba(20,50,75,0.08)] px-5 py-4">
-              <div>
-                <h2 className="text-lg font-semibold text-[var(--ink)]">
-                  {copy.postTitle}
-                </h2>
-                <p className="mt-1 text-sm text-[var(--ink-soft)]">
-                  {copy.postSubtitle}
-                </p>
-              </div>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          onClick={() => setOpenComposer(false)}
+        >
+          <div
+            className="w-full max-w-3xl bg-[#f9f9ff] shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="border-b border-[#dde2f3] px-6 py-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="font-serif text-3xl text-[#030813]">
+                    {text.dialogTitle}
+                  </h2>
+                  <p className="mt-2 text-sm text-[#45474C]">
+                    {text.dialogSubtitle}
+                  </p>
+                </div>
 
-              <button
-                type="button"
-                onClick={() => setOpenComposer(false)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-[1.1rem] text-[var(--ink-soft)] transition hover:bg-white/80 hover:text-[var(--ink)]"
-                aria-label={copy.cancel}
-              >
-                <X className="size-4.5" />
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setOpenComposer(false)}
+                  className="shrink-0 text-[#45474C]"
+                  aria-label={text.cancel}
+                >
+                  <X className="size-5" />
+                </button>
+              </div>
             </div>
 
-            <div className="space-y-4 px-5 py-5">
+            <div className="space-y-5 px-6 py-6">
               <div>
-                <label className="mb-2 block text-sm font-medium text-[var(--ink)]">
-                  {copy.inputCategory}
+                <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-[#45474C]">
+                  {text.category}
                 </label>
                 <select
                   value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="h-10 w-full rounded-[1.1rem] border border-[rgba(20,50,75,0.12)] bg-white/90 px-4 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--navy)]"
+                  onChange={(e) => setCategory(e.target.value as DiscussionCategory)}
+                  className="h-12 w-full border border-[#c6c6cc] bg-white px-4 outline-none"
                 >
-                  {copy.categories.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
+                  <option value="grammar">{text.categories.grammar}</option>
+                  <option value="listening">{text.categories.listening}</option>
+                  <option value="writing">{text.categories.writing}</option>
+                  <option value="speaking">{text.categories.speaking}</option>
+                  <option value="experience">{text.categories.experience}</option>
                 </select>
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-[var(--ink)]">
-                  {copy.inputTitle}
+                <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-[#45474C]">
+                  {text.title}
                 </label>
                 <input
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder={copy.titlePlaceholder}
-                  className="h-10 w-full rounded-[1.1rem] border border-[rgba(20,50,75,0.12)] bg-white/90 px-4 text-sm text-[var(--ink)] outline-none placeholder:text-[var(--ink-soft)] transition focus:border-[var(--navy)]"
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    if (error) setError("");
+                  }}
+                  placeholder={text.placeholderTitle}
+                  className="w-full border border-[#c6c6cc] bg-white px-4 py-3 outline-none"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-[var(--ink)]">
-                  {copy.inputContent}
+                <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-[#45474C]">
+                  {text.content}
                 </label>
                 <textarea
                   value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder={copy.contentPlaceholder}
-                  rows={7}
-                  className="w-full rounded-[1.1rem] border border-[rgba(20,50,75,0.12)] bg-white/90 px-4 py-3 text-sm leading-6 text-[var(--ink)] outline-none placeholder:text-[var(--ink-soft)] transition focus:border-[var(--navy)]"
+                  onChange={(e) => {
+                    setContent(e.target.value);
+                    if (error) setError("");
+                  }}
+                  placeholder={text.placeholderContent}
+                  rows={10}
+                  className="w-full resize-none border border-[#c6c6cc] bg-white px-4 py-3 outline-none"
                 />
               </div>
-            </div>
 
-            <div className="flex items-center justify-end gap-3 border-t border-[rgba(20,50,75,0.08)] px-5 py-4">
-              <button
-                type="button"
-                onClick={() => setOpenComposer(false)}
-                className="inline-flex h-10 items-center justify-center rounded-[1.1rem] border border-[rgba(20,50,75,0.12)] bg-white/90 px-4 text-sm font-medium text-[var(--ink)] transition hover:bg-white"
-              >
-                {copy.cancel}
-              </button>
+              {error && (
+                <div className="border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">
+                  {error}
+                </div>
+              )}
 
-              <button
-                type="button"
-                onClick={handleSubmit}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-[1.1rem] bg-[var(--navy)] px-4 text-sm font-medium text-[#f7efe3] transition hover:opacity-95"
-              >
-                <Send className="size-4" />
-                {copy.submit}
-              </button>
+              <div className="flex items-center justify-end gap-3 border-t border-[#dde2f3] pt-5">
+                <button
+                  type="button"
+                  onClick={() => setOpenComposer(false)}
+                  className="text-sm font-medium text-[#45474C]"
+                >
+                  {text.cancel}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  className="inline-flex items-center gap-2 bg-[#030813] px-5 py-3 text-sm font-medium text-white"
+                >
+                  <Send className="size-4" />
+                  {text.publish}
+                </button>
+              </div>
             </div>
           </div>
         </div>
