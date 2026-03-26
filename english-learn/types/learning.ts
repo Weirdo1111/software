@@ -1,4 +1,12 @@
 export type CEFRLevel = "A1" | "A2" | "B1" | "B2";
+export type SpeakingDifficulty = "low" | "medium" | "high";
+export type SpeakingScenarioCategory = "major-study" | "academic-discussion" | "campus-life";
+export type DIICSUMajorId =
+  | "civil-engineering"
+  | "mathematics"
+  | "computing-science"
+  | "mechanical-engineering"
+  | "mechanical-engineering-transportation";
 
 export type SkillType =
   | "vocab"
@@ -47,7 +55,11 @@ export interface SpeakingFeedback {
 
 export interface SpeakingPrompt {
   id: string;
-  level: CEFRLevel;
+  difficulty: SpeakingDifficulty;
+  major_id: DIICSUMajorId;
+  major_label: string;
+  category: SpeakingScenarioCategory;
+  category_label: string;
   title: string;
   scenario: string;
   prompt: string;
@@ -70,7 +82,9 @@ export interface SpeakingAttemptRecord {
   id: string;
   prompt_id: string;
   prompt_title: string;
-  target_level: CEFRLevel;
+  target_level: SpeakingDifficulty;
+  major_id: DIICSUMajorId;
+  category: SpeakingScenarioCategory;
   transcript: string;
   overall_score: number;
   task_response_score: number;

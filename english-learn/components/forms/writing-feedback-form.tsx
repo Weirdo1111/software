@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ArrowRight, FilePenLine, LoaderCircle, WandSparkles } from "lucide-react";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -15,8 +16,14 @@ import {
   getLevelForDifficulty,
   type DifficultyLabel,
 } from "@/lib/level-labels";
-import { getWritingPromptById, getWritingPromptsForLevel } from "@/lib/writing-prompts";
+import { writingDisciplineLabels, type WritingDiscipline } from "@/lib/writing-language-bank";
+import {
+  getWritingPromptById,
+  getWritingPromptsForLevelAndDiscipline,
+} from "@/lib/writing-prompts";
 import type { CEFRLevel, WritingFeedback } from "@/types/learning";
+
+const disciplines: WritingDiscipline[] = ["computing", "transport", "maths", "mechanical", "civil"];
 
 export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: CEFRLevel }) {
   const searchParams = useSearchParams();
@@ -25,33 +32,35 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: CE
   const wc = locale === "zh" ? {
     label: "写作反馈",
     heading: "检查观点逻辑、语言准确性与修改质量。",
-    subheading: "本工具定位为学术写作实验室，而非通用语法检查器。",
     guideTitle: "使用指南",
     guide: "选择一个场景，写一段150-200词的段落，包含清晰的主题句、一条解释和一个具体例子，然后使用AI反馈进行修改。",
     levelLabel: "目标难度",
+    disciplineLabel: "专业方向",
     scenarioLabel: "练习场景",
     scenarioSub: "场景",
     promptSub: "写作提示",
     focusSub: "练习重点",
+    promptReviewButton: "查看这道题之前的 review",
     draftLabel: "草稿段落",
     submitting: "正在分析...",
     submit: "获取写作反馈",
     analyzing: "正在审阅你的段落并生成修改建议。",
-    analyzingDesc: "写作教练正在检查你在目标CEFR等级上的观点控制、语法和词汇，并生成修改示例。",
+    analyzingDesc: "写作教练正在检查你在目标难度上的观点控制、语法和词汇，并生成修改示例。",
     steps: ["阅读你的段落，识别主要论点。", "对比目标等级的句式控制、语法和词汇。", "准备优先修改建议和更强的修改示例。"],
     revisionTitle: "修改建议",
     overallScore: "总体得分",
   } : {
     label: "Writing feedback",
     heading: "Check idea control, language accuracy, and revision quality.",
-    subheading: "This form is positioned as an academic writing lab rather than a generic grammar checker.",
     guideTitle: "Quick guide",
     guide: "Choose a scenario, write one focused 150-200 word paragraph with a clear topic sentence, one explanation, and one concrete example, then use the AI feedback to revise.",
     levelLabel: "Target difficulty",
+    disciplineLabel: "Major",
     scenarioLabel: "Practice scenario",
     scenarioSub: "Scenario",
     promptSub: "Prompt",
     focusSub: "Focus",
+    promptReviewButton: "View earlier review for this prompt",
     draftLabel: "Draft paragraph",
     submitting: "Analyzing draft...",
     submit: "Get writing feedback",
@@ -62,17 +71,21 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: CE
     overallScore: "Overall score",
   };
   const easyBaseline: "A1" | "A2" = defaultLevel === "A1" ? "A1" : "A2";
-  const [targetDifficulty, setTargetDifficulty] = useState<DifficultyLabel>(getDifficultyLabel(defaultLevel));
-  const targetLevel = getLevelForDifficulty(targetDifficulty, easyBaseline);
+  const initialDifficulty = getDifficultyLabel(defaultLevel);
+  const initialLevel = getLevelForDifficulty(initialDifficulty, easyBaseline);
+
+  const [selectedDiscipline, setSelectedDiscipline] = useState<WritingDiscipline>("computing");
   const initialPrompt =
-    getWritingPromptsForLevel(targetLevel)[0] ?? getWritingPromptById("b1-english-medium-support");
+    getWritingPromptsForLevelAndDiscipline(initialLevel, "computing")[0] ?? getWritingPromptById("b1-english-medium-support");
+  const [targetDifficulty, setTargetDifficulty] = useState<DifficultyLabel>(initialDifficulty);
+  const [targetLevel, setTargetLevel] = useState<CEFRLevel>(initialLevel);
   const [selectedPromptId, setSelectedPromptId] = useState(initialPrompt?.id ?? "b1-english-medium-support");
   const [essay, setEssay] = useState(initialPrompt?.sample_response ?? "");
   const [result, setResult] = useState<WritingFeedback | null>(null);
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const availablePrompts = getWritingPromptsForLevel(targetLevel);
+  const availablePrompts = getWritingPromptsForLevelAndDiscipline(targetLevel, selectedDiscipline);
   const selectedPrompt =
     getWritingPromptById(selectedPromptId) ?? availablePrompts[0] ?? getWritingPromptById("b1-english-medium-support");
   const discussionContext = {
@@ -149,10 +162,21 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: CE
 
   function handleTargetDifficultyChange(nextDifficulty: DifficultyLabel) {
     const nextLevel = getLevelForDifficulty(nextDifficulty, easyBaseline);
-    const nextPrompts = getWritingPromptsForLevel(nextLevel);
+    const nextPrompts = getWritingPromptsForLevelAndDiscipline(nextLevel, selectedDiscipline);
     const nextPrompt = nextPrompts[0] ?? selectedPrompt;
 
     setTargetDifficulty(nextDifficulty);
+    setTargetLevel(nextLevel);
+    if (nextPrompt) {
+      loadPrompt(nextPrompt.id);
+    }
+  }
+
+  function handleDisciplineChange(nextDiscipline: WritingDiscipline) {
+    const nextPrompts = getWritingPromptsForLevelAndDiscipline(targetLevel, nextDiscipline);
+    const nextPrompt = nextPrompts[0] ?? getWritingPromptById("b1-english-medium-support");
+
+    setSelectedDiscipline(nextDiscipline);
     if (nextPrompt) {
       loadPrompt(nextPrompt.id);
     }
@@ -189,6 +213,14 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: CE
     }
   }
 
+  const fullFeedbackEntry = result
+    ? [
+        `${locale === "zh" ? "Overall score" : "Overall score"}: ${result.overall_score}`,
+        `${locale === "zh" ? "Priority fixes" : "Priority fixes"}: ${result.errors.join(" | ")}`,
+        `${locale === "zh" ? "Rewrite sample" : "Rewrite sample"}: ${result.rewrite_sample}`,
+      ].join("\n\n")
+    : "";
+
   return (
     <form onSubmit={onSubmit} className="surface-panel grid gap-5 rounded-[2rem] p-6 sm:p-7">
       <div>
@@ -199,7 +231,6 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: CE
           <LanguageSwitcher locale={locale} />
         </div>
         <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">{wc.heading}</h2>
-        <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">{wc.subheading}</p>
         <div className="mt-4 rounded-[1.2rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.72)] p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">{wc.guideTitle}</p>
           <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">{wc.guide}</p>
@@ -218,6 +249,21 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: CE
               {difficultyOptions.map((difficulty) => (
                 <option key={difficulty} value={difficulty}>
                   {difficulty}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
+            {wc.disciplineLabel}
+            <select
+              value={selectedDiscipline}
+              onChange={(event) => handleDisciplineChange(event.target.value as WritingDiscipline)}
+              className="rounded-[1.1rem] border border-[rgba(20,50,75,0.16)] bg-white/75 px-4 py-3 text-sm outline-none"
+            >
+              {disciplines.map((discipline) => (
+                <option key={discipline} value={discipline}>
+                  {writingDisciplineLabels[discipline]}
                 </option>
               ))}
             </select>
@@ -246,6 +292,12 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: CE
           <p className="mt-2 text-sm leading-7 text-[var(--ink)]">{selectedPrompt.prompt}</p>
           <p className="mt-3 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">{wc.focusSub}</p>
           <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">{selectedPrompt.skill_focus}</p>
+          <Link
+            href={`/review?tag=Writing&prompt=${encodeURIComponent(selectedPrompt.title)}&scenario=${encodeURIComponent(selectedPrompt.scenario)}&task=${encodeURIComponent(selectedPrompt.prompt)}`}
+            className="mt-4 inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition-colors hover:border-[#7b4b14] hover:text-[#7b4b14]"
+          >
+            {wc.promptReviewButton}
+          </Link>
         </div>
       </div>
 
@@ -303,7 +355,12 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: CE
           </div>
           <SaveToDeckButton
             tag="Writing"
-            items={result.errors.map((err) => ({ front: "Writing fix", back: err }))}
+            items={[
+              {
+                front: selectedPrompt.title,
+                back: fullFeedbackEntry,
+              },
+            ]}
           />
         </div>
       ) : null}

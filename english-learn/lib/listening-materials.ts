@@ -1,3 +1,8 @@
+import {
+  authenticListeningBlueprints,
+  type AuthenticAccent,
+  type AuthenticResourceType,
+} from "@/lib/authentic-listening-catalog";
 import type { CEFRLevel } from "@/types/learning";
 
 export type DIICSUMajorId =
@@ -8,7 +13,8 @@ export type DIICSUMajorId =
   | "mechanical-engineering-transportation";
 
 export type ListeningAccent = "british" | "american" | "global";
-export type ListeningContentMode = "practice" | "ted";
+export type ListeningContentMode = "practice" | "ted" | "authentic";
+export type ListeningResourceType = "real-talk" | AuthenticResourceType;
 export type SpeakerRegion = "north-america" | "british" | "europe" | "asia" | "latin-america" | "other";
 
 export interface DIICSUMajorProfile {
@@ -35,6 +41,8 @@ export interface ListeningQuestion {
 export interface ListeningMaterial {
   id: string;
   contentMode: ListeningContentMode;
+  resourceType: ListeningResourceType;
+  isCrossDisciplinary?: boolean;
   materialGroupId: string;
   materialGroupLabel: string;
   majorId: DIICSUMajorId;
@@ -111,6 +119,38 @@ export interface ListeningMaterialOption {
   durationLabel: string;
   recommendedLevel: CEFRLevel;
   contentMode: ListeningContentMode;
+}
+
+const blockedInlinePreviewHosts = new Set([
+  "youtube.com",
+  "www.youtube.com",
+  "m.youtube.com",
+  "youtu.be",
+  "www.youtu.be",
+  "youtube-nocookie.com",
+  "www.youtube-nocookie.com",
+]);
+
+function getHostname(url?: string) {
+  if (!url) return null;
+
+  try {
+    return new URL(url).hostname.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+export function hasStableInlinePreview(
+  material: Pick<ListeningMaterial, "embedUrl">,
+): material is Pick<ListeningMaterial, "embedUrl"> & { embedUrl: string } {
+  const hostname = getHostname(material.embedUrl);
+
+  if (!hostname || typeof material.embedUrl !== "string") {
+    return false;
+  }
+
+  return !blockedInlinePreviewHosts.has(hostname);
 }
 
 interface AccentVariant {
@@ -1129,41 +1169,9 @@ const listeningBlueprints: ListeningBlueprint[] = [
   },
 ];
 
-export const practiceListeningMaterials: ListeningMaterial[] = listeningBlueprints.flatMap((blueprint) => {
-  const major = listeningMajors.find((item) => item.id === blueprint.majorId);
+void listeningBlueprints;
 
-  if (!major) return [];
-
-  return (Object.entries(blueprint.variants) as Array<[ListeningAccent, AccentVariant]>).map(
-    ([accent, variant]) => ({
-      id: `${blueprint.groupId}-${accent}`,
-      contentMode: "practice",
-      materialGroupId: blueprint.groupId,
-      materialGroupLabel: blueprint.groupLabel,
-      majorId: blueprint.majorId,
-      majorLabel: major.label,
-      accent,
-      accentLabel: accentMeta[accent].label,
-      accentHint: accentMeta[accent].hint,
-      title: variant.title,
-      source: variant.source,
-      sourceName: "DIICSU Studio",
-      speakerRole: variant.speakerRole,
-      scenario: blueprint.scenario,
-      transcript: variant.transcript,
-      recommendedLevel: variant.recommendedLevel,
-      durationLabel: variant.durationLabel,
-      supportFocus: variant.supportFocus,
-      notePrompts: blueprint.notePrompts,
-      vocabulary: blueprint.vocabulary,
-      questions: blueprint.questions,
-      followUpTask: blueprint.followUpTask,
-      audioSrc: `/audio/listening/${blueprint.groupId}-${accent}.m4a`,
-      audioVoice: variant.audioVoice,
-      voiceLocales: variant.voiceLocales,
-    }),
-  );
-});
+export const practiceListeningMaterials: ListeningMaterial[] = [];
 
 interface TedListeningBlueprint {
   groupId: string;
@@ -1189,6 +1197,12 @@ function buildTedTalkUrls(slug: string) {
     embedUrl: `https://embed.ted.com/talks/${slug}`,
     transcriptUrl: `https://www.ted.com/talks/${slug}/transcript?language=en`,
   };
+}
+
+function getAccentFromSpeakerRegion(region: SpeakerRegion): ListeningAccent {
+  if (region === "british") return "british";
+  if (region === "north-america") return "american";
+  return "global";
 }
 
 const tedTalkThumbnailBySlug: Record<string, string> = {
@@ -1232,7 +1246,44 @@ const tedTalkThumbnailBySlug: Record<string, string> = {
     "https://pi.tedcdn.com/r/talkstar-photos.s3.amazonaws.com/uploads/ceef94d8-20e5-48e9-aadb-e8f403762336/MonicaAraya_2021T-embed.jpg?u%5Br%5D=2&u%5Bs%5D=0.5&u%5Ba%5D=0.8&u%5Bt%5D=0.03&quality=82c=1050%2C550&w=1050",
   wayne_ting_a_carbon_free_future_starts_with_driving_less:
     "https://pi.tedcdn.com/r/talkstar-photos.s3.amazonaws.com/uploads/1bd2298b-9b51-4825-a2d6-bb4f7c8daf4f/WayneTing_2022T-embed.jpg?u%5Br%5D=2&u%5Bs%5D=0.5&u%5Ba%5D=0.8&u%5Bt%5D=0.03&quality=82c=1050%2C550&w=1050",
+  michael_green_how_we_can_make_the_world_a_better_place_by_2030:
+    "https://pi.tedcdn.com/r/pe.tedcdn.com/images/ted/7e282e3b442c167b2993f0ef4a51d5e641174c1d_2880x1620.jpg?u%5Br%5D=2&u%5Bs%5D=0.5&u%5Ba%5D=0.8&u%5Bt%5D=0.03&quality=82c=1050%2C550&w=1050",
+  kotchakorn_voraakhom_how_to_transform_sinking_cities_into_landscapes_that_fight_floods:
+    "https://pi.tedcdn.com/r/talkstar-photos.s3.amazonaws.com/uploads/541d915a-559f-43d0-be04-8f2f8d960c3c/KotchakornVoraakhom_2016W-embed.jpg?u%5Br%5D=2&u%5Bs%5D=0.5&u%5Ba%5D=0.8&u%5Bt%5D=0.03&quality=82c=1050%2C550&w=1050",
+  roger_antonsen_math_is_the_hidden_secret_to_understanding_the_world:
+    "https://pi.tedcdn.com/r/talkstar-photos.s3.amazonaws.com/uploads/65c9fb8d-557c-4121-9f6f-aba33dc2f4d3/RogerAntonsen_2015X-embed.jpg?u%5Br%5D=2&u%5Bs%5D=0.5&u%5Ba%5D=0.8&u%5Bt%5D=0.03&quality=82c=1050%2C550&w=1050",
+  max_tegmark_how_to_get_empowered_not_overpowered_by_ai:
+    "https://pi.tedcdn.com/r/talkstar-photos.s3.amazonaws.com/uploads/fb47cef7-3332-4841-8057-a7544548d607/MaxTegmark_2018-embed.jpg?u%5Br%5D=2&u%5Bs%5D=0.5&u%5Ba%5D=0.8&u%5Bt%5D=0.03&quality=82c=1050%2C550&w=1050",
+  jeff_hawkins_how_brain_science_will_change_computing:
+    "https://pi.tedcdn.com/r/pe.tedcdn.com/images/ted/dfc244d5b81ab35ce80a3c4f19877b23f8be7a27_2880x1620.jpg?u%5Br%5D=2&u%5Bs%5D=0.5&u%5Ba%5D=0.8&u%5Bt%5D=0.03&quality=82c=1050%2C550&w=1050",
+  thomas_dohmke_with_ai_anyone_can_be_a_coder_now:
+    "https://pi.tedcdn.com/r/talkstar-photos.s3.amazonaws.com/uploads/ee0f173f-cd33-4a8c-838d-6848a336c18f/ThomasDohmke_2024-embed.jpg?u%5Br%5D=2&u%5Bs%5D=0.5&u%5Ba%5D=0.8&u%5Bt%5D=0.03&quality=82c=1050%2C550&w=1050",
+  anthony_atala_printing_a_human_kidney:
+    "https://pi.tedcdn.com/r/talkstar-photos.s3.amazonaws.com/uploads/84c26514-97fb-4caa-812d-bd0ab03a9387/AnthonyAtala_2011-embed.jpg?u%5Br%5D=2&u%5Bs%5D=0.5&u%5Ba%5D=0.8&u%5Bt%5D=0.03&quality=82c=1050%2C550&w=1050",
+  alex_luebke_vivek_kumbhari_how_you_could_see_inside_your_body_with_a_micro_robot:
+    "https://pi.tedcdn.com/r/talkstar-photos.s3.amazonaws.com/uploads/ba035b2e-ac05-4250-bcd3-9f947d2a85f8/AlexLuebkeandVivekKumbhari_2024-embed.jpg?u%5Br%5D=2&u%5Bs%5D=0.5&u%5Ba%5D=0.8&u%5Bt%5D=0.03&quality=82c=1050%2C550&w=1050",
+  peter_calthorpe_7_principles_for_building_better_cities:
+    "https://pi.tedcdn.com/r/talkstar-photos.s3.amazonaws.com/uploads/7d9dbaf3-9c76-45f3-9609-a2369f00848d/PeterCalthorpe_2017-embed.jpg?u%5Br%5D=2&u%5Bs%5D=0.5&u%5Ba%5D=0.8&u%5Bt%5D=0.03&quality=82c=1050%2C550&w=1050",
+  enrique_penalosa_why_buses_represent_democracy_in_action:
+    "https://pi.tedcdn.com/r/pe.tedcdn.com/images/ted/915e59caaa1b90365d5474ec55a29aea13a31ed4_1600x1200.jpg?u%5Br%5D=2&u%5Bs%5D=0.5&u%5Ba%5D=0.8&u%5Bt%5D=0.03&quality=82c=1050%2C550&w=1050",
 };
+
+const crossDisciplinaryGroupIds = new Set([
+  "maths-ai-science-oxford",
+  "computing-ai-healthcare-stanford",
+  "ted-civil-better-world-2030",
+  "ted-civil-flood-fighting-landscapes",
+  "ted-maths-hidden-secret-world",
+  "ted-maths-empowered-by-ai",
+  "ted-computing-brain-science",
+  "ted-computing-ai-coder",
+  "ted-mechanical-printing-human-kidney",
+  "ted-mechanical-micro-robot",
+  "ted-transport-better-cities",
+  "ted-transport-buses-democracy",
+  "ted-computing-digital-physical-ai",
+  "ted-computing-ai-human-brain",
+]);
 
 const tedListeningBlueprints: TedListeningBlueprint[] = [
   {
@@ -2495,6 +2546,636 @@ const tedListeningBlueprints: TedListeningBlueprint[] = [
     followUpTask:
       "Use your notes to suggest one shared-mobility change that could reduce short car trips on campus or in a city center.",
   },
+  {
+    groupId: "ted-civil-better-world-2030",
+    majorId: "civil-engineering",
+    talkSlug: "michael_green_how_we_can_make_the_world_a_better_place_by_2030",
+    title: "How we can make the world a better place by 2030",
+    speakerName: "Michael Green",
+    speakerRole: "TED speaker and social progress strategist",
+    speakerRegion: "north-america",
+    scenario:
+      "Real TED listening on sustainable development, city planning, and how engineering decisions connect with wider social progress.",
+    recommendedLevel: "B1",
+    durationLabel: "15 min TED Talk",
+    supportFocus:
+      "Track how the speaker links infrastructure thinking with health, education, inclusion, and long-term development targets.",
+    notePrompts: [
+      "What does the speaker want countries and cities to improve by 2030?",
+      "How does he connect progress with systems, not only money?",
+      "Which social or urban indicators are mentioned?",
+      "Which planning term should stay in your notes?",
+    ],
+    vocabulary: [
+      { term: "social progress", definition: "improvement in how well a society supports people's wellbeing and opportunity" },
+      { term: "indicator", definition: "a measurable sign used to judge performance or change" },
+      { term: "development target", definition: "a planned goal for improvement in society, the economy, or the environment" },
+    ],
+    questions: [
+      {
+        id: "gist",
+        prompt: "What is the main message of the talk?",
+        placeholder: "Write the main idea in one or two sentences.",
+        modelAnswer:
+          "Green argues that making the world better by 2030 depends on improving social progress through better systems and measurable targets, not only economic growth.",
+        rubricNote: "Mention both social progress and system-level planning.",
+        matchGroups: [["better world", "2030", "social progress"], ["systems", "targets", "measure", "indicators"]],
+      },
+      {
+        id: "detail",
+        prompt: "What kind of measures does the speaker use to discuss progress?",
+        placeholder: "Write one short answer.",
+        modelAnswer: "He discusses indicators or measurable targets rather than vague promises.",
+        rubricNote: "The answer should focus on how progress is tracked.",
+        matchGroups: [["indicator", "measure", "target"]],
+      },
+      {
+        id: "signpost",
+        prompt: "Why is this talk relevant to engineering and planning students?",
+        placeholder: "Write one practical reason.",
+        modelAnswer: "Because infrastructure and planning decisions affect wider social progress, not only physical construction.",
+        rubricNote: "Link the talk to civil-engineering decision-making.",
+        matchGroups: [["infrastructure", "planning", "engineering"], ["social progress", "wider", "society"]],
+      },
+      {
+        id: "term",
+        prompt: "Which planning or development term should you keep from this talk?",
+        placeholder: "Write one term.",
+        modelAnswer: "A correct term is 'social progress', 'indicator', or 'development target'.",
+        rubricNote: "Choose one term you can reuse in sustainability or policy discussion.",
+        matchGroups: [["social progress", "indicator", "development target"]],
+      },
+    ],
+    followUpTask:
+      "Use your notes to explain how engineering projects on a campus or in a city could be judged by social progress as well as cost.",
+  },
+  {
+    groupId: "ted-civil-flood-fighting-landscapes",
+    majorId: "civil-engineering",
+    talkSlug: "kotchakorn_voraakhom_how_to_transform_sinking_cities_into_landscapes_that_fight_floods",
+    title: "How to transform sinking cities into landscapes that fight floods",
+    speakerName: "Kotchakorn Voraakhom",
+    speakerRole: "TED speaker and landscape architect",
+    speakerRegion: "asia",
+    scenario:
+      "Real TED listening on flood resilience, landscape design, and how cities can use nature-based infrastructure to adapt to climate pressure.",
+    recommendedLevel: "B1",
+    durationLabel: "12 min TED Talk",
+    supportFocus:
+      "Track how the speaker connects flooding, urban design, and climate adaptation through landscape-based infrastructure.",
+    notePrompts: [
+      "Why are some cities becoming more vulnerable to floods?",
+      "How does landscape design help manage water?",
+      "What kind of infrastructure is being reimagined?",
+      "Which resilience term should stay in your notes?",
+    ],
+    vocabulary: [
+      { term: "flood resilience", definition: "the ability of a place to prepare for, absorb, and recover from flooding" },
+      { term: "landscape infrastructure", definition: "using parks, open space, and terrain design as working infrastructure" },
+      { term: "climate adaptation", definition: "adjusting systems and places to cope better with climate impacts" },
+    ],
+    questions: [
+      {
+        id: "gist",
+        prompt: "What is the main idea of the talk?",
+        placeholder: "Write the main idea in one or two sentences.",
+        modelAnswer:
+          "Voraakhom argues that sinking cities can reduce flood risk by redesigning landscapes as working climate-resilient infrastructure.",
+        rubricNote: "Mention both flood risk and landscape-based infrastructure.",
+        matchGroups: [["cities", "flood"], ["landscape", "infrastructure"], ["climate", "resilient", "adaptation"]],
+      },
+      {
+        id: "detail",
+        prompt: "What kind of design solution does the speaker promote?",
+        placeholder: "Write one short answer.",
+        modelAnswer: "She promotes landscape or nature-based design that can absorb, store, or redirect water.",
+        rubricNote: "The answer should focus on the design approach, not only the climate problem.",
+        matchGroups: [["landscape", "nature"], ["water", "absorb", "store", "redirect"]],
+      },
+      {
+        id: "signpost",
+        prompt: "Why is this approach different from conventional flood engineering alone?",
+        placeholder: "Write one practical difference.",
+        modelAnswer: "It treats open space and public landscape as active infrastructure rather than only decoration.",
+        rubricNote: "Capture the shift in how urban space is understood.",
+        matchGroups: [["open space", "landscape"], ["infrastructure", "active", "working"]],
+      },
+      {
+        id: "term",
+        prompt: "Which resilience term should you keep from this talk?",
+        placeholder: "Write one term.",
+        modelAnswer: "A correct term is 'flood resilience', 'landscape infrastructure', or 'climate adaptation'.",
+        rubricNote: "Choose a term you can reuse in flood-risk or city-planning discussion.",
+        matchGroups: [["flood resilience", "landscape infrastructure", "climate adaptation"]],
+      },
+    ],
+    followUpTask:
+      "Use your notes to explain how civil engineers and landscape designers could work together on a flood-prone city project.",
+  },
+  {
+    groupId: "ted-maths-hidden-secret-world",
+    majorId: "mathematics",
+    talkSlug: "roger_antonsen_math_is_the_hidden_secret_to_understanding_the_world",
+    title: "Math is the hidden secret to understanding the world",
+    speakerName: "Roger Antonsen",
+    speakerRole: "TED speaker and mathematician",
+    speakerRegion: "europe",
+    scenario:
+      "Real TED listening on mathematics, patterns, language, and how abstraction helps us understand the structure of the world.",
+    recommendedLevel: "B1",
+    durationLabel: "17 min TED Talk",
+    supportFocus:
+      "Track how the speaker turns abstract mathematics into a broader argument about patterns, meaning, and understanding.",
+    notePrompts: [
+      "What does the speaker say mathematics helps us see?",
+      "How does he connect patterns with understanding?",
+      "Why is abstraction important in the talk?",
+      "Which mathematics term should stay in your notes?",
+    ],
+    vocabulary: [
+      { term: "abstraction", definition: "thinking about the general structure of something rather than only one concrete example" },
+      { term: "pattern", definition: "a repeated form or relationship that can reveal structure" },
+      { term: "structure", definition: "the way parts are organized into a meaningful whole" },
+    ],
+    questions: [
+      {
+        id: "gist",
+        prompt: "What is the speaker's main message about mathematics?",
+        placeholder: "Write the main idea in one or two sentences.",
+        modelAnswer:
+          "Antonsen argues that mathematics helps us understand the world by revealing patterns, structures, and deep relationships.",
+        rubricNote: "Mention both mathematics and pattern-based understanding.",
+        matchGroups: [["mathematics", "math"], ["patterns", "structure", "relationships"], ["understand", "world"]],
+      },
+      {
+        id: "detail",
+        prompt: "What kind of hidden order does the speaker say mathematics reveals?",
+        placeholder: "Write one short answer.",
+        modelAnswer: "He says mathematics reveals patterns and structure hidden beneath everyday experience.",
+        rubricNote: "The answer should focus on what mathematics makes visible.",
+        matchGroups: [["pattern", "structure"], ["hidden", "reveals", "visible"]],
+      },
+      {
+        id: "signpost",
+        prompt: "Why is abstraction important in this talk?",
+        placeholder: "Write one practical reason.",
+        modelAnswer: "Because abstraction helps us move beyond one example and see a more general structure.",
+        rubricNote: "Link abstraction to general understanding rather than difficulty.",
+        matchGroups: [["abstraction"], ["general", "structure", "beyond one example"]],
+      },
+      {
+        id: "term",
+        prompt: "Which mathematics term should you keep from this talk?",
+        placeholder: "Write one term.",
+        modelAnswer: "A correct term is 'abstraction', 'pattern', or 'structure'.",
+        rubricNote: "Choose one term that fits both mathematics and interdisciplinary explanation.",
+        matchGroups: [["abstraction", "pattern", "structure"]],
+      },
+    ],
+    followUpTask:
+      "Use your notes to explain how mathematical abstraction can help students in another major understand a complex real-world problem.",
+  },
+  {
+    groupId: "ted-maths-empowered-by-ai",
+    majorId: "mathematics",
+    talkSlug: "max_tegmark_how_to_get_empowered_not_overpowered_by_ai",
+    title: "How to get empowered, not overpowered, by AI",
+    speakerName: "Max Tegmark",
+    speakerRole: "TED speaker and physicist",
+    speakerRegion: "europe",
+    scenario:
+      "Real TED listening on AI, decision-making, and how quantitative thinking can help people engage with fast-moving technology responsibly.",
+    recommendedLevel: "B1",
+    durationLabel: "17 min TED Talk",
+    supportFocus:
+      "Track how the speaker explains AI risk and opportunity in a structured, evidence-based way for a broad audience.",
+    notePrompts: [
+      "What balance does the speaker want people to find with AI?",
+      "How does he frame risk and opportunity together?",
+      "Why are informed decisions important in the talk?",
+      "Which AI or decision term should stay in your notes?",
+    ],
+    vocabulary: [
+      { term: "empowered", definition: "made more capable of acting effectively and confidently" },
+      { term: "decision-making", definition: "the process of choosing actions after weighing evidence and outcomes" },
+      { term: "risk management", definition: "identifying and reducing possible negative outcomes" },
+    ],
+    questions: [
+      {
+        id: "gist",
+        prompt: "What is the main message of the talk?",
+        placeholder: "Write the main idea in one or two sentences.",
+        modelAnswer:
+          "Tegmark argues that people should understand AI well enough to use it constructively without being controlled or overwhelmed by it.",
+        rubricNote: "Mention both empowerment and avoiding loss of control.",
+        matchGroups: [["ai"], ["empowered", "not overpowered", "control"], ["understand", "use"]],
+      },
+      {
+        id: "detail",
+        prompt: "What two sides of AI does the speaker discuss together?",
+        placeholder: "Write one short answer.",
+        modelAnswer: "He discusses both opportunity and risk, or benefit and danger.",
+        rubricNote: "This balance is central to the talk's structure.",
+        matchGroups: [["opportunity", "benefit"], ["risk", "danger"]],
+      },
+      {
+        id: "signpost",
+        prompt: "Why is informed decision-making important here?",
+        placeholder: "Write one practical reason.",
+        modelAnswer: "Because people need evidence-based judgement to shape how AI affects society and their own work.",
+        rubricNote: "Connect the talk to responsible choices, not only technical excitement.",
+        matchGroups: [["decision", "judgement", "evidence"], ["society", "work", "shape"]],
+      },
+      {
+        id: "term",
+        prompt: "Which AI or decision term should you keep from this talk?",
+        placeholder: "Write one term.",
+        modelAnswer: "A correct term is 'decision-making', 'risk management', or 'empowered'.",
+        rubricNote: "Choose a term that works in technology and policy discussion.",
+        matchGroups: [["decision-making", "risk management", "empowered"]],
+      },
+    ],
+    followUpTask:
+      "Use your notes to explain how students can approach AI with both curiosity and critical judgement.",
+  },
+  {
+    groupId: "ted-computing-brain-science",
+    majorId: "computing-science",
+    talkSlug: "jeff_hawkins_how_brain_science_will_change_computing",
+    title: "How brain science will change computing",
+    speakerName: "Jeff Hawkins",
+    speakerRole: "TED speaker and computing researcher",
+    speakerRegion: "north-america",
+    scenario:
+      "Real TED listening on brain science, computing models, and why neuroscience may inspire a different future for intelligent systems.",
+    recommendedLevel: "B2",
+    durationLabel: "20 min TED Talk",
+    supportFocus:
+      "Track how the speaker links brain research with new ideas about machine intelligence and computing architecture.",
+    notePrompts: [
+      "What does the speaker think brain science can change in computing?",
+      "How does he connect intelligence with the brain?",
+      "What limitation of current computing does he imply?",
+      "Which cross-disciplinary term should stay in your notes?",
+    ],
+    vocabulary: [
+      { term: "neuroscience", definition: "the study of the brain and nervous system" },
+      { term: "intelligence", definition: "the ability to learn, reason, and adapt" },
+      { term: "model", definition: "a simplified representation used to explain or predict a system" },
+    ],
+    questions: [
+      {
+        id: "gist",
+        prompt: "What is the main argument of the talk?",
+        placeholder: "Write the main idea in one or two sentences.",
+        modelAnswer:
+          "Hawkins argues that brain science can reshape computing by giving researchers better models of intelligence.",
+        rubricNote: "Mention both brain science and change in computing.",
+        matchGroups: [["brain science", "neuroscience"], ["computing"], ["models", "intelligence", "change"]],
+      },
+      {
+        id: "detail",
+        prompt: "What field does the speaker borrow ideas from to rethink computing?",
+        placeholder: "Write one short answer.",
+        modelAnswer: "He borrows ideas from brain science or neuroscience.",
+        rubricNote: "This field connection drives the whole talk.",
+        matchGroups: [["brain science", "neuroscience"]],
+      },
+      {
+        id: "signpost",
+        prompt: "Why does the speaker care about better models of intelligence?",
+        placeholder: "Write one practical reason.",
+        modelAnswer: "Because better models could help computing systems learn or reason in more powerful ways.",
+        rubricNote: "Connect the biology insight to computing outcomes.",
+        matchGroups: [["models", "intelligence"], ["learn", "reason", "systems"]],
+      },
+      {
+        id: "term",
+        prompt: "Which cross-disciplinary term should you keep from this talk?",
+        placeholder: "Write one term.",
+        modelAnswer: "A correct term is 'neuroscience', 'intelligence', or 'model'.",
+        rubricNote: "Choose a term that bridges computing and brain science.",
+        matchGroups: [["neuroscience", "intelligence", "model"]],
+      },
+    ],
+    followUpTask:
+      "Use your notes to explain why computing students may need ideas from neuroscience as well as software engineering.",
+  },
+  {
+    groupId: "ted-computing-ai-coder",
+    majorId: "computing-science",
+    talkSlug: "thomas_dohmke_with_ai_anyone_can_be_a_coder_now",
+    title: "With AI, anyone can be a coder now",
+    speakerName: "Thomas Dohmke",
+    speakerRole: "TED speaker and software leader",
+    speakerRegion: "europe",
+    scenario:
+      "Real TED listening on AI-assisted coding, software access, and how development work is changing for technical and non-technical users.",
+    recommendedLevel: "B1",
+    durationLabel: "14 min TED Talk",
+    supportFocus:
+      "Track how the speaker explains AI coding tools, changing developer workflows, and wider access to software creation.",
+    notePrompts: [
+      "How does the speaker say AI changes coding?",
+      "Who can benefit from AI-assisted coding?",
+      "What still matters even if coding becomes easier?",
+      "Which software term should stay in your notes?",
+    ],
+    vocabulary: [
+      { term: "AI-assisted coding", definition: "using AI tools to help write, revise, or explain code" },
+      { term: "workflow", definition: "the sequence of steps used to complete technical work" },
+      { term: "accessibility", definition: "how easy something is for more people to use or take part in" },
+    ],
+    questions: [
+      {
+        id: "gist",
+        prompt: "What is the main message of the talk?",
+        placeholder: "Write the main idea in one or two sentences.",
+        modelAnswer:
+          "Dohmke argues that AI can make coding more accessible while also changing how software is built and reviewed.",
+        rubricNote: "Mention both wider access and workflow change.",
+        matchGroups: [["ai"], ["coding", "software"], ["accessible", "workflow", "review", "change"]],
+      },
+      {
+        id: "detail",
+        prompt: "Who does the speaker say can benefit from these AI tools?",
+        placeholder: "Write one short answer.",
+        modelAnswer: "He suggests that both developers and new learners can benefit from AI-assisted coding.",
+        rubricNote: "The answer should show expanded participation, not only experts.",
+        matchGroups: [["developers", "learners", "anyone", "more people"]],
+      },
+      {
+        id: "signpost",
+        prompt: "What still matters even if AI makes coding easier?",
+        placeholder: "Write one practical point.",
+        modelAnswer: "Good judgement, review, and understanding still matter even with AI support.",
+        rubricNote: "The talk is not only about convenience; it still values human oversight.",
+        matchGroups: [["judgement", "review", "understanding", "oversight"]],
+      },
+      {
+        id: "term",
+        prompt: "Which software term should you keep from this talk?",
+        placeholder: "Write one term.",
+        modelAnswer: "A correct term is 'AI-assisted coding', 'workflow', or 'accessibility'.",
+        rubricNote: "Choose a term that fits both software learning and real development practice.",
+        matchGroups: [["ai-assisted coding", "workflow", "accessibility"]],
+      },
+    ],
+    followUpTask:
+      "Use your notes to explain how AI coding tools could help a student team move faster without removing the need for review.",
+  },
+  {
+    groupId: "ted-mechanical-printing-human-kidney",
+    majorId: "mechanical-engineering",
+    talkSlug: "anthony_atala_printing_a_human_kidney",
+    title: "Printing a human kidney",
+    speakerName: "Anthony Atala",
+    speakerRole: "TED speaker and regenerative medicine researcher",
+    speakerRegion: "north-america",
+    scenario:
+      "Real TED listening on bioprinting, tissue engineering, and how manufacturing ideas are being applied to medical design.",
+    recommendedLevel: "B2",
+    durationLabel: "17 min TED Talk",
+    supportFocus:
+      "Track how the speaker links engineering fabrication, medical need, and future organ replacement.",
+    notePrompts: [
+      "What medical problem is the speaker trying to solve?",
+      "How does he connect printing with living tissue?",
+      "Why is this work interdisciplinary?",
+      "Which engineering or medical term should stay in your notes?",
+    ],
+    vocabulary: [
+      { term: "bioprinting", definition: "using printing methods to create structures containing living biological material" },
+      { term: "tissue engineering", definition: "designing biological tissue for repair or replacement in the body" },
+      { term: "regenerative medicine", definition: "medical work focused on repairing or replacing damaged tissue or organs" },
+    ],
+    questions: [
+      {
+        id: "gist",
+        prompt: "What is the main idea of the talk?",
+        placeholder: "Write the main idea in one or two sentences.",
+        modelAnswer:
+          "Atala explains how printing technology and tissue engineering could help create replacement organs such as kidneys.",
+        rubricNote: "Mention both printing and organ replacement.",
+        matchGroups: [["printing", "bioprinting"], ["kidney", "organs", "replacement"], ["tissue engineering", "medicine"]],
+      },
+      {
+        id: "detail",
+        prompt: "Which organ appears directly in the title and central argument?",
+        placeholder: "Write one word or phrase.",
+        modelAnswer: "The organ is the kidney.",
+        rubricNote: "The answer should capture the core medical target clearly.",
+        matchGroups: [["kidney"]],
+      },
+      {
+        id: "signpost",
+        prompt: "Why is this talk strongly interdisciplinary?",
+        placeholder: "Write one practical reason.",
+        modelAnswer: "Because it combines engineering fabrication methods with medicine and biology.",
+        rubricNote: "Capture the field combination rather than only saying it is advanced.",
+        matchGroups: [["engineering", "printing"], ["medicine", "biology", "tissue"]],
+      },
+      {
+        id: "term",
+        prompt: "Which engineering or medical term should you keep from this talk?",
+        placeholder: "Write one term.",
+        modelAnswer: "A correct term is 'bioprinting', 'tissue engineering', or 'regenerative medicine'.",
+        rubricNote: "Choose one term that bridges manufacturing and healthcare.",
+        matchGroups: [["bioprinting", "tissue engineering", "regenerative medicine"]],
+      },
+    ],
+    followUpTask:
+      "Use your notes to explain how manufacturing ideas can move into medicine when engineers work with clinicians and biologists.",
+  },
+  {
+    groupId: "ted-mechanical-micro-robot",
+    majorId: "mechanical-engineering",
+    talkSlug: "alex_luebke_vivek_kumbhari_how_you_could_see_inside_your_body_with_a_micro_robot",
+    title: "How you could see inside your body -- with a micro-robot",
+    speakerName: "Alex Luebke and Vivek Kumbhari",
+    speakerRole: "TED speakers in medical robotics",
+    speakerRegion: "north-america",
+    scenario:
+      "Real TED listening on medical robotics, miniature devices, and how mechanical systems can support diagnosis inside the body.",
+    recommendedLevel: "B1",
+    durationLabel: "9 min TED Talk",
+    supportFocus:
+      "Track how the speakers explain miniature robotic design, imaging, and medical application in a simple but technical way.",
+    notePrompts: [
+      "What can the micro-robot do inside the body?",
+      "Why is miniaturization important in the talk?",
+      "How does this device connect engineering with medicine?",
+      "Which robotics term should stay in your notes?",
+    ],
+    vocabulary: [
+      { term: "micro-robot", definition: "a very small robot designed to operate in restricted spaces" },
+      { term: "miniaturization", definition: "making a device much smaller while keeping or improving function" },
+      { term: "diagnosis", definition: "identifying a medical condition by examining evidence" },
+    ],
+    questions: [
+      {
+        id: "gist",
+        prompt: "What is the main idea of the talk?",
+        placeholder: "Write the main idea in one or two sentences.",
+        modelAnswer:
+          "The speakers explain how a micro-robot could help doctors see and work inside the body in less invasive ways.",
+        rubricNote: "Mention both the micro-robot and its medical use.",
+        matchGroups: [["micro-robot", "robot"], ["inside the body", "see", "medical"], ["less invasive", "diagnosis", "doctors"]],
+      },
+      {
+        id: "detail",
+        prompt: "Why is the small size of the robot important?",
+        placeholder: "Write one practical reason.",
+        modelAnswer: "Its small size helps it move through tight spaces inside the body and support diagnosis more safely.",
+        rubricNote: "Connect size with function rather than only saying it is impressive.",
+        matchGroups: [["small", "mini", "micro"], ["body", "tight spaces", "inside"]],
+      },
+      {
+        id: "signpost",
+        prompt: "Why is this technology interdisciplinary?",
+        placeholder: "Write one short explanation.",
+        modelAnswer: "Because it combines robotics, mechanical design, imaging, and medicine.",
+        rubricNote: "Name at least two fields working together.",
+        matchGroups: [["robotics", "mechanical"], ["imaging", "medicine"]],
+      },
+      {
+        id: "term",
+        prompt: "Which robotics term should you keep from this talk?",
+        placeholder: "Write one term.",
+        modelAnswer: "A correct term is 'micro-robot', 'miniaturization', or 'diagnosis'.",
+        rubricNote: "Choose one term that connects device design with medical use.",
+        matchGroups: [["micro-robot", "miniaturization", "diagnosis"]],
+      },
+    ],
+    followUpTask:
+      "Use your notes to explain why small-scale device design can open new possibilities in diagnosis and treatment.",
+  },
+  {
+    groupId: "ted-transport-better-cities",
+    majorId: "mechanical-engineering-transportation",
+    talkSlug: "peter_calthorpe_7_principles_for_building_better_cities",
+    title: "7 principles for building better cities",
+    speakerName: "Peter Calthorpe",
+    speakerRole: "TED speaker and urban designer",
+    speakerRegion: "north-america",
+    scenario:
+      "Real TED listening on urban design, transport planning, and how city form shapes mobility, energy use, and quality of life.",
+    recommendedLevel: "B1",
+    durationLabel: "14 min TED Talk",
+    supportFocus:
+      "Track how the speaker connects city design principles with mobility choices and long-term transport performance.",
+    notePrompts: [
+      "What makes a city 'better' in the speaker's view?",
+      "How does urban form affect transport?",
+      "Which planning principles guide mobility design?",
+      "Which city-planning term should stay in your notes?",
+    ],
+    vocabulary: [
+      { term: "urban form", definition: "the physical layout and structure of a city" },
+      { term: "mobility", definition: "the ability of people and goods to move efficiently through a system" },
+      { term: "mixed-use", definition: "an area that combines homes, work, and services close together" },
+    ],
+    questions: [
+      {
+        id: "gist",
+        prompt: "What is the main message of the talk?",
+        placeholder: "Write the main idea in one or two sentences.",
+        modelAnswer:
+          "Calthorpe argues that better cities depend on design principles that improve mobility, reduce sprawl, and support more sustainable transport.",
+        rubricNote: "Mention both city design and transport effect.",
+        matchGroups: [["better cities", "city design"], ["mobility", "transport"], ["sustainable", "sprawl", "urban"]],
+      },
+      {
+        id: "detail",
+        prompt: "What kind of city layout does the speaker support?",
+        placeholder: "Write one short answer.",
+        modelAnswer: "He supports more compact, connected, mixed-use urban form.",
+        rubricNote: "The answer should describe the planning model rather than a single building.",
+        matchGroups: [["compact", "connected", "mixed-use", "urban form"]],
+      },
+      {
+        id: "signpost",
+        prompt: "Why does urban design matter for transport performance?",
+        placeholder: "Write one practical reason.",
+        modelAnswer: "Because city layout shapes travel distance, mobility choices, and dependence on cars.",
+        rubricNote: "Connect planning with transport outcomes.",
+        matchGroups: [["layout", "travel", "mobility"], ["cars", "distance", "choices"]],
+      },
+      {
+        id: "term",
+        prompt: "Which city-planning term should you keep from this talk?",
+        placeholder: "Write one term.",
+        modelAnswer: "A correct term is 'urban form', 'mobility', or 'mixed-use'.",
+        rubricNote: "Choose a term that helps you discuss city design and transport together.",
+        matchGroups: [["urban form", "mobility", "mixed-use"]],
+      },
+    ],
+    followUpTask:
+      "Use your notes to explain how one planning principle could improve transport around a university district or city center.",
+  },
+  {
+    groupId: "ted-transport-buses-democracy",
+    majorId: "mechanical-engineering-transportation",
+    talkSlug: "enrique_penalosa_why_buses_represent_democracy_in_action",
+    title: "Why buses represent democracy in action",
+    speakerName: "Enrique Peñalosa",
+    speakerRole: "TED speaker and urban policy leader",
+    speakerRegion: "latin-america",
+    scenario:
+      "Real TED listening on public transport, urban equality, and why bus systems can reflect social priorities in city design.",
+    recommendedLevel: "B1",
+    durationLabel: "14 min TED Talk",
+    supportFocus:
+      "Track how the speaker connects buses, street space, and democratic fairness in urban transport policy.",
+    notePrompts: [
+      "Why does the speaker connect buses with democracy?",
+      "How does street-space allocation appear in the talk?",
+      "What social argument supports public transport investment?",
+      "Which transport policy term should stay in your notes?",
+    ],
+    vocabulary: [
+      { term: "public transport", definition: "shared transport systems such as buses or trains used by the general public" },
+      { term: "street space", definition: "the limited physical space in streets allocated to different users and modes" },
+      { term: "equity", definition: "fairness in how opportunities or resources are distributed" },
+    ],
+    questions: [
+      {
+        id: "gist",
+        prompt: "What is the main argument of the talk?",
+        placeholder: "Write the main idea in one or two sentences.",
+        modelAnswer:
+          "Peñalosa argues that buses and public transport show democracy in action because cities must decide how to share street space fairly.",
+        rubricNote: "Mention both buses and fairness in city space.",
+        matchGroups: [["buses", "public transport"], ["democracy", "fair", "equity"], ["street space", "cities"]],
+      },
+      {
+        id: "detail",
+        prompt: "What urban resource does the speaker focus on sharing more fairly?",
+        placeholder: "Write one short answer.",
+        modelAnswer: "He focuses on how street space is allocated.",
+        rubricNote: "This is the clearest physical system in the talk.",
+        matchGroups: [["street space"]],
+      },
+      {
+        id: "signpost",
+        prompt: "Why does the speaker think buses matter beyond transport efficiency?",
+        placeholder: "Write one practical reason.",
+        modelAnswer: "Because they represent fairness, access, and social priorities in city life.",
+        rubricNote: "The answer should go beyond speed or engineering alone.",
+        matchGroups: [["fair", "access", "social", "priorities"]],
+      },
+      {
+        id: "term",
+        prompt: "Which transport policy term should you keep from this talk?",
+        placeholder: "Write one term.",
+        modelAnswer: "A correct term is 'public transport', 'street space', or 'equity'.",
+        rubricNote: "Choose a term that links transport systems with public policy.",
+        matchGroups: [["public transport", "street space", "equity"]],
+      },
+    ],
+    followUpTask:
+      "Use your notes to explain why transport planning should be judged by fairness as well as by traffic speed.",
+  },
 ];
 
 export const tedListeningMaterials: ListeningMaterial[] = tedListeningBlueprints.flatMap((blueprint) => {
@@ -2503,19 +3184,24 @@ export const tedListeningMaterials: ListeningMaterial[] = tedListeningBlueprints
   if (!major) return [];
 
   const urls = buildTedTalkUrls(blueprint.talkSlug);
+  const accent = getAccentFromSpeakerRegion(blueprint.speakerRegion);
 
   return [
     {
       id: blueprint.groupId,
       contentMode: "ted",
+      resourceType: "real-talk",
+      isCrossDisciplinary: crossDisciplinaryGroupIds.has(blueprint.groupId),
       materialGroupId: blueprint.groupId,
       materialGroupLabel: blueprint.title,
       majorId: blueprint.majorId,
       majorLabel: major.label,
-      accent: "global",
-      accentLabel: "Original TED delivery",
+      accent,
+      accentLabel: accentMeta[accent].label,
       accentHint:
-        "Authentic conference speech with natural pacing, live emphasis, and no simplified classroom scripting.",
+        accent === "global"
+          ? "Original TED delivery from an international speaker with natural conference pacing."
+          : `${accentMeta[accent].hint} This is the original TED delivery rather than a simplified classroom clip.`,
       title: blueprint.title,
       source: "TED Talk",
       sourceName: "TED",
@@ -2542,21 +3228,69 @@ export const tedListeningMaterials: ListeningMaterial[] = tedListeningBlueprints
   ];
 });
 
+export const authenticListeningMaterials: ListeningMaterial[] = authenticListeningBlueprints.flatMap(
+  (blueprint) => {
+    const major = listeningMajors.find((item) => item.id === blueprint.majorId);
+
+    if (!major) return [];
+
+    const accent = blueprint.accent as AuthenticAccent as ListeningAccent;
+
+    return [
+      {
+        id: blueprint.groupId,
+        contentMode: "authentic",
+        resourceType: blueprint.resourceType,
+        isCrossDisciplinary: crossDisciplinaryGroupIds.has(blueprint.groupId),
+        materialGroupId: blueprint.groupId,
+        materialGroupLabel: blueprint.title,
+        majorId: blueprint.majorId,
+        majorLabel: major.label,
+        accent,
+        accentLabel: accentMeta[accent].label,
+        accentHint: accentMeta[accent].hint,
+        title: blueprint.title,
+        source: blueprint.source,
+        sourceName: blueprint.sourceName,
+        speakerRole: blueprint.speakerRole,
+        speakerName: blueprint.speakerName,
+        speakerRegion: blueprint.speakerRegion,
+        scenario: blueprint.scenario,
+        transcript: blueprint.transcript,
+        transcriptUrl: blueprint.transcriptUrl,
+        officialUrl: blueprint.officialUrl,
+        embedUrl: blueprint.embedUrl,
+        thumbnailUrl: blueprint.thumbnailUrl,
+        recommendedLevel: blueprint.recommendedLevel,
+        durationLabel: blueprint.durationLabel,
+        supportFocus: blueprint.supportFocus,
+        notePrompts: blueprint.notePrompts,
+        vocabulary: blueprint.vocabulary,
+        questions: blueprint.questions,
+        followUpTask: blueprint.followUpTask,
+        audioSrc: null,
+        audioVoice: null,
+        voiceLocales: [],
+      },
+    ];
+  },
+);
+
 export const listeningMaterials: ListeningMaterial[] = [
-  ...practiceListeningMaterials,
   ...tedListeningMaterials,
+  ...authenticListeningMaterials,
 ];
 
 export const listeningModes = [
   {
-    id: "practice",
-    label: "Accent practice",
-    hint: "Short DIICSU clips with controlled British, American, and global accent contrast.",
+    id: "ted",
+    label: "TED talks",
+    hint: "Official TED talks matched to DIICSU majors and grouped with note-taking checkpoints.",
   },
   {
-    id: "ted",
-    label: "TED listening",
-    hint: "Real official TED talks embedded from TED with major-matched topics and note-taking tasks.",
+    id: "authentic",
+    label: "Lectures & podcasts",
+    hint: "Public lectures, expert interviews, and podcasts from official academic and engineering sources.",
   },
 ] as const;
 

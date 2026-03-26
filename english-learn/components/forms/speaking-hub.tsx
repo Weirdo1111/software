@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Bot, Mic, Waves } from "lucide-react";
+import { ArrowRight, Mic, Waves } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
 import type { SpeakingModuleId } from "@/components/forms/speaking/types";
@@ -10,11 +10,10 @@ import { speakingModuleCopy } from "@/lib/speaking-modules";
 
 const moduleIcons: Record<SpeakingModuleId, typeof Mic> = {
   studio: Mic,
-  shadowing: Waves,
-  partner: Bot,
+  rehearsal: Waves,
 };
 
-const moduleOrder: SpeakingModuleId[] = ["shadowing", "partner", "studio"];
+const moduleOrder: SpeakingModuleId[] = ["studio", "rehearsal"];
 
 // Date: 2026/3/18
 // Author: Tianbo Cao
@@ -30,11 +29,11 @@ export function SpeakingHub({
     locale === "zh"
       ? {
           title: "口语练习",
-          subtitle: "先选择一种练习方式，再进入对应模块。",
+          subtitle: "先进入主练习或预演实验室，再完成当前口语任务。",
         }
       : {
           title: "Speaking",
-          subtitle: "Choose one practice mode first, then enter that workspace.",
+          subtitle: "Open either the main studio or the rehearsal lab for the current speaking task.",
         };
 
   function buildHref(moduleId: SpeakingModuleId) {
@@ -53,7 +52,7 @@ export function SpeakingHub({
         </div>
       </article>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         {moduleOrder.map((moduleId) => {
           const moduleCopy = speakingModuleCopy[moduleId];
           const Icon = moduleIcons[moduleId];

@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { BrainCircuit, CalendarClock, Clock, Filter, LoaderCircle, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -49,12 +50,18 @@ const ratingLabel: Record<number, { text: string; color: string }> = {
   4: { text: "Easy", color: "text-blue-600" },
 };
 
-export function ReviewPageShell() {
+export function ReviewPageShell({ initialTag = "All" }: { initialTag?: string }) {
+  const searchParams = useSearchParams();
+  const promptFilter = searchParams.get("prompt")?.trim() || "";
+  const scenarioText = searchParams.get("scenario")?.trim() || "";
+  const taskText = searchParams.get("task")?.trim() || "";
+  const queryTag = searchParams.get("tag");
   const [stats, setStats] = useState<ReviewStats>({ due: 0, total: 0, mature: 0, at_risk: 0 });
+  const [allCards, setAllCards] = useState<ReviewCard[]>([]);
   const [recentCards, setRecentCards] = useState<ReviewCard[]>([]);
   const [reviewHistory, setReviewHistory] = useState<ReviewHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTag, setActiveTag] = useState<string>("All");
+  const [activeTag, setActiveTag] = useState<string>(initialTag);
   const [deleting, setDeleting] = useState<string | null>(null);
 
   const fetchData = useCallback(async (tag?: string) => {
@@ -66,6 +73,7 @@ export function ReviewPageShell() {
       const data = await res.json();
       setStats(data.stats ?? { due: 0, total: 0, mature: 0, at_risk: 0 });
       const allCards: ReviewCard[] = data.cards ?? [];
+      setAllCards(allCards);
       const sortedByRecent = [...allCards].sort(
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       );
@@ -81,6 +89,19 @@ export function ReviewPageShell() {
   useEffect(() => {
     fetchData(activeTag);
   }, [fetchData, activeTag]);
+
+  useEffect(() => {
+    if (queryTag && TAG_OPTIONS.includes(queryTag as (typeof TAG_OPTIONS)[number])) {
+      setActiveTag(queryTag);
+    }
+  }, [queryTag]);
+
+  const visibleCards = promptFilter
+    ? allCards.filter((card) => card.front === promptFilter)
+    : recentCards;
+  const visibleHistory = promptFilter
+    ? reviewHistory.filter((entry) => entry.card_front === promptFilter)
+    : reviewHistory;
 
   async function handleDelete(cardId: string) {
     if (deleting) return;
@@ -107,6 +128,52 @@ export function ReviewPageShell() {
       <div className="flex items-center justify-center gap-3 py-20">
         <LoaderCircle className="size-5 animate-spin text-[var(--ink-soft)]" />
         <p className="text-sm text-[var(--ink-soft)]">Loading review data…</p>
+      </div>
+    );
+  }
+
+  if (promptFilter) {
+    return (
+      <div className="grid gap-5">
+        <article className="surface-panel reveal-up rounded-[2rem] p-6 sm:p-7">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--ink-soft)]">Writing prompt review</p>
+          <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">{promptFilter}</h2>
+          {scenarioText ? (
+            <div className="mt-5 rounded-[1.2rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.76)] p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Scenario</p>
+              <p className="mt-2 text-sm leading-7 text-[var(--ink)]">{scenarioText}</p>
+            </div>
+          ) : null}
+          {taskText ? (
+            <div className="mt-4 rounded-[1.2rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.76)] p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Task</p>
+              <p className="mt-2 text-sm leading-7 text-[var(--ink)]">{taskText}</p>
+            </div>
+          ) : null}
+        </article>
+
+        <article className="surface-panel reveal-up rounded-[2rem] p-6 sm:p-7">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--ink-soft)]">Past feedback</p>
+          <h3 className="font-display mt-4 text-2xl tracking-tight text-[var(--ink)]">
+            {visibleCards.length > 0 ? `All saved feedback for ${promptFilter}.` : "No saved feedback for this prompt yet."}
+          </h3>
+          {visibleCards.length > 0 ? (
+            <div className="mt-5 grid gap-3">
+              {visibleCards.map((card) => (
+                <div
+                  key={card.id}
+                  className="rounded-[1.3rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.76)] p-4"
+                >
+                  <p className="text-sm leading-7 text-[var(--ink)]">{card.back}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-4 text-sm leading-7 text-[var(--ink-soft)]">
+              Save review tips for this prompt first, then all earlier feedback will appear here.
+            </p>
+          )}
+        </article>
       </div>
     );
   }
@@ -151,11 +218,17 @@ export function ReviewPageShell() {
               {activeTag !== "All" ? ` · ${activeTag}` : ""}
             </p>
             <h2 className="font-display mt-4 text-2xl tracking-tight text-[var(--ink)]">
-              {recentCards.length > 0 ? "Recently added to your deck." : "No cards in your deck yet."}
+              {visibleCards.length > 0
+                ? promptFilter
+                  ? `Review saved for ${promptFilter}.`
+                  : "Recently added to your deck."
+                : promptFilter
+                  ? "No review saved for this prompt yet."
+                  : "No cards in your deck yet."}
             </h2>
-            {recentCards.length > 0 ? (
+            {visibleCards.length > 0 ? (
               <div className="mt-5 grid gap-3">
-                {recentCards.map((card) => (
+                {visibleCards.map((card) => (
                   <div
                     key={card.id}
                     className="group rounded-[1.3rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.76)] p-4"
@@ -196,9 +269,11 @@ export function ReviewPageShell() {
               </div>
             ) : (
               <p className="mt-4 text-sm leading-7 text-[var(--ink-soft)]">
-                {activeTag !== "All"
-                  ? `No ${activeTag} cards yet. Add vocabulary from ${activeTag.toLowerCase()} exercises.`
-                  : "Add vocabulary from reading articles (select words while reading) or from feedback sessions (speaking, writing, reading). Cards you add will appear here and in your review sessions."}
+                {promptFilter
+                  ? "Save review tips for this writing prompt first, then they will appear here."
+                  : activeTag !== "All"
+                    ? `No ${activeTag} cards yet. Add vocabulary from ${activeTag.toLowerCase()} exercises.`
+                    : "Add vocabulary from reading articles (select words while reading) or from feedback sessions (speaking, writing, reading). Cards you add will appear here and in your review sessions."}
               </p>
             )}
           </article>
@@ -211,9 +286,9 @@ export function ReviewPageShell() {
                 Recent reviews
               </p>
             </div>
-            {reviewHistory.length > 0 ? (
+            {visibleHistory.length > 0 ? (
               <div className="mt-4 grid gap-2">
-                {reviewHistory.map((entry) => {
+                {visibleHistory.map((entry) => {
                   const label = ratingLabel[entry.rating] ?? { text: `${entry.rating}`, color: "text-[var(--ink)]" };
                   const timeAgo = formatTimeAgo(entry.reviewed_at);
                   return (
@@ -232,7 +307,9 @@ export function ReviewPageShell() {
               </div>
             ) : (
               <p className="mt-4 text-sm leading-7 text-[var(--ink-soft)]">
-                No review history yet. Complete a review session to see your activity here.
+                {promptFilter
+                  ? "No review history for this writing prompt yet."
+                  : "No review history yet. Complete a review session to see your activity here."}
               </p>
             )}
           </article>

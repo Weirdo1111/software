@@ -29,34 +29,31 @@ export function SpeakingHistoryPanel({
   const hasComparison = promptAttempts.length >= 2 && latestAttempt && firstAttempt;
 
   return (
-    <div className="rounded-[1.6rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.76)] p-5 sm:p-6">
+    <div className="rounded-[1.45rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.76)] p-4">
       <div className="flex items-start gap-3 text-[var(--ink)]">
         <History className="mt-0.5 size-4" />
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Speaking history</p>
-          <p className="mt-3 text-lg font-semibold text-[var(--ink)]">Compare first takes and revised takes for this prompt.</p>
-          <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
-            Track how this prompt is improving over time and reload earlier drafts when you want to revise them again.
-          </p>
+          <p className="mt-2 text-base font-semibold text-[var(--ink)]">Compare earlier and later takes for this prompt.</p>
         </div>
       </div>
 
       {promptAttempts.length === 0 ? (
-        <div className="mt-5 rounded-[1.2rem] bg-[rgba(20,50,75,0.04)] px-4 py-4 text-sm leading-6 text-[var(--ink-soft)]">
+        <div className="mt-3 rounded-[1rem] bg-[rgba(20,50,75,0.04)] px-4 py-3 text-sm leading-6 text-[var(--ink-soft)]">
           No scored attempts yet for <span className="font-semibold text-[var(--ink)]">{selectedPromptTitle}</span>.
-          Score one response and the history panel will start comparing first takes and revised takes here.
+          Score one response to start tracking revisions here.
         </div>
       ) : null}
 
       {hasComparison ? (
-        <div className="mt-5 grid gap-4">
+        <div className="mt-4 grid gap-3">
           <div className="flex items-center gap-2 text-[var(--ink)]">
             <TrendingUp className="size-4" />
             <p className="text-sm font-semibold">First take vs latest take</p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-[1.2rem] bg-white/88 p-4">
+            <div className="rounded-[1.05rem] bg-white/88 p-3">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">First take</p>
               <p className="font-display mt-2 text-3xl tracking-tight text-[var(--ink)]">{firstAttempt.overall_score}</p>
               <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[var(--ink-soft)]">{formatAttemptDate(firstAttempt.created_at)}</p>
@@ -70,7 +67,7 @@ export function SpeakingHistoryPanel({
               </button>
             </div>
 
-            <div className="rounded-[1.2rem] bg-white/88 p-4">
+            <div className="rounded-[1.05rem] bg-white/88 p-3">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Latest take</p>
               <p className="font-display mt-2 text-3xl tracking-tight text-[var(--ink)]">{latestAttempt.overall_score}</p>
               <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[var(--ink-soft)]">{formatAttemptDate(latestAttempt.created_at)}</p>
@@ -85,20 +82,20 @@ export function SpeakingHistoryPanel({
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-[1.1rem] border border-[rgba(20,50,75,0.08)] bg-[rgba(237,246,241,0.92)] px-4 py-3">
+          <div className="grid gap-2 sm:grid-cols-3">
+            <div className="rounded-[1rem] border border-[rgba(20,50,75,0.08)] bg-[rgba(237,246,241,0.92)] px-4 py-3">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#47685f]">Overall delta</p>
               <p className="mt-2 text-sm font-semibold text-[#1a493f]">
                 {formatSignedDelta(latestAttempt.overall_score - firstAttempt.overall_score)}
               </p>
             </div>
-            <div className="rounded-[1.1rem] border border-[rgba(20,50,75,0.08)] bg-[rgba(237,245,251,0.92)] px-4 py-3">
+            <div className="rounded-[1rem] border border-[rgba(20,50,75,0.08)] bg-[rgba(237,245,251,0.92)] px-4 py-3">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#48606f]">Task delta</p>
               <p className="mt-2 text-sm font-semibold text-[var(--navy)]">
                 {formatSignedDelta(latestAttempt.task_response_score - firstAttempt.task_response_score)}
               </p>
             </div>
-            <div className="rounded-[1.1rem] border border-[rgba(20,50,75,0.08)] bg-[rgba(255,249,241,0.96)] px-4 py-3">
+            <div className="rounded-[1rem] border border-[rgba(20,50,75,0.08)] bg-[rgba(255,249,241,0.96)] px-4 py-3">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8d6229]">Draft delta</p>
               <p className="mt-2 text-sm font-semibold text-[#7b4b14]">
                 {formatSignedDelta(
@@ -113,12 +110,12 @@ export function SpeakingHistoryPanel({
       ) : null}
 
       {promptAttempts.length > 0 ? (
-        <div className="mt-5 grid gap-3">
+        <div className="mt-4 grid gap-2">
           <p className="text-sm font-semibold text-[var(--ink)]">Recent scored attempts for this prompt</p>
-          {promptAttempts.slice(0, 4).map((attempt) => (
+          {promptAttempts.slice(0, 3).map((attempt) => (
             <div
               key={attempt.id}
-              className="rounded-[1.15rem] border border-[rgba(20,50,75,0.08)] bg-white/82 px-4 py-3"
+              className="rounded-[1rem] border border-[rgba(20,50,75,0.08)] bg-white/82 px-4 py-3"
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>

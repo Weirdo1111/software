@@ -1,84 +1,168 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
+  Bell,
+  BookOpen,
+  Grid2x2,
+  Headphones,
   Heart,
   MessageCircle,
+  Mic,
   Pin,
-  Clock3,
-  TrendingUp,
-  LayoutList,
-  Search,
   Plus,
+  Search,
+  SquarePen,
+  TrendingUp,
 } from "lucide-react";
-import type { DiscussionPost, Locale } from "@/components/discussion/types";
-import { LanguageSwitcher } from "@/components/language-switcher";
 
-type ViewMode = "all" | "hot" | "latest";
+import type {
+  DiscussionCategory,
+  DiscussionNotification,
+  DiscussionPost,
+  Locale,
+} from "@/components/discussion/types";
+
+type ViewMode = "all" | "latest" | "popular";
 
 interface DiscussionBoardProps {
   locale: Locale;
   posts: DiscussionPost[];
-  onLike: (postId: string) => void;
-  onAddComment: (postId: string, commentText: string) => void;
+  notifications: DiscussionNotification[];
   onOpenComposer: () => void;
+  onToggleLike?: (postId: string) => void;
+}
+
+function formatRelativeDate(dateString: string, locale: Locale) {
+  const date = new Date(dateString.replace(" ", "T"));
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+
+  if (diff < hour) {
+    const value = Math.max(1, Math.floor(diff / minute));
+    return locale === "zh" ? `${value} 分钟前` : `${value}m ago`;
+  }
+
+  if (diff < day) {
+    const value = Math.floor(diff / hour);
+    return locale === "zh" ? `${value} 小时前` : `${value}h ago`;
+  }
+
+  const value = Math.floor(diff / day);
+  return locale === "zh" ? `${value} 天前` : `${value}d ago`;
+}
+
+function getCategoryLabel(tag: DiscussionCategory, locale: Locale) {
+  const map = {
+    grammar: { zh: "语法", en: "Grammar" },
+    listening: { zh: "听力", en: "Listening" },
+    writing: { zh: "写作", en: "Writing" },
+    experience: { zh: "经验分享", en: "Experience" },
+    speaking: { zh: "口语", en: "Speaking" },
+  };
+
+  return map[tag][locale];
+}
+
+function getCategoryIcon(tag: DiscussionCategory | "all") {
+  const iconMap = {
+    all: Grid2x2,
+    grammar: BookOpen,
+    listening: Headphones,
+    writing: SquarePen,
+    speaking: Mic,
+    experience: TrendingUp,
+  };
+
+  return iconMap[tag];
+}
+
+function getInitial(name: string) {
+  const trimmed = name.trim();
+  if (!trimmed) return "U";
+  return trimmed.charAt(0).toUpperCase();
+}
+
+function getLastActivityText(post: DiscussionPost, locale: Locale) {
+  if (post.comments.length > 0) {
+    const lastComment = post.comments[post.comments.length - 1];
+    return locale === "zh"
+      ? `${lastComment.author} 回复于 ${formatRelativeDate(lastComment.createdAt, locale)}`
+      : `${lastComment.author} replied ${formatRelativeDate(lastComment.createdAt, locale)}`;
+  }
+
+  return locale === "zh"
+    ? `${post.author} 发布于 ${formatRelativeDate(post.createdAt, locale)}`
+    : `${post.author} posted ${formatRelativeDate(post.createdAt, locale)}`;
 }
 
 export function DiscussionBoard({
   locale,
   posts,
-  onLike,
-  onAddComment,
+  notifications,
   onOpenComposer,
+  onToggleLike,
 }: DiscussionBoardProps) {
   const [view, setView] = useState<ViewMode>("all");
   const [search, setSearch] = useState("");
-  const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
+  const [selectedTag, setSelectedTag] = useState<DiscussionCategory | "all">("all");
+
+  const unreadCount = notifications.filter((item) => !item.read).length;
 
   const text = {
     zh: {
+      sideTitle: "论坛分类",
+      heroTitle: "学习讨论论坛",
+      start: "Start New Discussion",
+      search: "Search discussion topics...",
       all: "全部",
       latest: "最新",
-      hot: "热门",
-      searchPlaceholder: "搜索帖子标题或内容...",
-      comments: "评论",
-      addComment: "发表评论",
-      commentPlaceholder: "写下你的想法...",
-      empty: "当前还没有帖子，试着发布第一条讨论。",
-      noResult: "没有匹配的帖子。",
+      popular: "热门",
       pinned: "置顶",
-      noComments: "还没有评论，来发表第一条回复吧。",
-      threads: "篇帖子",
+      empty: "当前没有可展示的讨论主题。",
+      activity: "消息中心",
+      replies: "回复",
+      likes: "点赞",
+      views: "浏览",
+      forumCn: "学术论坛",
     },
     en: {
+      sideTitle: "Forum Categories",
+      heroTitle: "Academic Discussion Forum",
+      start: "Start New Discussion",
+      search: "Search discussion topics...",
       all: "All",
       latest: "Latest",
-      hot: "Hot",
-      searchPlaceholder: "Search threads...",
-      comments: "Comments",
-      addComment: "Add comment",
-      commentPlaceholder: "Write your reply...",
-      empty: "No discussions yet. Create the first one.",
-      noResult: "No matching threads.",
+      popular: "Popular",
       pinned: "Pinned",
-      noComments: "No comments yet. Start the conversation.",
-      threads: "threads",
+      empty: "No discussion threads available.",
+      activity: "Activity",
+      replies: "Replies",
+      likes: "Likes",
+      views: "Views",
+      forumCn: "Academic Forum",
     },
   }[locale];
 
-  const filteredAndSortedPosts = useMemo(() => {
+  const categories: DiscussionCategory[] = [
+    "grammar",
+    "listening",
+    "writing",
+    "speaking",
+    "experience",
+  ];
+
+  const filteredPosts = useMemo(() => {
     const keyword = search.trim().toLowerCase();
-    let arr = [...posts];
+    let list = [...posts];
 
     if (keyword) {
-      arr = arr.filter((post) => {
-        const haystack = [
-          post.title,
-          post.content,
-          post.author,
-          post.tag,
-          ...post.comments.map((c) => c.content),
-        ]
+      list = list.filter((post) => {
+        const haystack = [post.title, post.content, post.author, post.excerpt ?? ""]
           .join(" ")
           .toLowerCase();
 
@@ -86,226 +170,243 @@ export function DiscussionBoard({
       });
     }
 
-    if (view === "hot") {
-      arr.sort((a, b) => b.likes - a.likes);
-      return arr;
+    if (selectedTag !== "all") {
+      list = list.filter((post) => post.tag === selectedTag);
     }
 
     if (view === "latest") {
-      arr.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-      return arr;
+      list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      return list;
     }
 
-    arr.sort((a, b) => {
+    if (view === "popular") {
+      list.sort(
+        (a, b) =>
+          b.comments.length * 2 + b.views + b.likes * 3 -
+          (a.comments.length * 2 + a.views + a.likes * 3),
+      );
+      return list;
+    }
+
+    list.sort((a, b) => {
       if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
       return b.createdAt.localeCompare(a.createdAt);
     });
 
-    return arr;
-  }, [posts, search, view]);
-
-  const handleSubmitComment = (postId: string) => {
-    const draft = (commentDrafts[postId] || "").trim();
-    if (!draft) return;
-
-    onAddComment(postId, draft);
-    setCommentDrafts((prev) => ({ ...prev, [postId]: "" }));
-  };
-
-  const showEmpty = posts.length === 0;
-  const showNoResult = posts.length > 0 && filteredAndSortedPosts.length === 0;
+    return list;
+  }, [posts, search, selectedTag, view]);
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[1.6rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,251,246,0.88)] p-2 shadow-[0_14px_36px_rgba(23,32,51,0.06)] backdrop-blur-md">
-          <div className="flex flex-wrap items-center gap-2">
-            <LanguageSwitcher locale={locale} />
-            <div className="inline-flex items-center gap-1 rounded-[1.1rem] bg-white/75 p-1">
-              <button
-                type="button"
-                onClick={() => setView("all")}
-                className={`inline-flex items-center gap-2 rounded-[0.95rem] px-3 py-2 text-sm font-medium transition ${
-                  view === "all"
-                    ? "bg-white text-[var(--ink)] shadow-sm"
-                    : "text-[var(--ink-soft)] hover:bg-[var(--navy)] hover:text-[#f7efe3]"
-                }`}
-              >
-                <LayoutList className="size-4" />
-                {text.all}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setView("hot")}
-                className={`inline-flex items-center gap-2 rounded-[0.95rem] px-3 py-2 text-sm font-medium transition ${
-                  view === "hot"
-                    ? "bg-white text-[var(--ink)] shadow-sm"
-                    : "text-[var(--ink-soft)] hover:bg-[var(--navy)] hover:text-[#f7efe3]"
-                }`}
-              >
-                <TrendingUp className="size-4" />
-                {text.hot}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setView("latest")}
-                className={`inline-flex items-center gap-2 rounded-[0.95rem] px-3 py-2 text-sm font-medium transition ${
-                  view === "latest"
-                    ? "bg-white text-[var(--ink)] shadow-sm"
-                    : "text-[var(--ink-soft)] hover:bg-[var(--navy)] hover:text-[#f7efe3]"
-                }`}
-              >
-                <Clock3 className="size-4" />
-                {text.latest}
-              </button>
+    <div className="min-h-screen bg-[#f7f9fc] text-[#1b2430]">
+      <header className="sticky top-0 z-50 border-b border-[#e9eef5] bg-[rgba(255,255,255,0.9)] backdrop-blur-xl">
+        <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-6 px-6 py-4 lg:px-8">
+          <div className="min-w-[220px]">
+            <div className="flex items-center gap-2 text-[28px] font-semibold tracking-[-0.02em] text-[#111827]">
+              <span>LearnEnglishRight</span>
+              <span className="text-[#9aa4b2]">|</span>
+              <span className="text-[#111827]">{text.forumCn}</span>
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={onOpenComposer}
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[1.1rem] bg-[var(--navy)] text-[#f7efe3] shadow-[0_10px_24px_rgba(23,32,51,0.14)] transition hover:opacity-95"
-            aria-label={locale === "zh" ? "发帖" : "Create post"}
-          >
-            <Plus className="size-4.5" />
-          </button>
-        </div>
+          <div className="hidden flex-1 justify-center lg:flex">
+            <div className="flex w-full max-w-[460px] items-center rounded-full border border-[#d8e1ee] bg-white px-4 py-3 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+              <Search className="mr-3 size-4 text-[#8b97a8]" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full border-none bg-transparent text-sm text-[#111827] outline-none placeholder:text-[#9aa4b2]"
+                placeholder={text.search}
+              />
+            </div>
+          </div>
 
-        <div className="relative w-full rounded-[1.6rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,251,246,0.88)] p-2 shadow-[0_14px_36px_rgba(23,32,51,0.06)] backdrop-blur-md">
-          <Search className="pointer-events-none absolute left-5 top-1/2 size-4 -translate-y-1/2 text-[var(--ink-soft)]" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={text.searchPlaceholder}
-            className="h-10 w-full rounded-[1.1rem] border border-[rgba(20,50,75,0.12)] bg-white/85 pl-10 pr-4 text-sm text-[var(--ink)] outline-none transition placeholder:text-[var(--ink-soft)] focus:border-[var(--navy)]"
-          />
-        </div>
-
-        <div className="px-1 text-xs text-[var(--ink-soft)]">
-          {filteredAndSortedPosts.length} {text.threads}
-        </div>
-      </div>
-
-      {showEmpty ? (
-        <div className="rounded-[1.35rem] border border-[rgba(20,50,75,0.1)] bg-white/92 px-5 py-10 text-center text-sm text-[var(--ink-soft)] shadow-[0_8px_18px_rgba(23,32,51,0.04)]">
-          {text.empty}
-        </div>
-      ) : null}
-
-      {showNoResult ? (
-        <div className="rounded-[1.35rem] border border-[rgba(20,50,75,0.1)] bg-white/92 px-5 py-10 text-center text-sm text-[var(--ink-soft)] shadow-[0_8px_18px_rgba(23,32,51,0.04)]">
-          {text.noResult}
-        </div>
-      ) : null}
-
-      {filteredAndSortedPosts.map((post) => (
-        <article
-          key={post.id}
-          className="rounded-[1.35rem] border border-[rgba(20,50,75,0.1)] bg-white/92 p-4 shadow-[0_8px_18px_rgba(23,32,51,0.04)] transition hover:border-[rgba(20,50,75,0.16)] sm:p-5"
-        >
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="min-w-0 flex-1">
-              <div className="mb-2 flex flex-wrap items-center gap-2">
-                {post.pinned && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-[var(--navy)] px-2.5 py-1 text-[11px] font-semibold text-[#f7efe3]">
-                    <Pin className="size-3.5" />
-                    {text.pinned}
-                  </span>
-                )}
-
-                <span className="rounded-full border border-[rgba(20,50,75,0.1)] bg-[rgba(255,251,246,0.88)] px-2.5 py-1 text-[11px] font-medium text-[var(--ink-soft)]">
-                  {post.tag}
+          <div className="flex min-w-[220px] items-center justify-end gap-3">
+            <Link
+              href="/activity"
+              className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#e3eaf4] bg-white text-[#1f2937] shadow-sm transition hover:bg-[#f8fbff]"
+            >
+              <Bell className="size-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#ef4444] px-1 text-[10px] font-bold text-white">
+                  {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
-              </div>
+              )}
+            </Link>
 
-              <h3 className="text-lg font-semibold tracking-tight text-[var(--ink)] sm:text-[1.28rem]">
-                {post.title}
-              </h3>
-
-              <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
-                {post.content}
-              </p>
-            </div>
-
-            <div className="shrink-0 text-right text-xs text-[var(--ink-soft)]">
-              <div className="font-medium text-[var(--ink)]">{post.author}</div>
-              <div className="mt-1">{post.createdAt}</div>
-            </div>
-          </div>
-
-          <div className="mt-4 flex flex-wrap items-center gap-2.5">
             <button
-              type="button"
-              onClick={() => onLike(post.id)}
-              className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition ${
-                post.liked
-                  ? "bg-[rgba(195,109,89,0.1)] text-[var(--coral)]"
-                  : "border border-[rgba(20,50,75,0.1)] bg-white text-[var(--ink)] hover:bg-[rgba(255,251,246,0.88)]"
+              onClick={onOpenComposer}
+              className="inline-flex items-center gap-2 rounded-full bg-[#2f6df6] px-5 py-3 text-sm font-medium text-white shadow-[0_10px_20px_rgba(47,109,246,0.22)] transition hover:bg-[#255fe0]"
+            >
+              <Plus className="size-4" />
+              {text.start}
+            </button>
+          </div>
+        </div>
+
+        <div className="px-6 pb-4 lg:hidden">
+          <div className="flex items-center rounded-full border border-[#d8e1ee] bg-white px-4 py-3 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+            <Search className="mr-3 size-4 text-[#8b97a8]" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full border-none bg-transparent text-sm text-[#111827] outline-none placeholder:text-[#9aa4b2]"
+              placeholder={text.search}
+            />
+          </div>
+        </div>
+      </header>
+
+      <div className="mx-auto flex max-w-[1600px]">
+        <aside className="hidden min-h-[calc(100vh-81px)] w-[250px] shrink-0 bg-[#eef2ff] px-5 py-8 md:block">
+          <h2 className="mb-6 px-2 text-lg font-semibold text-[#1f2937]">{text.sideTitle}</h2>
+
+          <nav className="space-y-2">
+            <button
+              onClick={() => setSelectedTag("all")}
+              className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-medium transition ${
+                selectedTag === "all"
+                  ? "bg-white text-[#111827] shadow-sm"
+                  : "text-[#4b5563] hover:bg-[#e5ecff]"
               }`}
             >
-              <Heart className="size-4" />
-              {post.likes}
+              <Grid2x2 className="size-4" />
+              {text.all}
             </button>
 
-            <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.1)] bg-white px-3 py-1.5 text-sm font-medium text-[var(--ink)]">
-              <MessageCircle className="size-4" />
-              {post.comments.length} {text.comments}
-            </div>
-          </div>
+            {categories.map((category) => {
+              const Icon = getCategoryIcon(category);
 
-          <div className="mt-4 space-y-2.5">
-            {post.comments.length === 0 ? (
-              <div className="rounded-[1rem] border border-dashed border-[rgba(20,50,75,0.12)] bg-[rgba(255,251,246,0.65)] px-4 py-3 text-sm text-[var(--ink-soft)]">
-                {text.noComments}
+              return (
+                <button
+                  key={category}
+                  onClick={() => setSelectedTag(category)}
+                  className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-medium transition ${
+                    selectedTag === category
+                      ? "bg-white text-[#111827] shadow-sm"
+                      : "text-[#4b5563] hover:bg-[#e5ecff]"
+                  }`}
+                >
+                  <Icon className="size-4" />
+                  {getCategoryLabel(category, locale)}
+                </button>
+              );
+            })}
+          </nav>
+        </aside>
+
+        <main className="flex-1 px-6 py-8 lg:px-10">
+          <section className="mb-8">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-center gap-4">
+                <div className="h-14 w-[4px] rounded-full bg-[#2f6df6]" />
+                <h1 className="text-[36px] font-medium leading-none tracking-[-0.03em] text-[#1f2937] md:text-[42px]">
+                  {text.heroTitle}
+                </h1>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                {(["all", "latest", "popular"] as ViewMode[]).map((item) => (
+                  <button
+                    key={item}
+                    onClick={() => setView(item)}
+                    className={`rounded-full border px-6 py-2.5 text-sm font-medium transition ${
+                      view === item
+                        ? "border-[#2f6df6] bg-[#eef4ff] text-[#2f6df6]"
+                        : "border-[#d6deea] bg-white text-[#4b5563] hover:bg-[#f8fbff]"
+                    }`}
+                  >
+                    {item === "all"
+                      ? text.all
+                      : item === "latest"
+                        ? text.latest
+                        : text.popular}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section>
+            {filteredPosts.length === 0 ? (
+              <div className="bg-white px-6 py-10 text-sm text-[#4b5563] shadow-sm">
+                {text.empty}
               </div>
             ) : (
-              post.comments.map((comment) => (
-                <div
-                  key={comment.id}
-                  className="rounded-[1rem] border border-[rgba(20,50,75,0.08)] bg-[rgba(255,251,246,0.62)] p-3.5"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm font-medium text-[var(--ink)]">
-                      {comment.author}
-                    </span>
-                    <span className="text-xs text-[var(--ink-soft)]">
-                      {comment.createdAt}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
-                    {comment.content}
-                  </p>
-                </div>
-              ))
+              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                {filteredPosts.map((post) => (
+                  <Link
+                    key={post.id}
+                    href={`/posts/${post.id}`}
+                    className="group flex min-h-[300px] flex-col border border-[#edf1f6] bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.05)] transition hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(15,23,42,0.08)]"
+                  >
+                    <div className="mb-4 flex items-start justify-between gap-3">
+                      <span className="inline-flex rounded-full bg-[#edf2f8] px-3 py-1 text-[11px] font-semibold text-[#5b6574]">
+                        {getCategoryLabel(post.tag, locale)}
+                      </span>
+
+                      {post.pinned ? (
+                        <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#f6e8c7] text-[#8a6a2f]">
+                          <Pin className="size-4" />
+                        </span>
+                      ) : (
+                        <span className="h-9 w-9" />
+                      )}
+                    </div>
+
+                    <h3 className="line-clamp-4 text-[24px] font-medium leading-[1.35] tracking-[-0.02em] text-[#111827] transition-colors group-hover:text-[#2f6df6]">
+                      {post.title}
+                    </h3>
+
+                    <div className="mt-4 text-sm leading-6 text-[#8a94a6]">
+                      {getLastActivityText(post, locale)}
+                    </div>
+
+                    <div className="mt-auto pt-10">
+                      <div className="flex items-end justify-between gap-4">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#2f6df6] text-sm font-bold text-white">
+                            {getInitial(post.author)}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="truncate text-sm font-semibold text-[#1f2937]">
+                              {post.author}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex shrink-0 items-center gap-5 text-sm text-[#6b7280]">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              onToggleLike?.(post.id);
+                            }}
+                            className={`inline-flex items-center gap-1.5 transition ${
+                              post.liked ? "text-rose-600" : "text-[#6b7280] hover:text-[#2f6df6]"
+                            }`}
+                            aria-pressed={post.liked}
+                          >
+                            <Heart
+                              className={`size-4 ${post.liked ? "fill-current text-rose-600" : ""}`}
+                            />
+                            <span>{post.likes}</span>
+                          </button>
+
+                          <div className="inline-flex items-center gap-1.5">
+                            <MessageCircle className="size-4" />
+                            <span>{post.comments.length}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             )}
-          </div>
-
-          <div className="mt-4 flex gap-2.5">
-            <input
-              value={commentDrafts[post.id] || ""}
-              onChange={(e) =>
-                setCommentDrafts((prev) => ({
-                  ...prev,
-                  [post.id]: e.target.value,
-                }))
-              }
-              placeholder={text.commentPlaceholder}
-              className="h-10 flex-1 rounded-[1.1rem] border border-[rgba(20,50,75,0.1)] bg-white/90 px-4 text-sm text-[var(--ink)] outline-none transition placeholder:text-[var(--ink-soft)] focus:border-[var(--navy)]"
-            />
-
-            <button
-              type="button"
-              onClick={() => handleSubmitComment(post.id)}
-              className="inline-flex h-10 items-center justify-center rounded-[1.1rem] bg-[var(--navy)] px-4 text-sm font-medium text-[#f7efe3] transition hover:opacity-95"
-            >
-              {text.addComment}
-            </button>
-          </div>
-        </article>
-      ))}
+          </section>
+        </main>
+      </div>
     </div>
   );
 }

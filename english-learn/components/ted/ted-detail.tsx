@@ -17,20 +17,20 @@ import { AIAnalysisState } from "@/components/forms/ai-analysis-state";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { SaveToDeckButton } from "@/components/forms/save-to-deck-button";
 import {
+  hasStableInlinePreview,
+  listeningMaterials,
   scoreListeningMaterial,
-  tedListeningMaterials,
   type ListeningMaterial,
 } from "@/lib/listening-materials";
 import {
   recordListeningCompletionInStorage,
   recordListeningHistoryInStorage,
 } from "@/lib/listening-library";
-import { getDifficultyLabel } from "@/lib/level-labels";
 import { cn } from "@/lib/utils";
 import type { CEFRLevel, ListeningAIFeedback } from "@/types/learning";
 
-const tedThumbnailFallbackMap = new Map(
-  tedListeningMaterials.map((material) => [material.materialGroupId, material.thumbnailUrl]),
+const thumbnailFallbackMap = new Map(
+  listeningMaterials.map((material) => [material.materialGroupId, material.thumbnailUrl]),
 );
 
 function buildAnswerState(questionIds: string[]) {
@@ -42,7 +42,7 @@ function countWords(value: string) {
 }
 
 function getMaterialThumbnail(material: ListeningMaterial) {
-  return material.thumbnailUrl ?? tedThumbnailFallbackMap.get(material.materialGroupId) ?? null;
+  return material.thumbnailUrl ?? thumbnailFallbackMap.get(material.materialGroupId) ?? null;
 }
 
 function TedThumbnail({ src, alt, className }: { src: string; alt: string; className?: string }) {
@@ -62,6 +62,21 @@ function TedThumbnail({ src, alt, className }: { src: string; alt: string; class
   /* eslint-enable @next/next/no-img-element */
 }
 
+function getSourceActionLabel(material: ListeningMaterial) {
+  if (!material.officialUrl) return "Open source";
+  if (material.officialUrl.includes("ted.com")) return "Watch on TED";
+  if (material.officialUrl.includes("youtube.com") || material.officialUrl.includes("youtu.be")) {
+    return "Watch on YouTube";
+  }
+  return "Open source page";
+}
+
+function getTranscriptActionLabel(material: ListeningMaterial) {
+  if (!material.transcriptUrl) return "Source notes";
+  if (material.transcriptUrl === material.officialUrl) return "Open transcript / source page";
+  return "Transcript";
+}
+
 export function TedDetail({
   material,
   defaultLevel = "B1",
@@ -71,7 +86,7 @@ export function TedDetail({
   defaultLevel?: CEFRLevel;
   locale: string;
 }) {
-  const [showTedEmbed, setShowTedEmbed] = useState(false);
+  const [showEmbed, setShowEmbed] = useState(false);
   const [notes, setNotes] = useState("");
   const [result, setResult] = useState<ReturnType<typeof scoreListeningMaterial> | null>(null);
   const [submitStatus, setSubmitStatus] = useState("");
@@ -85,7 +100,8 @@ export function TedDetail({
   const [aiStatus, setAiStatus] = useState("");
   const recordedRef = useRef(false);
 
-  const thumbnail = getMaterialThumbnail(material);
+  const canPreviewInline = hasStableInlinePreview(material);
+  const thumbnail = canPreviewInline ? getMaterialThumbnail(material) : null;
   const noteWordCount = countWords(notes);
   const answeredCount = material.questions.filter(
     (question) => (answers[question.id] ?? "").trim().length >= 2,
@@ -121,7 +137,7 @@ export function TedDetail({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          exercise_id: `${material.id}:ted-listening-check`,
+          exercise_id: `${material.id}:listening-check`,
           answer_payload: {
             major: material.majorLabel,
             mode: material.contentMode,
@@ -216,22 +232,33 @@ export function TedDetail({
               {material.majorLabel}
             </span>
             <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
-              {getDifficultyLabel(material.recommendedLevel)}
+              {material.accentLabel}
             </span>
+            <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
+              Level {material.recommendedLevel}
+            </span>
+            <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
+              {material.sourceName}
+            </span>
+            {material.isCrossDisciplinary ? (
+              <span className="rounded-full border border-[rgba(107,79,44,0.18)] bg-[rgba(247,239,227,0.92)] px-3 py-1.5 text-[#6b4f2c]">
+                Cross-disciplinary
+              </span>
+            ) : null}
           </div>
         </div>
 
         <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">{material.scenario}</p>
 
         <div className="mt-4 flex flex-wrap gap-3">
-          {material.embedUrl ? (
+          {canPreviewInline ? (
             <button
               type="button"
-              onClick={() => setShowTedEmbed((current) => !current)}
+              onClick={() => setShowEmbed((current) => !current)}
               className="inline-flex items-center gap-2 rounded-full bg-[var(--navy)] px-5 py-3 text-sm font-semibold text-[#f7efe3]"
             >
               <PlayCircle className="size-4" />
-              {showTedEmbed ? "Hide preview" : "Preview this talk"}
+              {showEmbed ? "Hide preview" : "Preview in player"}
             </button>
           ) : null}
 
@@ -243,11 +270,11 @@ export function TedDetail({
               className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white px-5 py-3 text-sm font-semibold text-[var(--ink)]"
             >
               <ExternalLink className="size-4" />
-              Watch on TED
+              {getSourceActionLabel(material)}
             </a>
           ) : null}
 
-          {material.transcriptUrl ? (
+          {material.transcriptUrl && material.transcriptUrl !== material.officialUrl ? (
             <a
               href={material.transcriptUrl}
               target="_blank"
@@ -255,10 +282,18 @@ export function TedDetail({
               className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white px-5 py-3 text-sm font-semibold text-[var(--ink)]"
             >
               <FileText className="size-4" />
-              Transcript
+              {getTranscriptActionLabel(material)}
             </a>
           ) : null}
         </div>
+
+        {material.embedUrl && !canPreviewInline ? (
+          <p className="mt-4 rounded-[1rem] border border-[rgba(191,128,64,0.18)] bg-[rgba(247,239,227,0.68)] px-4 py-3 text-sm leading-6 text-[#6b4f2c]">
+            {locale === "zh"
+              ? "这个来源的内嵌播放器在当前网络环境下不稳定，所以主资源库里已隐藏该预览，只保留来源链接。"
+              : "This source's inline player is unstable in the current network environment, so the main library hides its preview and keeps the source link only."}
+          </p>
+        ) : null}
       </article>
 
       {/* Video + Notes section */}
@@ -266,7 +301,7 @@ export function TedDetail({
         <article className="rounded-[2rem] border border-[rgba(20,50,75,0.12)] bg-white p-5 shadow-[0_18px_38px_rgba(18,32,52,0.06)] sm:p-6">
           <div className="overflow-hidden rounded-[1.4rem] border border-[rgba(20,50,75,0.12)] bg-[var(--navy)]">
             <div className="relative aspect-video">
-              {showTedEmbed && material.embedUrl ? (
+              {showEmbed && canPreviewInline ? (
                 <iframe
                   key={material.embedUrl}
                   src={material.embedUrl}
@@ -286,7 +321,9 @@ export function TedDetail({
                       {material.title}
                     </h4>
                     <p className="mt-2 text-sm leading-6 text-white/80">
-                      {material.speakerName} · {material.durationLabel}
+                      {material.speakerName
+                        ? `${material.speakerName} · ${material.durationLabel}`
+                        : material.durationLabel}
                     </p>
                   </div>
                 </div>
@@ -341,7 +378,7 @@ export function TedDetail({
                 front: item.term,
                 back: item.definition,
               }))}
-              tag={`ted-listening:${material.majorId}`}
+              tag={`listening:${material.majorId}`}
             />
           </div>
         </article>
@@ -354,7 +391,7 @@ export function TedDetail({
               Listening check
             </p>
             <p className="text-sm font-semibold text-[var(--ink-soft)]">
-              {answeredCount}/{material.questions.length} · {getDifficultyLabel(defaultLevel)}
+              {answeredCount}/{material.questions.length} · {defaultLevel}
             </p>
           </div>
 
@@ -436,7 +473,7 @@ export function TedDetail({
                   : "bg-[#8d5a21] text-white",
               )}
             >
-              {result.passed ? "Ready for another talk" : "Review and try again"}
+              {result.passed ? "Ready for another item" : "Review and try again"}
             </span>
           </div>
 
@@ -527,7 +564,7 @@ export function TedDetail({
         <article className="rounded-[2rem] border border-[rgba(20,50,75,0.12)] bg-white p-5 shadow-[0_18px_38px_rgba(18,32,52,0.06)] sm:p-6">
           <AIAnalysisState
             title="Evaluating your listening comprehension."
-            description="The listening coach is checking your answers against the TED talk's argument structure, then preparing personalised feedback and tips."
+            description="The listening coach is checking your answers against the source's main argument, then preparing personalised feedback and tips."
             steps={[
               "Reviewing your main argument and key detail answers.",
               "Checking signpost identification and technical term choice.",
