@@ -10,9 +10,9 @@ import type {
 export const speakingPromptMajors = listeningMajors;
 
 export const speakingDifficultyOptions: Array<{ id: SpeakingDifficulty; label: string }> = [
-  { id: "low", label: "Low" },
+  { id: "low", label: "Easy" },
   { id: "medium", label: "Medium" },
-  { id: "high", label: "High" },
+  { id: "high", label: "Difficult" },
 ];
 
 export const speakingCategoryLabels: Record<SpeakingScenarioCategory, string> = {

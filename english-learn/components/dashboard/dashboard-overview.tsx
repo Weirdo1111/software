@@ -5,6 +5,7 @@ import { ArrowRight, BookOpenText, Headphones, Mic, PenTool } from "lucide-react
 import { useEffect, useMemo, useState } from "react";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { getDifficultyLabel } from "@/lib/level-labels";
 
 import { type Locale } from "@/lib/i18n/dictionaries";
 import {
@@ -104,9 +105,7 @@ function normalizeLevel(raw: string | null) {
 }
 
 function deriveStage(level: string) {
-  if (level === "A1" || level === "A2") return "Foundation";
-  if (level === "B1" || level === "B2") return "Developing";
-  return "Advanced";
+  return getDifficultyLabel(level);
 }
 
 function getSkillAccuracy(correct: number, attempts: number) {
@@ -306,7 +305,7 @@ export function DashboardOverview({ locale }: { locale: Locale }) {
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-[1.2rem] border border-[rgba(20,50,75,0.14)] bg-[rgba(255,255,255,0.82)] p-4 shadow-[0_10px_20px_rgba(20,50,75,0.06)]">
             <p className="text-xs uppercase tracking-[0.2em] text-[var(--ink-soft)]">{copy.currentStage}</p>
-            <p className="mt-2 text-xl font-semibold text-[var(--ink)]">{stage} ({levelPrefix})</p>
+            <p className="mt-2 text-xl font-semibold text-[var(--ink)]">{stage}</p>
           </div>
           <div className="rounded-[1.2rem] border border-[rgba(20,50,75,0.14)] bg-[rgba(255,255,255,0.82)] p-4 shadow-[0_10px_20px_rgba(20,50,75,0.06)]">
             <p className="text-xs uppercase tracking-[0.2em] text-[var(--ink-soft)]">{copy.overallAccuracy}</p>

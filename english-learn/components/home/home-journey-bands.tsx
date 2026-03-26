@@ -30,7 +30,7 @@ export function HomeJourneyBands() {
 
       <article className="surface-panel reveal-up rounded-[2rem] p-6 sm:p-7">
         <p className="section-label">Level bands</p>
-        <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">Low, Medium, High should read as real paths.</h2>
+        <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">Easy, Medium, Difficult should read as real paths.</h2>
         <div className="mt-6 space-y-4">
           {levelBands.map((band) => (
             <div key={band.name} className={`rounded-[1.5rem] border p-5 ${band.accentClass}`}>

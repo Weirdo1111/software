@@ -10,6 +10,12 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { AIAnalysisState } from "@/components/forms/ai-analysis-state";
 import { ContextDock } from "@/components/context-comments/context-dock";
 import { SaveToDeckButton } from "@/components/forms/save-to-deck-button";
+import {
+  difficultyOptions,
+  getDifficultyLabel,
+  getLevelForDifficulty,
+  type DifficultyLabel,
+} from "@/lib/level-labels";
 import { writingDisciplineLabels, type WritingDiscipline } from "@/lib/writing-language-bank";
 import {
   getWritingPromptById,
@@ -28,7 +34,7 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: CE
     heading: "检查观点逻辑、语言准确性与修改质量。",
     guideTitle: "使用指南",
     guide: "选择一个场景，写一段150-200词的段落，包含清晰的主题句、一条解释和一个具体例子，然后使用AI反馈进行修改。",
-    levelLabel: "目标级别",
+    levelLabel: "目标难度",
     disciplineLabel: "专业方向",
     scenarioLabel: "练习场景",
     scenarioSub: "场景",
@@ -39,7 +45,7 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: CE
     submitting: "正在分析...",
     submit: "获取写作反馈",
     analyzing: "正在审阅你的段落并生成修改建议。",
-    analyzingDesc: "写作教练正在检查你在目标CEFR等级上的观点控制、语法和词汇，并生成修改示例。",
+    analyzingDesc: "写作教练正在检查你在目标难度上的观点控制、语法和词汇，并生成修改示例。",
     steps: ["阅读你的段落，识别主要论点。", "对比目标等级的句式控制、语法和词汇。", "准备优先修改建议和更强的修改示例。"],
     revisionTitle: "修改建议",
     overallScore: "总体得分",
@@ -48,7 +54,7 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: CE
     heading: "Check idea control, language accuracy, and revision quality.",
     guideTitle: "Quick guide",
     guide: "Choose a scenario, write one focused 150-200 word paragraph with a clear topic sentence, one explanation, and one concrete example, then use the AI feedback to revise.",
-    levelLabel: "Target level",
+    levelLabel: "Target difficulty",
     disciplineLabel: "Major",
     scenarioLabel: "Practice scenario",
     scenarioSub: "Scenario",
@@ -59,15 +65,20 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: CE
     submitting: "Analyzing draft...",
     submit: "Get writing feedback",
     analyzing: "Reviewing your paragraph and building revision guidance.",
-    analyzingDesc: "The writing coach is checking idea control, grammar, and vocabulary at your selected CEFR level before generating a cleaner rewrite sample.",
+    analyzingDesc: "The writing coach is checking idea control, grammar, and vocabulary at your selected difficulty before generating a cleaner rewrite sample.",
     steps: ["Reading your paragraph and identifying the main argument.", "Comparing sentence control, grammar, and vocabulary to the target level.", "Preparing priority fixes and a stronger revision example."],
     revisionTitle: "Revision guidance",
     overallScore: "Overall score",
   };
+  const easyBaseline: "A1" | "A2" = defaultLevel === "A1" ? "A1" : "A2";
+  const initialDifficulty = getDifficultyLabel(defaultLevel);
+  const initialLevel = getLevelForDifficulty(initialDifficulty, easyBaseline);
+
   const [selectedDiscipline, setSelectedDiscipline] = useState<WritingDiscipline>("computing");
   const initialPrompt =
-    getWritingPromptsForLevelAndDiscipline(defaultLevel, "computing")[0] ?? getWritingPromptById("b1-english-medium-support");
-  const [targetLevel, setTargetLevel] = useState<CEFRLevel>(defaultLevel);
+    getWritingPromptsForLevelAndDiscipline(initialLevel, "computing")[0] ?? getWritingPromptById("b1-english-medium-support");
+  const [targetDifficulty, setTargetDifficulty] = useState<DifficultyLabel>(initialDifficulty);
+  const [targetLevel, setTargetLevel] = useState<CEFRLevel>(initialLevel);
   const [selectedPromptId, setSelectedPromptId] = useState(initialPrompt?.id ?? "b1-english-medium-support");
   const [essay, setEssay] = useState(initialPrompt?.sample_response ?? "");
   const [result, setResult] = useState<WritingFeedback | null>(null);
@@ -149,10 +160,12 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: CE
     setStatus("");
   }
 
-  function handleTargetLevelChange(nextLevel: CEFRLevel) {
+  function handleTargetDifficultyChange(nextDifficulty: DifficultyLabel) {
+    const nextLevel = getLevelForDifficulty(nextDifficulty, easyBaseline);
     const nextPrompts = getWritingPromptsForLevelAndDiscipline(nextLevel, selectedDiscipline);
     const nextPrompt = nextPrompts[0] ?? selectedPrompt;
 
+    setTargetDifficulty(nextDifficulty);
     setTargetLevel(nextLevel);
     if (nextPrompt) {
       loadPrompt(nextPrompt.id);
@@ -229,14 +242,15 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: CE
           <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
             {wc.levelLabel}
             <select
-              value={targetLevel}
-              onChange={(event) => handleTargetLevelChange(event.target.value as CEFRLevel)}
+              value={targetDifficulty}
+              onChange={(event) => handleTargetDifficultyChange(event.target.value as DifficultyLabel)}
               className="rounded-[1.1rem] border border-[rgba(20,50,75,0.16)] bg-white/75 px-4 py-3 text-sm outline-none"
             >
-              <option value="A1">A1</option>
-              <option value="A2">A2</option>
-              <option value="B1">B1</option>
-              <option value="B2">B2</option>
+              {difficultyOptions.map((difficulty) => (
+                <option key={difficulty} value={difficulty}>
+                  {difficulty}
+                </option>
+              ))}
             </select>
           </label>
 

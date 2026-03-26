@@ -29,7 +29,7 @@ export const learnerJourney = [
   {
     step: "03",
     title: "Assign the right support band",
-    detail: "Route each learner to Low, Medium, or High based on current readiness for academic participation.",
+    detail: "Route each learner to Easy, Medium, or Difficult based on current readiness for academic participation.",
   },
   {
     step: "04",
@@ -60,8 +60,8 @@ export const learnerJourney = [
 
 export const levelBands = [
   {
-    name: "Low",
-    short: "Foundation band",
+    name: "Easy",
+    short: "Easy band",
     summary: "More structure, simpler academic tasks, and heavy scaffolding for vocabulary and comprehension.",
     support: "Sentence frames, guided notes, modeled responses, and slower task pacing.",
     unlock: "Focus on confidence, academic routines, and core classroom language.",
@@ -70,7 +70,7 @@ export const levelBands = [
   },
   {
     name: "Medium",
-    short: "Core target band",
+    short: "Core band",
     summary: "Balanced practice for the main audience: intermediate learners building steady academic performance.",
     support: "Integrated note-taking, speaking rehearsal, text analysis, and paragraph-level writing.",
     unlock: "Default pathway for launch because it matches the agreed primary user group.",
@@ -78,8 +78,8 @@ export const levelBands = [
     barClass: "bg-[#6a9483]",
   },
   {
-    name: "High",
-    short: "Advanced band",
+    name: "Difficult",
+    short: "Difficult band",
     summary: "More complex academic texts, higher language precision, and deeper output tasks.",
     support: "Faster pacing, synthesis tasks, seminar-style speaking, and critique-oriented writing.",
     unlock: "Unlock stretch content and more demanding evidence-based production tasks.",
@@ -155,7 +155,7 @@ export const releaseFeatures = [
     status: "MVP",
   },
   {
-    title: "Low / Medium / High routing",
+    title: "Easy / Medium / Difficult routing",
     detail: "Clear support bands so academic tasks can feel matched rather than generic.",
     status: "MVP",
   },
@@ -215,6 +215,6 @@ export const dashboardFocus = [
 
 export const assessmentFacts = [
   "20 short items across vocabulary, grammar, reading, and listening signals.",
-  "Level recommendation mapped into Low / Medium / High learner bands.",
+  "Level recommendation mapped into Easy / Medium / Difficult learner bands.",
   "Retake supported after progress to keep the learning path adjustable.",
 ] as const;

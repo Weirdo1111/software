@@ -14,21 +14,21 @@ export const difficultyStyle: Record<ReadingArticle["difficulty"], string> = {
 };
 
 export const cefrBadgeLabel: Record<ReadingArticle["cefr"], string> = {
-  A2: "CEFR A2",
-  B1: "CEFR B1",
-  B2: "CEFR B2",
+  A2: "Easy",
+  B1: "Medium",
+  B2: "Difficult",
 };
 
 export const cefrStageLabel: Record<ReadingArticle["cefr"], string> = {
-  A2: "Foundation Builder",
-  B1: "Academic Bridge",
-  B2: "Advanced Analysis",
+  A2: "Easy",
+  B1: "Medium",
+  B2: "Difficult",
 };
 
 export const examReferenceLabel: Record<ReadingArticle["cefr"], string> = {
-  A2: "Reference only: below or approaching CET-4 style reading.",
-  B1: "Reference only: around CET-4 to early IELTS-style academic reading.",
-  B2: "Reference only: around CET-6 to stronger IELTS-style academic reading.",
+  A2: "Reference only: easy reading difficulty.",
+  B1: "Reference only: medium reading difficulty.",
+  B2: "Reference only: difficult reading difficulty.",
 };
 
 export function buildReadingHref(articleId: string, lang?: string) {

@@ -45,7 +45,7 @@ const tagStyle: Record<string, string> = {
 
 const ratingLabel: Record<number, { text: string; color: string }> = {
   1: { text: "Forgot", color: "text-red-600" },
-  2: { text: "Hard", color: "text-amber-600" },
+  2: { text: "Difficult", color: "text-amber-600" },
   3: { text: "Good", color: "text-emerald-600" },
   4: { text: "Easy", color: "text-blue-600" },
 };
@@ -335,7 +335,7 @@ export function ReviewPageShell({ initialTag = "All" }: { initialTag?: string })
                   <p className="text-sm font-semibold">Forgotten cards come back quickly</p>
                 </div>
                 <p className="mt-2 text-sm leading-6 text-[#efe5d6]/70">
-                  If you rate a card &ldquo;Forgot&rdquo; or &ldquo;Hard&rdquo;, the interval shrinks and the
+                  If you rate a card &ldquo;Forgot&rdquo; or &ldquo;Difficult&rdquo;, the interval shrinks and the
                   card is flagged as at-risk until retention stabilizes.
                 </p>
               </div>
