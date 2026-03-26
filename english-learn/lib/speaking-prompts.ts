@@ -1,157 +1,459 @@
-import type { CEFRLevel, SpeakingPrompt } from "@/types/learning";
+import { listeningMajors } from "@/lib/listening-materials";
+import type {
+  CEFRLevel,
+  DIICSUMajorId,
+  SpeakingDifficulty,
+  SpeakingPrompt,
+  SpeakingScenarioCategory,
+} from "@/types/learning";
+
+export const speakingPromptMajors = listeningMajors;
+
+export const speakingDifficultyOptions: Array<{ id: SpeakingDifficulty; label: string }> = [
+  { id: "low", label: "Low" },
+  { id: "medium", label: "Medium" },
+  { id: "high", label: "High" },
+];
+
+export const speakingCategoryLabels: Record<SpeakingScenarioCategory, string> = {
+  "major-study": "Major study",
+  "academic-discussion": "Academic discussion",
+  "campus-life": "Campus life",
+};
+
+export const speakingScenarioOptions: Array<{ id: SpeakingScenarioCategory; label: string }> = [
+  { id: "major-study", label: speakingCategoryLabels["major-study"] },
+  { id: "academic-discussion", label: speakingCategoryLabels["academic-discussion"] },
+  { id: "campus-life", label: speakingCategoryLabels["campus-life"] },
+];
+
+function getMajorLabel(majorId: DIICSUMajorId) {
+  return speakingPromptMajors.find((major) => major.id === majorId)?.label ?? majorId;
+}
+
+function createPrompt({
+  id,
+  difficulty,
+  majorId,
+  category,
+  title,
+  scenario,
+  prompt,
+  responseTimeSec,
+  skillFocus,
+  partnerRole,
+  partnerGoal,
+  usefulPhrases,
+  checkpoints,
+  sampleOpening,
+}: {
+  id: string;
+  difficulty: SpeakingDifficulty;
+  majorId: DIICSUMajorId;
+  category: SpeakingScenarioCategory;
+  title: string;
+  scenario: string;
+  prompt: string;
+  responseTimeSec: number;
+  skillFocus: string;
+  partnerRole: string;
+  partnerGoal: string;
+  usefulPhrases: string[];
+  checkpoints: string[];
+  sampleOpening: string;
+}): SpeakingPrompt {
+  return {
+    id,
+    difficulty,
+    major_id: majorId,
+    major_label: getMajorLabel(majorId),
+    category,
+    category_label: speakingCategoryLabels[category],
+    title,
+    scenario,
+    prompt,
+    response_time_sec: responseTimeSec,
+    skill_focus: skillFocus,
+    partner_role: partnerRole,
+    partner_goal: partnerGoal,
+    useful_phrases: usefulPhrases,
+    checkpoints,
+    sample_opening: sampleOpening,
+  };
+}
 
 // Date: 2026/3/18
 // Author: Tianbo Cao
-// Added a reusable prompt bank for the academic speaking studio.
+// Rebuilt the speaking bank around DIICSU majors, three difficulty bands, and a wider mix of study, discussion, and campus scenarios.
 export const speakingPrompts: SpeakingPrompt[] = [
-  {
-    id: "a1-study-routine",
-    level: "A1",
-    title: "Study routine introduction",
-    scenario: "Orientation pair discussion",
-    prompt: "Introduce one study habit that helps you learn in English and explain why it is useful.",
-    response_time_sec: 45,
-    skill_focus: "Give one clear idea with one simple reason.",
-    partner_role: "friendly student partner",
-    partner_goal: "help the learner give a simple, complete answer about study habits",
-    useful_phrases: ["I usually...", "It helps me because...", "For my classes..."],
-    checkpoints: [
-      "State one study habit clearly.",
-      "Give one reason with because.",
-      "Finish with a simple result or benefit.",
-    ],
-    sample_opening: "I usually review my class notes every evening because it helps me remember key words.",
-  },
-  {
-    id: "a1-asking-for-help",
-    level: "A1",
-    title: "Ask for assignment help",
-    scenario: "Short tutor meeting",
-    prompt: "Explain one problem you have with an assignment and say what help you need from the tutor.",
-    response_time_sec: 45,
-    skill_focus: "Describe one problem and one support request.",
-    partner_role: "patient tutor",
-    partner_goal: "help the learner explain a classroom problem and request support politely",
-    useful_phrases: ["I have difficulty with...", "Could you help me with...", "I need more practice in..."],
-    checkpoints: [
-      "Name the assignment problem.",
-      "Use a polite request.",
-      "Say what support would help next.",
-    ],
-    sample_opening: "I have difficulty with the reading summary, and I need more help with academic vocabulary.",
-  },
-  {
-    id: "a2-seminar-preparation",
-    level: "A2",
-    title: "Seminar preparation advice",
-    scenario: "Peer study conversation",
-    prompt: "Give advice to a classmate about how to prepare for an academic seminar in English.",
-    response_time_sec: 60,
-    skill_focus: "Organize advice with sequence and support.",
-    partner_role: "classmate preparing for a seminar",
-    partner_goal: "push the learner to offer practical and organized speaking advice",
-    useful_phrases: ["First, you should...", "It is useful to...", "This can help you..."],
-    checkpoints: [
-      "Give at least two steps.",
-      "Use a sequence word such as first or then.",
-      "Explain why the advice helps.",
-    ],
-    sample_opening: "First, you should read the topic early and write two short ideas before the seminar starts.",
-  },
-  {
-    id: "a2-study-group",
-    level: "A2",
-    title: "Recommend a study group",
-    scenario: "Campus support fair",
-    prompt: "Recommend a study group or club to a new student and explain how it supports academic English.",
-    response_time_sec: 60,
-    skill_focus: "Recommend one option with one clear benefit and example.",
-    partner_role: "new international student",
-    partner_goal: "encourage the learner to make a clear recommendation with support",
-    useful_phrases: ["I recommend...", "One benefit is...", "For example..."],
-    checkpoints: [
-      "Name the group clearly.",
-      "Give one benefit for academic English.",
-      "Add one short example.",
-    ],
-    sample_opening: "I recommend the weekly discussion club because it gives students more chances to speak in English.",
-  },
-  {
-    id: "b1-language-support",
-    level: "B1",
-    title: "University language support",
-    scenario: "Seminar response",
-    prompt: "In one minute, explain how a university should support students who are learning through English.",
-    response_time_sec: 60,
-    skill_focus: "State a position, give one reason, and support it with one example.",
-    partner_role: "seminar classmate",
-    partner_goal: "challenge the learner to defend one practical support idea",
-    useful_phrases: ["I would argue that...", "One reason is that...", "A useful example is..."],
-    checkpoints: [
-      "Open with a clear position.",
-      "Give one specific reason.",
-      "Add one concrete support example.",
-    ],
-    sample_opening: "I would argue that universities should give clearer task guidance and small-group speaking practice.",
-  },
-  {
-    id: "b1-reading-discussion",
-    level: "B1",
-    title: "Reading discussion response",
-    scenario: "Tutorial follow-up",
-    prompt: "Respond to the claim that online reading improves flexibility but reduces deep understanding.",
-    response_time_sec: 75,
-    skill_focus: "Respond to a claim and weigh one advantage against one limitation.",
-    partner_role: "tutorial leader",
-    partner_goal: "ask the learner to compare benefits and drawbacks in a balanced way",
-    useful_phrases: ["I partly agree because...", "However, we should also consider...", "This means that..."],
-    checkpoints: [
-      "Show your position clearly.",
-      "Mention both benefit and limitation.",
-      "Use one contrast signal such as however.",
-    ],
-    sample_opening: "I partly agree because online reading is flexible, but it can reduce concentration when students read too quickly.",
-  },
-  {
-    id: "b2-research-summary",
-    level: "B2",
-    title: "Mini research summary",
-    scenario: "Research methods class",
-    prompt: "Summarize a small campus study and explain what conclusion a lecturer could draw from it.",
-    response_time_sec: 90,
-    skill_focus: "Summarize evidence and interpret its meaning with academic caution.",
-    partner_role: "research methods tutor",
-    partner_goal: "push the learner to connect evidence with a careful conclusion",
-    useful_phrases: ["The study suggests that...", "The data indicates...", "A cautious conclusion is..."],
-    checkpoints: [
-      "State what the study found.",
-      "Interpret the finding carefully.",
-      "Avoid overgeneralizing the result.",
-    ],
-    sample_opening: "The study suggests that students who join weekly discussion groups identify evidence more accurately in seminar readings.",
-  },
-  {
-    id: "b2-policy-debate",
-    level: "B2",
-    title: "Attendance policy debate",
-    scenario: "Academic debate practice",
-    prompt: "Argue for or against a strict attendance policy in English-medium university courses.",
-    response_time_sec: 90,
-    skill_focus: "Take a position, justify it, and address one counterpoint.",
-    partner_role: "debate opponent",
-    partner_goal: "test whether the learner can defend a policy position under pressure",
-    useful_phrases: ["My position is that...", "The strongest argument is...", "A counterpoint might be..."],
-    checkpoints: [
-      "State a direct position.",
-      "Give one strong justification.",
-      "Address one counterargument briefly.",
-    ],
-    sample_opening: "My position is that attendance policies should be firm but flexible when students face documented academic or health issues.",
-  },
+  createPrompt({
+    id: "civil-low-campus-route",
+    difficulty: "low",
+    majorId: "civil-engineering",
+    category: "campus-life",
+    title: "Find the survey room",
+    scenario: "Orientation week",
+    prompt: "Explain to a new civil engineering classmate how to find the surveying room and why arriving early helps.",
+    responseTimeSec: 45,
+    skillFocus: "Give one clear suggestion with one reason.",
+    partnerRole: "new civil engineering classmate",
+    partnerGoal: "understand a simple campus instruction clearly",
+    usefulPhrases: ["You should...", "It is in...", "It helps because..."],
+    checkpoints: ["Give one clear direction.", "Add one reason.", "Finish with one useful reminder."],
+    sampleOpening:
+      "You should go to the engineering building early because the surveying room is on the second floor and it is easy to miss.",
+  }),
+  createPrompt({
+    id: "civil-medium-drainage-brief",
+    difficulty: "medium",
+    majorId: "civil-engineering",
+    category: "major-study",
+    title: "Drainage inspection priority",
+    scenario: "Lab briefing",
+    prompt: "Explain which area of a campus drainage system should be checked first after heavy rain and why.",
+    responseTimeSec: 60,
+    skillFocus: "State one priority and support it with a reason and one detail.",
+    partnerRole: "lab partner",
+    partnerGoal: "decide which inspection task to prioritise",
+    usefulPhrases: ["I would check... first", "The main reason is...", "A clear sign is..."],
+    checkpoints: ["Name one priority area.", "Give one engineering reason.", "Add one concrete sign or detail."],
+    sampleOpening:
+      "I would check the drainage outlet first because blocked flow there can quickly affect the whole site after heavy rain.",
+  }),
+  createPrompt({
+    id: "civil-medium-report-discussion",
+    difficulty: "medium",
+    majorId: "civil-engineering",
+    category: "academic-discussion",
+    title: "Group report or individual report",
+    scenario: "Tutorial discussion",
+    prompt: "Discuss whether first-year engineering fieldwork should be assessed through group reports or individual reports.",
+    responseTimeSec: 70,
+    skillFocus: "Take a view and compare one advantage with one concern.",
+    partnerRole: "tutorial classmate",
+    partnerGoal: "hear a balanced opinion about assessment",
+    usefulPhrases: ["I think... is better", "One advantage is...", "However, ..."],
+    checkpoints: ["State a clear view.", "Give one advantage.", "Mention one limitation or concern."],
+    sampleOpening:
+      "I think group reports are better for first-year fieldwork because students can compare observations, although weaker students may contribute less.",
+  }),
+  createPrompt({
+    id: "civil-high-flood-design",
+    difficulty: "high",
+    majorId: "civil-engineering",
+    category: "major-study",
+    title: "Flood-resilient campus design",
+    scenario: "Mini design presentation",
+    prompt: "Recommend one flood-resilient design improvement for a university campus and justify why it should be funded first.",
+    responseTimeSec: 90,
+    skillFocus: "Present a recommendation, justify it, and anticipate one challenge.",
+    partnerRole: "project tutor",
+    partnerGoal: "judge whether the design recommendation is well justified",
+    usefulPhrases: ["I recommend...", "This should be prioritised because...", "One challenge is..."],
+    checkpoints: ["Make one direct recommendation.", "Justify the funding priority.", "Address one implementation challenge."],
+    sampleOpening:
+      "I recommend upgrading surface drainage near teaching buildings because this would reduce repeated flooding and protect the busiest parts of campus first.",
+  }),
+  createPrompt({
+    id: "math-low-study-group",
+    difficulty: "low",
+    majorId: "mathematics",
+    category: "campus-life",
+    title: "Invite a classmate to revise",
+    scenario: "Library conversation",
+    prompt: "Invite a new mathematics student to join a revision group and explain how it could help before a quiz.",
+    responseTimeSec: 45,
+    skillFocus: "Make one invitation with one practical benefit.",
+    partnerRole: "new mathematics classmate",
+    partnerGoal: "decide whether to join the revision group",
+    usefulPhrases: ["Would you like to...", "It could help because...", "We can..."],
+    checkpoints: ["Make a clear invitation.", "Give one benefit.", "Mention one activity the group can do."],
+    sampleOpening:
+      "Would you like to join our revision group because we usually solve quiz questions together before class tests?",
+  }),
+  createPrompt({
+    id: "math-medium-graph-trend",
+    difficulty: "medium",
+    majorId: "mathematics",
+    category: "major-study",
+    title: "Explain a graph trend",
+    scenario: "Statistics tutorial",
+    prompt: "Explain the main trend in a simple data graph and say what conclusion a first-year class could draw from it.",
+    responseTimeSec: 60,
+    skillFocus: "Describe one trend clearly and interpret it carefully.",
+    partnerRole: "statistics tutor",
+    partnerGoal: "check whether the learner can link data with meaning",
+    usefulPhrases: ["The graph shows...", "The main trend is...", "This suggests that..."],
+    checkpoints: ["Describe the trend clearly.", "Use one data-focused phrase.", "Give one careful conclusion."],
+    sampleOpening:
+      "The graph shows a steady increase in attendance, and this suggests that students respond well to regular weekly reminders.",
+  }),
+  createPrompt({
+    id: "math-medium-calculator-debate",
+    difficulty: "medium",
+    majorId: "mathematics",
+    category: "academic-discussion",
+    title: "Calculator use in exams",
+    scenario: "Seminar discussion",
+    prompt: "Discuss whether calculators should be limited in first-year mathematics exams.",
+    responseTimeSec: 70,
+    skillFocus: "Present a position and support it with one educational reason.",
+    partnerRole: "seminar partner",
+    partnerGoal: "hear a reasoned view on assessment fairness",
+    usefulPhrases: ["My view is that...", "This matters because...", "At the same time..."],
+    checkpoints: ["State one direct position.", "Support it with one reason.", "Acknowledge one other side briefly."],
+    sampleOpening:
+      "My view is that calculators should be limited in some exams because students still need to show core reasoning without over-relying on technology.",
+  }),
+  createPrompt({
+    id: "math-high-model-assumption",
+    difficulty: "high",
+    majorId: "mathematics",
+    category: "major-study",
+    title: "Justify a modelling assumption",
+    scenario: "Methods presentation",
+    prompt: "Explain one assumption in a mathematical model and justify why it is useful even if it simplifies reality.",
+    responseTimeSec: 90,
+    skillFocus: "Explain an assumption, justify it, and note one limitation.",
+    partnerRole: "methods lecturer",
+    partnerGoal: "test whether the learner can speak cautiously about modelling choices",
+    usefulPhrases: ["This model assumes...", "This is useful because...", "However, it may not..."],
+    checkpoints: ["State the assumption clearly.", "Explain why it helps the model.", "Mention one limitation."],
+    sampleOpening:
+      "This model assumes stable travel demand, which is useful because it makes the first analysis manageable, although real demand often changes over time.",
+  }),
+  createPrompt({
+    id: "cs-low-lab-intro",
+    difficulty: "low",
+    majorId: "computing-science",
+    category: "campus-life",
+    title: "Programming lab check-in",
+    scenario: "First lab session",
+    prompt: "Introduce yourself to a new programming lab partner and say how you like to work on coding tasks.",
+    responseTimeSec: 45,
+    skillFocus: "Introduce yourself with one preference and one reason.",
+    partnerRole: "new lab partner",
+    partnerGoal: "start a simple working conversation",
+    usefulPhrases: ["I usually...", "I prefer...", "It helps me because..."],
+    checkpoints: ["Introduce yourself clearly.", "State one work preference.", "Give one short reason."],
+    sampleOpening:
+      "I usually test code in small steps because it helps me find mistakes faster during lab work.",
+  }),
+  createPrompt({
+    id: "cs-medium-bug-update",
+    difficulty: "medium",
+    majorId: "computing-science",
+    category: "major-study",
+    title: "Explain a bug fix plan",
+    scenario: "Project stand-up",
+    prompt: "Explain one bug in a group project and describe the next step you would take to fix it.",
+    responseTimeSec: 60,
+    skillFocus: "Describe one problem and one practical next action.",
+    partnerRole: "project teammate",
+    partnerGoal: "understand the bug and the next development step",
+    usefulPhrases: ["The issue is...", "I found that...", "The next step is..."],
+    checkpoints: ["Name the bug clearly.", "Explain its effect.", "Say what you will do next."],
+    sampleOpening:
+      "The issue is that the login form accepts the password but does not redirect the user, so my next step is to check the response handler in the client code.",
+  }),
+  createPrompt({
+    id: "cs-medium-ai-coursework",
+    difficulty: "medium",
+    majorId: "computing-science",
+    category: "academic-discussion",
+    title: "AI tools in coursework",
+    scenario: "Department discussion",
+    prompt: "Discuss whether AI coding tools should be allowed in first-year coursework.",
+    responseTimeSec: 70,
+    skillFocus: "Give a position with one benefit and one risk.",
+    partnerRole: "course representative",
+    partnerGoal: "hear a balanced view on AI use in study",
+    usefulPhrases: ["I think...", "One benefit is...", "A risk is..."],
+    checkpoints: ["State one position.", "Give one benefit.", "Mention one clear risk."],
+    sampleOpening:
+      "I think AI coding tools can be useful because they give fast feedback, but they also create a risk if students stop thinking through the code for themselves.",
+  }),
+  createPrompt({
+    id: "cs-high-design-choice",
+    difficulty: "high",
+    majorId: "computing-science",
+    category: "major-study",
+    title: "Defend a system design choice",
+    scenario: "Mini technical presentation",
+    prompt: "Defend one design choice for a student app and explain why it is more suitable than an alternative.",
+    responseTimeSec: 90,
+    skillFocus: "Justify one design decision and compare it with an alternative.",
+    partnerRole: "technical reviewer",
+    partnerGoal: "test whether the learner can justify design trade-offs clearly",
+    usefulPhrases: ["I chose...", "This is more suitable because...", "Compared with..."],
+    checkpoints: ["State the design choice.", "Justify it with one clear reason.", "Compare it with one alternative."],
+    sampleOpening:
+      "I chose a simple web-based interface because it is easier for students to access on different devices than a platform-specific desktop tool.",
+  }),
+  createPrompt({
+    id: "mech-low-workshop-help",
+    difficulty: "low",
+    majorId: "mechanical-engineering",
+    category: "campus-life",
+    title: "Ask for workshop help",
+    scenario: "Before a workshop class",
+    prompt: "Explain one thing you are unsure about before a workshop session and ask a classmate for help politely.",
+    responseTimeSec: 45,
+    skillFocus: "State one problem and make one polite request.",
+    partnerRole: "classmate in the workshop",
+    partnerGoal: "understand what support the learner needs",
+    usefulPhrases: ["I am not sure about...", "Could you show me...", "I want to check..."],
+    checkpoints: ["Say what you are unsure about.", "Use a polite request.", "Mention what you need to do next."],
+    sampleOpening:
+      "I am not sure about the machine setup, so could you show me the first safety check before we start?",
+  }),
+  createPrompt({
+    id: "mech-medium-test-report",
+    difficulty: "medium",
+    majorId: "mechanical-engineering",
+    category: "major-study",
+    title: "Report a test result",
+    scenario: "Materials lab",
+    prompt: "Summarize one test result from a materials experiment and explain what it means for design choice.",
+    responseTimeSec: 60,
+    skillFocus: "State one result and connect it to one design implication.",
+    partnerRole: "lab tutor",
+    partnerGoal: "check whether the learner can interpret a test result clearly",
+    usefulPhrases: ["The test showed...", "This means that...", "As a result..."],
+    checkpoints: ["State the result clearly.", "Interpret the result.", "Connect it to one design decision."],
+    sampleOpening:
+      "The test showed that the lighter material deformed earlier, and this means it may not be the best choice for a part under repeated stress.",
+  }),
+  createPrompt({
+    id: "mech-medium-sustainability-discussion",
+    difficulty: "medium",
+    majorId: "mechanical-engineering",
+    category: "academic-discussion",
+    title: "Cost or sustainability first",
+    scenario: "Design tutorial",
+    prompt: "Discuss whether first-year engineering design projects should prioritise low cost or sustainability.",
+    responseTimeSec: 70,
+    skillFocus: "Compare two priorities and support your preference.",
+    partnerRole: "design teammate",
+    partnerGoal: "hear a reasoned design priority choice",
+    usefulPhrases: ["I would prioritise...", "The main reason is...", "At the same time..."],
+    checkpoints: ["Choose one priority.", "Give one reason.", "Show awareness of the other factor."],
+    sampleOpening:
+      "I would prioritise sustainability because first-year projects should help students think long term, although cost still matters in real production.",
+  }),
+  createPrompt({
+    id: "mech-high-energy-pitch",
+    difficulty: "high",
+    majorId: "mechanical-engineering",
+    category: "major-study",
+    title: "Pitch an efficiency improvement",
+    scenario: "Engineering proposal",
+    prompt: "Propose one change that could improve energy efficiency in a mechanical system and justify why it is practical.",
+    responseTimeSec: 90,
+    skillFocus: "Propose a change, justify it, and mention one practical constraint.",
+    partnerRole: "project supervisor",
+    partnerGoal: "judge whether the proposal is realistic and well justified",
+    usefulPhrases: ["I propose...", "This would improve...", "One practical limit is..."],
+    checkpoints: ["Make one direct proposal.", "Justify the expected improvement.", "Mention one practical constraint."],
+    sampleOpening:
+      "I propose improving insulation around the hot section of the system because this could reduce heat loss without completely redesigning the equipment.",
+  }),
+  createPrompt({
+    id: "transport-low-bus-route",
+    difficulty: "low",
+    majorId: "mechanical-engineering-transportation",
+    category: "campus-life",
+    title: "Suggest a better bus route",
+    scenario: "Student support meeting",
+    prompt: "Suggest one way to improve a campus bus route for new students and explain why it would help.",
+    responseTimeSec: 45,
+    skillFocus: "Make one suggestion with one clear benefit.",
+    partnerRole: "student volunteer",
+    partnerGoal: "understand a simple transport suggestion",
+    usefulPhrases: ["I suggest...", "It would help because...", "New students could..."],
+    checkpoints: ["Make one clear suggestion.", "Explain one benefit.", "Keep the answer practical."],
+    sampleOpening:
+      "I suggest adding one stop near the library because new students often need to travel there between classes.",
+  }),
+  createPrompt({
+    id: "transport-medium-simulation-update",
+    difficulty: "medium",
+    majorId: "mechanical-engineering-transportation",
+    category: "major-study",
+    title: "Explain a delay pattern",
+    scenario: "Simulation tutorial",
+    prompt: "Explain one delay pattern from a basic transport simulation and what action it suggests.",
+    responseTimeSec: 60,
+    skillFocus: "Describe one pattern and link it to one transport action.",
+    partnerRole: "tutorial partner",
+    partnerGoal: "understand the main result of the simulation",
+    usefulPhrases: ["The pattern shows...", "This suggests...", "A useful action is..."],
+    checkpoints: ["Describe the delay pattern.", "Interpret the result.", "Suggest one action."],
+    sampleOpening:
+      "The pattern shows the longest delays near the final junction, and this suggests that signal timing should be adjusted there first.",
+  }),
+  createPrompt({
+    id: "transport-medium-campus-cars",
+    difficulty: "medium",
+    majorId: "mechanical-engineering-transportation",
+    category: "academic-discussion",
+    title: "Should cars be limited on campus",
+    scenario: "Seminar discussion",
+    prompt: "Discuss whether private cars should be limited in the busiest parts of a university campus.",
+    responseTimeSec: 70,
+    skillFocus: "Take a position and support it with one safety or access argument.",
+    partnerRole: "seminar classmate",
+    partnerGoal: "hear a clear transport policy opinion",
+    usefulPhrases: ["I think...", "One reason is...", "This could improve..."],
+    checkpoints: ["State a direct position.", "Support it with one reason.", "Mention one impact on students or staff."],
+    sampleOpening:
+      "I think private cars should be limited in the busiest campus areas because this could improve safety and make walking routes less stressful for new students.",
+  }),
+  createPrompt({
+    id: "transport-high-mobility-policy",
+    difficulty: "high",
+    majorId: "mechanical-engineering-transportation",
+    category: "major-study",
+    title: "Respond to a mobility policy",
+    scenario: "Policy briefing response",
+    prompt: "Respond to a proposal for more shared transport on campus and explain whether it is the best long-term choice.",
+    responseTimeSec: 90,
+    skillFocus: "Evaluate a proposal, justify your view, and mention one trade-off.",
+    partnerRole: "policy tutor",
+    partnerGoal: "test whether the learner can evaluate transport policy critically",
+    usefulPhrases: ["My view is that...", "In the long term...", "One trade-off is..."],
+    checkpoints: ["Evaluate the proposal clearly.", "Justify the long-term view.", "Mention one trade-off."],
+    sampleOpening:
+      "My view is that shared transport should expand, but only if the system is reliable enough to replace short private car trips in the long term.",
+  }),
 ];
 
-export function getSpeakingPromptsForLevel(level: CEFRLevel) {
-  return speakingPrompts.filter((prompt) => prompt.level === level);
+export function mapCEFRToSpeakingDifficulty(level: CEFRLevel): SpeakingDifficulty {
+  if (level === "A1" || level === "A2") return "low";
+  if (level === "B1") return "medium";
+  return "high";
+}
+
+export function getSpeakingPrompts({
+  majorId,
+  difficulty,
+  category,
+}: {
+  majorId?: DIICSUMajorId;
+  difficulty?: SpeakingDifficulty;
+  category?: SpeakingScenarioCategory;
+} = {}) {
+  return speakingPrompts.filter((prompt) => {
+    if (majorId && prompt.major_id !== majorId) return false;
+    if (difficulty && prompt.difficulty !== difficulty) return false;
+    if (category && prompt.category !== category) return false;
+    return true;
+  });
+}
+
+export function getSpeakingPromptsForLevel(level: CEFRLevel | SpeakingDifficulty) {
+  const difficulty = level === "low" || level === "medium" || level === "high" ? level : mapCEFRToSpeakingDifficulty(level);
+  return getSpeakingPrompts({ difficulty });
 }
 
 export function getSpeakingPromptById(id: string) {

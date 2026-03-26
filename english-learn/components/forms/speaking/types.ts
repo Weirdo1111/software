@@ -1,5 +1,9 @@
-export type SpeakingLevel = "A1" | "A2" | "B1" | "B2";
-export type SpeakingModuleId = "studio" | "shadowing" | "partner";
+import type { SpeakingDifficulty, SpeakingScenarioCategory } from "@/types/learning";
+
+export type { SpeakingDifficulty, SpeakingScenarioCategory };
+export type SpeakingModuleId = "studio" | "rehearsal";
+export type SpeakingModuleRouteId = SpeakingModuleId | "shadowing" | "partner";
+export type SpeakingScenarioFilter = SpeakingScenarioCategory | "all";
 
 export type PartnerMessage = {
   role: "user" | "assistant";

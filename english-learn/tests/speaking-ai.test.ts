@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { getSpeakingPromptById } from "@/lib/speaking-prompts";
 import { buildMockSpeakingFeedback, buildMockSpeakingPartnerReply } from "@/lib/speaking-ai";
 
 describe("speaking AI helpers", () => {
@@ -18,7 +19,11 @@ describe("speaking AI helpers", () => {
   });
 
   it("builds a partner reply with a follow-up question", () => {
-    const reply = buildMockSpeakingPartnerReply("I think students need more support because seminar speaking is difficult.");
+    const prompt = getSpeakingPromptById("civil-medium-report-discussion");
+    const reply = buildMockSpeakingPartnerReply(
+      "I think group reports are useful because students can compare site observations.",
+      prompt!,
+    );
 
     expect(reply.reply.length).toBeGreaterThan(20);
     expect(reply.follow_up.endsWith("?")).toBe(true);
