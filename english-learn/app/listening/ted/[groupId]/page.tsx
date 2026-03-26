@@ -18,9 +18,7 @@ export default async function TedDetailPage({
   const locale = await getLocale(resolvedSearchParams);
   const catalog = await getListeningMaterialsCatalog();
 
-  const material = catalog.find(
-    (m) => m.contentMode === "ted" && m.materialGroupId === resolvedParams.groupId,
-  );
+  const material = catalog.find((m) => m.materialGroupId === resolvedParams.groupId);
 
   if (!material) {
     notFound();
@@ -29,7 +27,7 @@ export default async function TedDetailPage({
   const level = (resolvedSearchParams.level ?? material.recommendedLevel ?? "B1") as CEFRLevel;
 
   return (
-    <PageFrame locale={locale} title={material.title} description={material.scenario} showHeader>
+    <PageFrame locale={locale} title={material.title} description={material.scenario} showHeader={false}>
       <TedDetail material={material} defaultLevel={level} locale={locale} />
     </PageFrame>
   );

@@ -8,8 +8,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const copy =
     locale === "zh"
       ? {
-          title: "Dashboard",
-          description: "学习状态、技能进度、系统建议与最近活动总览。",
+          title: "\u603b\u89c8",
+          description:
+            "\u67e5\u770b\u5f53\u524d\u5b66\u4e60\u72b6\u6001\uff0c\u542c\u8bf4\u8bfb\u5199\u8fdb\u5ea6\uff0c\u7cfb\u7edf\u5efa\u8bae\u4e0e\u6700\u8fd1\u6d3b\u52a8\u3002",
         }
       : {
           title: "Dashboard",

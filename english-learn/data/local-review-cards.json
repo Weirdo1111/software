@@ -1,0 +1,57 @@
+{
+  "cards": [
+    {
+      "id": "144788fc-ae52-48a2-a17c-0f9c839452b9",
+      "user_id": "00000000-0000-0000-0000-000000000001",
+      "front": "Writing fix",
+      "back": "students can practise explaining errors and solutions",
+      "tag": "Writing",
+      "stability": 2,
+      "difficulty": 5,
+      "due_at": "2026-03-26T06:22:14.256Z",
+      "last_reviewed_at": null,
+      "lapses": 0,
+      "created_at": "2026-03-26T06:22:14.256Z"
+    },
+    {
+      "id": "f75b873b-4b7f-4842-a7ea-7713a7fbbe3b",
+      "user_id": "00000000-0000-0000-0000-000000000001",
+      "front": "Writing fix",
+      "back": "members discuss simple programming tasks and learn useful technical words",
+      "tag": "Writing",
+      "stability": 2,
+      "difficulty": 5,
+      "due_at": "2026-03-26T06:22:14.256Z",
+      "last_reviewed_at": null,
+      "lapses": 0,
+      "created_at": "2026-03-26T06:22:14.256Z"
+    },
+    {
+      "id": "7618def0-cfbb-4cda-8a9c-ec94956f8be0",
+      "user_id": "00000000-0000-0000-0000-000000000001",
+      "front": "Recommend a coding clinic",
+      "back": "students can practise explaining errors and solutions in a friendly way.",
+      "tag": "Writing",
+      "stability": 2,
+      "difficulty": 5,
+      "due_at": "2026-03-26T06:34:56.437Z",
+      "last_reviewed_at": null,
+      "lapses": 0,
+      "created_at": "2026-03-26T06:34:56.437Z"
+    },
+    {
+      "id": "25760957-62bd-4195-86e9-e55e012d1975",
+      "user_id": "00000000-0000-0000-0000-000000000001",
+      "front": "Recommend a coding clinic",
+      "back": "members discuss simple programming tasks and learn useful technical words before labs.",
+      "tag": "Writing",
+      "stability": 2,
+      "difficulty": 5,
+      "due_at": "2026-03-26T06:34:56.437Z",
+      "last_reviewed_at": null,
+      "lapses": 0,
+      "created_at": "2026-03-26T06:34:56.437Z"
+    }
+  ],
+  "logs": []
+}

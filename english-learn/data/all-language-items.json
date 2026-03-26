@@ -1,0 +1,1804 @@
+{
+  "items": [
+    {
+      "id": "3ed2f83f-0ec0-4174-baa5-3b383d8ff7fa",
+      "kind": "vocabulary",
+      "discipline": "computing",
+      "level": "A1",
+      "title": "Simple computing language for beginner writers",
+      "content": "program",
+      "detail": "a set of computer instructions Our program helps students practise vocabulary every day."
+    },
+    {
+      "id": "d1015b6e-82b8-492e-8ca4-d47688f5c043",
+      "kind": "vocabulary",
+      "discipline": "computing",
+      "level": "A1",
+      "title": "Simple computing language for beginner writers",
+      "content": "screen",
+      "detail": "the part of a device that shows information The data appears clearly on the screen."
+    },
+    {
+      "id": "c5120283-081b-4daf-b877-ffa7bd9dce8c",
+      "kind": "vocabulary",
+      "discipline": "computing",
+      "level": "A1",
+      "title": "Simple computing language for beginner writers",
+      "content": "file",
+      "detail": "a saved document or piece of data I save each report in a separate file."
+    },
+    {
+      "id": "919c782d-3777-4c42-803e-5f24bfad9fa5",
+      "kind": "vocabulary",
+      "discipline": "computing",
+      "level": "A1",
+      "title": "Simple computing language for beginner writers",
+      "content": "button",
+      "detail": "a control you click or press Click the blue button to open the task."
+    },
+    {
+      "id": "823ef53b-6a2f-48f4-91a4-179930cc1715",
+      "kind": "vocabulary",
+      "discipline": "computing",
+      "level": "A1",
+      "title": "Simple computing language for beginner writers",
+      "content": "error",
+      "detail": "a mistake in a system or text The system shows an error after the wrong password."
+    },
+    {
+      "id": "0b72a524-651c-4136-ba59-1ddaa84fb103",
+      "kind": "vocabulary",
+      "discipline": "computing",
+      "level": "A1",
+      "title": "Simple computing language for beginner writers",
+      "content": "update",
+      "detail": "a new version or change The update makes the learning page faster."
+    },
+    {
+      "id": "d9288c40-76a7-4b53-93bd-373b168f42cd",
+      "kind": "sentence",
+      "discipline": "computing",
+      "level": "A1",
+      "title": "Simple computing language for beginner writers",
+      "content": "This program helps users complete simple study tasks on one page.",
+      "detail": "Describe a basic function"
+    },
+    {
+      "id": "44902534-4f56-4825-9fed-e13bacc982c1",
+      "kind": "sentence",
+      "discipline": "computing",
+      "level": "A1",
+      "title": "Simple computing language for beginner writers",
+      "content": "The main problem is that students cannot find important information quickly.",
+      "detail": "Explain a problem"
+    },
+    {
+      "id": "37b95ca0-c4ae-4c2a-833b-7fa56bba3725",
+      "kind": "sentence",
+      "discipline": "computing",
+      "level": "A1",
+      "title": "Simple computing language for beginner writers",
+      "content": "A small update can make the system easier to use.",
+      "detail": "Give a simple improvement"
+    },
+    {
+      "id": "39ed0741-2055-48ba-b75b-f4ed9ed64653",
+      "kind": "sentence",
+      "discipline": "computing",
+      "level": "A1",
+      "title": "Simple computing language for beginner writers",
+      "content": "As a result, learners spend less time searching for materials.",
+      "detail": "State a result"
+    },
+    {
+      "id": "8dbdf0b1-9dfa-449f-8d45-88282530f57d",
+      "kind": "vocabulary",
+      "discipline": "computing",
+      "level": "A2",
+      "title": "Practical computing language for short paragraphs",
+      "content": "database",
+      "detail": "an organized collection of information The database stores student accounts and scores."
+    },
+    {
+      "id": "7dac847b-8a17-4d79-b6b3-d34765d2460d",
+      "kind": "vocabulary",
+      "discipline": "computing",
+      "level": "A2",
+      "title": "Practical computing language for short paragraphs",
+      "content": "network",
+      "detail": "connected computers or devices A stable network is necessary for online learning."
+    },
+    {
+      "id": "e5fe1a09-d499-4ec3-86c5-292219daa4ef",
+      "kind": "vocabulary",
+      "discipline": "computing",
+      "level": "A2",
+      "title": "Practical computing language for short paragraphs",
+      "content": "backup",
+      "detail": "a saved copy of data Regular backup protects important project files."
+    },
+    {
+      "id": "9c63d501-d7ee-495a-899b-55d3e36db54f",
+      "kind": "vocabulary",
+      "discipline": "computing",
+      "level": "A2",
+      "title": "Practical computing language for short paragraphs",
+      "content": "search function",
+      "detail": "a tool for finding information The search function helps users find articles quickly."
+    },
+    {
+      "id": "d6fc1600-ebf9-4aa7-bee3-081e130a0651",
+      "kind": "vocabulary",
+      "discipline": "computing",
+      "level": "A2",
+      "title": "Practical computing language for short paragraphs",
+      "content": "digital tool",
+      "detail": "software used for a task This digital tool supports note-taking in class."
+    },
+    {
+      "id": "e1e3cda5-7a03-45d9-8a4b-44cc3a3f05c3",
+      "kind": "vocabulary",
+      "discipline": "computing",
+      "level": "A2",
+      "title": "Practical computing language for short paragraphs",
+      "content": "user account",
+      "detail": "a personal profile in a system Each user account keeps learning records safe."
+    },
+    {
+      "id": "cdf38b5c-6e8e-4173-9a77-62a01c5879c7",
+      "kind": "sentence",
+      "discipline": "computing",
+      "level": "A2",
+      "title": "Practical computing language for short paragraphs",
+      "content": "This digital tool is useful because it combines storage, search, and quick feedback.",
+      "detail": "Introduce a tool"
+    },
+    {
+      "id": "1a6c3ad5-6870-40cb-9702-0d64b3a5b213",
+      "kind": "sentence",
+      "discipline": "computing",
+      "level": "A2",
+      "title": "Practical computing language for short paragraphs",
+      "content": "When the network is unstable, students may lose access to online tasks.",
+      "detail": "Show cause and effect"
+    },
+    {
+      "id": "543ba3cb-8a50-4f38-beef-c894c2c358de",
+      "kind": "sentence",
+      "discipline": "computing",
+      "level": "A2",
+      "title": "Practical computing language for short paragraphs",
+      "content": "Students should create a backup before making major changes to a file.",
+      "detail": "Recommend an action"
+    },
+    {
+      "id": "2998fe10-d681-417a-8b46-c14ef9fa6376",
+      "kind": "sentence",
+      "discipline": "computing",
+      "level": "A2",
+      "title": "Practical computing language for short paragraphs",
+      "content": "A clear search function can improve efficiency during academic study.",
+      "detail": "Explain a benefit"
+    },
+    {
+      "id": "eec015eb-f149-4c3b-97b0-e1aaa5cb9e38",
+      "kind": "vocabulary",
+      "discipline": "computing",
+      "level": "B1",
+      "title": "Analytical computing language for academic writing",
+      "content": "algorithm",
+      "detail": "a set of rules for solving a problem The algorithm sorts large amounts of learning data."
+    },
+    {
+      "id": "4ac14acc-86fa-40bb-9f72-e3d2091e1132",
+      "kind": "vocabulary",
+      "discipline": "computing",
+      "level": "B1",
+      "title": "Analytical computing language for academic writing",
+      "content": "interface",
+      "detail": "the part of a system users interact with A clear interface reduces confusion for first-year students."
+    },
+    {
+      "id": "97de18f8-b19c-4c07-831d-df31f35d8d68",
+      "kind": "vocabulary",
+      "discipline": "computing",
+      "level": "B1",
+      "title": "Analytical computing language for academic writing",
+      "content": "automation",
+      "detail": "using technology to complete tasks automatically Automation can save time in routine assessment tasks."
+    },
+    {
+      "id": "d35245cb-3a11-41a3-a5cb-693b813ba091",
+      "kind": "vocabulary",
+      "discipline": "computing",
+      "level": "B1",
+      "title": "Analytical computing language for academic writing",
+      "content": "data security",
+      "detail": "protection of digital information Data security is essential in student management systems."
+    },
+    {
+      "id": "b2673247-d3a9-4950-b3c5-1bd6866c56fd",
+      "kind": "vocabulary",
+      "discipline": "computing",
+      "level": "B1",
+      "title": "Analytical computing language for academic writing",
+      "content": "processing speed",
+      "detail": "how fast a system handles tasks Higher processing speed improves the user experience."
+    },
+    {
+      "id": "bb62180e-d7b7-4cbe-9687-d26ecf28a222",
+      "kind": "vocabulary",
+      "discipline": "computing",
+      "level": "B1",
+      "title": "Analytical computing language for academic writing",
+      "content": "system design",
+      "detail": "the structure and planning of a system Good system design supports both access and reliability."
+    },
+    {
+      "id": "27fcb954-c3db-4022-8e14-c8f4bf8fa4cb",
+      "kind": "sentence",
+      "discipline": "computing",
+      "level": "B1",
+      "title": "Analytical computing language for academic writing",
+      "content": "A well-designed interface improves learning because students can focus on content rather than navigation.",
+      "detail": "Make an analytical claim"
+    },
+    {
+      "id": "abc1c48a-62bd-419a-8982-ffca63921f80",
+      "kind": "sentence",
+      "discipline": "computing",
+      "level": "B1",
+      "title": "Analytical computing language for academic writing",
+      "content": "Although automation increases efficiency, poor system design may reduce user control.",
+      "detail": "Balance benefit and risk"
+    },
+    {
+      "id": "c6fffac6-660d-4da6-bd1b-c1d609592cb0",
+      "kind": "sentence",
+      "discipline": "computing",
+      "level": "B1",
+      "title": "Analytical computing language for academic writing",
+      "content": "One practical solution is to improve data security while keeping the platform easy to access.",
+      "detail": "Propose a solution"
+    },
+    {
+      "id": "ae30c5ee-a40a-47b8-9acc-53a25df52d66",
+      "kind": "sentence",
+      "discipline": "computing",
+      "level": "B1",
+      "title": "Analytical computing language for academic writing",
+      "content": "This suggests that technical performance and user confidence are closely connected.",
+      "detail": "Link evidence to conclusion"
+    },
+    {
+      "id": "50d92e72-888f-4ab9-afe6-208fc6d65405",
+      "kind": "vocabulary",
+      "discipline": "computing",
+      "level": "B2",
+      "title": "Precise computing language for higher-level argument",
+      "content": "scalability",
+      "detail": "the ability to grow without losing performance Scalability matters when a platform serves many users at once."
+    },
+    {
+      "id": "3f230164-6260-4a8c-936c-dcdeb28d9c06",
+      "kind": "vocabulary",
+      "discipline": "computing",
+      "level": "B2",
+      "title": "Precise computing language for higher-level argument",
+      "content": "optimization",
+      "detail": "improving efficiency or performance Optimization can reduce loading time during peak periods."
+    },
+    {
+      "id": "a491e680-bf22-4b0f-ae87-d983ef6a8dc9",
+      "kind": "vocabulary",
+      "discipline": "computing",
+      "level": "B2",
+      "title": "Precise computing language for higher-level argument",
+      "content": "interoperability",
+      "detail": "the ability of systems to work together Interoperability supports data sharing across departments."
+    },
+    {
+      "id": "1802d7fc-2c9d-4a1a-b7c2-e42bcf1bcd3a",
+      "kind": "vocabulary",
+      "discipline": "computing",
+      "level": "B2",
+      "title": "Precise computing language for higher-level argument",
+      "content": "encryption",
+      "detail": "coding data to keep it secure Encryption protects sensitive student information."
+    },
+    {
+      "id": "a125b306-1867-4171-89b0-fa6433b48ad9",
+      "kind": "vocabulary",
+      "discipline": "computing",
+      "level": "B2",
+      "title": "Precise computing language for higher-level argument",
+      "content": "deployment",
+      "detail": "the release of a system into use Careful deployment reduces disruption for users."
+    },
+    {
+      "id": "5dd0cd18-650d-41bd-8c23-8884a2a684a3",
+      "kind": "vocabulary",
+      "discipline": "computing",
+      "level": "B2",
+      "title": "Precise computing language for higher-level argument",
+      "content": "computational efficiency",
+      "detail": "effective use of computing resources Computational efficiency should guide software decisions in large systems."
+    },
+    {
+      "id": "3981cd1f-e118-42dd-aa16-c3ef72cadd2d",
+      "kind": "sentence",
+      "discipline": "computing",
+      "level": "B2",
+      "title": "Precise computing language for higher-level argument",
+      "content": "Universities should prioritize interoperable systems because fragmented platforms weaken both efficiency and accountability.",
+      "detail": "State a policy position"
+    },
+    {
+      "id": "b966f4ff-b7ed-4314-b588-40e4b60f3c83",
+      "kind": "sentence",
+      "discipline": "computing",
+      "level": "B2",
+      "title": "Precise computing language for higher-level argument",
+      "content": "Nevertheless, optimization alone cannot guarantee a positive user experience if the interface remains unclear.",
+      "detail": "Acknowledge a limitation"
+    },
+    {
+      "id": "0facd6c3-cb71-41ca-97e6-86010c7c7637",
+      "kind": "sentence",
+      "discipline": "computing",
+      "level": "B2",
+      "title": "Precise computing language for higher-level argument",
+      "content": "Any large-scale deployment should include encryption standards and routine user testing.",
+      "detail": "Present a condition"
+    },
+    {
+      "id": "bcfc1407-5e34-47dd-b0df-d13e66b12024",
+      "kind": "sentence",
+      "discipline": "computing",
+      "level": "B2",
+      "title": "Precise computing language for higher-level argument",
+      "content": "For this reason, computational efficiency must be evaluated alongside accessibility and security.",
+      "detail": "Conclude with precision"
+    },
+    {
+      "id": "e703cc68-2403-46fe-b2cf-4e73d069de02",
+      "kind": "vocabulary",
+      "discipline": "transport",
+      "level": "A1",
+      "title": "Basic transport language for short writing",
+      "content": "route",
+      "detail": "the path a bus, train, or car follows This bus route connects the campus and the station."
+    },
+    {
+      "id": "e78930da-4ddc-4634-8d1b-ba5ed7d59c78",
+      "kind": "vocabulary",
+      "discipline": "transport",
+      "level": "A1",
+      "title": "Basic transport language for short writing",
+      "content": "station",
+      "detail": "a place where buses or trains stop The station is close to the university gate."
+    },
+    {
+      "id": "f0eb3fb1-ff15-4e36-a672-4bc81b79f8fa",
+      "kind": "vocabulary",
+      "discipline": "transport",
+      "level": "A1",
+      "title": "Basic transport language for short writing",
+      "content": "ticket",
+      "detail": "proof that you paid to travel Students can buy a ticket on the app."
+    },
+    {
+      "id": "67801899-b392-49dc-ba2a-c02e89111681",
+      "kind": "vocabulary",
+      "discipline": "transport",
+      "level": "A1",
+      "title": "Basic transport language for short writing",
+      "content": "traffic",
+      "detail": "vehicles moving on the road Heavy traffic makes the journey slower."
+    },
+    {
+      "id": "0727d136-dd72-4fa7-85cc-6dd32a5e7e09",
+      "kind": "vocabulary",
+      "discipline": "transport",
+      "level": "A1",
+      "title": "Basic transport language for short writing",
+      "content": "bridge",
+      "detail": "a structure across water or a road The bridge helps cars cross the river safely."
+    },
+    {
+      "id": "03b17194-babe-48dd-a9f6-bb6aefb51657",
+      "kind": "vocabulary",
+      "discipline": "transport",
+      "level": "A1",
+      "title": "Basic transport language for short writing",
+      "content": "bus lane",
+      "detail": "a road area only for buses The bus lane saves time in the morning."
+    },
+    {
+      "id": "95f97e50-bdfb-48f8-8891-d31b74f69781",
+      "kind": "sentence",
+      "discipline": "transport",
+      "level": "A1",
+      "title": "Basic transport language for short writing",
+      "content": "The new bus route is useful for students who travel to campus every day.",
+      "detail": "Describe a transport service"
+    },
+    {
+      "id": "7a358ff4-3f65-4a59-bacd-2db3da89fa0b",
+      "kind": "sentence",
+      "discipline": "transport",
+      "level": "A1",
+      "title": "Basic transport language for short writing",
+      "content": "Traffic is heavy in the morning, so the trip takes longer.",
+      "detail": "Explain a delay"
+    },
+    {
+      "id": "00ff4773-e568-4844-b008-b8b81572c54f",
+      "kind": "sentence",
+      "discipline": "transport",
+      "level": "A1",
+      "title": "Basic transport language for short writing",
+      "content": "A bus lane can make public transport faster and more reliable.",
+      "detail": "State a simple benefit"
+    },
+    {
+      "id": "9633cc6a-b67f-4ec9-8a2e-381f8bf102c2",
+      "kind": "sentence",
+      "discipline": "transport",
+      "level": "A1",
+      "title": "Basic transport language for short writing",
+      "content": "Students should check the ticket information before the journey.",
+      "detail": "Give a recommendation"
+    },
+    {
+      "id": "6cb90163-283c-4d15-b86f-09b3faf08b67",
+      "kind": "vocabulary",
+      "discipline": "transport",
+      "level": "A2",
+      "title": "Practical transport language for paragraph writing",
+      "content": "public transport",
+      "detail": "buses, trains, and other shared travel systems Public transport is important for daily commuting."
+    },
+    {
+      "id": "e5037164-a6ad-44af-88f4-a12b32a78aef",
+      "kind": "vocabulary",
+      "discipline": "transport",
+      "level": "A2",
+      "title": "Practical transport language for paragraph writing",
+      "content": "schedule",
+      "detail": "a timetable of planned times A clear schedule helps passengers arrive on time."
+    },
+    {
+      "id": "cbfc3969-995b-4e5a-a40e-58a2c47737dd",
+      "kind": "vocabulary",
+      "discipline": "transport",
+      "level": "A2",
+      "title": "Practical transport language for paragraph writing",
+      "content": "congestion",
+      "detail": "too much traffic in one place Road congestion increases travel time in the city center."
+    },
+    {
+      "id": "f4bc1bba-173a-4009-9544-b8533ac82a14",
+      "kind": "vocabulary",
+      "discipline": "transport",
+      "level": "A2",
+      "title": "Practical transport language for paragraph writing",
+      "content": "commuter",
+      "detail": "a person who travels regularly to work or study Many commuters use the metro every weekday."
+    },
+    {
+      "id": "2c3f4ef7-46cf-4648-ab89-3023b555a842",
+      "kind": "vocabulary",
+      "discipline": "transport",
+      "level": "A2",
+      "title": "Practical transport language for paragraph writing",
+      "content": "transfer",
+      "detail": "changing from one vehicle to another The transfer between two train lines is easy."
+    },
+    {
+      "id": "6da8d645-702b-4f66-b192-f7845bf1efce",
+      "kind": "vocabulary",
+      "discipline": "transport",
+      "level": "A2",
+      "title": "Practical transport language for paragraph writing",
+      "content": "maintenance",
+      "detail": "work to keep something in good condition Regular maintenance keeps buses safe."
+    },
+    {
+      "id": "70807a3a-e83c-4ea8-abdc-c29b5920988e",
+      "kind": "sentence",
+      "discipline": "transport",
+      "level": "A2",
+      "title": "Practical transport language for paragraph writing",
+      "content": "Many commuters experience delays when congestion affects the main road near the station.",
+      "detail": "Explain a common issue"
+    },
+    {
+      "id": "2832a978-4467-4751-b159-d69b5d794fef",
+      "kind": "sentence",
+      "discipline": "transport",
+      "level": "A2",
+      "title": "Practical transport language for paragraph writing",
+      "content": "A clear schedule allows passengers to plan transfers more confidently.",
+      "detail": "Describe a useful system"
+    },
+    {
+      "id": "20e0204c-5a7f-4dbc-b541-03ac0fea2f59",
+      "kind": "sentence",
+      "discipline": "transport",
+      "level": "A2",
+      "title": "Practical transport language for paragraph writing",
+      "content": "City planners should improve maintenance so public transport remains safe and punctual.",
+      "detail": "Recommend improvement"
+    },
+    {
+      "id": "e5162aa9-0f62-4f12-aaec-7a08f9b73012",
+      "kind": "sentence",
+      "discipline": "transport",
+      "level": "A2",
+      "title": "Practical transport language for paragraph writing",
+      "content": "As a result, students can reach campus more efficiently.",
+      "detail": "Show impact"
+    },
+    {
+      "id": "a97d0c79-2915-4e8c-a808-db55fe8a2c1f",
+      "kind": "vocabulary",
+      "discipline": "transport",
+      "level": "B1",
+      "title": "Analytical transport language for academic support",
+      "content": "mobility",
+      "detail": "the ability to move efficiently from place to place Reliable transport improves urban mobility for students and workers."
+    },
+    {
+      "id": "bdcf79b6-c1e0-4459-ad35-03e8574bbdda",
+      "kind": "vocabulary",
+      "discipline": "transport",
+      "level": "B1",
+      "title": "Analytical transport language for academic support",
+      "content": "infrastructure",
+      "detail": "basic systems such as roads and railways Transport infrastructure shapes economic activity across a city."
+    },
+    {
+      "id": "5ae9371a-251e-44fa-b474-84c44db84af0",
+      "kind": "vocabulary",
+      "discipline": "transport",
+      "level": "B1",
+      "title": "Analytical transport language for academic support",
+      "content": "capacity",
+      "detail": "the amount a system can handle Rail capacity is limited during peak hours."
+    },
+    {
+      "id": "d5578604-2a83-4592-9179-7afe25204e2d",
+      "kind": "vocabulary",
+      "discipline": "transport",
+      "level": "B1",
+      "title": "Analytical transport language for academic support",
+      "content": "commuting pattern",
+      "detail": "a regular travel behavior Commuting patterns changed after new bus links were introduced."
+    },
+    {
+      "id": "578994e3-2cba-468e-b129-7cfbf65b8462",
+      "kind": "vocabulary",
+      "discipline": "transport",
+      "level": "B1",
+      "title": "Analytical transport language for academic support",
+      "content": "travel demand",
+      "detail": "how much people need transport Travel demand rises quickly near university campuses."
+    },
+    {
+      "id": "57fc3577-583e-4eb4-baa0-ac0ba6de6342",
+      "kind": "vocabulary",
+      "discipline": "transport",
+      "level": "B1",
+      "title": "Analytical transport language for academic support",
+      "content": "service reliability",
+      "detail": "how dependably transport runs Service reliability affects whether passengers trust public systems."
+    },
+    {
+      "id": "495ba54c-4c7e-482b-8ba1-d3670a050510",
+      "kind": "sentence",
+      "discipline": "transport",
+      "level": "B1",
+      "title": "Analytical transport language for academic support",
+      "content": "Transport infrastructure should respond to travel demand rather than rely on outdated commuting patterns.",
+      "detail": "Present an analytical point"
+    },
+    {
+      "id": "3af1f333-17f5-4f0a-b7b5-0fc16a0ddfdd",
+      "kind": "sentence",
+      "discipline": "transport",
+      "level": "B1",
+      "title": "Analytical transport language for academic support",
+      "content": "When service reliability declines, passengers are more likely to choose private vehicles instead.",
+      "detail": "Explain a consequence"
+    },
+    {
+      "id": "9fed0a3c-471e-49d8-8173-c932aedd1328",
+      "kind": "sentence",
+      "discipline": "transport",
+      "level": "B1",
+      "title": "Analytical transport language for academic support",
+      "content": "One practical solution is to increase capacity on routes used heavily by students.",
+      "detail": "Suggest a solution"
+    },
+    {
+      "id": "f7025ec4-accc-45cd-969d-f4c6daffec12",
+      "kind": "sentence",
+      "discipline": "transport",
+      "level": "B1",
+      "title": "Analytical transport language for academic support",
+      "content": "This would strengthen mobility while reducing pressure on congested roads.",
+      "detail": "Conclude with impact"
+    },
+    {
+      "id": "c9b8ef56-ad85-4f2c-a717-ef18fa575aa8",
+      "kind": "vocabulary",
+      "discipline": "transport",
+      "level": "B2",
+      "title": "Higher-level transport language for argument",
+      "content": "sustainability",
+      "detail": "meeting present needs without harming the future Transport policy should support sustainability as well as speed."
+    },
+    {
+      "id": "7d707ae4-7cba-4d19-8737-f7002bc4fb41",
+      "kind": "vocabulary",
+      "discipline": "transport",
+      "level": "B2",
+      "title": "Higher-level transport language for argument",
+      "content": "multimodal network",
+      "detail": "a system combining different transport methods A multimodal network connects buses, rail, and cycling routes."
+    },
+    {
+      "id": "ebf7ff31-c991-46f9-9ada-f04a873766ee",
+      "kind": "vocabulary",
+      "discipline": "transport",
+      "level": "B2",
+      "title": "Higher-level transport language for argument",
+      "content": "logistical efficiency",
+      "detail": "effective movement of people or goods Logistical efficiency is essential in growing urban regions."
+    },
+    {
+      "id": "7c15298f-9419-4d16-955c-02d2e7c188ac",
+      "kind": "vocabulary",
+      "discipline": "transport",
+      "level": "B2",
+      "title": "Higher-level transport language for argument",
+      "content": "emission reduction",
+      "detail": "lowering harmful gases Public transport investment can support emission reduction."
+    },
+    {
+      "id": "c5e27d6f-8fb2-40c8-aa96-b5ec6f4be750",
+      "kind": "vocabulary",
+      "discipline": "transport",
+      "level": "B2",
+      "title": "Higher-level transport language for argument",
+      "content": "capacity constraint",
+      "detail": "a limit on how much a system can handle Capacity constraints weaken service quality during rush hour."
+    },
+    {
+      "id": "e083257b-98b1-467c-b590-fd424b383299",
+      "kind": "vocabulary",
+      "discipline": "transport",
+      "level": "B2",
+      "title": "Higher-level transport language for argument",
+      "content": "transport resilience",
+      "detail": "the ability to recover from disruption Transport resilience matters during extreme weather events."
+    },
+    {
+      "id": "0afdbda7-b266-4b00-89b4-1efe6e76bccb",
+      "kind": "sentence",
+      "discipline": "transport",
+      "level": "B2",
+      "title": "Higher-level transport language for argument",
+      "content": "Cities should invest in multimodal networks because single-mode expansion rarely solves long-term mobility problems.",
+      "detail": "State a strategic argument"
+    },
+    {
+      "id": "802d35c6-b4fa-4554-bac7-432b088715e5",
+      "kind": "sentence",
+      "discipline": "transport",
+      "level": "B2",
+      "title": "Higher-level transport language for argument",
+      "content": "Although speed remains important, sustainability and transport resilience deserve equal policy attention.",
+      "detail": "Balance aims"
+    },
+    {
+      "id": "540aaee2-5681-4625-a33e-7483b0640e42",
+      "kind": "sentence",
+      "discipline": "transport",
+      "level": "B2",
+      "title": "Higher-level transport language for argument",
+      "content": "Any expansion plan should address capacity constraints rather than simply increase route length.",
+      "detail": "Add a condition"
+    },
+    {
+      "id": "909df21a-0601-496b-a7da-094cfca05127",
+      "kind": "sentence",
+      "discipline": "transport",
+      "level": "B2",
+      "title": "Higher-level transport language for argument",
+      "content": "For this reason, emission reduction and logistical efficiency should be treated as linked objectives.",
+      "detail": "Draw a policy conclusion"
+    },
+    {
+      "id": "af386b71-7519-4c38-a7fd-182e618c26ee",
+      "kind": "vocabulary",
+      "discipline": "maths",
+      "level": "A1",
+      "title": "Simple maths language for beginning writers",
+      "content": "number",
+      "detail": "a symbol used for counting The number shows how many students joined the class."
+    },
+    {
+      "id": "69f84cbd-8207-46ff-abd3-3eb49d192150",
+      "kind": "vocabulary",
+      "discipline": "maths",
+      "level": "A1",
+      "title": "Simple maths language for beginning writers",
+      "content": "shape",
+      "detail": "the form of an object A triangle is a simple shape in geometry."
+    },
+    {
+      "id": "c45ecf7c-990f-4a73-9643-11c3fc93fc52",
+      "kind": "vocabulary",
+      "discipline": "maths",
+      "level": "A1",
+      "title": "Simple maths language for beginning writers",
+      "content": "measure",
+      "detail": "find the size or amount of something We measure the line with a ruler."
+    },
+    {
+      "id": "2c1491fd-3aa2-43fa-a193-26f2664f1685",
+      "kind": "vocabulary",
+      "discipline": "maths",
+      "level": "A1",
+      "title": "Simple maths language for beginning writers",
+      "content": "pattern",
+      "detail": "something that repeats in a clear way The chart shows a simple pattern."
+    },
+    {
+      "id": "4f55a4d1-be6a-45c3-a30e-ad065389e41d",
+      "kind": "vocabulary",
+      "discipline": "maths",
+      "level": "A1",
+      "title": "Simple maths language for beginning writers",
+      "content": "graph",
+      "detail": "a picture that shows data The graph makes the result easy to see."
+    },
+    {
+      "id": "91702d7b-de0a-46a8-8e50-297c93b9e235",
+      "kind": "vocabulary",
+      "discipline": "maths",
+      "level": "A1",
+      "title": "Simple maths language for beginning writers",
+      "content": "angle",
+      "detail": "the space between two lines This angle is larger than the first one."
+    },
+    {
+      "id": "91e9cda7-3212-429d-aabb-cad3c12cf73e",
+      "kind": "sentence",
+      "discipline": "maths",
+      "level": "A1",
+      "title": "Simple maths language for beginning writers",
+      "content": "The graph shows a clear increase in student participation.",
+      "detail": "Describe data"
+    },
+    {
+      "id": "6727d85e-df9c-4d86-b835-8b06e2830168",
+      "kind": "sentence",
+      "discipline": "maths",
+      "level": "A1",
+      "title": "Simple maths language for beginning writers",
+      "content": "This pattern is easy to see because the numbers rise each week.",
+      "detail": "Explain a pattern"
+    },
+    {
+      "id": "bd61cb69-4e37-411e-ae4b-e3250c77fd6f",
+      "kind": "sentence",
+      "discipline": "maths",
+      "level": "A1",
+      "title": "Simple maths language for beginning writers",
+      "content": "The first angle is smaller than the second angle.",
+      "detail": "State a comparison"
+    },
+    {
+      "id": "727458dd-fe23-4bde-9b8a-b7429905556b",
+      "kind": "sentence",
+      "discipline": "maths",
+      "level": "A1",
+      "title": "Simple maths language for beginning writers",
+      "content": "These numbers help us understand the result more clearly.",
+      "detail": "Give a simple conclusion"
+    },
+    {
+      "id": "468ce811-cc74-48fd-8a70-a185920f380d",
+      "kind": "vocabulary",
+      "discipline": "maths",
+      "level": "A2",
+      "title": "Practical maths language for structured paragraphs",
+      "content": "equation",
+      "detail": "a mathematical statement with equal values The equation shows the relationship between two values."
+    },
+    {
+      "id": "a8666c31-0b35-4f2b-aaae-3caaa87b4fca",
+      "kind": "vocabulary",
+      "discipline": "maths",
+      "level": "A2",
+      "title": "Practical maths language for structured paragraphs",
+      "content": "variable",
+      "detail": "a quantity that can change Each variable has a different meaning in the formula."
+    },
+    {
+      "id": "6b7916e3-fc75-4f85-bb58-5354898f9381",
+      "kind": "vocabulary",
+      "discipline": "maths",
+      "level": "A2",
+      "title": "Practical maths language for structured paragraphs",
+      "content": "ratio",
+      "detail": "a comparison between two amounts The ratio between theory and practice is balanced."
+    },
+    {
+      "id": "9850dc81-325c-40e5-b378-27e6a5abdef4",
+      "kind": "vocabulary",
+      "discipline": "maths",
+      "level": "A2",
+      "title": "Practical maths language for structured paragraphs",
+      "content": "estimate",
+      "detail": "an approximate calculation We can estimate the total using the first results."
+    },
+    {
+      "id": "3dc5ed79-12d8-47f6-9df5-702e46027955",
+      "kind": "vocabulary",
+      "discipline": "maths",
+      "level": "A2",
+      "title": "Practical maths language for structured paragraphs",
+      "content": "trend",
+      "detail": "the general direction of change The trend in the data is upward."
+    },
+    {
+      "id": "63cb125e-49eb-4ca3-b1f4-842dad65c559",
+      "kind": "vocabulary",
+      "discipline": "maths",
+      "level": "A2",
+      "title": "Practical maths language for structured paragraphs",
+      "content": "calculate",
+      "detail": "work out an answer using numbers Students calculate the value before drawing a conclusion."
+    },
+    {
+      "id": "b1bcab4a-336f-4514-9ec9-abf7be6ebcd0",
+      "kind": "sentence",
+      "discipline": "maths",
+      "level": "A2",
+      "title": "Practical maths language for structured paragraphs",
+      "content": "The equation helps explain how two variables are connected.",
+      "detail": "Introduce numerical evidence"
+    },
+    {
+      "id": "26b18317-8c85-4c79-bf80-adb487bb1dbe",
+      "kind": "sentence",
+      "discipline": "maths",
+      "level": "A2",
+      "title": "Practical maths language for structured paragraphs",
+      "content": "The data shows an upward trend over the first three weeks.",
+      "detail": "Report a trend"
+    },
+    {
+      "id": "7feb6347-764d-4454-bb8b-1c6618a2c802",
+      "kind": "sentence",
+      "discipline": "maths",
+      "level": "A2",
+      "title": "Practical maths language for structured paragraphs",
+      "content": "Students can estimate the result before they calculate the exact answer.",
+      "detail": "Explain method"
+    },
+    {
+      "id": "5226b79c-acaa-4f78-8cff-978ab89a6e37",
+      "kind": "sentence",
+      "discipline": "maths",
+      "level": "A2",
+      "title": "Practical maths language for structured paragraphs",
+      "content": "This ratio suggests that one factor has a stronger influence than the other.",
+      "detail": "Interpret data"
+    },
+    {
+      "id": "4c3262f4-048b-4272-8202-6963004a8cf9",
+      "kind": "vocabulary",
+      "discipline": "maths",
+      "level": "B1",
+      "title": "Analytical maths language for academic writing",
+      "content": "correlation",
+      "detail": "a connection between two changing values The chart suggests a correlation between study time and performance."
+    },
+    {
+      "id": "9ba0baa2-1b03-48d5-ba22-68e3034678a3",
+      "kind": "vocabulary",
+      "discipline": "maths",
+      "level": "B1",
+      "title": "Analytical maths language for academic writing",
+      "content": "distribution",
+      "detail": "the way values are spread The distribution of scores is uneven across the group."
+    },
+    {
+      "id": "1d21a1b8-ae7c-4649-85c7-aad84939e99a",
+      "kind": "vocabulary",
+      "discipline": "maths",
+      "level": "B1",
+      "title": "Analytical maths language for academic writing",
+      "content": "probability",
+      "detail": "how likely something is to happen Probability helps researchers discuss uncertain outcomes."
+    },
+    {
+      "id": "e0894bc5-72a0-48a1-ab40-ac358214724e",
+      "kind": "vocabulary",
+      "discipline": "maths",
+      "level": "B1",
+      "title": "Analytical maths language for academic writing",
+      "content": "model",
+      "detail": "a representation used to explain something The model simplifies a complex real-world process."
+    },
+    {
+      "id": "16e619af-46bb-4d9a-a1ca-2bc49812e031",
+      "kind": "vocabulary",
+      "discipline": "maths",
+      "level": "B1",
+      "title": "Analytical maths language for academic writing",
+      "content": "calculation",
+      "detail": "the process of working out a value The final calculation supports the main conclusion."
+    },
+    {
+      "id": "7b5a11b1-b03d-4d05-8eab-f4e76c533c3f",
+      "kind": "vocabulary",
+      "discipline": "maths",
+      "level": "B1",
+      "title": "Analytical maths language for academic writing",
+      "content": "quantitative evidence",
+      "detail": "evidence based on numbers Quantitative evidence makes the argument more convincing."
+    },
+    {
+      "id": "9bf4f241-4386-44f1-89f1-fa03a9f6b5af",
+      "kind": "sentence",
+      "discipline": "maths",
+      "level": "B1",
+      "title": "Analytical maths language for academic writing",
+      "content": "Quantitative evidence strengthens the argument because it reveals patterns that may not be obvious in description alone.",
+      "detail": "State an analytical claim"
+    },
+    {
+      "id": "f8798d92-1400-4e75-9aac-8014b529f126",
+      "kind": "sentence",
+      "discipline": "maths",
+      "level": "B1",
+      "title": "Analytical maths language for academic writing",
+      "content": "However, correlation does not automatically prove that one factor caused the other.",
+      "detail": "Warn about interpretation"
+    },
+    {
+      "id": "b178b0a4-c411-4d54-8ddc-bd096b6414d1",
+      "kind": "sentence",
+      "discipline": "maths",
+      "level": "B1",
+      "title": "Analytical maths language for academic writing",
+      "content": "A mathematical model can simplify a complex problem while preserving its main structure.",
+      "detail": "Explain value of a model"
+    },
+    {
+      "id": "dd0fb08a-2b89-4649-be29-6d94b0e41145",
+      "kind": "sentence",
+      "discipline": "maths",
+      "level": "B1",
+      "title": "Analytical maths language for academic writing",
+      "content": "This calculation therefore provides a stronger basis for the final interpretation.",
+      "detail": "Link method and conclusion"
+    },
+    {
+      "id": "abbef0e3-dbc3-4bbe-b21a-790730ba2bc0",
+      "kind": "vocabulary",
+      "discipline": "maths",
+      "level": "B2",
+      "title": "Higher-level maths language for reasoned argument",
+      "content": "statistical validity",
+      "detail": "how trustworthy a statistical result is Statistical validity depends on both sample size and method."
+    },
+    {
+      "id": "f2131c75-ea54-40d3-875b-7ce51ff39f21",
+      "kind": "vocabulary",
+      "discipline": "maths",
+      "level": "B2",
+      "title": "Higher-level maths language for reasoned argument",
+      "content": "predictive model",
+      "detail": "a model used to forecast outcomes The predictive model estimates future transport demand."
+    },
+    {
+      "id": "c497b89f-f1d8-4419-a1a1-290289efeadc",
+      "kind": "vocabulary",
+      "discipline": "maths",
+      "level": "B2",
+      "title": "Higher-level maths language for reasoned argument",
+      "content": "deviation",
+      "detail": "difference from an expected value A large deviation may suggest a hidden variable."
+    },
+    {
+      "id": "45d8bd37-1f42-4f2d-927c-c5c50b9ae0f7",
+      "kind": "vocabulary",
+      "discipline": "maths",
+      "level": "B2",
+      "title": "Higher-level maths language for reasoned argument",
+      "content": "parameter",
+      "detail": "a measurable factor in a system Researchers adjusted the main parameter during testing."
+    },
+    {
+      "id": "af421583-19d8-4e84-be60-bfab732f07f1",
+      "kind": "vocabulary",
+      "discipline": "maths",
+      "level": "B2",
+      "title": "Higher-level maths language for reasoned argument",
+      "content": "optimization problem",
+      "detail": "a problem about finding the best result Route planning can be framed as an optimization problem."
+    },
+    {
+      "id": "e81a2119-9246-403d-8d85-896eb9e6df94",
+      "kind": "vocabulary",
+      "discipline": "maths",
+      "level": "B2",
+      "title": "Higher-level maths language for reasoned argument",
+      "content": "analytical precision",
+      "detail": "careful and exact reasoning Analytical precision is essential when interpreting complex datasets."
+    },
+    {
+      "id": "35f34f63-f77d-47eb-83b8-de38a1332086",
+      "kind": "sentence",
+      "discipline": "maths",
+      "level": "B2",
+      "title": "Higher-level maths language for reasoned argument",
+      "content": "A predictive model is only persuasive when its assumptions and parameters are explained with analytical precision.",
+      "detail": "State a precise claim"
+    },
+    {
+      "id": "9d20c3e8-da29-417f-ad23-448844379820",
+      "kind": "sentence",
+      "discipline": "maths",
+      "level": "B2",
+      "title": "Higher-level maths language for reasoned argument",
+      "content": "Even so, some deviation is inevitable when real-world conditions change unexpectedly.",
+      "detail": "Acknowledge uncertainty"
+    },
+    {
+      "id": "ffef8fe8-1c8a-4443-9157-f914f81b1359",
+      "kind": "sentence",
+      "discipline": "maths",
+      "level": "B2",
+      "title": "Higher-level maths language for reasoned argument",
+      "content": "Statistical validity improves when researchers combine transparent sampling with careful interpretation.",
+      "detail": "Discuss methodological strength"
+    },
+    {
+      "id": "fe38e96b-39c1-43b1-84f3-49d918b75310",
+      "kind": "sentence",
+      "discipline": "maths",
+      "level": "B2",
+      "title": "Higher-level maths language for reasoned argument",
+      "content": "For this reason, optimization problems should be discussed in relation to both efficiency and uncertainty.",
+      "detail": "Draw a higher-level conclusion"
+    },
+    {
+      "id": "8d0dfbba-0621-463a-8b74-ae352ea6b568",
+      "kind": "vocabulary",
+      "discipline": "mechanical",
+      "level": "A1",
+      "title": "Basic mechanical language for simple description",
+      "content": "machine",
+      "detail": "a tool with moving parts that does work This machine lifts heavy materials safely."
+    },
+    {
+      "id": "f3e7d63a-099e-44a9-9f8a-c563356c46b9",
+      "kind": "vocabulary",
+      "discipline": "mechanical",
+      "level": "A1",
+      "title": "Basic mechanical language for simple description",
+      "content": "gear",
+      "detail": "a toothed wheel in a machine The gear helps the parts move together."
+    },
+    {
+      "id": "fc6a4480-3d6e-4373-99b4-db2118797f98",
+      "kind": "vocabulary",
+      "discipline": "mechanical",
+      "level": "A1",
+      "title": "Basic mechanical language for simple description",
+      "content": "engine",
+      "detail": "a machine that produces power The engine provides energy for the system."
+    },
+    {
+      "id": "710c3af1-e5d7-46f6-92c0-f54fbc8ea108",
+      "kind": "vocabulary",
+      "discipline": "mechanical",
+      "level": "A1",
+      "title": "Basic mechanical language for simple description",
+      "content": "metal",
+      "detail": "a strong material used in engineering The frame is made of metal."
+    },
+    {
+      "id": "68228767-057c-4862-b89e-777bf7e4138f",
+      "kind": "vocabulary",
+      "discipline": "mechanical",
+      "level": "A1",
+      "title": "Basic mechanical language for simple description",
+      "content": "motor",
+      "detail": "a device that creates movement The motor turns the fan quickly."
+    },
+    {
+      "id": "c2cb96cc-3db3-4487-bb0c-4f05bd5bfc8e",
+      "kind": "vocabulary",
+      "discipline": "mechanical",
+      "level": "A1",
+      "title": "Basic mechanical language for simple description",
+      "content": "part",
+      "detail": "one piece of a larger system Each part has a clear function in the device."
+    },
+    {
+      "id": "2bbd6192-868d-4d3a-9408-28dacf19a4b2",
+      "kind": "sentence",
+      "discipline": "mechanical",
+      "level": "A1",
+      "title": "Basic mechanical language for simple description",
+      "content": "This machine uses a motor to move one important part.",
+      "detail": "Describe a device"
+    },
+    {
+      "id": "210cfa8c-0027-46c7-abee-2b55e03c915f",
+      "kind": "sentence",
+      "discipline": "mechanical",
+      "level": "A1",
+      "title": "Basic mechanical language for simple description",
+      "content": "The gear helps the system work in a smooth way.",
+      "detail": "Explain a function"
+    },
+    {
+      "id": "5223b261-032b-43aa-bfd5-cc2d3b0ae182",
+      "kind": "sentence",
+      "discipline": "mechanical",
+      "level": "A1",
+      "title": "Basic mechanical language for simple description",
+      "content": "Metal is useful because it is strong and durable.",
+      "detail": "State material choice"
+    },
+    {
+      "id": "27ecddbd-f10f-471a-a08d-3c9fd51a79e9",
+      "kind": "sentence",
+      "discipline": "mechanical",
+      "level": "A1",
+      "title": "Basic mechanical language for simple description",
+      "content": "As a result, the device can work safely for daily tasks.",
+      "detail": "Give a simple conclusion"
+    },
+    {
+      "id": "23befe3b-1552-4633-aa09-a95b9b1f8ea6",
+      "kind": "vocabulary",
+      "discipline": "mechanical",
+      "level": "A2",
+      "title": "Practical mechanical language for short explanation",
+      "content": "force",
+      "detail": "a push or pull that causes movement The machine uses force to lift the object."
+    },
+    {
+      "id": "aee59bf6-ebca-47c8-8316-b1cf87f4dfe8",
+      "kind": "vocabulary",
+      "discipline": "mechanical",
+      "level": "A2",
+      "title": "Practical mechanical language for short explanation",
+      "content": "friction",
+      "detail": "resistance when surfaces move against each other Too much friction can damage the moving parts."
+    },
+    {
+      "id": "7bc3be5c-30c0-421c-b998-54f9daee23e2",
+      "kind": "vocabulary",
+      "discipline": "mechanical",
+      "level": "A2",
+      "title": "Practical mechanical language for short explanation",
+      "content": "rotation",
+      "detail": "movement in a circle Rotation allows the wheel to turn continuously."
+    },
+    {
+      "id": "2c527f52-23a8-49b0-8110-d014b33f2816",
+      "kind": "vocabulary",
+      "discipline": "mechanical",
+      "level": "A2",
+      "title": "Practical mechanical language for short explanation",
+      "content": "component",
+      "detail": "one important piece in a machine Each component should be checked before use."
+    },
+    {
+      "id": "c054ff2c-fc78-4912-ad05-2baa5ef6722b",
+      "kind": "vocabulary",
+      "discipline": "mechanical",
+      "level": "A2",
+      "title": "Practical mechanical language for short explanation",
+      "content": "efficiency",
+      "detail": "how well something works without waste Better efficiency reduces energy loss."
+    },
+    {
+      "id": "87138a47-66f7-4982-9445-0ae8404d8b05",
+      "kind": "vocabulary",
+      "discipline": "mechanical",
+      "level": "A2",
+      "title": "Practical mechanical language for short explanation",
+      "content": "inspection",
+      "detail": "a careful check Regular inspection prevents simple problems."
+    },
+    {
+      "id": "ac460c8d-fabd-4cfb-8141-d558a3188a01",
+      "kind": "sentence",
+      "discipline": "mechanical",
+      "level": "A2",
+      "title": "Practical mechanical language for short explanation",
+      "content": "High friction can reduce efficiency and shorten the life of the component.",
+      "detail": "Explain a mechanical issue"
+    },
+    {
+      "id": "e0d34fc6-df03-468b-a14f-731c51f7eaad",
+      "kind": "sentence",
+      "discipline": "mechanical",
+      "level": "A2",
+      "title": "Practical mechanical language for short explanation",
+      "content": "The system uses rotation to transfer force from one part to another.",
+      "detail": "Describe movement"
+    },
+    {
+      "id": "c039aad3-6da2-478d-a6a9-9e1ab999e6de",
+      "kind": "sentence",
+      "discipline": "mechanical",
+      "level": "A2",
+      "title": "Practical mechanical language for short explanation",
+      "content": "Students should complete a simple inspection before operating the device.",
+      "detail": "Recommend practice"
+    },
+    {
+      "id": "5ef4efbf-4b3c-4339-a69b-4e1b0a70e8fd",
+      "kind": "sentence",
+      "discipline": "mechanical",
+      "level": "A2",
+      "title": "Practical mechanical language for short explanation",
+      "content": "This process improves safety and supports stable performance.",
+      "detail": "State a benefit"
+    },
+    {
+      "id": "f1a04780-0b04-42e2-a4b2-1b6599add00a",
+      "kind": "vocabulary",
+      "discipline": "mechanical",
+      "level": "B1",
+      "title": "Analytical mechanical language for technical writing",
+      "content": "load distribution",
+      "detail": "how weight or force is shared in a system Load distribution affects whether the structure remains stable."
+    },
+    {
+      "id": "0ed5b670-ceb0-4727-8fd8-29b9a380b1ab",
+      "kind": "vocabulary",
+      "discipline": "mechanical",
+      "level": "B1",
+      "title": "Analytical mechanical language for technical writing",
+      "content": "mechanical stress",
+      "detail": "internal force inside a material Mechanical stress increases when the component carries a heavy load."
+    },
+    {
+      "id": "6c314f83-8e76-4688-83df-073cc0ece2f3",
+      "kind": "vocabulary",
+      "discipline": "mechanical",
+      "level": "B1",
+      "title": "Analytical mechanical language for technical writing",
+      "content": "torque",
+      "detail": "turning force Torque is necessary for controlled rotation."
+    },
+    {
+      "id": "bdb2321c-ed0a-437c-88d9-cfe547585679",
+      "kind": "vocabulary",
+      "discipline": "mechanical",
+      "level": "B1",
+      "title": "Analytical mechanical language for technical writing",
+      "content": "structural stability",
+      "detail": "ability to remain strong and balanced Structural stability is essential in machine frames."
+    },
+    {
+      "id": "b36553e0-8d5c-443d-a748-e3cbcd9ee21b",
+      "kind": "vocabulary",
+      "discipline": "mechanical",
+      "level": "B1",
+      "title": "Analytical mechanical language for technical writing",
+      "content": "wear resistance",
+      "detail": "ability to resist damage from use Wear resistance matters in high-speed systems."
+    },
+    {
+      "id": "adbe513e-c940-4f26-95bd-d64317303cc9",
+      "kind": "vocabulary",
+      "discipline": "mechanical",
+      "level": "B1",
+      "title": "Analytical mechanical language for technical writing",
+      "content": "maintenance cycle",
+      "detail": "planned schedule for upkeep A short maintenance cycle can reduce long-term failure risk."
+    },
+    {
+      "id": "c9947394-0242-43fb-b52f-3fd34da62c1c",
+      "kind": "sentence",
+      "discipline": "mechanical",
+      "level": "B1",
+      "title": "Analytical mechanical language for technical writing",
+      "content": "Mechanical stress should be monitored carefully because repeated overload can weaken structural stability.",
+      "detail": "Present a technical claim"
+    },
+    {
+      "id": "2420ce85-e0d4-446a-b5fa-66b732702482",
+      "kind": "sentence",
+      "discipline": "mechanical",
+      "level": "B1",
+      "title": "Analytical mechanical language for technical writing",
+      "content": "When torque is uneven, load distribution becomes less predictable across the system.",
+      "detail": "Explain cause and effect"
+    },
+    {
+      "id": "4bd2b3de-3b68-4ea1-96fc-27c885ba58be",
+      "kind": "sentence",
+      "discipline": "mechanical",
+      "level": "B1",
+      "title": "Analytical mechanical language for technical writing",
+      "content": "One practical response is to shorten the maintenance cycle for heavily used components.",
+      "detail": "Recommend a response"
+    },
+    {
+      "id": "c23eab21-9055-4a1e-aca2-25188a801e7c",
+      "kind": "sentence",
+      "discipline": "mechanical",
+      "level": "B1",
+      "title": "Analytical mechanical language for technical writing",
+      "content": "This approach can improve wear resistance and reduce sudden failure.",
+      "detail": "Draw a conclusion"
+    },
+    {
+      "id": "12c5ec36-c7a7-4656-8ade-239e617384bb",
+      "kind": "vocabulary",
+      "discipline": "mechanical",
+      "level": "B2",
+      "title": "Higher-level mechanical language for engineering argument",
+      "content": "fatigue failure",
+      "detail": "breakage caused by repeated stress over time Fatigue failure may occur even when the load is moderate."
+    },
+    {
+      "id": "a7515c2a-e2f5-4a02-ab41-240f296dbc9b",
+      "kind": "vocabulary",
+      "discipline": "mechanical",
+      "level": "B2",
+      "title": "Higher-level mechanical language for engineering argument",
+      "content": "kinematic chain",
+      "detail": "linked moving parts in a mechanism The kinematic chain determines how motion is transferred."
+    },
+    {
+      "id": "950d072e-9e07-40af-b942-8b22992c2c37",
+      "kind": "vocabulary",
+      "discipline": "mechanical",
+      "level": "B2",
+      "title": "Higher-level mechanical language for engineering argument",
+      "content": "load-bearing capacity",
+      "detail": "how much weight a part can safely hold Design choices must reflect the required load-bearing capacity."
+    },
+    {
+      "id": "531ecd18-0012-4fcf-8d66-93a6f9191800",
+      "kind": "vocabulary",
+      "discipline": "mechanical",
+      "level": "B2",
+      "title": "Higher-level mechanical language for engineering argument",
+      "content": "mechanical reliability",
+      "detail": "how consistently a system performs Mechanical reliability is crucial in public safety systems."
+    },
+    {
+      "id": "3c37569c-d39b-40e2-ac9b-26ede3d29c72",
+      "kind": "vocabulary",
+      "discipline": "mechanical",
+      "level": "B2",
+      "title": "Higher-level mechanical language for engineering argument",
+      "content": "material deformation",
+      "detail": "change in shape under force Material deformation becomes serious under repeated impact."
+    },
+    {
+      "id": "84f6a6ca-6d8a-4c50-9e8f-b08ec9c00527",
+      "kind": "vocabulary",
+      "discipline": "mechanical",
+      "level": "B2",
+      "title": "Higher-level mechanical language for engineering argument",
+      "content": "design tolerance",
+      "detail": "acceptable limit of variation in design Small design tolerances can improve precision but increase cost."
+    },
+    {
+      "id": "d9fd963f-a3b9-4339-ab13-0a45b5e3de37",
+      "kind": "sentence",
+      "discipline": "mechanical",
+      "level": "B2",
+      "title": "Higher-level mechanical language for engineering argument",
+      "content": "Mechanical reliability depends not only on strength, but also on how the kinematic chain distributes repeated stress.",
+      "detail": "State a higher-level argument"
+    },
+    {
+      "id": "943b8292-2609-437c-8686-f473d33e845d",
+      "kind": "sentence",
+      "discipline": "mechanical",
+      "level": "B2",
+      "title": "Higher-level mechanical language for engineering argument",
+      "content": "Even minor material deformation can become significant when design tolerance is narrow.",
+      "detail": "Evaluate a risk"
+    },
+    {
+      "id": "9f7b8c6c-3ba0-4fad-bd81-56ae8a12195d",
+      "kind": "sentence",
+      "discipline": "mechanical",
+      "level": "B2",
+      "title": "Higher-level mechanical language for engineering argument",
+      "content": "Any proposal should consider load-bearing capacity alongside the risk of fatigue failure.",
+      "detail": "Add a design condition"
+    },
+    {
+      "id": "35f83a27-92fa-495d-91a6-2818683cee3d",
+      "kind": "sentence",
+      "discipline": "mechanical",
+      "level": "B2",
+      "title": "Higher-level mechanical language for engineering argument",
+      "content": "For this reason, mechanism design must balance precision, durability, and long-term reliability.",
+      "detail": "Conclude with precision"
+    },
+    {
+      "id": "ed4b17d3-57a8-470f-ba8a-d39b929eed7f",
+      "kind": "vocabulary",
+      "discipline": "civil",
+      "level": "A1",
+      "title": "Basic civil language for simple academic writing",
+      "content": "building",
+      "detail": "a structure with walls and a roof The new building is near the engineering lab."
+    },
+    {
+      "id": "4e178f12-70e6-4d57-b16a-69f702cd2e64",
+      "kind": "vocabulary",
+      "discipline": "civil",
+      "level": "A1",
+      "title": "Basic civil language for simple academic writing",
+      "content": "road",
+      "detail": "a surface for cars and buses The road connects the campus and the town."
+    },
+    {
+      "id": "c2dbb94a-0119-4b06-8675-e66bb2b035a8",
+      "kind": "vocabulary",
+      "discipline": "civil",
+      "level": "A1",
+      "title": "Basic civil language for simple academic writing",
+      "content": "site",
+      "detail": "a place where work happens The site needs careful safety checks."
+    },
+    {
+      "id": "4e3f3163-98de-4065-b267-7923ecda2fcd",
+      "kind": "vocabulary",
+      "discipline": "civil",
+      "level": "A1",
+      "title": "Basic civil language for simple academic writing",
+      "content": "concrete",
+      "detail": "a hard building material Concrete is used in the foundation."
+    },
+    {
+      "id": "59a0ee18-cbbf-4f6e-bcd2-70a24869c41f",
+      "kind": "vocabulary",
+      "discipline": "civil",
+      "level": "A1",
+      "title": "Basic civil language for simple academic writing",
+      "content": "safety helmet",
+      "detail": "head protection on a site Every student must wear a safety helmet."
+    },
+    {
+      "id": "71e02181-b88f-4e67-bc44-774a7a3a5ece",
+      "kind": "vocabulary",
+      "discipline": "civil",
+      "level": "A1",
+      "title": "Basic civil language for simple academic writing",
+      "content": "foundation",
+      "detail": "the base that supports a structure A strong foundation keeps the building stable."
+    },
+    {
+      "id": "fd947b00-d288-4269-a8b0-c61af7086d05",
+      "kind": "sentence",
+      "discipline": "civil",
+      "level": "A1",
+      "title": "Basic civil language for simple academic writing",
+      "content": "The foundation is important because it supports the whole building.",
+      "detail": "Describe a structure"
+    },
+    {
+      "id": "78650e61-2d8f-4fb6-b0e7-e67c65fd1ddc",
+      "kind": "sentence",
+      "discipline": "civil",
+      "level": "A1",
+      "title": "Basic civil language for simple academic writing",
+      "content": "Workers should wear a safety helmet on every site visit.",
+      "detail": "Mention safety"
+    },
+    {
+      "id": "9bcfcb74-9890-4944-b3e2-cfd088e6272b",
+      "kind": "sentence",
+      "discipline": "civil",
+      "level": "A1",
+      "title": "Basic civil language for simple academic writing",
+      "content": "Concrete is useful because it is strong and durable.",
+      "detail": "State a material use"
+    },
+    {
+      "id": "a1aaa3a2-3c14-4d91-8e9f-cdbe76a138e7",
+      "kind": "sentence",
+      "discipline": "civil",
+      "level": "A1",
+      "title": "Basic civil language for simple academic writing",
+      "content": "These steps help the project stay safe and organized.",
+      "detail": "Give a simple conclusion"
+    },
+    {
+      "id": "5c46d641-66a9-4827-9c1b-c2d5344dbac8",
+      "kind": "vocabulary",
+      "discipline": "civil",
+      "level": "A2",
+      "title": "Practical civil language for paragraph building",
+      "content": "drainage",
+      "detail": "system for removing water Good drainage prevents flooding near roads."
+    },
+    {
+      "id": "eda38717-a515-44d1-aca7-6da4cc7117c6",
+      "kind": "vocabulary",
+      "discipline": "civil",
+      "level": "A2",
+      "title": "Practical civil language for paragraph building",
+      "content": "survey",
+      "detail": "measurement and examination of land The survey provides important site information."
+    },
+    {
+      "id": "4ba1584b-b534-42ed-833f-427a7f0b928d",
+      "kind": "vocabulary",
+      "discipline": "civil",
+      "level": "A2",
+      "title": "Practical civil language for paragraph building",
+      "content": "construction plan",
+      "detail": "a document showing how to build something The construction plan explains each stage of the project."
+    },
+    {
+      "id": "e2ff5cd4-a0c9-4516-9742-649945735a48",
+      "kind": "vocabulary",
+      "discipline": "civil",
+      "level": "A2",
+      "title": "Practical civil language for paragraph building",
+      "content": "load",
+      "detail": "weight a structure carries Engineers must check the load on the bridge."
+    },
+    {
+      "id": "b04a22e4-6a11-4e77-85d2-707fa89487d7",
+      "kind": "vocabulary",
+      "discipline": "civil",
+      "level": "A2",
+      "title": "Practical civil language for paragraph building",
+      "content": "inspection report",
+      "detail": "a document after checking a site The inspection report lists safety concerns."
+    },
+    {
+      "id": "da9dc97d-2d50-428e-8c68-9956b904b63c",
+      "kind": "vocabulary",
+      "discipline": "civil",
+      "level": "A2",
+      "title": "Practical civil language for paragraph building",
+      "content": "surface crack",
+      "detail": "a small break on the outside A surface crack should be checked quickly."
+    },
+    {
+      "id": "5a7a440c-0571-44cd-8d0a-54fc1467e9cd",
+      "kind": "sentence",
+      "discipline": "civil",
+      "level": "A2",
+      "title": "Practical civil language for paragraph building",
+      "content": "A clear construction plan helps the team complete each stage in the correct order.",
+      "detail": "Explain planning"
+    },
+    {
+      "id": "34ac3665-f08a-4cdd-bf05-f949e7684ea5",
+      "kind": "sentence",
+      "discipline": "civil",
+      "level": "A2",
+      "title": "Practical civil language for paragraph building",
+      "content": "Poor drainage can damage roads and create safety problems after heavy rain.",
+      "detail": "Describe risk"
+    },
+    {
+      "id": "705cdd29-63ad-4fa1-8b04-9a8eb3d26086",
+      "kind": "sentence",
+      "discipline": "civil",
+      "level": "A2",
+      "title": "Practical civil language for paragraph building",
+      "content": "Engineers should review the inspection report before the next site task.",
+      "detail": "Recommend checking"
+    },
+    {
+      "id": "f6c26d28-3b8b-4234-b7d7-b14d18e61107",
+      "kind": "sentence",
+      "discipline": "civil",
+      "level": "A2",
+      "title": "Practical civil language for paragraph building",
+      "content": "This survey is useful because it gives accurate information about the land.",
+      "detail": "Show purpose"
+    },
+    {
+      "id": "e4fc8655-3277-474a-8151-9380464af835",
+      "kind": "vocabulary",
+      "discipline": "civil",
+      "level": "B1",
+      "title": "Analytical civil language for technical explanation",
+      "content": "structural load",
+      "detail": "the weight and force carried by a structure Structural load must be calculated before design approval."
+    },
+    {
+      "id": "6c9a73bf-b73d-4a37-a611-3140c09c6fcc",
+      "kind": "vocabulary",
+      "discipline": "civil",
+      "level": "B1",
+      "title": "Analytical civil language for technical explanation",
+      "content": "site assessment",
+      "detail": "evaluation of a construction site A detailed site assessment reduces planning errors."
+    },
+    {
+      "id": "9beb9bea-6059-4647-87ff-fe011abff915",
+      "kind": "vocabulary",
+      "discipline": "civil",
+      "level": "B1",
+      "title": "Analytical civil language for technical explanation",
+      "content": "material durability",
+      "detail": "how long a material lasts under use Material durability influences long-term maintenance costs."
+    },
+    {
+      "id": "d621ae28-b857-4f94-95d8-fac0f6237dae",
+      "kind": "vocabulary",
+      "discipline": "civil",
+      "level": "B1",
+      "title": "Analytical civil language for technical explanation",
+      "content": "foundation design",
+      "detail": "planning the base of a structure Foundation design depends on soil condition and load."
+    },
+    {
+      "id": "a02f9c5d-a3f6-4159-ac41-dd09fe0803da",
+      "kind": "vocabulary",
+      "discipline": "civil",
+      "level": "B1",
+      "title": "Analytical civil language for technical explanation",
+      "content": "water management",
+      "detail": "control of water on or near a site Water management is necessary in flood-prone areas."
+    },
+    {
+      "id": "4fb7c6a5-04fd-4666-aa76-a204377631b1",
+      "kind": "vocabulary",
+      "discipline": "civil",
+      "level": "B1",
+      "title": "Analytical civil language for technical explanation",
+      "content": "construction safety",
+      "detail": "protection of workers and site operations Construction safety should guide every stage of the project."
+    },
+    {
+      "id": "fa40d11d-6569-45d1-82f0-6456e9d87cdc",
+      "kind": "sentence",
+      "discipline": "civil",
+      "level": "B1",
+      "title": "Analytical civil language for technical explanation",
+      "content": "Foundation design should reflect both soil condition and expected structural load.",
+      "detail": "State an engineering point"
+    },
+    {
+      "id": "c56acb2b-5078-4fcb-9cb9-2fd2cdf3924b",
+      "kind": "sentence",
+      "discipline": "civil",
+      "level": "B1",
+      "title": "Analytical civil language for technical explanation",
+      "content": "Material durability matters because early damage increases maintenance demands and cost.",
+      "detail": "Explain long-term value"
+    },
+    {
+      "id": "b3c36646-276b-4b18-bf8f-8b5326db669b",
+      "kind": "sentence",
+      "discipline": "civil",
+      "level": "B1",
+      "title": "Analytical civil language for technical explanation",
+      "content": "One effective measure is to improve water management before major construction begins.",
+      "detail": "Suggest a practical measure"
+    },
+    {
+      "id": "36bb1927-5364-44b5-8a7b-2faab79ac22b",
+      "kind": "sentence",
+      "discipline": "civil",
+      "level": "B1",
+      "title": "Analytical civil language for technical explanation",
+      "content": "This would strengthen construction safety and reduce preventable structural problems.",
+      "detail": "Conclude with impact"
+    },
+    {
+      "id": "b36c5342-049c-41b5-b084-d559ae117208",
+      "kind": "vocabulary",
+      "discipline": "civil",
+      "level": "B2",
+      "title": "Higher-level civil language for academic argument",
+      "content": "geotechnical analysis",
+      "detail": "study of soil and ground conditions Geotechnical analysis is essential before large foundation work."
+    },
+    {
+      "id": "5edc18a0-e0b0-4058-a1dd-c48cc4893bdf",
+      "kind": "vocabulary",
+      "discipline": "civil",
+      "level": "B2",
+      "title": "Higher-level civil language for academic argument",
+      "content": "structural integrity",
+      "detail": "overall strength and soundness of a structure Structural integrity must remain the priority throughout construction."
+    },
+    {
+      "id": "fd82046b-9e48-41b1-ab37-929153a511fe",
+      "kind": "vocabulary",
+      "discipline": "civil",
+      "level": "B2",
+      "title": "Higher-level civil language for academic argument",
+      "content": "load-path efficiency",
+      "detail": "effective transfer of force through a structure Load-path efficiency improves building stability under pressure."
+    },
+    {
+      "id": "5eb31dfd-19e3-4a4c-ad8a-a6c38c030ac7",
+      "kind": "vocabulary",
+      "discipline": "civil",
+      "level": "B2",
+      "title": "Higher-level civil language for academic argument",
+      "content": "infrastructure resilience",
+      "detail": "ability of infrastructure to recover from stress or disaster Infrastructure resilience is increasingly important in climate planning."
+    },
+    {
+      "id": "69e32379-de86-44e1-8d4d-c9cdcbb81b34",
+      "kind": "vocabulary",
+      "discipline": "civil",
+      "level": "B2",
+      "title": "Higher-level civil language for academic argument",
+      "content": "compliance standard",
+      "detail": "required rule or benchmark Each design must meet the relevant compliance standard."
+    },
+    {
+      "id": "09bd3491-deed-4944-bbf9-be951adc251f",
+      "kind": "vocabulary",
+      "discipline": "civil",
+      "level": "B2",
+      "title": "Higher-level civil language for academic argument",
+      "content": "lifecycle cost",
+      "detail": "total cost across the full life of a project Lifecycle cost should influence material decisions, not only initial price."
+    },
+    {
+      "id": "1c41e2e8-14e1-47b9-bbe3-9263fd312197",
+      "kind": "sentence",
+      "discipline": "civil",
+      "level": "B2",
+      "title": "Higher-level civil language for academic argument",
+      "content": "Civil engineering decisions should prioritize structural integrity and lifecycle cost rather than short-term savings alone.",
+      "detail": "State a policy-style argument"
+    },
+    {
+      "id": "0a68baef-e2b8-4054-9d83-b9585a28917f",
+      "kind": "sentence",
+      "discipline": "civil",
+      "level": "B2",
+      "title": "Higher-level civil language for academic argument",
+      "content": "This is especially important when infrastructure resilience is threatened by changing environmental conditions.",
+      "detail": "Acknowledge a planning demand"
+    },
+    {
+      "id": "08052fcc-9ded-47ca-bc44-91cad8f3cb5f",
+      "kind": "sentence",
+      "discipline": "civil",
+      "level": "B2",
+      "title": "Higher-level civil language for academic argument",
+      "content": "Any proposal should include geotechnical analysis and clear compliance standards from the earliest stage.",
+      "detail": "Add a technical condition"
+    },
+    {
+      "id": "b93f6756-bf72-44e5-bce3-fe3550189f40",
+      "kind": "sentence",
+      "discipline": "civil",
+      "level": "B2",
+      "title": "Higher-level civil language for academic argument",
+      "content": "For this reason, long-term public safety must remain central to civil design choices.",
+      "detail": "Reach a precise conclusion"
+    }
+  ]
+}
