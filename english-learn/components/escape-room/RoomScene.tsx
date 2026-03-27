@@ -39,7 +39,7 @@ export function RoomScene({
       </div>
 
       <div className="relative mt-5 min-h-[56vh] overflow-hidden rounded-[1.85rem] border border-white/12 shadow-[0_24px_64px_rgba(0,0,0,0.28)]">
-        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/quests/escape-room/room-scene.svg')" }} />
+        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/quests/escape-room/library.png')" }} />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(4,10,20,0.12),rgba(4,10,20,0.36))]" />
 
         {roomObjects.map((roomObject) => (
