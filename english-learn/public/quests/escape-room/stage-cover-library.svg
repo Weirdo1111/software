@@ -1,0 +1,31 @@
+<svg width="1400" height="900" viewBox="0 0 1400 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="lib-bg" x1="700" y1="0" x2="700" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0C1C22" />
+      <stop offset="1" stop-color="#081116" />
+    </linearGradient>
+    <linearGradient id="lib-panel" x1="186" y1="132" x2="1184" y2="770" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#67E8F9" stop-opacity="0.74" />
+      <stop offset="1" stop-color="#BEF264" stop-opacity="0.44" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1400" height="900" fill="url(#lib-bg)" />
+  <circle cx="240" cy="140" r="180" fill="#67E8F9" fill-opacity="0.14" />
+  <circle cx="1168" cy="760" r="240" fill="#BEF264" fill-opacity="0.12" />
+
+  <rect x="132" y="114" width="1136" height="622" rx="48" fill="#0F1D22" stroke="rgba(255,255,255,0.1)" stroke-width="6" />
+  <rect x="198" y="168" width="200" height="476" rx="28" fill="#12323A" />
+  <rect x="422" y="168" width="200" height="476" rx="28" fill="#102C33" />
+  <rect x="646" y="168" width="200" height="476" rx="28" fill="#0F2930" />
+  <rect x="870" y="168" width="200" height="476" rx="28" fill="#102C33" />
+  <rect x="1094" y="168" width="108" height="476" rx="28" fill="#12323A" />
+
+  <rect x="226" y="210" width="144" height="40" rx="14" fill="url(#lib-panel)" />
+  <rect x="450" y="250" width="144" height="40" rx="14" fill="url(#lib-panel)" />
+  <rect x="674" y="220" width="144" height="40" rx="14" fill="url(#lib-panel)" />
+  <rect x="898" y="280" width="144" height="40" rx="14" fill="url(#lib-panel)" />
+
+  <rect x="312" y="690" width="776" height="86" rx="26" fill="#0C171C" stroke="rgba(255,255,255,0.08)" stroke-width="4" />
+  <text x="360" y="748" fill="#E7FFF6" font-family="Avenir Next, Segoe UI, sans-serif" font-size="54" font-weight="700">Library Vault</text>
+</svg>

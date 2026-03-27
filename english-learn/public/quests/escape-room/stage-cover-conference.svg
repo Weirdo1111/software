@@ -1,0 +1,27 @@
+<svg width="1400" height="900" viewBox="0 0 1400 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="conf-bg" x1="700" y1="0" x2="700" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#21101B" />
+      <stop offset="1" stop-color="#12070D" />
+    </linearGradient>
+    <linearGradient id="conf-stage" x1="278" y1="160" x2="1144" y2="702" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F59E0B" stop-opacity="0.72" />
+      <stop offset="0.52" stop-color="#EF4444" stop-opacity="0.68" />
+      <stop offset="1" stop-color="#FB7185" stop-opacity="0.52" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1400" height="900" fill="url(#conf-bg)" />
+  <circle cx="300" cy="130" r="180" fill="#F59E0B" fill-opacity="0.15" />
+  <circle cx="1140" cy="180" r="150" fill="#FB7185" fill-opacity="0.14" />
+  <circle cx="1128" cy="760" r="210" fill="#EF4444" fill-opacity="0.14" />
+
+  <rect x="210" y="162" width="980" height="476" rx="52" fill="#180A12" stroke="rgba(255,255,255,0.08)" stroke-width="6" />
+  <rect x="298" y="238" width="804" height="250" rx="34" fill="#09050A" />
+  <rect x="328" y="266" width="744" height="194" rx="24" fill="#140A13" />
+  <path d="M250 690H1150L1000 808H400L250 690Z" fill="url(#conf-stage)" />
+  <circle cx="470" cy="226" r="22" fill="#FFD166" />
+  <circle cx="702" cy="196" r="26" fill="#FB7185" />
+  <circle cx="934" cy="226" r="22" fill="#FFD166" />
+  <text x="352" y="594" fill="#FFF1EC" font-family="Avenir Next, Segoe UI, sans-serif" font-size="54" font-weight="700">Conference Rush</text>
+</svg>

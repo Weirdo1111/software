@@ -273,6 +273,276 @@ body::after {
   }
 }
 
+@keyframes arcadeFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.arcade-float {
+  animation: arcadeFloat 7s ease-in-out infinite;
+}
+
+@keyframes arcadeSceneIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.arcade-scene-enter {
+  animation: arcadeSceneIn 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes coverSweep {
+  0% {
+    transform: translateX(-120%) skewX(-20deg);
+  }
+  100% {
+    transform: translateX(180%) skewX(-20deg);
+  }
+}
+
+.arcade-cover-sweep::before {
+  content: "";
+  position: absolute;
+  inset: -10% auto -10% -35%;
+  width: 28%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.38), transparent);
+  filter: blur(8px);
+  animation: coverSweep 4.8s linear infinite;
+}
+
+@keyframes rankBurst {
+  0% {
+    opacity: 0;
+    transform: scale(0.78);
+  }
+  75% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.rank-burst {
+  animation: rankBurst 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes rankOrb {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(44, 140, 255, 0.18);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 0 36px rgba(44, 140, 255, 0.22);
+  }
+}
+
+.rank-orb {
+  animation: rankOrb 2.8s ease-in-out infinite;
+}
+
+@keyframes timerAlert {
+  0%,
+  100% {
+    border-color: rgba(244, 114, 182, 0.22);
+    background: rgba(255, 255, 255, 0.06);
+  }
+  50% {
+    border-color: rgba(251, 113, 133, 0.55);
+    background: rgba(251, 113, 133, 0.12);
+  }
+}
+
+.timer-alert {
+  animation: timerAlert 1s ease-in-out infinite;
+}
+
+@keyframes cornerHudFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.corner-hud {
+  animation: cornerHudFloat 6.5s ease-in-out infinite;
+}
+
+@keyframes hotspotRingPulse {
+  0% {
+    opacity: 0.24;
+    transform: scale(0.9);
+  }
+  70% {
+    opacity: 0.75;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.14);
+  }
+}
+
+@keyframes hotspotSweep {
+  0% {
+    transform: translateY(-120%);
+    opacity: 0;
+  }
+  18%,
+  72% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(320%);
+    opacity: 0;
+  }
+}
+
+@keyframes hotspotHalo {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(34, 211, 238, 0.12), 0 0 0 rgba(44, 140, 255, 0.08);
+  }
+  50% {
+    box-shadow: 0 0 32px rgba(34, 211, 238, 0.18), 0 0 60px rgba(44, 140, 255, 0.16);
+  }
+}
+
+.hotspot-panel {
+  animation: hotspotHalo 2.8s ease-in-out infinite;
+}
+
+.hotspot-panel:hover .hotspot-ring,
+.hotspot-panel:focus-visible .hotspot-ring {
+  animation-duration: 1.2s;
+}
+
+.hotspot-ring {
+  animation: hotspotRingPulse 2.4s ease-out infinite;
+}
+
+.hotspot-scan-line {
+  animation: hotspotSweep 2.8s linear infinite;
+}
+
+@keyframes badgePulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(16, 185, 129, 0.1);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 22px rgba(16, 185, 129, 0.18);
+  }
+}
+
+.hotspot-badge {
+  animation: badgePulse 2.4s ease-in-out infinite;
+}
+
+@keyframes questConsoleIn {
+  0% {
+    opacity: 0;
+    transform: translateY(26px) scale(0.96);
+    filter: blur(8px);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.01);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes consoleFlash {
+  0% {
+    opacity: 0;
+    transform: translateX(-8%);
+  }
+  18% {
+    opacity: 0.42;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(110%);
+  }
+}
+
+@keyframes consoleFlicker {
+  0%,
+  100% {
+    opacity: 0.14;
+  }
+  20% {
+    opacity: 0.22;
+  }
+  21% {
+    opacity: 0.08;
+  }
+  42% {
+    opacity: 0.18;
+  }
+  43% {
+    opacity: 0.1;
+  }
+  65% {
+    opacity: 0.16;
+  }
+}
+
+.quest-console-enter {
+  animation: questConsoleIn 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.quest-console-flicker::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, transparent 20%, transparent 80%, rgba(255, 255, 255, 0.03) 100%),
+    linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+  background-size: auto, 100% 3px;
+  mix-blend-mode: screen;
+  opacity: 0.14;
+  animation: consoleFlicker 2.6s linear infinite;
+}
+
+.quest-console-flash::after {
+  content: "";
+  position: absolute;
+  inset: -10% auto -10% -16%;
+  width: 20%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+  filter: blur(10px);
+  opacity: 0;
+  animation: consoleFlash 0.75s ease-out 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -281,7 +551,21 @@ body::after {
   body::after,
   .reveal-up,
   .ambient-card,
-  .signal-pill {
+  .signal-pill,
+  .arcade-float,
+  .arcade-scene-enter,
+  .rank-burst,
+  .rank-orb,
+  .timer-alert,
+  .corner-hud,
+  .hotspot-panel,
+  .hotspot-ring,
+  .hotspot-scan-line,
+  .hotspot-badge,
+  .quest-console-enter,
+  .quest-console-flicker::before,
+  .quest-console-flash::after,
+  .arcade-cover-sweep::before {
     animation: none !important;
   }
 }

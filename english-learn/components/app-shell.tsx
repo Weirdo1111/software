@@ -40,6 +40,12 @@ const moduleNav = [
     protected: true,
   },
   {
+    id: "games",
+    href: "/games",
+    label: { zh: "\u6e38\u620f\u4e2d\u5fc3", en: "Games" },
+    protected: false,
+  },
+  {
     id: "writing",
     label: { zh: "\u5199\u4f5c", en: "Writing" },
     protected: true,
@@ -120,6 +126,7 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
     if (id === "listening") return `/listening?lang=${locale}`;
     if (id === "speaking") return lessonHref("speaking");
     if (id === "discussion") return `/discussion?lang=${locale}`;
+    if (id === "games") return `/games?lang=${locale}`;
     return lessonHref("writing");
   };
 
@@ -132,6 +139,7 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
     if (id === "speaking") return pathname?.includes("/lesson/") && pathname?.includes("speaking");
     if (id === "writing") return pathname?.includes("/lesson/") && pathname?.includes("writing");
     if (id === "reading") return pathname?.startsWith("/reading");
+    if (id === "games") return pathname?.startsWith("/games");
     if (id === "discussion") return pathname?.startsWith("/discussion");
     return false;
   };
@@ -166,6 +174,14 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
               const className = `inline-flex min-h-10 items-center rounded-[0.8rem] px-3 text-[17px] font-semibold transition ${
                 active ? "bg-white text-[#1d3f77]" : "text-[#edf5ff] hover:bg-white/20"
               }`;
+
+              if (!item.protected) {
+                return (
+                  <Link key={item.id} href={resolveHref(item.id)} className={className}>
+                    {item.label[locale]}
+                  </Link>
+                );
+              }
 
               return (
                 <ProtectedAction
