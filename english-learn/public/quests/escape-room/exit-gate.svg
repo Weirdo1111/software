@@ -1,0 +1,55 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="800" y1="0" x2="800" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#10233D" />
+      <stop offset="1" stop-color="#07111E" />
+    </linearGradient>
+    <linearGradient id="gate" x1="874" y1="100" x2="874" y2="776" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FBE6B8" />
+      <stop offset="1" stop-color="#D09148" />
+    </linearGradient>
+    <linearGradient id="panel" x1="1268" y1="250" x2="1268" y2="672" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#31425D" />
+      <stop offset="1" stop-color="#172233" />
+    </linearGradient>
+    <filter id="shadow" x="0" y="0" width="1600" height="900" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="28" stdDeviation="26" flood-color="#010812" flood-opacity="0.42" />
+    </filter>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)" />
+  <circle cx="302" cy="170" r="220" fill="#19D3C5" fill-opacity="0.1" />
+  <circle cx="1308" cy="126" r="180" fill="#FFD166" fill-opacity="0.12" />
+  <circle cx="1460" cy="748" r="240" fill="#2C8CFF" fill-opacity="0.12" />
+
+  <g opacity="0.2">
+    <line x1="0" y1="110" x2="1600" y2="110" stroke="#D9E7FF" stroke-width="2" />
+    <line x1="0" y1="780" x2="1600" y2="780" stroke="#D9E7FF" stroke-width="2" />
+    <line x1="116" y1="0" x2="116" y2="900" stroke="#D9E7FF" stroke-width="2" />
+    <line x1="1488" y1="0" x2="1488" y2="900" stroke="#D9E7FF" stroke-width="2" />
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="586" y="100" width="576" height="676" rx="72" fill="url(#gate)" />
+    <rect x="638" y="164" width="472" height="552" rx="46" fill="#F8E6C3" fill-opacity="0.18" stroke="#FFF0C8" stroke-width="6" />
+    <circle cx="1016" cy="432" r="26" fill="#FFF1C3" />
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="1156" y="244" width="224" height="432" rx="38" fill="url(#panel)" />
+    <rect x="1206" y="298" width="124" height="76" rx="16" fill="#0A1220" />
+    <rect x="1198" y="406" width="140" height="204" rx="22" fill="#0B1628" stroke="#2C8CFF" stroke-opacity="0.4" stroke-width="4" />
+    <circle cx="1238" cy="452" r="16" fill="#19D3C5" fill-opacity="0.65" />
+    <circle cx="1296" cy="452" r="16" fill="#19D3C5" fill-opacity="0.65" />
+    <circle cx="1238" cy="510" r="16" fill="#19D3C5" fill-opacity="0.65" />
+    <circle cx="1296" cy="510" r="16" fill="#19D3C5" fill-opacity="0.65" />
+    <circle cx="1238" cy="568" r="16" fill="#19D3C5" fill-opacity="0.65" />
+    <circle cx="1296" cy="568" r="16" fill="#19D3C5" fill-opacity="0.65" />
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="160" y="480" width="286" height="188" rx="34" fill="#1A2C43" />
+    <rect x="188" y="512" width="230" height="24" rx="12" fill="#19293C" />
+    <rect x="196" y="556" width="214" height="80" rx="22" fill="#0A1525" />
+  </g>
+</svg>

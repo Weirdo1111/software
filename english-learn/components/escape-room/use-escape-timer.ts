@@ -1,0 +1,97 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
+import { ESCAPE_ROOM_BEST_TIME_KEY } from "@/components/escape-room/time-utils";
+
+export function useEscapeTimer({
+  started,
+  escaped,
+  durationSeconds,
+}: {
+  started: boolean;
+  escaped: boolean;
+  durationSeconds: number;
+}) {
+  const startedAtRef = useRef<number | null>(null);
+  const savedForRunRef = useRef(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [bestSeconds, setBestSeconds] = useState<number | null>(() => {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
+    const stored = window.localStorage.getItem(ESCAPE_ROOM_BEST_TIME_KEY);
+    return stored ? Number(stored) : null;
+  });
+
+  useEffect(() => {
+    if (!started) {
+      startedAtRef.current = null;
+      savedForRunRef.current = false;
+      return;
+    }
+
+    if (startedAtRef.current === null) {
+      startedAtRef.current = Date.now();
+      savedForRunRef.current = false;
+    }
+  }, [started]);
+
+  useEffect(() => {
+    if (!started || escaped || startedAtRef.current === null) {
+      return;
+    }
+
+    const updateElapsed = () => {
+      if (startedAtRef.current === null) {
+        return;
+      }
+
+      setElapsedSeconds(Math.max(1, Math.floor((Date.now() - startedAtRef.current) / 1000)));
+    };
+
+    updateElapsed();
+    const timerId = window.setInterval(updateElapsed, 1000);
+
+    return () => {
+      window.clearInterval(timerId);
+    };
+  }, [started, escaped]);
+
+  useEffect(() => {
+    if (!escaped || startedAtRef.current === null || savedForRunRef.current) {
+      return;
+    }
+
+    const finalSeconds = Math.max(1, Math.floor((Date.now() - startedAtRef.current) / 1000));
+    setElapsedSeconds(finalSeconds);
+
+    if (bestSeconds === null || finalSeconds < bestSeconds) {
+      setBestSeconds(finalSeconds);
+
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(ESCAPE_ROOM_BEST_TIME_KEY, String(finalSeconds));
+      }
+    }
+
+    savedForRunRef.current = true;
+  }, [bestSeconds, escaped]);
+
+  const resetTimer = () => {
+    startedAtRef.current = null;
+    savedForRunRef.current = false;
+    setElapsedSeconds(0);
+  };
+
+  const remainingSeconds = Math.max(0, durationSeconds - elapsedSeconds);
+  const expired = started && !escaped && remainingSeconds === 0;
+
+  return {
+    elapsedSeconds,
+    bestSeconds,
+    remainingSeconds,
+    expired,
+    resetTimer,
+  };
+}
