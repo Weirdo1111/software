@@ -53,7 +53,7 @@ export function BriefingScene({
         <div>
           <div className="relative overflow-hidden rounded-[1.8rem] border border-white/10 bg-black/24 shadow-[0_20px_44px_rgba(0,0,0,0.24)]">
             <div className="arcade-cover-sweep pointer-events-none absolute inset-0" />
-            <div className="h-52 w-full bg-cover bg-center" style={{ backgroundImage: "url('/quests/escape-room/stage-cover-library.svg')" }} />
+            <div className="h-52 w-full bg-cover bg-center" style={{ backgroundImage: "url('/quests/escape-room/library.png')" }} />
           </div>
           <div className="mt-5 inline-flex size-14 items-center justify-center rounded-2xl bg-cyan-400/12 text-cyan-100">
             <Sparkles className="size-6" />
