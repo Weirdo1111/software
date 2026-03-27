@@ -6,6 +6,8 @@ export function ExitGateScene({
   ready,
   escaped,
   clueValues,
+  intelValues,
+  notes,
   missingSteps,
   fullscreen = false,
   onOpenKeypad,
@@ -13,6 +15,8 @@ export function ExitGateScene({
   ready: boolean;
   escaped: boolean;
   clueValues: string[];
+  intelValues: string[];
+  notes: string[];
   missingSteps: string[];
   fullscreen?: boolean;
   onOpenKeypad: () => void;
@@ -35,7 +39,7 @@ export function ExitGateScene({
           <div className="rounded-[1.8rem] border border-white/12 bg-slate-950/48 p-5 backdrop-blur-xl">
             <div className="flex items-center gap-2 text-white">
               <DoorClosed className="size-4 text-cyan-200" />
-              <p className="text-sm font-semibold uppercase tracking-[0.24em]">Collected clues</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em]">Access evidence</p>
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2">
@@ -49,6 +53,28 @@ export function ExitGateScene({
                 <span className="rounded-full border border-dashed border-white/16 px-3 py-1.5 text-sm text-slate-300">No fragments collected</span>
               )}
             </div>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              {intelValues.length ? (
+                intelValues.map((value) => (
+                  <span key={value} className="rounded-full border border-amber-300/18 bg-amber-300/10 px-3 py-1.5 text-sm font-semibold tracking-[0.08em] text-amber-100">
+                    {value}
+                  </span>
+                ))
+              ) : (
+                <span className="rounded-full border border-dashed border-white/16 px-3 py-1.5 text-sm text-slate-300">Optional support intel missing</span>
+              )}
+            </div>
+
+            {notes.length ? (
+              <div className="mt-4 space-y-2">
+                {notes.slice(-3).map((note) => (
+                  <p key={note} className="text-sm leading-7 text-slate-300">
+                    {note}
+                  </p>
+                ))}
+              </div>
+            ) : null}
 
             {!ready && !escaped ? (
               <div className="mt-4 rounded-[1.3rem] border border-amber-300/18 bg-amber-300/8 px-4 py-3 text-sm leading-7 text-amber-100">

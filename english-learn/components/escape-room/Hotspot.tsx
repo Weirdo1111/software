@@ -1,11 +1,13 @@
 import clsx from "clsx";
-import { BookOpen, CheckCircle2, DoorClosed, Monitor, ScrollText, Volume2 } from "lucide-react";
+import { BookOpen, CheckCircle2, DoorClosed, Map, Monitor, ScrollText, ShoppingBasket, Volume2 } from "lucide-react";
 
 import type { RoomObject } from "@/components/escape-room/types";
 
 const iconMap = {
   "notice-board": ScrollText,
   bookshelf: BookOpen,
+  "floor-map": Map,
+  "return-cart": ShoppingBasket,
   speaker: Volume2,
   "librarian-desk-terminal": Monitor,
   "exit-door": DoorClosed,
@@ -54,6 +56,10 @@ export function Hotspot({
       {completed ? (
         <span className="hotspot-badge absolute right-2 top-2 rounded-full border border-emerald-300/35 bg-emerald-400/14 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-100">
           Clear
+        </span>
+      ) : !roomObject.required ? (
+        <span className="hotspot-badge absolute right-2 top-2 rounded-full border border-amber-300/30 bg-amber-300/12 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-100">
+          Intel
         </span>
       ) : null}
 

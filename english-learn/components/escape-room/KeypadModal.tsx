@@ -12,7 +12,9 @@ export function KeypadModal({
   codeLength,
   attempts,
   attemptLimit,
-  clueValues,
+  codeClues,
+  intelClues,
+  notes,
   missingSteps,
   feedback,
   onSubmit,
@@ -22,13 +24,19 @@ export function KeypadModal({
   codeLength: number;
   attempts: number;
   attemptLimit: number;
-  clueValues: string[];
+  codeClues: string[];
+  intelClues: string[];
+  notes: string[];
   missingSteps: string[];
   feedback: string | null;
   onSubmit: (code: string) => void;
   onClose: () => void;
 }) {
   const [code, setCode] = useState("");
+  const suspectPatterns =
+    codeClues.length >= 2
+      ? [`${codeClues[0]}${codeClues[1]}`, `${codeClues[1]}${codeClues[0]}`, `${codeClues[0]}-${codeClues[1]}`]
+      : [];
 
   const appendDigit = (digit: string) => {
     setCode((current) => (current.length >= codeLength ? current : `${current}${digit}`));
@@ -64,8 +72,8 @@ export function KeypadModal({
           </p>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            {clueValues.length ? (
-              clueValues.map((value) => (
+            {codeClues.length ? (
+              codeClues.map((value) => (
                 <span key={value} className="rounded-full border border-cyan-300/16 bg-cyan-300/8 px-3 py-2 text-sm font-semibold tracking-[0.16em] text-cyan-100">
                   {value}
                 </span>
@@ -73,6 +81,21 @@ export function KeypadModal({
             ) : (
               <span className="rounded-full border border-dashed border-white/14 px-3 py-2 text-sm text-slate-300">No code fragments yet</span>
             )}
+          </div>
+
+          <div className="mt-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Support intel</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {intelClues.length ? (
+                intelClues.map((value) => (
+                  <span key={value} className="rounded-full border border-amber-300/18 bg-amber-300/10 px-3 py-2 text-sm font-semibold tracking-[0.08em] text-amber-100">
+                    {value}
+                  </span>
+                ))
+              ) : (
+                <span className="rounded-full border border-dashed border-white/14 px-3 py-2 text-sm text-slate-300">Optional desk intel not logged yet</span>
+              )}
+            </div>
           </div>
 
           <p className="mt-4 text-xs uppercase tracking-[0.2em] text-slate-500">Wrong attempts trigger a lock reset after {attemptLimit} tries.</p>
@@ -85,6 +108,28 @@ export function KeypadModal({
         </div>
 
         <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/52 p-5">
+          {suspectPatterns.length ? (
+            <div className="mb-5 rounded-[1.2rem] border border-white/10 bg-black/18 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Suspect code patterns</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {suspectPatterns.map((pattern) => (
+                  <span key={pattern} className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-semibold tracking-[0.12em] text-slate-200">
+                    {pattern}
+                  </span>
+                ))}
+              </div>
+              {notes.length ? (
+                <div className="mt-3 space-y-2">
+                  {notes.slice(-3).map((note) => (
+                    <p key={note} className="text-sm leading-6 text-slate-300">
+                      {note}
+                    </p>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
           <div className="grid grid-cols-6 gap-2">
             {Array.from({ length: codeLength }).map((_, index) => (
               <div

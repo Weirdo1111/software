@@ -1,4 +1,11 @@
-export type RoomObjectId = "notice-board" | "bookshelf" | "speaker" | "librarian-desk-terminal" | "exit-door";
+export type RoomObjectId =
+  | "notice-board"
+  | "bookshelf"
+  | "floor-map"
+  | "return-cart"
+  | "speaker"
+  | "librarian-desk-terminal"
+  | "exit-door";
 
 export type PuzzleId = "notice-board" | "bookshelf" | "speaker" | "librarian-desk-terminal" | "quiz";
 
@@ -14,6 +21,8 @@ export type GamePhase =
 export type ModalType = "clue" | "audio" | "dialogue" | "quiz" | "keypad" | "reward";
 
 export type DialogueIntent = "ask_for_help" | "ask_for_hint" | "impolite_request" | "unrelated";
+
+export type ClueKind = "code" | "intel";
 
 export type SceneId = "briefing" | "library" | "exit";
 
@@ -39,12 +48,13 @@ export interface ClueItem {
   id: string;
   label: string;
   value: string;
+  kind: ClueKind;
   source: RoomObjectId;
   description: string;
 }
 
 export interface ClueModalContent {
-  id: Extract<RoomObjectId, "notice-board" | "bookshelf">;
+  id: Extract<RoomObjectId, "notice-board" | "bookshelf" | "floor-map" | "return-cart">;
   title: string;
   subtitle: string;
   headline: string;

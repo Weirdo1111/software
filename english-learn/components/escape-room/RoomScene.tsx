@@ -19,6 +19,8 @@ export function RoomScene({
   const completionState = {
     "notice-board": progress.completedPuzzles["notice-board"],
     bookshelf: progress.completedPuzzles.bookshelf,
+    "floor-map": progress.inventory.clues.some((clue) => clue.source === "floor-map"),
+    "return-cart": progress.inventory.clues.some((clue) => clue.source === "return-cart"),
     speaker: progress.completedPuzzles.speaker,
     "librarian-desk-terminal": progress.completedPuzzles["librarian-desk-terminal"],
     "exit-door": progress.reward.escaped,
@@ -30,11 +32,12 @@ export function RoomScene({
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-200/72">Scene 02</p>
           <h2 className="font-display mt-3 text-3xl tracking-tight text-white sm:text-[2.2rem]">Midnight Library</h2>
+          <p className="mt-2 text-sm text-slate-300">Primary clues are hidden in the notice board and history shelf. Extra intel is tucked around the desk.</p>
         </div>
 
         <span className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/6 px-4 py-2 text-sm font-semibold text-slate-100">
           <Sparkles className="size-4 text-cyan-200" />
-          {progress.reward.escaped ? "Exit unlocked" : disabled ? "Hotspots standby" : "Hotspots live"}
+          {progress.reward.escaped ? "Exit unlocked" : disabled ? "Hotspots standby" : "6 live leads"}
         </span>
       </div>
 

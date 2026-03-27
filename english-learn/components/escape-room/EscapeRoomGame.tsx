@@ -5,7 +5,23 @@ import { useEffect, useReducer, useRef, useState } from "react";
 import { ArrowLeft, Expand, Minimize2, ScanFace, Timer, TimerOff, Trophy } from "lucide-react";
 
 import { AudioPuzzleModal } from "@/components/escape-room/AudioPuzzleModal";
-import { BOOKSHELF_CLUE, ESCAPE_ROOM_ATTEMPT_LIMIT, ESCAPE_ROOM_CODE, ESCAPE_ROOM_COUNTDOWN_SECONDS, LIBRARIAN_HINT, NOTICE_BOARD_CLUE, QUIZ_NOTE, SPEAKER_NOTE, clueModalContent, progressTasks, roomObjects } from "@/components/escape-room/room-data";
+import {
+  BOOKSHELF_CLUE,
+  ESCAPE_ROOM_ATTEMPT_LIMIT,
+  ESCAPE_ROOM_CODE,
+  ESCAPE_ROOM_COUNTDOWN_SECONDS,
+  FLOOR_MAP_CLUE,
+  FLOOR_MAP_NOTE,
+  LIBRARIAN_HINT,
+  NOTICE_BOARD_CLUE,
+  QUIZ_NOTE,
+  RETURN_CART_CLUE,
+  RETURN_CART_NOTE,
+  SPEAKER_NOTE,
+  clueModalContent,
+  progressTasks,
+  roomObjects,
+} from "@/components/escape-room/room-data";
 import { BriefingScene } from "@/components/escape-room/BriefingScene";
 import { ChoiceQuizModal } from "@/components/escape-room/ChoiceQuizModal";
 import { ClueModal } from "@/components/escape-room/ClueModal";
@@ -48,7 +64,7 @@ function playAudioCue(element: HTMLAudioElement | null) {
 export function EscapeRoomGame({ locale }: { locale: Locale }) {
   const [progress, dispatch] = useReducer(escapeRoomReducer, undefined, createInitialGameProgress);
   const [activeModal, setActiveModal] = useState<ModalType | null>(null);
-  const [activeClueObjectId, setActiveClueObjectId] = useState<"notice-board" | "bookshelf" | null>(null);
+  const [activeClueObjectId, setActiveClueObjectId] = useState<"notice-board" | "bookshelf" | "floor-map" | "return-cart" | null>(null);
   const [doorFeedback, setDoorFeedback] = useState<string | null>(null);
   const [scene, setScene] = useState<SceneId>("briefing");
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -156,6 +172,8 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
     switch (objectId) {
       case "notice-board":
       case "bookshelf":
+      case "floor-map":
+      case "return-cart":
         setActiveClueObjectId(objectId);
         setActiveModal("clue");
         break;
@@ -210,7 +228,10 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
     .filter((task) => !progress.completedPuzzles[task.id])
     .map((task) => missingLabelByTask[task.id]);
   const completionPercent = getCompletionPercent(progress);
-  const clueValues = progress.inventory.clues.map((clue) => clue.value);
+  const codeClues = progress.inventory.clues.filter((clue) => clue.kind === "code");
+  const intelClues = progress.inventory.clues.filter((clue) => clue.kind === "intel");
+  const clueValues = codeClues.map((clue) => clue.value);
+  const intelValues = intelClues.map((clue) => clue.value);
   const activeRoomObjects = roomObjects.filter((roomObject) => roomObject.id !== "exit-door");
   const activeClueContent = activeClueObjectId ? clueModalContent[activeClueObjectId] : null;
   const elapsedLabel = formatGameTime(elapsedSeconds);
@@ -226,7 +247,13 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
       {activeModal === "clue" ? (
         <ClueModal
           clueContent={activeClueContent}
-          collected={activeClueObjectId ? progress.completedPuzzles[activeClueObjectId] : false}
+          collected={
+            activeClueObjectId === "notice-board" || activeClueObjectId === "bookshelf"
+              ? progress.completedPuzzles[activeClueObjectId]
+              : activeClueObjectId
+                ? progress.inventory.clues.some((clue) => clue.source === activeClueObjectId)
+                : false
+          }
           onCollect={() => {
             if (activeClueObjectId === "notice-board") {
               dispatch({ type: "COLLECT_NOTICE_BOARD", clue: NOTICE_BOARD_CLUE });
@@ -234,6 +261,14 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
 
             if (activeClueObjectId === "bookshelf") {
               dispatch({ type: "COLLECT_BOOKSHELF", clue: BOOKSHELF_CLUE });
+            }
+
+            if (activeClueObjectId === "floor-map") {
+              dispatch({ type: "RECORD_INTEL", clue: FLOOR_MAP_CLUE, note: FLOOR_MAP_NOTE });
+            }
+
+            if (activeClueObjectId === "return-cart") {
+              dispatch({ type: "RECORD_INTEL", clue: RETURN_CART_CLUE, note: RETURN_CART_NOTE });
             }
           }}
           onClose={() => {
@@ -280,7 +315,9 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
           codeLength={ESCAPE_ROOM_CODE.length}
           attempts={progress.keypadAttempts}
           attemptLimit={ESCAPE_ROOM_ATTEMPT_LIMIT}
-          clueValues={clueValues}
+          codeClues={clueValues}
+          intelClues={intelValues}
+          notes={progress.inventory.notes}
           missingSteps={missingSteps}
           feedback={doorFeedback}
           onSubmit={(code) => {
@@ -487,6 +524,8 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
                   ready={readyToUnlock}
                   escaped={progress.reward.escaped}
                   clueValues={clueValues}
+                  intelValues={intelValues}
+                  notes={progress.inventory.notes}
                   missingSteps={missingSteps}
                   fullscreen={isFullscreen}
                   onOpenKeypad={() => {

@@ -9,10 +9,22 @@ import {
   completeDialoguePuzzle,
   createInitialGameProgress,
   isReadyToUnlock,
+  recordIntel,
   startQuest,
   tryUnlockDoor,
 } from "@/components/escape-room/puzzle-engine";
-import { BOOKSHELF_CLUE, ESCAPE_ROOM_CODE, LIBRARIAN_HINT, NOTICE_BOARD_CLUE, QUIZ_NOTE, SPEAKER_NOTE } from "@/components/escape-room/room-data";
+import {
+  BOOKSHELF_CLUE,
+  ESCAPE_ROOM_CODE,
+  FLOOR_MAP_CLUE,
+  FLOOR_MAP_NOTE,
+  LIBRARIAN_HINT,
+  NOTICE_BOARD_CLUE,
+  QUIZ_NOTE,
+  RETURN_CART_CLUE,
+  RETURN_CART_NOTE,
+  SPEAKER_NOTE,
+} from "@/components/escape-room/room-data";
 
 describe("escape room puzzle engine", () => {
   it("adds the notice-board clue and marks that puzzle complete", () => {
@@ -35,6 +47,16 @@ describe("escape room puzzle engine", () => {
     expect(isReadyToUnlock(withShelf)).toBe(false);
     expect(attempted.success).toBe(false);
     expect(attempted.message).toContain("more clues");
+  });
+
+  it("records optional environment intel without unlocking the door early", () => {
+    const started = startQuest(createInitialGameProgress());
+    const withMapIntel = recordIntel(started, FLOOR_MAP_CLUE, FLOOR_MAP_NOTE);
+    const withCartIntel = recordIntel(withMapIntel, RETURN_CART_CLUE, RETURN_CART_NOTE);
+
+    expect(withCartIntel.inventory.clues.map((clue) => clue.value)).toEqual(expect.arrayContaining(["6 DIGITS", "NO GAPS"]));
+    expect(withCartIntel.inventory.notes).toEqual(expect.arrayContaining([FLOOR_MAP_NOTE, RETURN_CART_NOTE]));
+    expect(isReadyToUnlock(withCartIntel)).toBe(false);
   });
 
   it("unlocks the library with the correct final code after all puzzles are complete", () => {

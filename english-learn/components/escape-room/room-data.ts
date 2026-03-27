@@ -8,6 +8,7 @@ export const NOTICE_BOARD_CLUE: ClueItem = {
   id: "closing-time",
   label: "Closing time",
   value: "915",
+  kind: "code",
   source: "notice-board",
   description: "Library closes at 9:15 PM.",
 };
@@ -16,13 +17,34 @@ export const BOOKSHELF_CLUE: ClueItem = {
   id: "history-shelf",
   label: "History shelf",
   value: "204",
+  kind: "code",
   source: "bookshelf",
   description: "History Section - Shelf 204.",
+};
+
+export const FLOOR_MAP_CLUE: ClueItem = {
+  id: "format-note",
+  label: "Security format",
+  value: "6 DIGITS",
+  kind: "intel",
+  source: "floor-map",
+  description: "The emergency keypad expects one continuous six-digit entry.",
+};
+
+export const RETURN_CART_CLUE: ClueItem = {
+  id: "sorting-slip",
+  label: "Sorting slip",
+  value: "NO GAPS",
+  kind: "intel",
+  source: "return-cart",
+  description: "A reshelving slip warns staff not to split the final access code.",
 };
 
 export const SPEAKER_NOTE = "The announcement says to use the closing time second.";
 export const LIBRARIAN_HINT = "Of course. Use the shelf number first, then the closing time.";
 export const QUIZ_NOTE = "Polite requests make it easier to get help in the library.";
+export const FLOOR_MAP_NOTE = "The floor map says the emergency keypad accepts one six-digit entry.";
+export const RETURN_CART_NOTE = "A reshelving slip repeats: keep the shelf clue and closing time together with no spaces.";
 
 export const QUEST_REWARD = {
   xpEarned: 50,
@@ -49,6 +71,26 @@ export const roomObjects: RoomObject[] = [
     modalType: "clue",
     required: true,
     accent: "bg-sky-500/90",
+  },
+  {
+    id: "floor-map",
+    name: "Floor Map",
+    shortLabel: "Trace",
+    description: "Study the emergency route and keypad notice on the desk map.",
+    hotspot: { left: "43%", top: "60%" },
+    modalType: "clue",
+    required: false,
+    accent: "bg-teal-500/90",
+  },
+  {
+    id: "return-cart",
+    name: "Return Cart",
+    shortLabel: "Search",
+    description: "Check the reshelving cart for any slip left by the night staff.",
+    hotspot: { left: "58%", top: "68%" },
+    modalType: "clue",
+    required: false,
+    accent: "bg-rose-500/90",
   },
   {
     id: "speaker",
@@ -86,17 +128,17 @@ export const progressTasks: ProgressTask[] = [
   {
     id: "notice-board",
     label: "Read the closing notice",
-    supportText: "Collect the library closing time from the notice board.",
+    supportText: "Collect the closing time from the notice board and look for supporting details nearby.",
   },
   {
     id: "bookshelf",
     label: "Inspect the history shelf",
-    supportText: "Find the shelf number hidden in the history section.",
+    supportText: "Find the history shelf number and compare it with any reshelving hints in the room.",
   },
   {
     id: "speaker",
     label: "Listen to the broadcast",
-    supportText: "Confirm which clue should be used second in the code.",
+    supportText: "Confirm the code order and pay attention to the final exit instructions.",
   },
   {
     id: "librarian-desk-terminal",
@@ -110,17 +152,18 @@ export const progressTasks: ProgressTask[] = [
   },
 ];
 
-export const clueModalContent: Record<"notice-board" | "bookshelf", ClueModalContent> = {
+export const clueModalContent: Record<"notice-board" | "bookshelf" | "floor-map" | "return-cart", ClueModalContent> = {
   "notice-board": {
     id: "notice-board",
     title: "Closing Notice",
     subtitle: "The board near the entrance still shows the final staff reminders.",
     headline: "Library closes at 9:15 PM",
-    body: "The closing time looks like part of the keypad code. Keep the number and remember the order hint from the room.",
+    body: "The closing time looks essential, but the surrounding notes suggest the board is only one piece of a larger access routine.",
     lines: [
       "Library closes at 9:15 PM",
       "Emergency exit access is restricted",
       "Ask staff if you need help finding a section",
+      "Quiet floor sweep begins at 9:20 PM",
     ],
     clue: NOTICE_BOARD_CLUE,
   },
@@ -129,20 +172,49 @@ export const clueModalContent: Record<"notice-board" | "bookshelf", ClueModalCon
     title: "Shelf Marker",
     subtitle: "A history shelf label is still lit by the aisle lamp.",
     headline: "History Section - Shelf 204",
-    body: "This shelf number looks like the first half of the exit code. Record it before you move on.",
+    body: "The shelf marker gives you a clean number, but the neighboring labels make it easy to choose the wrong aisle if you rush.",
     lines: [
       "History Section - Shelf 204",
+      "History Annex - Shelf 214",
       "Level 2 Reference Area",
       "Return books to the cart before closing",
     ],
     clue: BOOKSHELF_CLUE,
+  },
+  "floor-map": {
+    id: "floor-map",
+    title: "Emergency Floor Map",
+    subtitle: "A laminated map on the desk shows the late-night exit procedure.",
+    headline: "Keypad accepts one 6-digit entry",
+    body: "This does not give you a number, but it rules out dashes, spaces, and split entry formats. That should matter later.",
+    lines: [
+      "West Hall -> Emergency Exit",
+      "Security keypad accepts one 6-digit entry",
+      "Front desk support remains online until final lock cycle",
+      "Archive stairwell closed after 9:00 PM",
+    ],
+    clue: FLOOR_MAP_CLUE,
+  },
+  "return-cart": {
+    id: "return-cart",
+    title: "Reshelving Cart",
+    subtitle: "A sorting slip is tucked beneath a stack of late returns.",
+    headline: "Keep the final code together",
+    body: "The note does not reveal a new number, but it confirms the final code should be entered as one unbroken string.",
+    lines: [
+      "Tonight's sweep: History 204 first",
+      "Pair shelf clue with closing time",
+      "Do not split the final access code",
+      "Clear cart before lights out",
+    ],
+    clue: RETURN_CART_CLUE,
   },
 };
 
 export const speakerPuzzle: AudioPuzzle = {
   prompt: "Attention, visitors. The final exit code uses the history shelf number first, then the closing time.",
   instruction:
-    "Listen to the closing announcement. You are not collecting a new number here; you are confirming the correct order for the code.",
+    "Listen carefully. The broadcast confirms the clue order and repeats where stranded visitors should go for help before the lock cycle begins.",
   src: "/quests/escape-room/audio/library-announcement.wav",
   transcript:
     "Attention, visitors. The library will close at 9:15 p.m. The final exit code uses the history shelf number first, then the closing time. Please make your way to the front desk if you need help before leaving.",
@@ -190,20 +262,51 @@ export const speakerPuzzle: AudioPuzzle = {
         },
       ],
     },
+    {
+      id: "help-point",
+      question: "Where should visitors go if they still need help before leaving?",
+      answerId: "front-desk",
+      options: [
+        {
+          id: "front-desk",
+          text: "The front desk",
+          isCorrect: true,
+          feedback: "Correct. The announcement sends visitors to the front desk for last-minute help.",
+        },
+        {
+          id: "science-wing",
+          text: "The science wing",
+          isCorrect: false,
+          feedback: "The broadcast never mentions the science wing.",
+        },
+        {
+          id: "study-room",
+          text: "The study room",
+          isCorrect: false,
+          feedback: "That room is not part of the exit instruction.",
+        },
+        {
+          id: "archive-stairs",
+          text: "The archive stairs",
+          isCorrect: false,
+          feedback: "Those stairs are not the place named in the broadcast.",
+        },
+      ],
+    },
   ],
 };
 
 export const choiceQuiz: ChoiceQuiz = {
-  question: "Which sentence is the most polite way to ask for help in the library?",
+  question: "Which sentence is the most polite and specific way to ask for help in the library?",
   options: [
     { id: "a", text: "Give me the code.", isCorrect: false, feedback: "That sounds demanding, not polite." },
     {
       id: "b",
-      text: "Can you help me find the exit code, please?",
+      text: "Could you help me confirm the exit code order, please?",
       isCorrect: true,
-      feedback: "Correct. That is polite and clear.",
+      feedback: "Correct. That request is polite, specific, and sounds natural.",
     },
     { id: "c", text: "Tell me right now.", isCorrect: false, feedback: "That is too forceful for a help request." },
-    { id: "d", text: "I want the answer.", isCorrect: false, feedback: "That states a demand instead of asking politely." },
+    { id: "d", text: "I need the answer now, okay?", isCorrect: false, feedback: "That still sounds like a demand instead of a polite request." },
   ],
 };

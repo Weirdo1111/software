@@ -18,7 +18,7 @@ const starterTurns: DialogueTurn[] = [
 const promptSuggestions = [
   "Could you give me a hint, please?",
   "Can you help me with the exit code, please?",
-  "Could you help me understand the clues?",
+  "Could you help me understand the clues from the shelf and notice board?",
 ];
 
 export function DialogueModal({
@@ -119,7 +119,7 @@ export function DialogueModal({
             />
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs leading-5 text-slate-400">Use help or hint with please, can you, or could you.</p>
+              <p className="text-xs leading-5 text-slate-400">Try a polite request that refers to the shelf, notice board, or exit clue order.</p>
               <button
                 type="submit"
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:translate-y-[-1px]"

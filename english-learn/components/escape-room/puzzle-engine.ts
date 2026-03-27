@@ -5,6 +5,7 @@ export type GameAction =
   | { type: "START_GAME" }
   | { type: "COLLECT_NOTICE_BOARD"; clue: ClueItem }
   | { type: "COLLECT_BOOKSHELF"; clue: ClueItem }
+  | { type: "RECORD_INTEL"; clue?: ClueItem; note?: string }
   | { type: "COMPLETE_AUDIO"; note: string }
   | { type: "COMPLETE_DIALOGUE"; note: string }
   | { type: "COMPLETE_QUIZ"; note: string }
@@ -81,6 +82,16 @@ export function completePuzzle(progress: GameProgress, puzzleId: Exclude<PuzzleI
   });
 }
 
+export function recordIntel(progress: GameProgress, clue?: ClueItem, note?: string): GameProgress {
+  return syncProgress({
+    ...progress,
+    inventory: {
+      clues: clue && !progress.inventory.clues.some((entry) => entry.id === clue.id) ? [...progress.inventory.clues, clue] : progress.inventory.clues,
+      notes: note && !progress.inventory.notes.includes(note) ? [...progress.inventory.notes, note] : progress.inventory.notes,
+    },
+  });
+}
+
 export function getCompletionCount(progress: GameProgress): number {
   return Object.values(progress.completedPuzzles).filter(Boolean).length;
 }
@@ -139,15 +150,15 @@ export function getCurrentObjective(progress: GameProgress): string {
   }
 
   if (!progress.completedPuzzles["notice-board"]) {
-    return "Read the notice board and record the closing time.";
+    return "Read the notice board and scan the nearby floor map if you want extra context.";
   }
 
   if (!progress.completedPuzzles.bookshelf) {
-    return "Inspect the history shelf and collect its number.";
+    return "Inspect the history shelf and sweep the return cart for any sorting notes.";
   }
 
   if (!progress.completedPuzzles.speaker) {
-    return "Listen to the announcement and confirm which clue comes second.";
+    return "Listen to the announcement and verify both the order and the entry format.";
   }
 
   if (!progress.completedPuzzles["librarian-desk-terminal"]) {
@@ -251,6 +262,8 @@ export function escapeRoomReducer(progress: GameProgress, action: GameAction): G
       return collectNoticeBoardClue(progress, action.clue);
     case "COLLECT_BOOKSHELF":
       return collectBookshelfClue(progress, action.clue);
+    case "RECORD_INTEL":
+      return recordIntel(progress, action.clue, action.note);
     case "COMPLETE_AUDIO":
       return completeAudioPuzzle(progress, action.note);
     case "COMPLETE_DIALOGUE":
