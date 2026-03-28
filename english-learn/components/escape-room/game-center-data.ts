@@ -6,7 +6,7 @@ export const officialGameLevels: GameLevel[] = [
     slug: "escape-room",
     title: "Official Stage 01",
     subtitle: "Midnight Library Escape",
-    difficulty: "Starter Puzzle",
+    difficulty: "Campus Puzzle",
     duration: "6-10 min",
     status: "live",
     mission: "Collect the shelf number and closing time, solve the broadcast, ask politely, and unlock the library exit.",

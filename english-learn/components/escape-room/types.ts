@@ -61,6 +61,7 @@ export interface ClueModalContent {
   body: string;
   lines: string[];
   clue: ClueItem;
+  investigation?: InvestigationPuzzle;
 }
 
 export interface InventoryState {
@@ -82,6 +83,21 @@ export interface GameProgress {
   inventory: InventoryState;
   reward: RewardState;
   keypadAttempts: number;
+}
+
+export interface InvestigationTarget {
+  id: string;
+  label: string;
+  detail: string;
+  isCorrect: boolean;
+}
+
+export interface InvestigationPuzzle {
+  visualStyle: "board" | "shelf";
+  prompt: string;
+  targets: InvestigationTarget[];
+  question: string;
+  options: QuizOption[];
 }
 
 export interface QuizOption {

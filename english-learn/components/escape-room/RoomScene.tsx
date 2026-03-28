@@ -27,21 +27,29 @@ export function RoomScene({
   } as const;
 
   return (
-    <section className="min-h-[64vh] rounded-[2rem] border border-white/12 bg-[linear-gradient(150deg,rgba(10,18,31,0.98),rgba(13,30,50,0.92))] p-4 shadow-[0_28px_80px_rgba(0,0,0,0.34)] sm:p-5">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-200/72">Scene 02</p>
-          <h2 className="font-display mt-3 text-3xl tracking-tight text-white sm:text-[2.2rem]">Midnight Library</h2>
-          <p className="mt-2 text-sm text-slate-300">Primary clues are hidden in the notice board and history shelf. Extra intel is tucked around the desk.</p>
+    <section
+      className={
+        fullscreen
+          ? "relative h-screen overflow-hidden bg-[linear-gradient(150deg,rgba(10,18,31,0.98),rgba(13,30,50,0.92))]"
+          : "min-h-[64vh] rounded-[2rem] border border-white/12 bg-[linear-gradient(150deg,rgba(10,18,31,0.98),rgba(13,30,50,0.92))] p-4 shadow-[0_28px_80px_rgba(0,0,0,0.34)] sm:p-5"
+      }
+    >
+      {!fullscreen ? (
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-200/72">Scene 02</p>
+            <h2 className="font-display mt-3 text-3xl tracking-tight text-white sm:text-[2.2rem]">Midnight Library</h2>
+            <p className="mt-2 text-sm text-slate-300">Primary clues are hidden in the board and the stacks. Extra intel is tucked around the desk.</p>
+          </div>
+
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/6 px-4 py-2 text-sm font-semibold text-slate-100">
+            <Sparkles className="size-4 text-cyan-200" />
+            {progress.reward.escaped ? "Exit unlocked" : disabled ? "Hotspots standby" : "6 live leads"}
+          </span>
         </div>
+      ) : null}
 
-        <span className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/6 px-4 py-2 text-sm font-semibold text-slate-100">
-          <Sparkles className="size-4 text-cyan-200" />
-          {progress.reward.escaped ? "Exit unlocked" : disabled ? "Hotspots standby" : "6 live leads"}
-        </span>
-      </div>
-
-      <div className="relative mt-5 min-h-[56vh] overflow-hidden rounded-[1.85rem] border border-white/12 shadow-[0_24px_64px_rgba(0,0,0,0.28)]">
+      <div className={fullscreen ? "relative h-screen overflow-hidden" : "relative mt-5 min-h-[56vh] overflow-hidden rounded-[1.85rem] border border-white/12 shadow-[0_24px_64px_rgba(0,0,0,0.28)]"}>
         <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/quests/escape-room/library.png')" }} />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(4,10,20,0.12),rgba(4,10,20,0.36))]" />
 

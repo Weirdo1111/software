@@ -49,7 +49,7 @@ describe("escape room puzzle engine", () => {
     expect(attempted.message).toContain("more clues");
   });
 
-  it("records optional environment intel without unlocking the door early", () => {
+  it("records environment intel without unlocking the door early", () => {
     const started = startQuest(createInitialGameProgress());
     const withMapIntel = recordIntel(started, FLOOR_MAP_CLUE, FLOOR_MAP_NOTE);
     const withCartIntel = recordIntel(withMapIntel, RETURN_CART_CLUE, RETURN_CART_NOTE);
@@ -59,13 +59,14 @@ describe("escape room puzzle engine", () => {
     expect(isReadyToUnlock(withCartIntel)).toBe(false);
   });
 
-  it("unlocks the library with the correct final code after all puzzles are complete", () => {
+  it("unlocks the library with the correct final code after all puzzles and one intel lead are complete", () => {
     const started = startQuest(createInitialGameProgress());
     const withNotice = collectNoticeBoardClue(started, NOTICE_BOARD_CLUE);
     const withShelf = collectBookshelfClue(withNotice, BOOKSHELF_CLUE);
     const withAudio = completeAudioPuzzle(withShelf, SPEAKER_NOTE);
     const withDialogue = completeDialoguePuzzle(withAudio, LIBRARIAN_HINT);
-    const ready = completeChoiceQuiz(withDialogue, QUIZ_NOTE);
+    const withQuiz = completeChoiceQuiz(withDialogue, QUIZ_NOTE);
+    const ready = recordIntel(withQuiz, FLOOR_MAP_CLUE, FLOOR_MAP_NOTE);
     const result = tryUnlockDoor(ready, ESCAPE_ROOM_CODE, ESCAPE_ROOM_CODE);
 
     expect(isReadyToUnlock(ready)).toBe(true);
@@ -73,6 +74,22 @@ describe("escape room puzzle engine", () => {
     expect(result.nextProgress.reward.escaped).toBe(true);
     expect(result.nextProgress.reward.xpEarned).toBe(50);
     expect(result.nextProgress.reward.badgeUnlocked).toBe("Midnight Reader");
+  });
+
+  it("blocks the door until one desk-side intel lead is logged", () => {
+    const started = startQuest(createInitialGameProgress());
+    const withNotice = collectNoticeBoardClue(started, NOTICE_BOARD_CLUE);
+    const withShelf = collectBookshelfClue(withNotice, BOOKSHELF_CLUE);
+    const withAudio = completeAudioPuzzle(withShelf, SPEAKER_NOTE);
+    const withDialogue = completeDialoguePuzzle(withAudio, LIBRARIAN_HINT);
+    const readyForGate = completeChoiceQuiz(withDialogue, QUIZ_NOTE);
+    const blockedResult = tryUnlockDoor(readyForGate, ESCAPE_ROOM_CODE, ESCAPE_ROOM_CODE);
+    const withIntel = recordIntel(readyForGate, FLOOR_MAP_CLUE, FLOOR_MAP_NOTE);
+
+    expect(isReadyToUnlock(readyForGate)).toBe(false);
+    expect(blockedResult.success).toBe(false);
+    expect(blockedResult.message).toContain("floor map or return cart");
+    expect(isReadyToUnlock(withIntel)).toBe(true);
   });
 });
 

@@ -65,7 +65,7 @@ export function DialogueModal({
   };
 
   return (
-    <ModalShell title="AI Librarian Terminal" subtitle="Ask the librarian for help in polite English." onClose={onClose}>
+    <ModalShell title="Librarian Desk Terminal" subtitle="Ask the librarian for help in polite English." onClose={onClose}>
       <div className="space-y-4">
         <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/52 p-5">
           <div className="flex items-center gap-2">

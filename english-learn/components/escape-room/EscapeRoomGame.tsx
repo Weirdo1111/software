@@ -26,7 +26,7 @@ import { BriefingScene } from "@/components/escape-room/BriefingScene";
 import { ChoiceQuizModal } from "@/components/escape-room/ChoiceQuizModal";
 import { ClueModal } from "@/components/escape-room/ClueModal";
 import { DialogueModal } from "@/components/escape-room/DialogueModal";
-import { createInitialGameProgress, escapeRoomReducer, getCompletionPercent, isReadyToUnlock, tryUnlockDoor } from "@/components/escape-room/puzzle-engine";
+import { createInitialGameProgress, escapeRoomReducer, getCompletionPercent, hasRequiredIntel, isReadyToUnlock, tryUnlockDoor } from "@/components/escape-room/puzzle-engine";
 import { ExitGateScene } from "@/components/escape-room/ExitGateScene";
 import { GameResultScreen } from "@/components/escape-room/GameResultScreen";
 import { GameSidebar } from "@/components/escape-room/GameSidebar";
@@ -118,6 +118,7 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
   }, [scene]);
 
   const readyToUnlock = isReadyToUnlock(progress);
+  const intelSatisfied = hasRequiredIntel(progress);
   const attemptFailure = !progress.reward.escaped && progress.keypadAttempts >= ESCAPE_ROOM_ATTEMPT_LIMIT;
   const failureReason: "timer" | "attempts" | null = attemptFailure ? "attempts" : expired ? "timer" : null;
 
@@ -227,6 +228,7 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
   const missingSteps = progressTasks
     .filter((task) => !progress.completedPuzzles[task.id])
     .map((task) => missingLabelByTask[task.id]);
+  const unlockMissingSteps = !intelSatisfied ? [...missingSteps, "desk-side intel lead"] : missingSteps;
   const completionPercent = getCompletionPercent(progress);
   const codeClues = progress.inventory.clues.filter((clue) => clue.kind === "code");
   const intelClues = progress.inventory.clues.filter((clue) => clue.kind === "intel");
@@ -318,7 +320,7 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
           codeClues={clueValues}
           intelClues={intelValues}
           notes={progress.inventory.notes}
-          missingSteps={missingSteps}
+          missingSteps={unlockMissingSteps}
           feedback={doorFeedback}
           onSubmit={(code) => {
             const result = tryUnlockDoor(progress, code, ESCAPE_ROOM_CODE);
@@ -359,7 +361,12 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(25,211,197,0.16),transparent_26%),radial-gradient(circle_at_80%_10%,rgba(255,209,102,0.18),transparent_22%),radial-gradient(circle_at_50%_100%,rgba(44,140,255,0.2),transparent_30%)]" />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(148,163,184,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.05)_1px,transparent_1px)] bg-[size:30px_30px]" />
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-[1680px] flex-col px-3 py-3 sm:px-4 sm:py-4 lg:px-5">
+      <div
+        className={cn(
+          "relative mx-auto flex min-h-screen w-full flex-col",
+          isFullscreen ? "max-w-none px-0 py-0" : "max-w-[1680px] px-3 py-3 sm:px-4 sm:py-4 lg:px-5",
+        )}
+      >
         {!isFullscreen ? (
           <header className="rounded-[1.6rem] border border-white/12 bg-[linear-gradient(145deg,rgba(10,20,34,0.96),rgba(8,15,27,0.94))] p-4 shadow-[0_24px_70px_rgba(0,0,0,0.34)]">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -400,7 +407,7 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
             ref={gameViewportRef}
             className={cn(
               "relative isolate rounded-[2rem] border border-white/12 bg-[linear-gradient(145deg,rgba(7,17,30,0.96),rgba(9,26,42,0.92))] p-4 shadow-[0_30px_90px_rgba(0,0,0,0.38)] sm:p-5",
-              isFullscreen ? "h-screen w-screen overflow-y-auto rounded-none border-0 p-3 sm:p-5" : "",
+              isFullscreen ? "h-screen w-screen overflow-hidden rounded-none border-0 p-0 shadow-none" : "",
             )}
           >
             {isFullscreen ? (
@@ -440,7 +447,7 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
                 </div>
 
                 <div className="corner-hud pointer-events-auto absolute right-4 top-4 flex w-[min(220px,calc(100vw-2rem))] flex-col gap-3">
-                  <div className={cn("rounded-[1.5rem] border border-white/12 bg-slate-950/60 p-4 shadow-[0_18px_48px_rgba(0,0,0,0.28)] backdrop-blur-xl", chipTone)}>
+                <div className={cn("rounded-[1.5rem] border border-white/12 bg-slate-950/60 p-4 shadow-[0_18px_48px_rgba(0,0,0,0.28)] backdrop-blur-xl", chipTone)}>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">{copy.timer}</p>
                     <div className="mt-2 flex items-center gap-2 text-lg font-semibold text-white">
                       {remainingSeconds === 0 ? <TimerOff className="size-5 text-rose-300" /> : <Timer className="size-5 text-cyan-200" />}
@@ -466,6 +473,9 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
                 <div className="corner-hud pointer-events-auto absolute bottom-4 left-4 w-[min(360px,calc(100vw-2rem))] rounded-[1.6rem] border border-white/12 bg-slate-950/62 p-4 shadow-[0_18px_48px_rgba(0,0,0,0.3)] backdrop-blur-xl">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-200/70">Objective</p>
                   <p className="mt-2 text-sm font-medium leading-6 text-white">{progress.currentObjective}</p>
+                  {!intelSatisfied ? (
+                    <p className="mt-2 text-xs leading-5 text-amber-200">Desk-side intel is required. Inspect the floor map or return cart before the keypad.</p>
+                  ) : null}
                   <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/8">
                     <div
                       className="progress-stripe h-full rounded-full bg-[linear-gradient(90deg,#19d3c5,#2c8cff,#ffd166)]"
@@ -512,9 +522,25 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
               </div>
             )}
 
-            <div key={scene} className={cn("arcade-scene-enter", isFullscreen ? "pt-28 sm:pt-32" : "mt-4")}>
+            <div
+              key={scene}
+              className={cn(
+                "arcade-scene-enter",
+                !isFullscreen
+                  ? "mt-4"
+                  : scene === "library" || scene === "exit"
+                    ? "h-screen"
+                    : "px-3 pb-3 pt-28 sm:px-5 sm:pb-5 sm:pt-32",
+              )}
+            >
               {scene === "briefing" ? (
-                <BriefingScene started={progress.started} elapsedLabel={elapsedLabel} countdownLabel={countdownLabel} fullscreen={isFullscreen} onStart={handleStartRun} />
+                <BriefingScene
+                  started={progress.started}
+                  elapsedLabel={elapsedLabel}
+                  countdownLabel={countdownLabel}
+                  fullscreen={isFullscreen}
+                  onStart={handleStartRun}
+                />
               ) : null}
               {scene === "library" ? (
                 <RoomScene roomObjects={activeRoomObjects} progress={progress} disabled={sceneDisabled} fullscreen={isFullscreen} onHotspotSelect={handleHotspotSelect} />
@@ -526,7 +552,7 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
                   clueValues={clueValues}
                   intelValues={intelValues}
                   notes={progress.inventory.notes}
-                  missingSteps={missingSteps}
+                  missingSteps={unlockMissingSteps}
                   fullscreen={isFullscreen}
                   onOpenKeypad={() => {
                     if (failureReason) {

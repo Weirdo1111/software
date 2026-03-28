@@ -31,6 +31,12 @@ export function GameSidebar({
         </div>
         <p className="mt-3 text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Objective</p>
         <p className="mt-2 text-sm leading-7 text-slate-300">{progress.currentObjective}</p>
+        <div className="mt-4 inline-flex rounded-full border border-white/10 bg-white/6 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100">
+          Campus investigation
+        </div>
+        {!progress.inventory.clues.some((clue) => clue.source === "floor-map" || clue.source === "return-cart") ? (
+          <p className="mt-3 text-sm leading-6 text-amber-100">Door rule: log one support lead from the floor map or return cart before using the keypad.</p>
+        ) : null}
 
         <div className="mt-5">
           <div className="flex items-center justify-between text-sm font-medium text-slate-200">
