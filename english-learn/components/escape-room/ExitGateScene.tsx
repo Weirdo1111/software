@@ -6,6 +6,8 @@ export function ExitGateScene({
   ready,
   escaped,
   clueValues,
+  intelValues,
+  notes,
   missingSteps,
   fullscreen = false,
   onOpenKeypad,
@@ -13,12 +15,19 @@ export function ExitGateScene({
   ready: boolean;
   escaped: boolean;
   clueValues: string[];
+  intelValues: string[];
+  notes: string[];
   missingSteps: string[];
   fullscreen?: boolean;
   onOpenKeypad: () => void;
 }) {
   return (
-    <section className="relative min-h-[64vh] overflow-hidden rounded-[2rem] border border-white/12 bg-[linear-gradient(155deg,rgba(9,20,31,0.96),rgba(17,33,53,0.92))] shadow-[0_28px_80px_rgba(0,0,0,0.35)]">
+    <section
+      className={cn(
+        "relative overflow-hidden bg-[linear-gradient(155deg,rgba(9,20,31,0.96),rgba(17,33,53,0.92))]",
+        fullscreen ? "h-screen" : "min-h-[64vh] rounded-[2rem] border border-white/12 shadow-[0_28px_80px_rgba(0,0,0,0.35)]",
+      )}
+    >
       <div className="absolute inset-0 bg-cover bg-center opacity-85" style={{ backgroundImage: "url('/quests/escape-room/exit-gate.svg')" }} />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,13,25,0.28),rgba(4,10,20,0.72))]" />
 
@@ -27,7 +36,11 @@ export function ExitGateScene({
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-200/72">Scene 03</p>
           <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Emergency Exit Console</h2>
           <p className="mt-3 text-sm leading-7 text-slate-300">
-            {escaped ? "Exit unlocked." : ready ? "All required checks are complete. The keypad is armed." : "You still need more clues before unlocking the exit."}
+            {escaped
+              ? "Exit unlocked."
+              : ready
+                ? "All required checks are complete. The keypad is armed."
+                : "You still need more clues before unlocking the exit."}
           </p>
         </div>
 
@@ -35,7 +48,7 @@ export function ExitGateScene({
           <div className="rounded-[1.8rem] border border-white/12 bg-slate-950/48 p-5 backdrop-blur-xl">
             <div className="flex items-center gap-2 text-white">
               <DoorClosed className="size-4 text-cyan-200" />
-              <p className="text-sm font-semibold uppercase tracking-[0.24em]">Collected clues</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em]">Access evidence</p>
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2">
@@ -49,6 +62,28 @@ export function ExitGateScene({
                 <span className="rounded-full border border-dashed border-white/16 px-3 py-1.5 text-sm text-slate-300">No fragments collected</span>
               )}
             </div>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              {intelValues.length ? (
+                intelValues.map((value) => (
+                  <span key={value} className="rounded-full border border-amber-300/18 bg-amber-300/10 px-3 py-1.5 text-sm font-semibold tracking-[0.08em] text-amber-100">
+                    {value}
+                  </span>
+                ))
+              ) : (
+                <span className="rounded-full border border-dashed border-white/16 px-3 py-1.5 text-sm text-slate-300">Optional support intel missing</span>
+              )}
+            </div>
+
+            {notes.length ? (
+              <div className="mt-4 space-y-2">
+                {notes.slice(-3).map((note) => (
+                  <p key={note} className="text-sm leading-7 text-slate-300">
+                    {note}
+                  </p>
+                ))}
+              </div>
+            ) : null}
 
             {!ready && !escaped ? (
               <div className="mt-4 rounded-[1.3rem] border border-amber-300/18 bg-amber-300/8 px-4 py-3 text-sm leading-7 text-amber-100">

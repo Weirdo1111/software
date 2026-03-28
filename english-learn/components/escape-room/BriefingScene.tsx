@@ -26,8 +26,8 @@ export function BriefingScene({
 
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
           <div className="rounded-[1.4rem] border border-white/10 bg-white/6 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Mode</p>
-            <p className="mt-2 text-lg font-semibold text-white">Solo Quest Run</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Difficulty</p>
+            <p className="mt-2 text-lg font-semibold text-white">Campus Investigation</p>
           </div>
           <div className="rounded-[1.4rem] border border-white/10 bg-white/6 p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Clock</p>
@@ -42,7 +42,8 @@ export function BriefingScene({
 
         <div className="mt-6 flex flex-wrap gap-3 text-sm font-medium text-slate-200">
           <div className="rounded-full border border-cyan-400/16 bg-cyan-400/8 px-4 py-2">Notice Board</div>
-          <div className="rounded-full border border-cyan-400/16 bg-cyan-400/8 px-4 py-2">Bookshelf</div>
+          <div className="rounded-full border border-cyan-400/16 bg-cyan-400/8 px-4 py-2">Stacks</div>
+          <div className="rounded-full border border-cyan-400/16 bg-cyan-400/8 px-4 py-2">Close-up Puzzles</div>
           <div className="rounded-full border border-cyan-400/16 bg-cyan-400/8 px-4 py-2">Broadcast</div>
           <div className="rounded-full border border-cyan-400/16 bg-cyan-400/8 px-4 py-2">Librarian</div>
           <div className="rounded-full border border-cyan-400/16 bg-cyan-400/8 px-4 py-2">Keypad</div>
@@ -62,7 +63,7 @@ export function BriefingScene({
           <div className="mt-4 space-y-3 text-sm leading-7 text-slate-300">
             <p>Hotspots only. No character movement.</p>
             <p>English unlocks the AI librarian hint.</p>
-            <p>The final code is shelf first, then closing time.</p>
+            <p>The keypad stays locked until you log one support lead from the floor map or return cart.</p>
           </div>
         </div>
 

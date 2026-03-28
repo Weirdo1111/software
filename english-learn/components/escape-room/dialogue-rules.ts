@@ -35,13 +35,13 @@ export function hasPoliteRequestSignal(input: string): boolean {
 export function buildLibrarianReply(intent: DialogueIntent): string {
   switch (intent) {
     case "ask_for_help":
-      return "Of course. Use the shelf number first, then the closing time.";
+      return "Of course. Start with the history shelf number, then place the closing time right after it.";
     case "ask_for_hint":
-      return "Check the bookshelf and the notice board carefully.";
+      return "Check the bookshelf and the notice board carefully, then compare them with the desk-side support notes.";
     case "impolite_request":
       return "Please ask more politely.";
     default:
-      return "Focus on how to leave the library.";
+      return "Focus on the exit procedure, the shelf marker, and the closing notice.";
   }
 }
 

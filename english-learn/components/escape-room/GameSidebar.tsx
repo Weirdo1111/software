@@ -19,6 +19,9 @@ export function GameSidebar({
   onReset: () => void;
   onOpenGate: () => void;
 }) {
+  const codeClues = progress.inventory.clues.filter((clue) => clue.kind === "code");
+  const intelClues = progress.inventory.clues.filter((clue) => clue.kind === "intel");
+
   return (
     <aside className="grid gap-4 xl:max-h-[calc(100vh-136px)] xl:overflow-y-auto">
       <section className="rounded-[1.8rem] border border-white/12 bg-[linear-gradient(150deg,rgba(15,26,43,0.95),rgba(10,18,29,0.96))] p-5 text-white shadow-[0_26px_70px_rgba(0,0,0,0.28)]">
@@ -28,6 +31,12 @@ export function GameSidebar({
         </div>
         <p className="mt-3 text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Objective</p>
         <p className="mt-2 text-sm leading-7 text-slate-300">{progress.currentObjective}</p>
+        <div className="mt-4 inline-flex rounded-full border border-white/10 bg-white/6 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100">
+          Campus investigation
+        </div>
+        {!progress.inventory.clues.some((clue) => clue.source === "floor-map" || clue.source === "return-cart") ? (
+          <p className="mt-3 text-sm leading-6 text-amber-100">Door rule: log one support lead from the floor map or return cart before using the keypad.</p>
+        ) : null}
 
         <div className="mt-5">
           <div className="flex items-center justify-between text-sm font-medium text-slate-200">
@@ -102,22 +111,37 @@ export function GameSidebar({
         </div>
 
         <div className="mt-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Clue fragments</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Code fragments</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            {progress.inventory.clues.length ? (
-              progress.inventory.clues.map((clue) => (
+            {codeClues.length ? (
+              codeClues.map((clue) => (
                 <span key={clue.id} className="rounded-full border border-cyan-300/16 bg-cyan-300/8 px-3 py-1.5 text-sm font-semibold tracking-[0.18em] text-cyan-100">
                   {clue.value}
                 </span>
               ))
             ) : (
-              <span className="rounded-full border border-dashed border-white/16 px-3 py-1.5 text-sm text-slate-300">No clues</span>
+              <span className="rounded-full border border-dashed border-white/16 px-3 py-1.5 text-sm text-slate-300">No number fragments</span>
             )}
           </div>
         </div>
 
         <div className="mt-5">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Librarian notes</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Field intel</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {intelClues.length ? (
+              intelClues.map((clue) => (
+                <span key={clue.id} className="rounded-full border border-amber-300/18 bg-amber-300/10 px-3 py-1.5 text-sm font-semibold tracking-[0.08em] text-amber-100">
+                  {clue.value}
+                </span>
+              ))
+            ) : (
+              <span className="rounded-full border border-dashed border-white/16 px-3 py-1.5 text-sm text-slate-300">Map and cart intel will appear here</span>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Case notes</p>
           <div className="mt-3 space-y-2">
             {progress.inventory.notes.length ? (
               progress.inventory.notes.map((note) => (
@@ -126,7 +150,7 @@ export function GameSidebar({
                 </div>
               ))
             ) : (
-              <div className="rounded-[1.1rem] border border-dashed border-white/12 px-3 py-2.5 text-sm leading-6 text-slate-300">Broadcast and librarian notes appear here.</div>
+              <div className="rounded-[1.1rem] border border-dashed border-white/12 px-3 py-2.5 text-sm leading-6 text-slate-300">Broadcast, map, cart, and librarian notes appear here.</div>
             )}
           </div>
         </div>

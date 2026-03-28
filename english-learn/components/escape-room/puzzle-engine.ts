@@ -5,6 +5,7 @@ export type GameAction =
   | { type: "START_GAME" }
   | { type: "COLLECT_NOTICE_BOARD"; clue: ClueItem }
   | { type: "COLLECT_BOOKSHELF"; clue: ClueItem }
+  | { type: "RECORD_INTEL"; clue?: ClueItem; note?: string }
   | { type: "COMPLETE_AUDIO"; note: string }
   | { type: "COMPLETE_DIALOGUE"; note: string }
   | { type: "COMPLETE_QUIZ"; note: string }
@@ -81,6 +82,16 @@ export function completePuzzle(progress: GameProgress, puzzleId: Exclude<PuzzleI
   });
 }
 
+export function recordIntel(progress: GameProgress, clue?: ClueItem, note?: string): GameProgress {
+  return syncProgress({
+    ...progress,
+    inventory: {
+      clues: clue && !progress.inventory.clues.some((entry) => entry.id === clue.id) ? [...progress.inventory.clues, clue] : progress.inventory.clues,
+      notes: note && !progress.inventory.notes.includes(note) ? [...progress.inventory.notes, note] : progress.inventory.notes,
+    },
+  });
+}
+
 export function getCompletionCount(progress: GameProgress): number {
   return Object.values(progress.completedPuzzles).filter(Boolean).length;
 }
@@ -89,8 +100,12 @@ export function getCompletionPercent(progress: GameProgress): number {
   return Math.round((getCompletionCount(progress) / Object.keys(defaultPuzzles).length) * 100);
 }
 
+export function hasRequiredIntel(progress: GameProgress): boolean {
+  return progress.inventory.clues.some((clue) => clue.source === "floor-map" || clue.source === "return-cart");
+}
+
 export function canUnlockDoor(progress: GameProgress): boolean {
-  return Object.values(progress.completedPuzzles).every(Boolean);
+  return Object.values(progress.completedPuzzles).every(Boolean) && hasRequiredIntel(progress);
 }
 
 export function isReadyToUnlock(progress: GameProgress): boolean {
@@ -139,23 +154,27 @@ export function getCurrentObjective(progress: GameProgress): string {
   }
 
   if (!progress.completedPuzzles["notice-board"]) {
-    return "Read the notice board and record the closing time.";
+    return "Read the notice board and identify the real library closing notice.";
   }
 
   if (!progress.completedPuzzles.bookshelf) {
-    return "Inspect the history shelf and collect its number.";
+    return "Inspect the library stacks and find the campus history shelf number.";
   }
 
   if (!progress.completedPuzzles.speaker) {
-    return "Listen to the announcement and confirm which clue comes second.";
+    return "Listen to the announcement and verify the code order.";
   }
 
   if (!progress.completedPuzzles["librarian-desk-terminal"]) {
-    return "Ask the AI librarian politely for help with the order.";
+    return "Ask the librarian desk politely for help with the order.";
   }
 
   if (!progress.completedPuzzles.quiz) {
     return "Pass the library etiquette quiz to unlock the exit keypad.";
+  }
+
+  if (!hasRequiredIntel(progress)) {
+    return "Inspect the floor map or return cart before using the keypad. The final code format is hidden in the desk-side intel.";
   }
 
   return "Open the exit keypad and enter the full library code.";
@@ -207,6 +226,18 @@ export interface DoorAttemptResult {
   message: string;
 }
 
+export function getUnlockBlockerMessage(progress: GameProgress): string {
+  if (!Object.values(progress.completedPuzzles).every(Boolean)) {
+    return "You still need more clues before unlocking the exit.";
+  }
+
+  if (!hasRequiredIntel(progress)) {
+    return "Inspect the floor map or return cart before unlocking the exit.";
+  }
+
+  return "You still need more clues before unlocking the exit.";
+}
+
 export function tryUnlockDoor(progress: GameProgress, code: string, expectedCode: string): DoorAttemptResult {
   const nextAttemptState = syncProgress({
     ...progress,
@@ -217,7 +248,7 @@ export function tryUnlockDoor(progress: GameProgress, code: string, expectedCode
     return {
       nextProgress: nextAttemptState,
       success: false,
-      message: "You still need more clues before unlocking the exit.",
+      message: getUnlockBlockerMessage(progress),
     };
   }
 
@@ -251,6 +282,8 @@ export function escapeRoomReducer(progress: GameProgress, action: GameAction): G
       return collectNoticeBoardClue(progress, action.clue);
     case "COLLECT_BOOKSHELF":
       return collectBookshelfClue(progress, action.clue);
+    case "RECORD_INTEL":
+      return recordIntel(progress, action.clue, action.note);
     case "COMPLETE_AUDIO":
       return completeAudioPuzzle(progress, action.note);
     case "COMPLETE_DIALOGUE":
