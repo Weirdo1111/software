@@ -1,32 +1,25 @@
 export type RoomObjectId =
   | "notice-board"
-  | "bookshelf"
-  | "floor-map"
   | "return-cart"
+  | "bookshelf"
+  | "circulation-desk"
   | "speaker"
-  | "librarian-desk-terminal"
+  | "floor-map"
   | "exit-door";
 
-export type PuzzleId = "notice-board" | "bookshelf" | "speaker" | "librarian-desk-terminal" | "quiz";
+export type PuzzleId = Exclude<RoomObjectId, "exit-door">;
 
-export type GamePhase =
-  | "intro"
-  | "exploring"
-  | "audio-complete"
-  | "dialogue-complete"
-  | "quiz-complete"
-  | "ready-to-unlock"
-  | "escaped";
+export type GamePhase = "intro" | "exploring" | "cart-found" | "shelf-found" | "desk-opened" | "audio-complete" | "ready-to-unlock" | "escaped";
 
-export type ModalType = "clue" | "audio" | "dialogue" | "quiz" | "keypad" | "reward";
-
-export type DialogueIntent = "ask_for_help" | "ask_for_hint" | "impolite_request" | "unrelated";
+export type ModalType = "clue" | "audio" | "desk" | "keypad" | "reward";
 
 export type ClueKind = "code" | "intel";
 
 export type SceneId = "briefing" | "library" | "exit";
 
 export type LevelStatus = "live" | "locked";
+
+export type RoomObjectState = "locked" | "available" | "cleared";
 
 export interface HotspotPosition {
   left: string;
@@ -39,9 +32,10 @@ export interface RoomObject {
   shortLabel: string;
   description: string;
   hotspot: HotspotPosition;
-  modalType: Exclude<ModalType, "quiz" | "reward">;
+  modalType: Exclude<ModalType, "reward">;
   required: boolean;
   accent: string;
+  iconKey?: string;
 }
 
 export interface ClueItem {
@@ -49,8 +43,17 @@ export interface ClueItem {
   label: string;
   value: string;
   kind: ClueKind;
-  source: RoomObjectId;
+  source: Exclude<RoomObjectId, "exit-door">;
   description: string;
+}
+
+export interface InventoryItem {
+  id: string;
+  label: string;
+  value?: string;
+  source: Exclude<RoomObjectId, "exit-door">;
+  description: string;
+  used: boolean;
 }
 
 export interface ClueModalContent {
@@ -66,6 +69,7 @@ export interface ClueModalContent {
 
 export interface InventoryState {
   clues: ClueItem[];
+  items: InventoryItem[];
   notes: string[];
 }
 
@@ -123,16 +127,19 @@ export interface AudioPuzzle {
   clueValue: string;
 }
 
-export interface ChoiceQuiz {
-  question: string;
-  options: QuizOption[];
+export interface DeskRecord {
+  id: string;
+  tab: string;
+  detail: string;
+  isCorrect: boolean;
 }
 
-export interface DialogueTurn {
-  id: string;
-  role: "player" | "librarian";
-  content: string;
-  intent?: DialogueIntent;
+export interface DeskPuzzle {
+  requiredItemId: string;
+  prompt: string;
+  records: DeskRecord[];
+  question: string;
+  options: QuizOption[];
 }
 
 export interface ProgressTask {

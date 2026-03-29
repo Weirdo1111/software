@@ -8,10 +8,12 @@ export function useEscapeTimer({
   started,
   escaped,
   durationSeconds,
+  bestTimeKey = ESCAPE_ROOM_BEST_TIME_KEY,
 }: {
   started: boolean;
   escaped: boolean;
   durationSeconds: number;
+  bestTimeKey?: string;
 }) {
   const startedAtRef = useRef<number | null>(null);
   const savedForRunRef = useRef(false);
@@ -21,7 +23,7 @@ export function useEscapeTimer({
       return null;
     }
 
-    const stored = window.localStorage.getItem(ESCAPE_ROOM_BEST_TIME_KEY);
+    const stored = window.localStorage.getItem(bestTimeKey);
     return stored ? Number(stored) : null;
   });
 
@@ -71,12 +73,12 @@ export function useEscapeTimer({
       setBestSeconds(finalSeconds);
 
       if (typeof window !== "undefined") {
-        window.localStorage.setItem(ESCAPE_ROOM_BEST_TIME_KEY, String(finalSeconds));
+        window.localStorage.setItem(bestTimeKey, String(finalSeconds));
       }
     }
 
     savedForRunRef.current = true;
-  }, [bestSeconds, escaped]);
+  }, [bestSeconds, bestTimeKey, escaped]);
 
   const resetTimer = () => {
     startedAtRef.current = null;

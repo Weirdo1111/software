@@ -1,7 +1,7 @@
-import { QUEST_REWARD } from "@/components/escape-room/room-data";
+import { DORM_REWARD } from "@/components/dorm-lockout/dorm-data";
 import type { ClueItem, GamePhase, GameProgress, InventoryItem, InventoryState, PuzzleId, RoomObjectId, RoomObjectState } from "@/components/escape-room/types";
 
-export type GameAction =
+export type DormGameAction =
   | { type: "START_GAME" }
   | { type: "COLLECT_NOTICE_BOARD"; clue: ClueItem; note: string }
   | { type: "COLLECT_RETURN_CART"; clue: ClueItem; item: InventoryItem; note: string }
@@ -60,28 +60,28 @@ function addUniqueNote(inventory: InventoryState, note: string): InventoryState 
   };
 }
 
-export function hasItem(progress: GameProgress, itemId: string): boolean {
+export function dormHasItem(progress: GameProgress, itemId: string): boolean {
   return progress.inventory.items.some((item) => item.id === itemId);
 }
 
 function syncProgress(progress: GameProgress): GameProgress {
-  const nextPhase = derivePhase(progress);
+  const nextPhase = deriveDormPhase(progress);
 
   return {
     ...progress,
     phase: nextPhase,
-    currentObjective: getCurrentObjective({
+    currentObjective: getDormCurrentObjective({
       ...progress,
       phase: nextPhase,
     }),
   };
 }
 
-export function createInitialGameProgress(): GameProgress {
+export function createInitialDormProgress(): GameProgress {
   return {
     started: false,
     phase: "intro",
-    currentObjective: "Start the run and inspect the notice board for the first real closing clue.",
+    currentObjective: "Start the run and inspect the dorm notice board for the first after-hours clue.",
     completedPuzzles: { ...defaultPuzzles },
     inventory: {
       clues: [],
@@ -97,7 +97,7 @@ export function createInitialGameProgress(): GameProgress {
   };
 }
 
-export function collectNoticeBoardClue(progress: GameProgress, clue: ClueItem, note: string): GameProgress {
+export function collectDormNoticeClue(progress: GameProgress, clue: ClueItem, note: string): GameProgress {
   return syncProgress({
     ...progress,
     completedPuzzles: {
@@ -108,7 +108,7 @@ export function collectNoticeBoardClue(progress: GameProgress, clue: ClueItem, n
   });
 }
 
-export function collectReturnCartLead(progress: GameProgress, clue: ClueItem, item: InventoryItem, note: string): GameProgress {
+export function collectDormCubbyClue(progress: GameProgress, clue: ClueItem, item: InventoryItem, note: string): GameProgress {
   return syncProgress({
     ...progress,
     completedPuzzles: {
@@ -119,7 +119,7 @@ export function collectReturnCartLead(progress: GameProgress, clue: ClueItem, it
   });
 }
 
-export function collectBookshelfClue(progress: GameProgress, clue: ClueItem, item: InventoryItem, note: string): GameProgress {
+export function collectDormBackpackLead(progress: GameProgress, clue: ClueItem, item: InventoryItem, note: string): GameProgress {
   return syncProgress({
     ...progress,
     completedPuzzles: {
@@ -130,7 +130,7 @@ export function collectBookshelfClue(progress: GameProgress, clue: ClueItem, ite
   });
 }
 
-export function completeDeskPuzzle(progress: GameProgress, item: InventoryItem, note: string, usedItemId: string): GameProgress {
+export function completeDormDeskPuzzle(progress: GameProgress, item: InventoryItem, note: string, usedItemId: string): GameProgress {
   return syncProgress({
     ...progress,
     completedPuzzles: {
@@ -141,7 +141,7 @@ export function completeDeskPuzzle(progress: GameProgress, item: InventoryItem, 
   });
 }
 
-export function completeAudioPuzzle(progress: GameProgress, note: string): GameProgress {
+export function completeDormAudioPuzzle(progress: GameProgress, note: string): GameProgress {
   return syncProgress({
     ...progress,
     completedPuzzles: {
@@ -152,7 +152,7 @@ export function completeAudioPuzzle(progress: GameProgress, note: string): GameP
   });
 }
 
-export function collectFloorMapClue(progress: GameProgress, clue: ClueItem, note: string): GameProgress {
+export function collectDormHandbookClue(progress: GameProgress, clue: ClueItem, note: string): GameProgress {
   return syncProgress({
     ...progress,
     completedPuzzles: {
@@ -163,27 +163,27 @@ export function collectFloorMapClue(progress: GameProgress, clue: ClueItem, note
   });
 }
 
-export function getCompletionCount(progress: GameProgress): number {
+export function getDormCompletionCount(progress: GameProgress): number {
   return Object.values(progress.completedPuzzles).filter(Boolean).length;
 }
 
-export function getCompletionPercent(progress: GameProgress): number {
-  return Math.round((getCompletionCount(progress) / Object.keys(defaultPuzzles).length) * 100);
+export function getDormCompletionPercent(progress: GameProgress): number {
+  return Math.round((getDormCompletionCount(progress) / Object.keys(defaultPuzzles).length) * 100);
 }
 
-export function canUnlockDoor(progress: GameProgress): boolean {
+export function canUnlockDormDoor(progress: GameProgress): boolean {
   return Object.values(progress.completedPuzzles).every(Boolean);
 }
 
-export function isReadyToUnlock(progress: GameProgress): boolean {
-  return canUnlockDoor(progress);
+export function isDormReadyToUnlock(progress: GameProgress): boolean {
+  return canUnlockDormDoor(progress);
 }
 
-export function validateCode(code: string, expectedCode: string): boolean {
+export function validateDormCode(code: string, expectedCode: string): boolean {
   return code.replace(/\s+/g, "") === expectedCode;
 }
 
-export function derivePhase(progress: GameProgress): GamePhase {
+export function deriveDormPhase(progress: GameProgress): GamePhase {
   if (progress.reward.escaped) {
     return "escaped";
   }
@@ -192,7 +192,7 @@ export function derivePhase(progress: GameProgress): GamePhase {
     return "intro";
   }
 
-  if (canUnlockDoor(progress)) {
+  if (canUnlockDormDoor(progress)) {
     return "ready-to-unlock";
   }
 
@@ -215,47 +215,44 @@ export function derivePhase(progress: GameProgress): GamePhase {
   return "exploring";
 }
 
-export function getCurrentObjective(progress: GameProgress): string {
+export function getDormCurrentObjective(progress: GameProgress): string {
   if (progress.reward.escaped) {
-    return "Quest completed. Review the reward screen or restart the library run.";
+    return "Quest completed. Review the dorm reward screen or restart the run.";
   }
 
   if (!progress.started) {
-    return "Start the quest to activate the library floor investigation.";
+    return "Start the quest to activate the dorm lounge investigation.";
   }
 
   if (!progress.completedPuzzles["notice-board"]) {
-    return "Inspect the notice board and record the real closing time from the late-night memo.";
+    return "Inspect the dorm notice board and record the quiet-hours time.";
   }
 
   if (!progress.completedPuzzles["return-cart"]) {
-    return "Search the return cart and recover the reshelving slip that points to the correct section.";
+    return "Check the resident cubbies and recover the correct unit number.";
   }
 
   if (!progress.completedPuzzles.bookshelf) {
-    return "Use the cart slip in the history stacks, record the shelf code, and recover the desk key.";
+    return "Match the right backpack to Unit 105 and recover the returned RA passcard.";
   }
 
   if (!progress.completedPuzzles["circulation-desk"]) {
-    return "Unlock the circulation drawer and log the after-hours procedure card.";
+    return "Unlock the RA desk and log the after-hours hall access card.";
   }
 
   if (!progress.completedPuzzles.speaker) {
-    return "Listen to the overhead speaker and confirm which clue must come second.";
+    return "Listen to the hall intercom and confirm which clue comes second.";
   }
 
   if (!progress.completedPuzzles["floor-map"]) {
-    return "Verify the keypad format on the floor map before attempting the exit console.";
+    return "Verify the keypad format in the resident handbook before attempting the exit.";
   }
 
-  return "Move to the exit console and enter the full 6-digit code.";
+  return "Move to the hallway exit and enter the full dorm code.";
 }
 
-export function getObjectState(progress: GameProgress, objectId: RoomObjectId): RoomObjectState {
-  const cleared =
-    objectId === "exit-door"
-      ? progress.reward.escaped
-      : progress.completedPuzzles[objectId as PuzzleId];
+export function getDormObjectState(progress: GameProgress, objectId: RoomObjectId): RoomObjectState {
+  const cleared = objectId === "exit-door" ? progress.reward.escaped : progress.completedPuzzles[objectId as PuzzleId];
 
   if (cleared) {
     return "cleared";
@@ -273,7 +270,7 @@ export function getObjectState(progress: GameProgress, objectId: RoomObjectId): 
     case "bookshelf":
       return progress.completedPuzzles["return-cart"] ? "available" : "locked";
     case "circulation-desk":
-      return progress.completedPuzzles.bookshelf && hasItem(progress, "desk-key") ? "available" : "locked";
+      return progress.completedPuzzles.bookshelf && dormHasItem(progress, "ra-pass") ? "available" : "locked";
     case "speaker":
       return progress.completedPuzzles["circulation-desk"] ? "available" : "locked";
     case "floor-map":
@@ -283,46 +280,46 @@ export function getObjectState(progress: GameProgress, objectId: RoomObjectId): 
   }
 }
 
-export function startQuest(progress: GameProgress): GameProgress {
+export function startDormQuest(progress: GameProgress): GameProgress {
   return syncProgress({
     ...progress,
     started: true,
   });
 }
 
-export interface DoorAttemptResult {
+export interface DormDoorAttemptResult {
   nextProgress: GameProgress;
   success: boolean;
   message: string;
 }
 
-export function getUnlockBlockerMessage(progress: GameProgress): string {
-  if (canUnlockDoor(progress)) {
-    return "The exit is ready. Enter the 6-digit code.";
+export function getDormUnlockBlockerMessage(progress: GameProgress): string {
+  if (canUnlockDormDoor(progress)) {
+    return "The hallway exit is ready. Enter the 7-digit code.";
   }
 
-  return `You are not done yet. ${getCurrentObjective(progress)}`;
+  return `You are not done yet. ${getDormCurrentObjective(progress)}`;
 }
 
-export function tryUnlockDoor(progress: GameProgress, code: string, expectedCode: string): DoorAttemptResult {
+export function tryUnlockDormDoor(progress: GameProgress, code: string, expectedCode: string): DormDoorAttemptResult {
   const nextAttemptState = syncProgress({
     ...progress,
     keypadAttempts: progress.keypadAttempts + 1,
   });
 
-  if (!canUnlockDoor(progress)) {
+  if (!canUnlockDormDoor(progress)) {
     return {
       nextProgress: nextAttemptState,
       success: false,
-      message: getUnlockBlockerMessage(progress),
+      message: getDormUnlockBlockerMessage(progress),
     };
   }
 
-  if (!validateCode(code, expectedCode)) {
+  if (!validateDormCode(code, expectedCode)) {
     return {
       nextProgress: nextAttemptState,
       success: false,
-      message: "That sequence still does not match the desk card, PA order, and keypad format.",
+      message: "That sequence still does not match the unit clue, intercom order, and handbook format.",
     };
   }
 
@@ -330,32 +327,32 @@ export function tryUnlockDoor(progress: GameProgress, code: string, expectedCode
     nextProgress: syncProgress({
       ...nextAttemptState,
       reward: {
-        xpEarned: QUEST_REWARD.xpEarned,
-        badgeUnlocked: QUEST_REWARD.badgeUnlocked,
+        xpEarned: DORM_REWARD.xpEarned,
+        badgeUnlocked: DORM_REWARD.badgeUnlocked,
         escaped: true,
       },
     }),
     success: true,
-    message: "The emergency exit unlocks. You escaped the library.",
+    message: "The hallway exit unlocks. You cleared the dorm lounge.",
   };
 }
 
-export function escapeRoomReducer(progress: GameProgress, action: GameAction): GameProgress {
+export function dormLockoutReducer(progress: GameProgress, action: DormGameAction): GameProgress {
   switch (action.type) {
     case "START_GAME":
-      return startQuest(progress);
+      return startDormQuest(progress);
     case "COLLECT_NOTICE_BOARD":
-      return collectNoticeBoardClue(progress, action.clue, action.note);
+      return collectDormNoticeClue(progress, action.clue, action.note);
     case "COLLECT_RETURN_CART":
-      return collectReturnCartLead(progress, action.clue, action.item, action.note);
+      return collectDormCubbyClue(progress, action.clue, action.item, action.note);
     case "COLLECT_BOOKSHELF":
-      return collectBookshelfClue(progress, action.clue, action.item, action.note);
+      return collectDormBackpackLead(progress, action.clue, action.item, action.note);
     case "COMPLETE_DESK":
-      return completeDeskPuzzle(progress, action.item, action.note, action.usedItemId);
+      return completeDormDeskPuzzle(progress, action.item, action.note, action.usedItemId);
     case "COMPLETE_AUDIO":
-      return completeAudioPuzzle(progress, action.note);
+      return completeDormAudioPuzzle(progress, action.note);
     case "COLLECT_FLOOR_MAP":
-      return collectFloorMapClue(progress, action.clue, action.note);
+      return collectDormHandbookClue(progress, action.clue, action.note);
     case "SET_PROGRESS":
       return syncProgress(action.progress);
     default:

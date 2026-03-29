@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Delete, DoorClosed, RotateCcw } from "lucide-react";
 
 import { ModalShell } from "@/components/escape-room/ModalShell";
+import type { InventoryItem } from "@/components/escape-room/types";
 
 const keypadButtons = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "clear", "0", "delete"] as const;
 
@@ -14,6 +15,7 @@ export function KeypadModal({
   attemptLimit,
   codeClues,
   intelClues,
+  items,
   notes,
   missingSteps,
   feedback,
@@ -26,6 +28,7 @@ export function KeypadModal({
   attemptLimit: number;
   codeClues: string[];
   intelClues: string[];
+  items: InventoryItem[];
   notes: string[];
   missingSteps: string[];
   feedback: string | null;
@@ -57,43 +60,56 @@ export function KeypadModal({
   };
 
   return (
-    <ModalShell title="Exit Keypad" subtitle="Combine the shelf number and closing time to leave the library." onClose={onClose}>
+    <ModalShell title="Exit Keypad" subtitle="Merge the stack code and closing time using the confirmed procedure." onClose={onClose}>
       <div className="space-y-4">
-        <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/52 p-5">
-          <div className="flex items-center gap-2 text-cyan-100">
+        <div className="rounded-[1.5rem] border border-[#e8dcc7] bg-white/88 p-5">
+          <div className="flex items-center gap-2 text-teal-700">
             <DoorClosed className="size-4" />
             <p className="text-sm font-semibold tracking-tight">Exit status</p>
           </div>
 
-          <p className="mt-3 text-sm leading-6 text-slate-300">
-            {ready
-              ? "The keypad is active. Enter the full 6-digit code."
-              : "You still need more clues before unlocking the exit."}
+          <p className="mt-3 text-sm leading-6 text-slate-700">
+            {ready ? "The console is armed. Enter the full 6-digit code as one continuous sequence." : "You still need more evidence before this exit console can be trusted."}
           </p>
 
           <div className="mt-4 flex flex-wrap gap-2">
             {codeClues.length ? (
               codeClues.map((value) => (
-                <span key={value} className="rounded-full border border-cyan-300/16 bg-cyan-300/8 px-3 py-2 text-sm font-semibold tracking-[0.16em] text-cyan-100">
+                <span key={value} className="rounded-full border border-teal-200 bg-teal-50 px-3 py-2 text-sm font-semibold tracking-[0.16em] text-teal-900">
                   {value}
                 </span>
               ))
             ) : (
-              <span className="rounded-full border border-dashed border-white/14 px-3 py-2 text-sm text-slate-300">No code fragments yet</span>
+              <span className="rounded-full border border-dashed border-[#d7d2c7] px-3 py-2 text-sm text-slate-500">No code fragments yet</span>
             )}
           </div>
 
           <div className="mt-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Support intel</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Format intel</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {intelClues.length ? (
                 intelClues.map((value) => (
-                  <span key={value} className="rounded-full border border-amber-300/18 bg-amber-300/10 px-3 py-2 text-sm font-semibold tracking-[0.08em] text-amber-100">
+                  <span key={value} className="rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold tracking-[0.08em] text-amber-900">
                     {value}
                   </span>
                 ))
               ) : (
-                <span className="rounded-full border border-dashed border-white/14 px-3 py-2 text-sm text-slate-300">Optional desk intel not logged yet</span>
+                <span className="rounded-full border border-dashed border-[#d7d2c7] px-3 py-2 text-sm text-slate-500">Map format not verified yet</span>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Collected items</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {items.length ? (
+                items.map((item) => (
+                  <span key={item.id} className="rounded-full border border-[#e1dac8] bg-white px-3 py-2 text-sm font-semibold tracking-[0.08em] text-slate-700">
+                    {item.label}
+                  </span>
+                ))
+              ) : (
+                <span className="rounded-full border border-dashed border-[#d7d2c7] px-3 py-2 text-sm text-slate-500">No physical evidence logged</span>
               )}
             </div>
           </div>
@@ -101,27 +117,27 @@ export function KeypadModal({
           <p className="mt-4 text-xs uppercase tracking-[0.2em] text-slate-500">Wrong attempts trigger a lock reset after {attemptLimit} tries.</p>
 
           {!ready ? (
-            <div className="mt-4 rounded-[1.2rem] bg-amber-300/12 px-4 py-3 text-sm text-amber-100">
+            <div className="mt-4 rounded-[1.2rem] bg-amber-50 px-4 py-3 text-sm text-amber-900">
               Missing steps: {missingSteps.join(", ")}
             </div>
           ) : null}
         </div>
 
-        <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/52 p-5">
+        <div className="rounded-[1.5rem] border border-[#e8dcc7] bg-white/88 p-5">
           {suspectPatterns.length ? (
-            <div className="mb-5 rounded-[1.2rem] border border-white/10 bg-black/18 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Suspect code patterns</p>
+            <div className="mb-5 rounded-[1.2rem] border border-[#e1dac8] bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Working combinations</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {suspectPatterns.map((pattern) => (
-                  <span key={pattern} className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-semibold tracking-[0.12em] text-slate-200">
+                  <span key={pattern} className="rounded-full border border-[#e1dac8] bg-slate-50 px-3 py-1.5 text-sm font-semibold tracking-[0.12em] text-slate-700">
                     {pattern}
                   </span>
                 ))}
               </div>
               {notes.length ? (
                 <div className="mt-3 space-y-2">
-                  {notes.slice(-3).map((note) => (
-                    <p key={note} className="text-sm leading-6 text-slate-300">
+                  {notes.slice(-4).map((note) => (
+                    <p key={note} className="text-sm leading-6 text-slate-700">
                       {note}
                     </p>
                   ))}
@@ -134,7 +150,7 @@ export function KeypadModal({
             {Array.from({ length: codeLength }).map((_, index) => (
               <div
                 key={`slot-${index}`}
-                className="flex h-14 items-center justify-center rounded-[1rem] border border-white/10 bg-black/20 text-lg font-semibold tracking-[0.18em] text-white"
+                className="flex h-14 items-center justify-center rounded-[1rem] border border-[#e1dac8] bg-white text-lg font-semibold tracking-[0.18em] text-slate-900"
               >
                 {code[index] ?? ""}
               </div>
@@ -148,7 +164,7 @@ export function KeypadModal({
                 type="button"
                 onClick={() => handlePadClick(value)}
                 disabled={!ready}
-                className="inline-flex h-14 items-center justify-center rounded-[1rem] border border-white/10 bg-black/18 text-sm font-semibold text-white transition hover:border-cyan-300/28 hover:bg-cyan-300/8 disabled:cursor-not-allowed disabled:opacity-45"
+                className="inline-flex h-14 items-center justify-center rounded-[1rem] border border-[#e1dac8] bg-white text-sm font-semibold text-slate-800 transition hover:border-teal-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45"
               >
                 {value === "clear" ? (
                   <span className="inline-flex items-center gap-2 uppercase tracking-[0.18em] text-xs">
@@ -168,14 +184,14 @@ export function KeypadModal({
           </div>
 
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs leading-5 text-slate-400">
+            <p className="text-xs leading-5 text-slate-500">
               Attempts: {attempts} / {attemptLimit}
             </p>
             <button
               type="button"
               disabled={!ready || code.length !== codeLength}
               onClick={() => onSubmit(code)}
-              className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-950 transition hover:translate-y-[-1px] disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:translate-y-[-1px] disabled:cursor-not-allowed disabled:bg-slate-300"
             >
               Submit code
             </button>
@@ -183,7 +199,7 @@ export function KeypadModal({
         </div>
 
         {feedback ? (
-          <div className={`rounded-[1.4rem] px-4 py-3 text-sm ${ready ? "bg-amber-300/12 text-amber-100" : "bg-rose-400/12 text-rose-100"}`}>
+          <div className={`rounded-[1.4rem] px-4 py-3 text-sm ${ready ? "bg-amber-50 text-amber-900" : "bg-rose-50 text-rose-900"}`}>
             {feedback}
           </div>
         ) : null}
