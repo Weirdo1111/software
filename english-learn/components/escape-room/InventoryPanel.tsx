@@ -1,4 +1,4 @@
-import { BadgeCheck, BookOpenText, KeyRound, Sparkles } from "lucide-react";
+import { BadgeCheck, BookOpenText, KeyRound, Package2, Sparkles } from "lucide-react";
 
 import type { GameProgress } from "@/components/escape-room/types";
 
@@ -6,7 +6,7 @@ export function InventoryPanel({ progress }: { progress: GameProgress }) {
   return (
     <section className="surface-panel rounded-[2rem] p-5 sm:p-6">
       <p className="section-label institution-label">Inventory</p>
-      <h3 className="font-display mt-3 text-2xl tracking-tight text-[var(--ink)]">Clues and Rewards</h3>
+      <h3 className="font-display mt-3 text-2xl tracking-tight text-[var(--ink)]">Evidence and Rewards</h3>
 
       <div className="mt-5 rounded-[1.5rem] border border-[rgba(20,50,75,0.1)] bg-white/68 p-4">
         <div className="flex items-center gap-2">
@@ -34,6 +34,31 @@ export function InventoryPanel({ progress }: { progress: GameProgress }) {
 
       <div className="mt-4 rounded-[1.5rem] border border-[rgba(20,50,75,0.1)] bg-white/68 p-4">
         <div className="flex items-center gap-2">
+          <Package2 className="size-4 text-[var(--teal)]" />
+          <p className="text-sm font-semibold tracking-tight text-[var(--ink)]">Collected items</p>
+        </div>
+
+        {progress.inventory.items.length ? (
+          <div className="mt-3 space-y-2">
+            {progress.inventory.items.map((item) => (
+              <div key={item.id} className="rounded-2xl border border-[rgba(42,105,88,0.14)] bg-emerald-50/78 px-3 py-2 text-sm leading-6 text-[var(--ink)]">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-semibold">{item.label}</span>
+                  <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${item.used ? "bg-emerald-100 text-emerald-700" : "bg-sky-100 text-sky-700"}`}>
+                    {item.used ? "used" : "held"}
+                  </span>
+                </div>
+                <p className="mt-1">{item.value ? `${item.value} · ${item.description}` : item.description}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">Slips, keys, and procedure cards will appear here.</p>
+        )}
+      </div>
+
+      <div className="mt-4 rounded-[1.5rem] border border-[rgba(20,50,75,0.1)] bg-white/68 p-4">
+        <div className="flex items-center gap-2">
           <BookOpenText className="size-4 text-[var(--teal)]" />
           <p className="text-sm font-semibold tracking-tight text-[var(--ink)]">Notebook</p>
         </div>
@@ -47,7 +72,7 @@ export function InventoryPanel({ progress }: { progress: GameProgress }) {
             ))}
           </div>
         ) : (
-          <p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">Hints from the librarian and quiz will appear here.</p>
+          <p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">Investigation notes will appear here as you clear each step.</p>
         )}
       </div>
 

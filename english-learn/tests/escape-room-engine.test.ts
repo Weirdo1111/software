@@ -1,72 +1,107 @@
 import { describe, expect, it } from "vitest";
 
-import { detectDialogueIntent, resolveDialogueTurn } from "@/components/escape-room/dialogue-rules";
 import {
   collectBookshelfClue,
+  collectFloorMapClue,
   collectNoticeBoardClue,
+  collectReturnCartLead,
   completeAudioPuzzle,
-  completeChoiceQuiz,
-  completeDialoguePuzzle,
+  completeDeskPuzzle,
   createInitialGameProgress,
+  getObjectState,
   isReadyToUnlock,
-  recordIntel,
   startQuest,
   tryUnlockDoor,
 } from "@/components/escape-room/puzzle-engine";
 import {
   BOOKSHELF_CLUE,
+  BOOKSHELF_NOTE,
+  DESK_KEY_ITEM,
+  DESK_NOTE,
   ESCAPE_ROOM_CODE,
   FLOOR_MAP_CLUE,
   FLOOR_MAP_NOTE,
-  LIBRARIAN_HINT,
   NOTICE_BOARD_CLUE,
-  QUIZ_NOTE,
+  NOTICE_BOARD_NOTE,
+  PROCEDURE_CARD_ITEM,
+  RESHELVING_SLIP_ITEM,
   RETURN_CART_CLUE,
   RETURN_CART_NOTE,
   SPEAKER_NOTE,
 } from "@/components/escape-room/room-data";
 
 describe("escape room puzzle engine", () => {
-  it("adds the notice-board clue and marks that puzzle complete", () => {
+  it("adds the notice-board clue and unlocks the return cart next", () => {
     const started = startQuest(createInitialGameProgress());
-    const next = collectNoticeBoardClue(started, NOTICE_BOARD_CLUE);
+    const next = collectNoticeBoardClue(started, NOTICE_BOARD_CLUE, NOTICE_BOARD_NOTE);
 
     expect(next.completedPuzzles["notice-board"]).toBe(true);
     expect(next.inventory.clues.map((clue) => clue.value)).toContain("915");
-    expect(next.currentObjective).toContain("history shelf");
+    expect(next.inventory.notes).toContain(NOTICE_BOARD_NOTE);
+    expect(getObjectState(next, "return-cart")).toBe("available");
+    expect(next.currentObjective).toContain("return cart");
   });
 
-  it("adds the bookshelf clue and keeps the room locked until the rest is complete", () => {
+  it("adds the cart lead item and unlocks the history stacks", () => {
     const started = startQuest(createInitialGameProgress());
-    const withNotice = collectNoticeBoardClue(started, NOTICE_BOARD_CLUE);
-    const withShelf = collectBookshelfClue(withNotice, BOOKSHELF_CLUE);
-    const attempted = tryUnlockDoor(withShelf, ESCAPE_ROOM_CODE, ESCAPE_ROOM_CODE);
+    const withNotice = collectNoticeBoardClue(started, NOTICE_BOARD_CLUE, NOTICE_BOARD_NOTE);
+    const withCart = collectReturnCartLead(withNotice, RETURN_CART_CLUE, RESHELVING_SLIP_ITEM, RETURN_CART_NOTE);
+
+    expect(withCart.completedPuzzles["return-cart"]).toBe(true);
+    expect(withCart.inventory.items.map((item) => item.label)).toContain("Reshelving Slip");
+    expect(withCart.inventory.clues.map((clue) => clue.value)).toContain("HISTORY");
+    expect(getObjectState(withCart, "bookshelf")).toBe("available");
+  });
+
+  it("collects the shelf code and desk key from the stacks", () => {
+    const started = startQuest(createInitialGameProgress());
+    const withNotice = collectNoticeBoardClue(started, NOTICE_BOARD_CLUE, NOTICE_BOARD_NOTE);
+    const withCart = collectReturnCartLead(withNotice, RETURN_CART_CLUE, RESHELVING_SLIP_ITEM, RETURN_CART_NOTE);
+    const withShelf = collectBookshelfClue(withCart, BOOKSHELF_CLUE, DESK_KEY_ITEM, BOOKSHELF_NOTE);
 
     expect(withShelf.completedPuzzles.bookshelf).toBe(true);
     expect(withShelf.inventory.clues.map((clue) => clue.value)).toContain("204");
-    expect(isReadyToUnlock(withShelf)).toBe(false);
-    expect(attempted.success).toBe(false);
-    expect(attempted.message).toContain("more clues");
+    expect(withShelf.inventory.items.map((item) => item.id)).toContain("desk-key");
+    expect(getObjectState(withShelf, "circulation-desk")).toBe("available");
   });
 
-  it("records environment intel without unlocking the door early", () => {
+  it("marks the desk key used when the circulation drawer is cleared", () => {
     const started = startQuest(createInitialGameProgress());
-    const withMapIntel = recordIntel(started, FLOOR_MAP_CLUE, FLOOR_MAP_NOTE);
-    const withCartIntel = recordIntel(withMapIntel, RETURN_CART_CLUE, RETURN_CART_NOTE);
+    const withNotice = collectNoticeBoardClue(started, NOTICE_BOARD_CLUE, NOTICE_BOARD_NOTE);
+    const withCart = collectReturnCartLead(withNotice, RETURN_CART_CLUE, RESHELVING_SLIP_ITEM, RETURN_CART_NOTE);
+    const withShelf = collectBookshelfClue(withCart, BOOKSHELF_CLUE, DESK_KEY_ITEM, BOOKSHELF_NOTE);
+    const withDesk = completeDeskPuzzle(withShelf, PROCEDURE_CARD_ITEM, DESK_NOTE, DESK_KEY_ITEM.id);
 
-    expect(withCartIntel.inventory.clues.map((clue) => clue.value)).toEqual(expect.arrayContaining(["6 DIGITS", "NO GAPS"]));
-    expect(withCartIntel.inventory.notes).toEqual(expect.arrayContaining([FLOOR_MAP_NOTE, RETURN_CART_NOTE]));
-    expect(isReadyToUnlock(withCartIntel)).toBe(false);
+    expect(withDesk.completedPuzzles["circulation-desk"]).toBe(true);
+    expect(withDesk.inventory.items.find((item) => item.id === DESK_KEY_ITEM.id)?.used).toBe(true);
+    expect(withDesk.inventory.items.map((item) => item.id)).toContain("procedure-card");
+    expect(getObjectState(withDesk, "speaker")).toBe("available");
   });
 
-  it("unlocks the library with the correct final code after all puzzles and one intel lead are complete", () => {
+  it("keeps the door locked until the full board-cart-stacks-desk-speaker-map chain is complete", () => {
     const started = startQuest(createInitialGameProgress());
-    const withNotice = collectNoticeBoardClue(started, NOTICE_BOARD_CLUE);
-    const withShelf = collectBookshelfClue(withNotice, BOOKSHELF_CLUE);
-    const withAudio = completeAudioPuzzle(withShelf, SPEAKER_NOTE);
-    const withDialogue = completeDialoguePuzzle(withAudio, LIBRARIAN_HINT);
-    const withQuiz = completeChoiceQuiz(withDialogue, QUIZ_NOTE);
-    const ready = recordIntel(withQuiz, FLOOR_MAP_CLUE, FLOOR_MAP_NOTE);
+    const withNotice = collectNoticeBoardClue(started, NOTICE_BOARD_CLUE, NOTICE_BOARD_NOTE);
+    const withCart = collectReturnCartLead(withNotice, RETURN_CART_CLUE, RESHELVING_SLIP_ITEM, RETURN_CART_NOTE);
+    const withShelf = collectBookshelfClue(withCart, BOOKSHELF_CLUE, DESK_KEY_ITEM, BOOKSHELF_NOTE);
+    const withDesk = completeDeskPuzzle(withShelf, PROCEDURE_CARD_ITEM, DESK_NOTE, DESK_KEY_ITEM.id);
+    const withAudio = completeAudioPuzzle(withDesk, SPEAKER_NOTE);
+    const blocked = tryUnlockDoor(withAudio, ESCAPE_ROOM_CODE, ESCAPE_ROOM_CODE);
+    const ready = collectFloorMapClue(withAudio, FLOOR_MAP_CLUE, FLOOR_MAP_NOTE);
+
+    expect(isReadyToUnlock(withAudio)).toBe(false);
+    expect(blocked.success).toBe(false);
+    expect(blocked.message).toContain("floor map");
+    expect(isReadyToUnlock(ready)).toBe(true);
+  });
+
+  it("unlocks the library with the correct final code after the full sequence is complete", () => {
+    const started = startQuest(createInitialGameProgress());
+    const withNotice = collectNoticeBoardClue(started, NOTICE_BOARD_CLUE, NOTICE_BOARD_NOTE);
+    const withCart = collectReturnCartLead(withNotice, RETURN_CART_CLUE, RESHELVING_SLIP_ITEM, RETURN_CART_NOTE);
+    const withShelf = collectBookshelfClue(withCart, BOOKSHELF_CLUE, DESK_KEY_ITEM, BOOKSHELF_NOTE);
+    const withDesk = completeDeskPuzzle(withShelf, PROCEDURE_CARD_ITEM, DESK_NOTE, DESK_KEY_ITEM.id);
+    const withAudio = completeAudioPuzzle(withDesk, SPEAKER_NOTE);
+    const ready = collectFloorMapClue(withAudio, FLOOR_MAP_CLUE, FLOOR_MAP_NOTE);
     const result = tryUnlockDoor(ready, ESCAPE_ROOM_CODE, ESCAPE_ROOM_CODE);
 
     expect(isReadyToUnlock(ready)).toBe(true);
@@ -76,44 +111,18 @@ describe("escape room puzzle engine", () => {
     expect(result.nextProgress.reward.badgeUnlocked).toBe("Midnight Reader");
   });
 
-  it("blocks the door until one desk-side intel lead is logged", () => {
+  it("rejects incorrect keypad order even when every clue is collected", () => {
     const started = startQuest(createInitialGameProgress());
-    const withNotice = collectNoticeBoardClue(started, NOTICE_BOARD_CLUE);
-    const withShelf = collectBookshelfClue(withNotice, BOOKSHELF_CLUE);
-    const withAudio = completeAudioPuzzle(withShelf, SPEAKER_NOTE);
-    const withDialogue = completeDialoguePuzzle(withAudio, LIBRARIAN_HINT);
-    const readyForGate = completeChoiceQuiz(withDialogue, QUIZ_NOTE);
-    const blockedResult = tryUnlockDoor(readyForGate, ESCAPE_ROOM_CODE, ESCAPE_ROOM_CODE);
-    const withIntel = recordIntel(readyForGate, FLOOR_MAP_CLUE, FLOOR_MAP_NOTE);
+    const withNotice = collectNoticeBoardClue(started, NOTICE_BOARD_CLUE, NOTICE_BOARD_NOTE);
+    const withCart = collectReturnCartLead(withNotice, RETURN_CART_CLUE, RESHELVING_SLIP_ITEM, RETURN_CART_NOTE);
+    const withShelf = collectBookshelfClue(withCart, BOOKSHELF_CLUE, DESK_KEY_ITEM, BOOKSHELF_NOTE);
+    const withDesk = completeDeskPuzzle(withShelf, PROCEDURE_CARD_ITEM, DESK_NOTE, DESK_KEY_ITEM.id);
+    const withAudio = completeAudioPuzzle(withDesk, SPEAKER_NOTE);
+    const ready = collectFloorMapClue(withAudio, FLOOR_MAP_CLUE, FLOOR_MAP_NOTE);
+    const result = tryUnlockDoor(ready, "915204", ESCAPE_ROOM_CODE);
 
-    expect(isReadyToUnlock(readyForGate)).toBe(false);
-    expect(blockedResult.success).toBe(false);
-    expect(blockedResult.message).toContain("floor map or return cart");
-    expect(isReadyToUnlock(withIntel)).toBe(true);
-  });
-});
-
-describe("escape room dialogue rules", () => {
-  it("detects polite help requests", () => {
-    expect(detectDialogueIntent("Could you help me with the exit code, please?")).toBe("ask_for_help");
-  });
-
-  it("detects clue and hint requests as a solvable intent", () => {
-    const resolved = resolveDialogueTurn("Can you give me a hint?");
-
-    expect(resolved.intent).toBe("ask_for_hint");
-    expect(resolved.solved).toBe(true);
-  });
-
-  it("rejects demanding requests as impolite", () => {
-    expect(detectDialogueIntent("Give me the code.")).toBe("impolite_request");
-  });
-
-  it("requires polite wording before a hint request solves the dialogue", () => {
-    const resolved = resolveDialogueTurn("hint please");
-    const impoliteHint = resolveDialogueTurn("hint");
-
-    expect(resolved.solved).toBe(true);
-    expect(impoliteHint.solved).toBe(false);
+    expect(result.success).toBe(false);
+    expect(result.message).toContain("does not match");
+    expect(result.nextProgress.keypadAttempts).toBe(1);
   });
 });

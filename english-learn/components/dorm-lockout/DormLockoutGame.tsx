@@ -15,43 +15,53 @@ import { KeypadModal } from "@/components/escape-room/KeypadModal";
 import { RewardModal } from "@/components/escape-room/RewardModal";
 import { RoomScene } from "@/components/escape-room/RoomScene";
 import { SceneRail } from "@/components/escape-room/SceneRail";
-import {
-  BOOKSHELF_CLUE,
-  BOOKSHELF_NOTE,
-  clueModalContent,
-  DESK_KEY_ITEM,
-  DESK_NOTE,
-  ESCAPE_ROOM_ATTEMPT_LIMIT,
-  ESCAPE_ROOM_CODE,
-  ESCAPE_ROOM_COUNTDOWN_SECONDS,
-  FLOOR_MAP_CLUE,
-  FLOOR_MAP_NOTE,
-  NOTICE_BOARD_CLUE,
-  NOTICE_BOARD_NOTE,
-  PROCEDURE_CARD_ITEM,
-  progressTasks,
-  RESHELVING_SLIP_ITEM,
-  RETURN_CART_CLUE,
-  RETURN_CART_NOTE,
-  roomObjects,
-  speakerPuzzle,
-  circulationDeskPuzzle,
-  SPEAKER_NOTE,
-} from "@/components/escape-room/room-data";
-import { createInitialGameProgress, escapeRoomReducer, getCompletionPercent, hasItem, isReadyToUnlock, tryUnlockDoor } from "@/components/escape-room/puzzle-engine";
 import { formatGameTime, getTimeRank } from "@/components/escape-room/time-utils";
 import { useEscapeTimer } from "@/components/escape-room/use-escape-timer";
+import {
+  createInitialDormProgress,
+  dormHasItem,
+  dormLockoutReducer,
+  getDormCompletionPercent,
+  isDormReadyToUnlock,
+  tryUnlockDormDoor,
+} from "@/components/dorm-lockout/dorm-engine";
+import {
+  dormClueModalContent,
+  dormDeskPuzzle,
+  dormProgressTasks,
+  dormRoomObjects,
+  dormSpeakerPuzzle,
+  DORM_BACKPACK_CLUE,
+  DORM_BACKPACK_NOTE,
+  DORM_CUBBY_CLUE,
+  DORM_CUBBY_NOTE,
+  DORM_HANDBOOK_CLUE,
+  DORM_HANDBOOK_NOTE,
+  DORM_INTERCOM_NOTE,
+  DORM_LOCKOUT_ATTEMPT_LIMIT,
+  DORM_LOCKOUT_CODE,
+  DORM_LOCKOUT_COUNTDOWN_SECONDS,
+  DORM_NOTICE_CLUE,
+  DORM_NOTICE_NOTE,
+  DORM_REWARD,
+  DORM_DESK_NOTE,
+  HALL_ACCESS_CARD_ITEM,
+  RA_PASS_ITEM,
+  UNIT_MAIL_SLIP_ITEM,
+} from "@/components/dorm-lockout/dorm-data";
 import type { ModalType, RoomObjectId, SceneId } from "@/components/escape-room/types";
 import type { Locale } from "@/lib/i18n/dictionaries";
 import { cn } from "@/lib/utils";
 
+const DORM_BEST_TIME_KEY = "dorm-lockout-best-seconds-v1";
+
 const missingLabelByTask = {
-  "notice-board": "closing memo",
-  "return-cart": "reshelving slip",
-  bookshelf: "history shelf and key",
-  "circulation-desk": "procedure card",
-  speaker: "PA order",
-  "floor-map": "keypad format",
+  "notice-board": "quiet-hours notice",
+  "return-cart": "unit cubby lead",
+  bookshelf: "matching backpack",
+  "circulation-desk": "hall access card",
+  speaker: "intercom order",
+  "floor-map": "handbook format",
 } as const;
 
 function playAudioCue(element: HTMLAudioElement | null) {
@@ -67,8 +77,8 @@ function playAudioCue(element: HTMLAudioElement | null) {
   }
 }
 
-export function EscapeRoomGame({ locale }: { locale: Locale }) {
-  const [progress, dispatch] = useReducer(escapeRoomReducer, undefined, createInitialGameProgress);
+export function DormLockoutGame({ locale }: { locale: Locale }) {
+  const [progress, dispatch] = useReducer(dormLockoutReducer, undefined, createInitialDormProgress);
   const [activeModal, setActiveModal] = useState<ModalType | null>(null);
   const [activeClueObjectId, setActiveClueObjectId] = useState<"notice-board" | "bookshelf" | "floor-map" | "return-cart" | null>(null);
   const [doorFeedback, setDoorFeedback] = useState<string | null>(null);
@@ -88,12 +98,13 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
   const { elapsedSeconds, bestSeconds, remainingSeconds, expired, resetTimer } = useEscapeTimer({
     started: progress.started,
     escaped: progress.reward.escaped,
-    durationSeconds: ESCAPE_ROOM_COUNTDOWN_SECONDS,
+    durationSeconds: DORM_LOCKOUT_COUNTDOWN_SECONDS,
+    bestTimeKey: DORM_BEST_TIME_KEY,
   });
 
   const copy = {
     back: "Back to Game Center",
-    stage: "Midnight Library Escape",
+    stage: "Dorm Lounge Lockout",
     fullscreen: "Full screen",
     exitFullscreen: "Exit full screen",
     timer: "Time left",
@@ -123,8 +134,8 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
     sceneRef.current = scene;
   }, [scene]);
 
-  const readyToUnlock = isReadyToUnlock(progress);
-  const attemptFailure = !progress.reward.escaped && progress.keypadAttempts >= ESCAPE_ROOM_ATTEMPT_LIMIT;
+  const readyToUnlock = isDormReadyToUnlock(progress);
+  const attemptFailure = !progress.reward.escaped && progress.keypadAttempts >= DORM_LOCKOUT_ATTEMPT_LIMIT;
   const failureReason: "timer" | "attempts" | null = attemptFailure ? "attempts" : expired ? "timer" : null;
 
   useEffect(() => {
@@ -207,7 +218,7 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
   };
 
   const handleResetRun = () => {
-    dispatch({ type: "SET_PROGRESS", progress: createInitialGameProgress() });
+    dispatch({ type: "SET_PROGRESS", progress: createInitialDormProgress() });
     setActiveModal(null);
     setActiveClueObjectId(null);
     setDoorFeedback(null);
@@ -230,16 +241,16 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
     await gameViewportRef.current.requestFullscreen();
   };
 
-  const missingSteps = progressTasks
+  const missingSteps = dormProgressTasks
     .filter((task) => !progress.completedPuzzles[task.id])
     .map((task) => missingLabelByTask[task.id]);
-  const completionPercent = getCompletionPercent(progress);
+  const completionPercent = getDormCompletionPercent(progress);
   const codeClues = progress.inventory.clues.filter((clue) => clue.kind === "code");
   const intelClues = progress.inventory.clues.filter((clue) => clue.kind === "intel");
   const clueValues = codeClues.map((clue) => clue.value);
   const intelValues = intelClues.map((clue) => clue.value);
-  const activeRoomObjects = roomObjects.filter((roomObject) => roomObject.id !== "exit-door");
-  const activeClueContent = activeClueObjectId ? clueModalContent[activeClueObjectId] : null;
+  const activeRoomObjects = dormRoomObjects.filter((roomObject) => roomObject.id !== "exit-door");
+  const activeClueContent = activeClueObjectId ? dormClueModalContent[activeClueObjectId] : null;
   const elapsedLabel = formatGameTime(elapsedSeconds);
   const countdownLabel = formatGameTime(remainingSeconds);
   const bestLabel = bestSeconds === null ? "--:--" : formatGameTime(bestSeconds);
@@ -256,19 +267,19 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
           collected={activeClueObjectId ? progress.completedPuzzles[activeClueObjectId] : false}
           onCollect={() => {
             if (activeClueObjectId === "notice-board") {
-              dispatch({ type: "COLLECT_NOTICE_BOARD", clue: NOTICE_BOARD_CLUE, note: NOTICE_BOARD_NOTE });
+              dispatch({ type: "COLLECT_NOTICE_BOARD", clue: DORM_NOTICE_CLUE, note: DORM_NOTICE_NOTE });
             }
 
             if (activeClueObjectId === "return-cart") {
-              dispatch({ type: "COLLECT_RETURN_CART", clue: RETURN_CART_CLUE, item: RESHELVING_SLIP_ITEM, note: RETURN_CART_NOTE });
+              dispatch({ type: "COLLECT_RETURN_CART", clue: DORM_CUBBY_CLUE, item: UNIT_MAIL_SLIP_ITEM, note: DORM_CUBBY_NOTE });
             }
 
             if (activeClueObjectId === "bookshelf") {
-              dispatch({ type: "COLLECT_BOOKSHELF", clue: BOOKSHELF_CLUE, item: DESK_KEY_ITEM, note: BOOKSHELF_NOTE });
+              dispatch({ type: "COLLECT_BOOKSHELF", clue: DORM_BACKPACK_CLUE, item: RA_PASS_ITEM, note: DORM_BACKPACK_NOTE });
             }
 
             if (activeClueObjectId === "floor-map") {
-              dispatch({ type: "COLLECT_FLOOR_MAP", clue: FLOOR_MAP_CLUE, note: FLOOR_MAP_NOTE });
+              dispatch({ type: "COLLECT_FLOOR_MAP", clue: DORM_HANDBOOK_CLUE, note: DORM_HANDBOOK_NOTE });
             }
           }}
           onClose={() => {
@@ -280,21 +291,25 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
 
       {activeModal === "audio" ? (
         <AudioPuzzleModal
-          puzzle={speakerPuzzle}
+          puzzle={dormSpeakerPuzzle}
+          title="Hall Intercom"
+          subtitle="Replay the dorm announcement and confirm the final hallway code order."
           completed={progress.completedPuzzles.speaker}
-          onSolved={() => dispatch({ type: "COMPLETE_AUDIO", note: SPEAKER_NOTE })}
+          onSolved={() => dispatch({ type: "COMPLETE_AUDIO", note: DORM_INTERCOM_NOTE })}
           onClose={() => setActiveModal(null)}
         />
       ) : null}
 
       {activeModal === "desk" ? (
         <DeskPuzzleModal
-          puzzle={circulationDeskPuzzle}
-          rewardItem={PROCEDURE_CARD_ITEM}
+          puzzle={dormDeskPuzzle}
+          rewardItem={HALL_ACCESS_CARD_ITEM}
+          title="RA Desk Drawer"
+          subtitle="Use the returned passcard and identify the correct after-hours hall access card."
           completed={progress.completedPuzzles["circulation-desk"]}
-          hasKey={hasItem(progress, DESK_KEY_ITEM.id)}
+          hasKey={dormHasItem(progress, RA_PASS_ITEM.id)}
           onSolved={() => {
-            dispatch({ type: "COMPLETE_DESK", item: PROCEDURE_CARD_ITEM, note: DESK_NOTE, usedItemId: DESK_KEY_ITEM.id });
+            dispatch({ type: "COMPLETE_DESK", item: HALL_ACCESS_CARD_ITEM, note: DORM_DESK_NOTE, usedItemId: RA_PASS_ITEM.id });
             setActiveModal(null);
           }}
           onClose={() => setActiveModal(null)}
@@ -304,9 +319,9 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
       {activeModal === "keypad" ? (
         <KeypadModal
           ready={readyToUnlock}
-          codeLength={ESCAPE_ROOM_CODE.length}
+          codeLength={DORM_LOCKOUT_CODE.length}
           attempts={progress.keypadAttempts}
-          attemptLimit={ESCAPE_ROOM_ATTEMPT_LIMIT}
+          attemptLimit={DORM_LOCKOUT_ATTEMPT_LIMIT}
           codeClues={clueValues}
           intelClues={intelValues}
           items={progress.inventory.items}
@@ -314,11 +329,11 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
           missingSteps={missingSteps}
           feedback={doorFeedback}
           onSubmit={(code) => {
-            const result = tryUnlockDoor(progress, code, ESCAPE_ROOM_CODE);
+            const result = tryUnlockDormDoor(progress, code, DORM_LOCKOUT_CODE);
             dispatch({ type: "SET_PROGRESS", progress: result.nextProgress });
             setDoorFeedback(result.message);
 
-            if (result.success || result.nextProgress.keypadAttempts >= ESCAPE_ROOM_ATTEMPT_LIMIT) {
+            if (result.success || result.nextProgress.keypadAttempts >= DORM_LOCKOUT_ATTEMPT_LIMIT) {
               setActiveModal(null);
             }
           }}
@@ -327,7 +342,16 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
       ) : null}
 
       {progress.reward.escaped ? (
-        <RewardModal reward={progress.reward} elapsedLabel={elapsedLabel} bestLabel={bestLabel} rank={rank} onClose={handleResetRun} />
+        <RewardModal
+          reward={progress.reward}
+          elapsedLabel={elapsedLabel}
+          bestLabel={bestLabel}
+          rank={rank}
+          title="Stage Reward"
+          subtitle="The dorm hallway lock releases and the lounge finally opens back into the corridor."
+          successTitle="You cleared the dorm lounge!"
+          onClose={handleResetRun}
+        />
       ) : null}
 
       {failureReason ? (
@@ -341,6 +365,12 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
           bestLabel={bestLabel}
           countdownLabel={countdownLabel}
           failureReason={failureReason}
+          successTitle="Dorm Lounge Cleared"
+          successBody="You completed the dorm stage. Your clear time, rank, and rewards have been recorded locally."
+          failAttemptsTitle="Hall Lock Reset"
+          failAttemptsBody="Too many wrong attempts triggered a hall lock reset. Restart the run and rebuild the resident sequence."
+          failTimerTitle="Quiet Hours Took Over"
+          failTimerBody="You ran out of time before clearing the dorm lounge. Restart the stage and take a cleaner route."
           onRetry={handleResetRun}
         />
       ) : null}
@@ -470,7 +500,7 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
                       style={{ width: `${completionPercent}%` }}
                     />
                   </div>
-                  <p className="mt-3 text-xs leading-5 text-slate-600">{"Sequence: board -> cart -> stacks -> desk -> speaker -> map -> exit."}</p>
+                  <p className="mt-3 text-xs leading-5 text-slate-600">{"Sequence: board -> cubbies -> backpack -> RA desk -> intercom -> handbook -> exit."}</p>
                 </div>
               </div>
             ) : (
@@ -513,11 +543,43 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
 
             <div className={cn("relative", isFullscreen ? "h-screen" : "mt-5")}>
               {scene === "briefing" ? (
-                <BriefingScene started={progress.started} elapsedLabel={elapsedLabel} countdownLabel={countdownLabel} fullscreen={isFullscreen} onStart={handleStartRun} />
+                <BriefingScene
+                  started={progress.started}
+                  elapsedLabel={elapsedLabel}
+                  countdownLabel={countdownLabel}
+                  fullscreen={isFullscreen}
+                  onStart={handleStartRun}
+                  stageLabel="Official Stage 02"
+                  title="Dorm Lounge Lockout"
+                  description="The residence hall has locked down for the night. Read the board, trace the right unit, recover the returned passcard, and clear the hallway door before quiet hours fully settle in."
+                  difficulty="Residence Puzzle"
+                  reward={`+${DORM_REWARD.xpEarned} XP`}
+                  featureChips={["Notice Logic", "Unit Match", "Bag Search", "Desk Pass", "Intercom Listening", "7-Digit Exit"]}
+                  rules={[
+                    "Hotspots only. No character movement.",
+                    "The next lead only opens after the previous dorm clue is logged.",
+                    "Collect slips and access cards before you ever touch the hallway keypad.",
+                  ]}
+                  previewImage="/quests/escape-room/dorm.png"
+                  startLabel="Start dorm run"
+                  resumeLabel="Resume run"
+                />
               ) : null}
 
               {scene === "library" ? (
-                <RoomScene roomObjects={activeRoomObjects} progress={progress} disabled={sceneDisabled} fullscreen={isFullscreen} onHotspotSelect={handleHotspotSelect} />
+                <RoomScene
+                  roomObjects={activeRoomObjects}
+                  progress={progress}
+                  disabled={sceneDisabled}
+                  fullscreen={isFullscreen}
+                  onHotspotSelect={handleHotspotSelect}
+                  sceneLabel="Scene 02"
+                  title="Dorm Common Lounge"
+                  description="Read the board, check the cubbies, match the backpack, unlock the RA desk, confirm the intercom, then verify the handbook."
+                  backgroundImage="/quests/escape-room/dorm.png"
+                  standbyLabel="Lounge standby"
+                  unlockedLabel="Hall clear"
+                />
               ) : null}
 
               {scene === "exit" ? (
@@ -530,6 +592,12 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
                   notes={progress.inventory.notes}
                   missingSteps={missingSteps}
                   fullscreen={isFullscreen}
+                  backgroundImage="/quests/escape-room/dorm.png"
+                  sceneLabel="Scene 03"
+                  title="Hallway Exit Console"
+                  blockedDescription="The hallway console is still missing part of the resident access chain."
+                  readyDescription="Board, cubby, backpack, desk, intercom, and handbook checks are complete. The keypad is armed."
+                  escapedDescription="Hallway exit unlocked."
                   onOpenKeypad={() => {
                     setDoorFeedback(null);
                     setActiveModal("keypad");
@@ -560,7 +628,7 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
           {!isFullscreen ? (
             <GameSidebar
               progress={progress}
-              tasks={progressTasks}
+              tasks={dormProgressTasks}
               completionPercent={completionPercent}
               bestLabel={bestLabel}
               onStart={handleStartRun}
@@ -570,6 +638,10 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
                 setDoorFeedback(null);
                 setActiveModal("keypad");
               }}
+              itemsPlaceholder="Resident slips, passcards, and desk cards will appear here."
+              intelPlaceholder="Bag matches and keypad format clues will appear here."
+              notesPlaceholder="Board notes, cubby leads, desk rules, and intercom confirmations will appear here."
+              footerNote="The hallway code only works when the unit number, intercom order, and 7-digit handbook format all line up."
             />
           ) : null}
         </div>

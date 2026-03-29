@@ -1,21 +1,23 @@
-import { BookOpen, CheckCircle2, LockKeyhole, Monitor, ScrollText, Volume2 } from "lucide-react";
+import { BookOpen, CheckCircle2, LockKeyhole, Map, Monitor, ScrollText, ShoppingBasket, Volume2 } from "lucide-react";
 
 import type { GameProgress, ProgressTask } from "@/components/escape-room/types";
 
 const iconMap = {
   "notice-board": ScrollText,
+  "return-cart": ShoppingBasket,
   bookshelf: BookOpen,
+  "circulation-desk": Monitor,
   speaker: Volume2,
-  "librarian-desk-terminal": Monitor,
-  quiz: LockKeyhole,
+  "floor-map": Map,
 } as const;
 
 const phaseLabels: Record<GameProgress["phase"], string> = {
   intro: "Briefing",
   exploring: "Exploring",
+  "cart-found": "Cart lead secured",
+  "shelf-found": "Shelf clue secured",
+  "desk-opened": "Drawer cleared",
   "audio-complete": "Broadcast solved",
-  "dialogue-complete": "Librarian hint unlocked",
-  "quiz-complete": "Etiquette cleared",
   "ready-to-unlock": "Ready to unlock",
   escaped: "Escaped",
 };
@@ -53,7 +55,7 @@ export function ObjectivePanel({
             style={{ width: `${completionPercent}%` }}
           />
         </div>
-        <p className="mt-2 text-xs text-[var(--ink-soft)]">{completedCount} of 5 required steps completed.</p>
+        <p className="mt-2 text-xs text-[var(--ink-soft)]">{completedCount} of 6 required steps completed.</p>
       </div>
 
       <div className="mt-5 space-y-3">
@@ -62,10 +64,7 @@ export function ObjectivePanel({
           const done = progress.completedPuzzles[task.id];
 
           return (
-            <div
-              key={task.id}
-              className="flex gap-3 rounded-[1.3rem] border border-[rgba(20,50,75,0.1)] bg-white/60 p-3.5 transition"
-            >
+            <div key={task.id} className="flex gap-3 rounded-[1.3rem] border border-[rgba(20,50,75,0.1)] bg-white/60 p-3.5 transition">
               <span className={`inline-flex size-10 shrink-0 items-center justify-center rounded-xl ${done ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
                 {done ? <CheckCircle2 className="size-4" /> : <Icon className="size-4" />}
               </span>
@@ -77,6 +76,14 @@ export function ObjectivePanel({
             </div>
           );
         })}
+      </div>
+
+      <div className="mt-5 rounded-[1.4rem] border border-[rgba(20,50,75,0.1)] bg-white/68 p-4">
+        <div className="flex items-center gap-2 text-[var(--ink)]">
+          <LockKeyhole className="size-4 text-[var(--navy)]" />
+          <p className="text-sm font-semibold tracking-tight">Unlock chain</p>
+        </div>
+        <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">{"Board -> Cart -> Stacks -> Desk -> Speaker -> Map -> Exit"}</p>
       </div>
     </section>
   );

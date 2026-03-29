@@ -40,12 +40,12 @@ export function SceneRail({
             className={cn(
               "inline-flex items-center gap-2 rounded-full border font-semibold transition",
               fullscreen ? "px-5 py-3 text-base" : "px-4 py-2.5 text-sm",
-              active ? "border-cyan-300/40 bg-cyan-300/14 text-white" : "border-white/12 bg-white/6 text-slate-300 hover:bg-white/10",
+              active ? "border-teal-300 bg-teal-50 text-slate-900 shadow-[0_8px_24px_rgba(20,120,110,0.12)]" : "border-[#d9d7cf] bg-white/88 text-slate-700 hover:bg-white",
             )}
           >
             <Icon className={cn(fullscreen ? "size-5" : "size-4")} />
             {item.label}
-            {item.ready ? <CheckCircle2 className={cn("text-emerald-300", fullscreen ? "size-5" : "size-4")} /> : null}
+            {item.ready ? <CheckCircle2 className={cn("text-emerald-600", fullscreen ? "size-5" : "size-4")} /> : null}
           </button>
         );
       })}

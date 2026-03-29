@@ -1,4 +1,4 @@
-import type { AudioPuzzle, ChoiceQuiz, ClueItem, ClueModalContent, ProgressTask, RoomObject } from "@/components/escape-room/types";
+import type { AudioPuzzle, ClueItem, ClueModalContent, DeskPuzzle, InventoryItem, ProgressTask, RoomObject } from "@/components/escape-room/types";
 
 export const ESCAPE_ROOM_CODE = "204915";
 export const ESCAPE_ROOM_COUNTDOWN_SECONDS = 300;
@@ -6,45 +6,73 @@ export const ESCAPE_ROOM_ATTEMPT_LIMIT = 3;
 
 export const NOTICE_BOARD_CLUE: ClueItem = {
   id: "closing-time",
-  label: "Closing time",
+  label: "Closing Time",
   value: "915",
   kind: "code",
   source: "notice-board",
-  description: "Library closes at 9:15 PM.",
+  description: "The main library closes at 9:15 PM.",
+};
+
+export const RETURN_CART_CLUE: ClueItem = {
+  id: "history-route",
+  label: "Section Lead",
+  value: "HISTORY",
+  kind: "intel",
+  source: "return-cart",
+  description: "The reshelving slip points to the Campus History stacks.",
 };
 
 export const BOOKSHELF_CLUE: ClueItem = {
   id: "history-shelf",
-  label: "History shelf",
+  label: "Shelf Code",
   value: "204",
   kind: "code",
   source: "bookshelf",
-  description: "Campus History - Shelf 204.",
+  description: "Campus History is filed at Shelf 204.",
 };
 
 export const FLOOR_MAP_CLUE: ClueItem = {
-  id: "format-note",
-  label: "Security format",
+  id: "entry-format",
+  label: "Entry Format",
   value: "6 DIGITS",
   kind: "intel",
   source: "floor-map",
-  description: "The emergency keypad expects one continuous six-digit entry.",
+  description: "The emergency keypad accepts one continuous 6-digit entry.",
 };
 
-export const RETURN_CART_CLUE: ClueItem = {
-  id: "sorting-slip",
-  label: "Sorting slip",
-  value: "NO GAPS",
-  kind: "intel",
+export const RESHELVING_SLIP_ITEM: InventoryItem = {
+  id: "reshelving-slip",
+  label: "Reshelving Slip",
+  value: "Campus History",
   source: "return-cart",
-  description: "A reshelving slip warns staff not to split the final access code.",
+  description: "A late-return slip tells you which section to inspect next.",
+  used: false,
 };
 
-export const SPEAKER_NOTE = "The announcement says to use the closing time second.";
-export const LIBRARIAN_HINT = "Of course. Use the shelf number first, then the closing time.";
-export const QUIZ_NOTE = "Polite requests make it easier to get help in the library.";
-export const FLOOR_MAP_NOTE = "The floor map says the emergency keypad accepts one six-digit entry.";
-export const RETURN_CART_NOTE = "A reshelving slip repeats: keep the shelf clue and closing time together with no spaces.";
+export const DESK_KEY_ITEM: InventoryItem = {
+  id: "desk-key",
+  label: "Desk Key",
+  value: "Drawer 04",
+  source: "bookshelf",
+  description: "A brass key hidden behind the history atlas unlocks the circulation drawer.",
+  used: false,
+};
+
+export const PROCEDURE_CARD_ITEM: InventoryItem = {
+  id: "procedure-card",
+  label: "Procedure Card",
+  value: "STACK FIRST",
+  source: "circulation-desk",
+  description: "The after-hours exit card says to enter the stack code first.",
+  used: false,
+};
+
+export const NOTICE_BOARD_NOTE = "Closing memo logged: the main library shuts at 9:15 PM.";
+export const RETURN_CART_NOTE = "Reshelving slip: tonight's misplaced return belongs in Campus History.";
+export const BOOKSHELF_NOTE = "Shelf 204 holds the campus history atlas and a brass drawer key.";
+export const DESK_NOTE = "After-hours card: start with the stack code before the final PA confirmation.";
+export const SPEAKER_NOTE = "Broadcast confirms the closing time comes second.";
+export const FLOOR_MAP_NOTE = "Floor map legend: the keypad expects one continuous 6-digit entry.";
 
 export const QUEST_REWARD = {
   xpEarned: 50,
@@ -56,67 +84,67 @@ export const roomObjects: RoomObject[] = [
     id: "notice-board",
     name: "Notice Board",
     shortLabel: "Read",
-    description: "Check the campus notices and closing reminder on the wall board.",
-    hotspot: { left: "77%", top: "35%" },
+    description: "Check the late-night notices and find the real closing memo.",
+    hotspot: { left: "76%", top: "35%" },
     modalType: "clue",
     required: true,
     accent: "bg-amber-500/90",
   },
   {
+    id: "return-cart",
+    name: "Return Cart",
+    shortLabel: "Search",
+    description: "Find the slip that tells you where the missing return belongs.",
+    hotspot: { left: "46%", top: "60%" },
+    modalType: "clue",
+    required: true,
+    accent: "bg-rose-500/90",
+  },
+  {
     id: "bookshelf",
-    name: "Library Stacks",
+    name: "History Stacks",
     shortLabel: "Inspect",
-    description: "Inspect the central stacks and find the history shelf number.",
-    hotspot: { left: "46%", top: "44%" },
+    description: "Use the cart lead to locate the correct shelf marker in the stacks.",
+    hotspot: { left: "45%", top: "41%" },
     modalType: "clue",
     required: true,
     accent: "bg-sky-500/90",
   },
   {
-    id: "floor-map",
-    name: "Floor Map",
-    shortLabel: "Trace",
-    description: "Study the emergency route and keypad notice on the desk map.",
-    hotspot: { left: "61%", top: "38%" },
-    modalType: "clue",
-    required: false,
-    accent: "bg-teal-500/90",
-  },
-  {
-    id: "return-cart",
-    name: "Return Cart",
-    shortLabel: "Search",
-    description: "Check the reshelving cart for any slip left by the night staff.",
-    hotspot: { left: "46%", top: "62%" },
-    modalType: "clue",
-    required: false,
-    accent: "bg-rose-500/90",
+    id: "circulation-desk",
+    name: "Circulation Desk",
+    shortLabel: "Unlock",
+    description: "Use the brass key and check the after-hours procedure drawer.",
+    hotspot: { left: "20%", top: "50%" },
+    modalType: "desk",
+    required: true,
+    accent: "bg-emerald-500/90",
   },
   {
     id: "speaker",
     name: "Overhead Speaker",
     shortLabel: "Listen",
-    description: "Replay the final library announcement.",
-    hotspot: { left: "73%", top: "11%" },
+    description: "Replay the final PA announcement to confirm the second half of the code.",
+    hotspot: { left: "72%", top: "9%" },
     modalType: "audio",
     required: true,
     accent: "bg-violet-500/90",
   },
   {
-    id: "librarian-desk-terminal",
-    name: "Librarian Desk",
-    shortLabel: "Ask",
-    description: "Wake the librarian desk terminal and ask for help in English.",
-    hotspot: { left: "18%", top: "46%" },
-    modalType: "dialogue",
+    id: "floor-map",
+    name: "Floor Map",
+    shortLabel: "Verify",
+    description: "Check the wall map to confirm the keypad format before you leave.",
+    hotspot: { left: "61%", top: "34%" },
+    modalType: "clue",
     required: true,
-    accent: "bg-emerald-500/90",
+    accent: "bg-teal-500/90",
   },
   {
     id: "exit-door",
     name: "Exit Door",
     shortLabel: "Unlock",
-    description: "Enter the final code to leave the library.",
+    description: "Enter the final code and leave the library.",
     hotspot: { left: "8%", top: "39%" },
     modalType: "keypad",
     required: true,
@@ -128,27 +156,32 @@ export const progressTasks: ProgressTask[] = [
   {
     id: "notice-board",
     label: "Read the closing notice",
-    supportText: "Read the campus notice board and identify the real library closing reminder.",
+    supportText: "Find the real memo on the board and log the library closing time.",
+  },
+  {
+    id: "return-cart",
+    label: "Recover the cart slip",
+    supportText: "Search the return cart for the lead that tells you which section to inspect next.",
   },
   {
     id: "bookshelf",
-    label: "Inspect the history shelf",
-    supportText: "Search the central stacks and find the campus history shelf marker.",
+    label: "Search the history stacks",
+    supportText: "Locate the correct shelf marker and recover the brass desk key.",
+  },
+  {
+    id: "circulation-desk",
+    label: "Open the circulation drawer",
+    supportText: "Use the desk key and identify the correct after-hours procedure card.",
   },
   {
     id: "speaker",
-    label: "Listen to the broadcast",
-    supportText: "Confirm the code order and pay attention to the final exit instructions.",
+    label: "Confirm the PA announcement",
+    supportText: "Use the broadcast to verify which clue comes second in the exit sequence.",
   },
   {
-    id: "librarian-desk-terminal",
-    label: "Ask the librarian politely",
-    supportText: "Use polite English to get the final ordering hint.",
-  },
-  {
-    id: "quiz",
-    label: "Pass the library etiquette quiz",
-    supportText: "Choose the most polite sentence before the exit unlocks.",
+    id: "floor-map",
+    label: "Verify keypad format",
+    supportText: "Check the floor map and confirm how the final code must be entered.",
   },
 ];
 
@@ -156,231 +189,310 @@ export const clueModalContent: Record<"notice-board" | "bookshelf" | "floor-map"
   "notice-board": {
     id: "notice-board",
     title: "Closing Notice",
-    subtitle: "Zoom in on the wall board and identify the pinned campus notice that gives the library closing time.",
-    headline: "Library closes at 9:15 PM",
-    body: "The closing time looks essential, but the surrounding notes suggest the board is only one piece of a larger access routine.",
+    subtitle: "Zoom in on the board and identify the notice that controls the library's lock cycle.",
+    headline: "Main Library closes at 9:15 PM",
+    body: "The wall board mixes events, quiet-zone reminders, and service notes. The closing memo is the only time fragment you should log for the exit code.",
     lines: [
-      "Library closes at 9:15 PM",
-      "Emergency exit access is restricted",
-      "Ask staff if you need help finding a section",
-      "Quiet floor sweep begins at 9:20 PM",
+      "Main Library closes at 9:15 PM after the final circulation check",
+      "Emergency exit access is restricted after closing",
+      "Quiet-floor sweep begins after the lock cycle",
+      "Ask front-desk staff before the final lock if you need help",
     ],
     clue: NOTICE_BOARD_CLUE,
     investigation: {
       visualStyle: "board",
-      prompt: "Pick the campus notice that tells you the main library's closing time, not an event time or a different service schedule.",
+      prompt: "Choose the official closing memo, not an event poster or a quiet-zone reminder.",
       targets: [
         {
-          id: "library-events",
+          id: "events",
           label: "Library Events",
-          detail: "Poetry reading begins at 8:45 PM in the media room",
+          detail: "Poetry reading begins at 8:45 PM in seminar room C",
           isCorrect: false,
         },
         {
-          id: "library-closing",
-          label: "Closing Notice",
+          id: "closing",
+          label: "Closing Memo",
           detail: "Main Library closes at 9:15 PM after the final circulation check",
           isCorrect: true,
         },
         {
-          id: "research-tips",
-          label: "Research Tips",
-          detail: "Reference desk opens at 9:00 AM for citation support",
+          id: "quiet-zone",
+          label: "Quiet Zone",
+          detail: "Silent study sweep begins at 9:20 PM on level 2",
           isCorrect: false,
         },
         {
-          id: "quiet-zone",
-          label: "Quiet Zone",
-          detail: "Silent study hours begin at 9:20 PM on level 2",
+          id: "research-support",
+          label: "Research Support",
+          detail: "Citation desk opens at 9:00 AM on weekdays",
           isCorrect: false,
         },
       ],
-      question: "Which time from the notice board should be recorded for the exit code?",
+      question: "Which time belongs in your notebook for the exit code?",
       options: [
-        { id: "915", text: "9:15 PM", isCorrect: true, feedback: "Correct. The main library closing time is 9:15 PM." },
-        { id: "920", text: "9:20 PM", isCorrect: false, feedback: "That time belongs to the quiet-zone rule, not the closing notice." },
-        { id: "900", text: "9:00 AM", isCorrect: false, feedback: "That time refers to the research support schedule." },
-        { id: "845", text: "8:45 PM", isCorrect: false, feedback: "That is the event start time from the library-events poster." },
+        { id: "915", text: "9:15 PM", isCorrect: true, feedback: "Correct. The closing memo gives you 9:15 PM." },
+        { id: "920", text: "9:20 PM", isCorrect: false, feedback: "That belongs to the quiet-zone sweep, not the closing memo." },
+        { id: "900", text: "9:00 AM", isCorrect: false, feedback: "That time is from the research-support poster." },
+        { id: "845", text: "8:45 PM", isCorrect: false, feedback: "That is the event start time, not the closing time." },
       ],
     },
   },
-  "bookshelf": {
+  "return-cart": {
+    id: "return-cart",
+    title: "Return Cart",
+    subtitle: "Search the slip stack and recover the lead that points to the correct section.",
+    headline: "The missing return belongs in Campus History",
+    body: "One slip matters because it tells you which shelf family to inspect next. The others are valid library paperwork, but they will waste your run.",
+    lines: [
+      "Late return: Campus History Atlas",
+      "Reshelve before lights out",
+      "Do not send this copy to Science Reference",
+      "Place the final cart back by circulation after filing",
+    ],
+    clue: RETURN_CART_CLUE,
+    investigation: {
+      visualStyle: "shelf",
+      prompt: "Pick the cart slip that redirects the missing book to Campus History, not Science, Media, or Literature.",
+      targets: [
+        {
+          id: "science-slip",
+          label: "Science Reference",
+          detail: "Lab manual hold - Science Reference annex",
+          isCorrect: false,
+        },
+        {
+          id: "history-slip",
+          label: "Campus History",
+          detail: "Late return: Campus History Atlas - reshelve in History stacks",
+          isCorrect: true,
+        },
+        {
+          id: "media-slip",
+          label: "Media Desk",
+          detail: "DVD return - send to Media Services cabinet",
+          isCorrect: false,
+        },
+        {
+          id: "lit-slip",
+          label: "Literature Row",
+          detail: "Poetry reserve - store on Literature hold shelf",
+          isCorrect: false,
+        },
+      ],
+      question: "Which section should you inspect next?",
+      options: [
+        { id: "history", text: "Campus History", isCorrect: true, feedback: "Correct. The cart slip sends you to the history stacks." },
+        { id: "science", text: "Science Reference", isCorrect: false, feedback: "The slip explicitly says not to send the atlas there." },
+        { id: "media", text: "Media Services", isCorrect: false, feedback: "That is a different return workflow." },
+        { id: "literature", text: "Literature Row", isCorrect: false, feedback: "That lead belongs to a different hold request." },
+      ],
+    },
+  },
+  bookshelf: {
     id: "bookshelf",
-    title: "Stack Marker",
-    subtitle: "Zoom in on the stack markers and identify the correct shelf tag for campus history.",
+    title: "History Stacks",
+    subtitle: "Zoom in on the stack markers and recover the shelf code tied to Campus History.",
     headline: "Campus History - Shelf 204",
-    body: "The shelf marker gives you a clean number, but the neighboring labels make it easy to choose the wrong aisle if you rush.",
+    body: "The shelf marker gives you the first code fragment. Hidden behind the history atlas is a brass key for the circulation drawer.",
     lines: [
       "Campus History - Shelf 204",
       "Science Reference - Shelf 214",
-      "Level 2 Study Stacks",
-      "Return books to the cart before closing",
+      "Reserve Reading - Shelf 206",
+      "Atlas volume tagged for return cart pickup",
     ],
     clue: BOOKSHELF_CLUE,
     investigation: {
       visualStyle: "shelf",
-      prompt: "Choose the label that matches the campus history shelf, not the science stacks, reserve shelf, or literature row.",
+      prompt: "Follow the cart slip and choose the Campus History marker, not the nearby reserve or science labels.",
       targets: [
         {
           id: "science-214",
           label: "Science Reference",
-          detail: "Shelf 214 - Lab reports and research writing",
+          detail: "Shelf 214 - lab reports and citation manuals",
           isCorrect: false,
         },
         {
-          id: "hist-204",
+          id: "history-204",
           label: "Campus History",
-          detail: "Shelf 204 - University archives and campus history",
+          detail: "Shelf 204 - university archives and campus history",
           isCorrect: true,
         },
         {
           id: "reserve-206",
-          label: "Seminar Reserve",
-          detail: "Shelf 206 - Professor course packets",
+          label: "Reserve Reading",
+          detail: "Shelf 206 - professor packets and reserve copies",
           isCorrect: false,
         },
         {
           id: "lit-240",
           label: "Literature Row",
-          detail: "Shelf 240 - Drama and literary criticism",
+          detail: "Shelf 240 - drama and criticism",
           isCorrect: false,
         },
       ],
-      question: "Which shelf code should you record from the campus history marker?",
+      question: "Which shelf code should be recorded from the history marker?",
       options: [
-        { id: "204", text: "204", isCorrect: true, feedback: "Correct. The campus history marker is Shelf 204." },
-        { id: "214", text: "214", isCorrect: false, feedback: "That number belongs to the science reference shelf." },
-        { id: "206", text: "206", isCorrect: false, feedback: "That code belongs to the seminar reserve shelf, not campus history." },
-        { id: "240", text: "240", isCorrect: false, feedback: "That is the literature row number, not the history stack." },
+        { id: "204", text: "204", isCorrect: true, feedback: "Correct. Campus History is filed at Shelf 204." },
+        { id: "214", text: "214", isCorrect: false, feedback: "That belongs to Science Reference." },
+        { id: "206", text: "206", isCorrect: false, feedback: "That belongs to the reserve shelf." },
+        { id: "240", text: "240", isCorrect: false, feedback: "That number belongs to Literature Row." },
       ],
     },
   },
   "floor-map": {
     id: "floor-map",
-    title: "Emergency Floor Map",
-    subtitle: "A laminated map on the desk shows the late-night exit procedure.",
-    headline: "Keypad accepts one 6-digit entry",
-    body: "This does not give you a number, but it rules out dashes, spaces, and split entry formats. That should matter later.",
+    title: "Emergency Route Map",
+    subtitle: "Check the wall map and confirm the keypad rules before you leave.",
+    headline: "One continuous 6-digit entry",
+    body: "The map does not reveal a new number, but it does tell you exactly how the exit console expects the final code.",
     lines: [
-      "West Hall -> Emergency Exit",
-      "Security keypad accepts one 6-digit entry",
-      "Front desk support remains online until final lock cycle",
-      "Archive stairwell closed after 9:00 PM",
+      "Emergency keypad accepts one continuous 6-digit entry",
+      "Use the west-hall exit after the final lock cycle",
+      "Front desk verification ends before the final lock",
+      "Do not split the code with spaces or symbols",
     ],
     clue: FLOOR_MAP_CLUE,
   },
-  "return-cart": {
-    id: "return-cart",
-    title: "Reshelving Cart",
-    subtitle: "A sorting slip is tucked beneath a stack of late returns.",
-    headline: "Keep the final code together",
-    body: "The note does not reveal a new number, but it confirms the final code should be entered as one unbroken string.",
-    lines: [
-      "Tonight's sweep: History 204 first",
-      "Pair shelf clue with closing time",
-      "Do not split the final access code",
-      "Clear cart before lights out",
-    ],
-    clue: RETURN_CART_CLUE,
-  },
+};
+
+export const circulationDeskPuzzle: DeskPuzzle = {
+  requiredItemId: DESK_KEY_ITEM.id,
+  prompt: "The drawer contains several procedure cards. Choose the one that actually controls the emergency exit, not printer repair or fee processing.",
+  records: [
+    {
+      id: "printer-reset",
+      tab: "Printer Reset",
+      detail: "Reconnect the circulation printer before the morning shift.",
+      isCorrect: false,
+    },
+    {
+      id: "exit-procedure",
+      tab: "After-hours Exit",
+      detail: "Emergency exit procedure: begin with the stack code, then wait for final PA confirmation.",
+      isCorrect: true,
+    },
+    {
+      id: "late-fees",
+      tab: "Late Fees",
+      detail: "Payment disputes must be logged before 8 PM.",
+      isCorrect: false,
+    },
+    {
+      id: "study-rooms",
+      tab: "Study Rooms",
+      detail: "Group study rooms auto-lock after the last reservation block.",
+      isCorrect: false,
+    },
+  ],
+  question: "Which rule belongs in your notebook before you check the broadcast?",
+  options: [
+    {
+      id: "stack-first",
+      text: "Use the stack code first.",
+      isCorrect: true,
+      feedback: "Correct. The procedure card tells you the stack code must come first.",
+    },
+    {
+      id: "time-first",
+      text: "Use the closing time first.",
+      isCorrect: false,
+      feedback: "That reverses the procedure. The drawer note says to begin with the stack code.",
+    },
+    {
+      id: "key-first",
+      text: "Use the drawer key first.",
+      isCorrect: false,
+      feedback: "The key opens the drawer, but it is not part of the exit code.",
+    },
+    {
+      id: "map-first",
+      text: "Use the floor map number first.",
+      isCorrect: false,
+      feedback: "The map confirms the format, not the first code fragment.",
+    },
+  ],
 };
 
 export const speakerPuzzle: AudioPuzzle = {
   prompt: "Attention, visitors. The final exit code uses the history shelf number first, then the closing time.",
-  instruction:
-    "Listen carefully. The broadcast confirms the clue order and repeats where stranded visitors should go for help before the lock cycle begins.",
+  instruction: "Listen to the PA message. It confirms the second half of the sequence and reminds you where help was available before the final lock.",
   src: "/quests/escape-room/audio/library-announcement.wav",
   transcript:
     "Attention, visitors. The library will close at 9:15 p.m. The final exit code uses the history shelf number first, then the closing time. Please make your way to the front desk if you need help before leaving.",
-  clueValue: "Closing time second",
+  clueValue: "TIME SECOND",
   steps: [
     {
       id: "announcement-order",
       question: "What does the announcement say to use second?",
       answerId: "closing-time",
       options: [
-        { id: "librarian-name", text: "The librarian's name", isCorrect: false, feedback: "The announcement never mentions a name for the code." },
-        { id: "closing-time", text: "The closing time", isCorrect: true, feedback: "Correct. The closing time should be used second." },
-        { id: "map-number", text: "The map number", isCorrect: false, feedback: "The announcement does not mention any map number." },
-        { id: "floor-color", text: "The floor color", isCorrect: false, feedback: "That detail is not part of the exit code." },
+        { id: "stack-code", text: "The stack code", isCorrect: false, feedback: "The broadcast says the stack code comes first, not second." },
+        { id: "closing-time", text: "The closing time", isCorrect: true, feedback: "Correct. The closing time comes second." },
+        { id: "desk-key", text: "The desk key", isCorrect: false, feedback: "The key is not part of the final entry." },
+        { id: "map-note", text: "The map note", isCorrect: false, feedback: "The map only confirms the format." },
       ],
     },
     {
-      id: "order-check",
-      question: "Which clue order matches the broadcast?",
-      answerId: "shelf-then-time",
+      id: "sequence-check",
+      question: "Which sequence matches the drawer card and the announcement together?",
+      answerId: "stack-then-time",
       options: [
         {
-          id: "shelf-then-time",
-          text: "History shelf number first, then the closing time",
+          id: "stack-then-time",
+          text: "Stack code first, then closing time",
           isCorrect: true,
-          feedback: "Correct. Use 204 first, then 915.",
+          feedback: "Correct. Combine 204 first and 915 second.",
         },
         {
-          id: "time-then-shelf",
-          text: "Closing time first, then the history shelf number",
+          id: "time-then-stack",
+          text: "Closing time first, then stack code",
           isCorrect: false,
-          feedback: "That reverses the order from the broadcast.",
+          feedback: "That reverses the order confirmed by both clues.",
         },
         {
-          id: "desk-then-time",
-          text: "Front desk number first, then the closing time",
+          id: "map-then-stack",
+          text: "Map format first, then stack code",
           isCorrect: false,
-          feedback: "The announcement points to the history shelf, not the desk.",
+          feedback: "The format note is not a number fragment.",
         },
         {
-          id: "map-then-shelf",
-          text: "Map number first, then the shelf number",
+          id: "key-then-time",
+          text: "Desk key first, then closing time",
           isCorrect: false,
-          feedback: "The map is not part of the code order.",
+          feedback: "The key is a tool, not part of the code.",
         },
       ],
     },
     {
       id: "help-point",
-      question: "Where should visitors go if they still need help before leaving?",
+      question: "Where did the announcement say visitors should go if they still needed help?",
       answerId: "front-desk",
       options: [
         {
           id: "front-desk",
           text: "The front desk",
           isCorrect: true,
-          feedback: "Correct. The announcement sends visitors to the front desk for last-minute help.",
+          feedback: "Correct. The PA message points to the front desk.",
         },
         {
           id: "science-wing",
           text: "The science wing",
           isCorrect: false,
-          feedback: "The broadcast never mentions the science wing.",
-        },
-        {
-          id: "study-room",
-          text: "The study room",
-          isCorrect: false,
-          feedback: "That room is not part of the exit instruction.",
+          feedback: "The science wing is not mentioned in the announcement.",
         },
         {
           id: "archive-stairs",
           text: "The archive stairs",
           isCorrect: false,
-          feedback: "Those stairs are not the place named in the broadcast.",
+          feedback: "Those stairs are not part of the exit instruction.",
+        },
+        {
+          id: "quiet-room",
+          text: "The quiet room",
+          isCorrect: false,
+          feedback: "That room is not the help point named in the announcement.",
         },
       ],
     },
-  ],
-};
-
-export const choiceQuiz: ChoiceQuiz = {
-  question: "Which sentence is the most polite and specific way to ask for help in the library?",
-  options: [
-    { id: "a", text: "Give me the code.", isCorrect: false, feedback: "That sounds demanding, not polite." },
-    {
-      id: "b",
-      text: "Could you help me confirm the exit code order, please?",
-      isCorrect: true,
-      feedback: "Correct. That request is polite, specific, and sounds natural.",
-    },
-    { id: "c", text: "Tell me right now.", isCorrect: false, feedback: "That is too forceful for a help request." },
-    { id: "d", text: "I need the answer now, okay?", isCorrect: false, feedback: "That still sounds like a demand instead of a polite request." },
   ],
 };

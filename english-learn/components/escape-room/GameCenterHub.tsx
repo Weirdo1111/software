@@ -84,8 +84,8 @@ export function GameCenterHub({ locale }: { locale: Locale }) {
               </div>
               <div className="mt-4 grid gap-3 text-sm text-slate-700">
                 <p>1. Hotspot-based 2D rooms with modal puzzles</p>
-                <p>2. Listening, clue collection, and keypad progression</p>
-                <p>3. Polite-English dialogue tasks with a local AI librarian</p>
+                <p>2. Sequenced clue chains with collected items and locked leads</p>
+                <p>3. Listening, note-taking, and keypad deduction inside campus scenes</p>
               </div>
             </div>
           </div>
