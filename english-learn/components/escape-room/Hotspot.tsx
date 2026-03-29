@@ -1,11 +1,11 @@
 import clsx from "clsx";
-import { Archive, Backpack, BookOpen, CheckCircle2, ClipboardList, DoorClosed, LockKeyhole, Map, Monitor, NotebookText, ScrollText, ShoppingBasket, Volume2 } from "lucide-react";
+import { Archive, Backpack, BookOpen, BriefcaseBusiness, CheckCircle2, ClipboardList, DoorClosed, LockKeyhole, Map, Monitor, NotebookText, ScrollText, SignpostBig, Ticket, Volume2 } from "lucide-react";
 
 import type { RoomObject, RoomObjectState } from "@/components/escape-room/types";
 
 const iconMap = {
   "notice-board": ScrollText,
-  "return-cart": ShoppingBasket,
+  "return-cart": Ticket,
   bookshelf: BookOpen,
   "circulation-desk": Monitor,
   speaker: Volume2,
@@ -14,6 +14,9 @@ const iconMap = {
   archive: Archive,
   backpack: Backpack,
   notebook: NotebookText,
+  ticket: Ticket,
+  briefcase: BriefcaseBusiness,
+  signpost: SignpostBig,
 } as const;
 
 export function Hotspot({
