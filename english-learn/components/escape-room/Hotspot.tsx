@@ -36,6 +36,23 @@ export function Hotspot({
   const Icon = iconMap[iconKey];
   const completed = state === "cleared";
   const locked = state === "locked";
+  const showLeadBadge = roomObject.id === "return-cart" || roomObject.id === "floor-map";
+  const badge = completed ? (
+    <span className="hotspot-badge inline-flex items-center gap-1 rounded-full border border-emerald-300/35 bg-emerald-400/14 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-100">
+      <CheckCircle2 className="size-3" />
+      Clear
+    </span>
+  ) : locked ? (
+    <span className="hotspot-badge inline-flex items-center gap-1 rounded-full border border-white/16 bg-black/22 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200">
+      <LockKeyhole className="size-3" />
+      Locked
+    </span>
+  ) : showLeadBadge ? (
+    <span className="hotspot-badge inline-flex items-center gap-1 rounded-full border border-amber-300/30 bg-amber-300/12 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-100">
+      <ClipboardList className="size-3" />
+      Lead
+    </span>
+  ) : null;
 
   return (
     <button
@@ -64,35 +81,23 @@ export function Hotspot({
       />
       {!completed && !locked ? <span className="hotspot-scan-line pointer-events-none absolute inset-x-2 top-0 h-10 bg-[linear-gradient(180deg,transparent,rgba(125,211,252,0.22),transparent)] blur-sm" /> : null}
 
-      {completed ? (
-        <span className="hotspot-badge absolute right-2 top-2 rounded-full border border-emerald-300/35 bg-emerald-400/14 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-100">
-          Clear
-        </span>
-      ) : locked ? (
-        <span className="hotspot-badge absolute right-2 top-2 inline-flex items-center gap-1 rounded-full border border-white/16 bg-black/22 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200">
-          <LockKeyhole className="size-3" />
-          Locked
-        </span>
-      ) : roomObject.id === "return-cart" || roomObject.id === "floor-map" ? (
-        <span className="hotspot-badge absolute right-2 top-2 inline-flex items-center gap-1 rounded-full border border-amber-300/30 bg-amber-300/12 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-100">
-          <ClipboardList className="size-3" />
-          Lead
-        </span>
-      ) : null}
+      <div className="relative flex flex-col gap-2">
+        {badge ? <div className="flex justify-end">{badge}</div> : null}
 
-      <div className="relative flex items-center gap-3">
-        <span className={clsx("relative inline-flex items-center justify-center text-white", roomObject.accent, fullscreen ? "size-12 rounded-2xl" : "size-10 rounded-xl")}>
-          <Icon className={clsx(fullscreen ? "size-5" : "size-4")} />
-        </span>
-
-        <span className="min-w-0">
-          <span className={clsx("block font-semibold tracking-tight text-white", fullscreen ? "text-base" : "text-sm")}>{roomObject.name}</span>
-          <span className={clsx("block uppercase tracking-[0.18em] text-slate-300", fullscreen ? "text-xs" : "text-[11px]")}>
-            {locked ? "Stand by" : roomObject.shortLabel}
+        <div className="flex items-center gap-3">
+          <span className={clsx("relative inline-flex shrink-0 items-center justify-center text-white", roomObject.accent, fullscreen ? "size-12 rounded-2xl" : "size-10 rounded-xl")}>
+            <Icon className={clsx(fullscreen ? "size-5" : "size-4")} />
           </span>
-        </span>
 
-        {completed ? <CheckCircle2 className={clsx("shrink-0 text-emerald-300", fullscreen ? "size-5" : "size-4")} /> : null}
+          <span className="min-w-0 flex-1">
+            <span className={clsx("block font-semibold tracking-tight text-white", fullscreen ? "text-base" : "text-sm")}>{roomObject.name}</span>
+            <span className={clsx("block uppercase tracking-[0.18em] text-slate-300", fullscreen ? "text-xs" : "text-[11px]")}>
+              {locked ? "Stand by" : roomObject.shortLabel}
+            </span>
+          </span>
+
+          {completed ? <CheckCircle2 className={clsx("shrink-0 text-emerald-300", fullscreen ? "size-5" : "size-4")} /> : null}
+        </div>
       </div>
     </button>
   );
