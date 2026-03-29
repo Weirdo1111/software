@@ -34,6 +34,9 @@ export function DeskPuzzleModal({
   onClose,
   title = "Circulation Drawer",
   subtitle = "Unlock the drawer and identify the after-hours exit card.",
+  requiredItemLabel = "Desk Key",
+  missingItemMessage = "The drawer is locked. Recover the brass desk key from the history stacks first.",
+  drawerDescription = "Drawer 04 unlocks the circulation procedure cards.",
 }: {
   puzzle: DeskPuzzle;
   rewardItem: InventoryItem;
@@ -43,6 +46,9 @@ export function DeskPuzzleModal({
   onClose: () => void;
   title?: string;
   subtitle?: string;
+  requiredItemLabel?: string;
+  missingItemMessage?: string;
+  drawerDescription?: string;
 }) {
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
@@ -59,11 +65,11 @@ export function DeskPuzzleModal({
     }
 
     if (!hasKey) {
-      return "The drawer is locked. Recover the brass desk key from the history stacks first.";
+      return missingItemMessage;
     }
 
     return "Desk key accepted. Find the correct after-hours procedure card.";
-  }, [completed, hasKey]);
+  }, [completed, hasKey, missingItemMessage]);
 
   return (
     <ModalShell title={title} subtitle={subtitle} onClose={onClose}>
@@ -77,8 +83,8 @@ export function DeskPuzzleModal({
 
           <div className="mt-4 rounded-[1.2rem] border border-[#e1dac8] bg-white p-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Collected item</p>
-            <p className="mt-2 text-lg font-semibold text-slate-900">{hasKey || completed ? "Desk Key" : "Key missing"}</p>
-            <p className="mt-1 text-sm text-slate-700">Drawer 04 unlocks the circulation procedure cards.</p>
+            <p className="mt-2 text-lg font-semibold text-slate-900">{hasKey || completed ? requiredItemLabel : "Item missing"}</p>
+            <p className="mt-1 text-sm text-slate-700">{drawerDescription}</p>
           </div>
         </div>
 

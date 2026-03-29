@@ -293,6 +293,9 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
           rewardItem={PROCEDURE_CARD_ITEM}
           completed={progress.completedPuzzles["circulation-desk"]}
           hasKey={hasItem(progress, DESK_KEY_ITEM.id)}
+          requiredItemLabel="Desk Key"
+          missingItemMessage="The drawer is locked. Recover the brass desk key from the history stacks first."
+          drawerDescription="Drawer 04 unlocks the circulation procedure cards."
           onSolved={() => {
             dispatch({ type: "COMPLETE_DESK", item: PROCEDURE_CARD_ITEM, note: DESK_NOTE, usedItemId: DESK_KEY_ITEM.id });
             setActiveModal(null);
