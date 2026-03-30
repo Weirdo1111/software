@@ -1,4 +1,5 @@
 import type { Locale } from "@/lib/i18n/dictionaries";
+import { normalizeDiscussionCategory } from "@/components/discussion/types";
 import { appendDiscussionPost } from "@/lib/discussion-store";
 
 export type ContextCommentModule =
@@ -390,12 +391,13 @@ export function appendContextComment(
       title: buildDiscussionTitle(context, nextComment),
       content: buildDiscussionContent(nextComment),
       author: nextComment.author,
-      tag: context.plazaTag,
+      tag: normalizeDiscussionCategory(context.plazaTag),
       likes: 0,
       liked: false,
       pinned: false,
       createdAt: formatPlazaDate(now),
       comments: [],
+      views: 0,
     });
   }
 
