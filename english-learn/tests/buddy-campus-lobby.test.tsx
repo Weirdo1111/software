@@ -34,6 +34,7 @@ describe("BuddyCampusLobby", () => {
         nextQuestHref="/schedule?lang=en"
         buddyStage="fresh"
         buddyFocus="coursework"
+        selectedGoal="coursework"
       />,
     );
 

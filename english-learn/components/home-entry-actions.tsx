@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { LoginRequiredModal } from "@/components/login-required-modal";
+import { startNavigationLoading } from "@/lib/navigation-loading";
 
 type HomeEntryActionsProps = {
   locale: string;
@@ -22,15 +23,20 @@ export function HomeEntryActions({
   const [open, setOpen] = useState(false);
 
   const goLogin = () => {
-    router.push(`/login?lang=${locale}`);
+    const href = `/login?lang=${locale}`;
+    startNavigationLoading(href);
+    router.push(href);
   };
 
   const goDashboard = () => {
-    router.push(`/dashboard?lang=${locale}`);
+    const href = `/dashboard?lang=${locale}`;
+    startNavigationLoading(href);
+    router.push(href);
   };
 
   const handleProtectedClick = (href: string) => {
     if (isLoggedIn) {
+      startNavigationLoading(href);
       router.push(href);
       return;
     }

@@ -624,6 +624,8 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
         nextQuestHref={nextQuestHref}
         buddyStage={buddyStage.id}
         buddyFocus={getGoalFocus(preferences.goal)}
+        selectedGoal={preferences.goal}
+        onSelectGoal={(goal) => updatePrefs({ goal })}
       />
 
       <HomeLearningModules locale={locale} />

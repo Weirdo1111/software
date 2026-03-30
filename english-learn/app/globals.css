@@ -499,6 +499,232 @@ body::after {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
+.buddy-loading-screen {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(255, 211, 93, 0.28), transparent 28%),
+    radial-gradient(circle at top right, rgba(123, 227, 210, 0.24), transparent 24%),
+    radial-gradient(circle at bottom left, rgba(255, 201, 225, 0.32), transparent 26%),
+    linear-gradient(180deg, #f7fbff 0%, #eef6ff 48%, #fff5fb 100%);
+  padding: 1.5rem;
+}
+
+.buddy-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at top left, rgba(255, 211, 93, 0.18), transparent 28%),
+    radial-gradient(circle at top right, rgba(123, 227, 210, 0.16), transparent 24%),
+    rgba(247, 251, 255, 0.62);
+  backdrop-filter: blur(14px);
+  padding: 1.25rem;
+}
+
+.buddy-loading-card {
+  position: relative;
+  width: min(100%, 31rem);
+  overflow: hidden;
+  border-radius: 2.4rem;
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.98), rgba(242, 249, 255, 0.95), rgba(255, 242, 248, 0.94));
+  padding: 1.35rem 1.35rem 1.5rem;
+  text-align: center;
+  box-shadow:
+    0 18px 0 rgba(255, 201, 225, 0.22),
+    0 36px 56px rgba(90, 123, 255, 0.14);
+}
+
+.buddy-loading-card-overlay {
+  width: min(100%, 28rem);
+  box-shadow:
+    0 16px 0 rgba(255, 201, 225, 0.18),
+    0 28px 48px rgba(90, 123, 255, 0.18);
+}
+
+.buddy-loading-card::before,
+.buddy-loading-card::after {
+  position: absolute;
+  content: "";
+  border-radius: 999px;
+  opacity: 0.72;
+}
+
+.buddy-loading-card::before {
+  top: -2.8rem;
+  left: -2.1rem;
+  height: 8rem;
+  width: 8rem;
+  background: radial-gradient(circle, rgba(255, 211, 93, 0.48), rgba(255, 211, 93, 0));
+}
+
+.buddy-loading-card::after {
+  right: -1.6rem;
+  bottom: -2.2rem;
+  height: 7rem;
+  width: 7rem;
+  background: radial-gradient(circle, rgba(123, 227, 210, 0.42), rgba(123, 227, 210, 0));
+}
+
+.buddy-loading-badge {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(243, 250, 255, 0.94));
+  padding: 0.55rem 0.95rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--navy);
+  box-shadow:
+    0 8px 0 rgba(143, 240, 211, 0.2),
+    0 14px 22px rgba(90, 123, 255, 0.08);
+}
+
+.buddy-loading-stage {
+  position: relative;
+  margin-top: 1rem;
+  padding: 1.2rem 0.9rem 0.6rem;
+}
+
+.buddy-loading-orbit {
+  position: absolute;
+  inset: 0.25rem 8% 0.4rem;
+  border-radius: 50%;
+  border: 3px dashed rgba(90, 123, 255, 0.2);
+  animation: buddyLoadingSpin 6s linear infinite;
+}
+
+.buddy-loading-orbit-delayed {
+  inset: 1.1rem 14% 1.1rem;
+  border-style: solid;
+  border-color: rgba(255, 201, 225, 0.32) transparent rgba(123, 227, 210, 0.32) transparent;
+  animation-duration: 4.8s;
+  animation-direction: reverse;
+}
+
+.buddy-loading-track {
+  position: relative;
+  z-index: 1;
+  margin: 0 auto;
+  aspect-ratio: 1 / 1;
+  width: min(100%, 18rem);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.3) 38%, transparent 64%),
+    linear-gradient(180deg, rgba(145, 220, 255, 0.24), rgba(255, 255, 255, 0));
+}
+
+.buddy-loading-track::before {
+  position: absolute;
+  inset: 18%;
+  content: "";
+  border-radius: 999px;
+  border: 14px solid rgba(255, 255, 255, 0.75);
+  box-shadow:
+    inset 0 0 0 3px rgba(90, 123, 255, 0.08),
+    0 18px 26px rgba(90, 123, 255, 0.08);
+}
+
+.buddy-loading-lane {
+  position: absolute;
+  left: 50%;
+  width: 40%;
+  height: 0.55rem;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(90, 123, 255, 0), rgba(90, 123, 255, 0.36), rgba(90, 123, 255, 0));
+}
+
+.buddy-loading-lane-one {
+  top: 26%;
+}
+
+.buddy-loading-lane-two {
+  bottom: 26%;
+}
+
+.buddy-loading-runner {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5rem;
+  margin-left: -2.5rem;
+  margin-top: -2.5rem;
+  transform-origin: 50% 50%;
+  animation: buddyLoadingRunLoop 1.8s linear infinite;
+}
+
+.buddy-loading-pet {
+  width: 5rem;
+  max-width: 5rem;
+  filter: drop-shadow(0 16px 18px rgba(63, 85, 129, 0.16));
+  animation: buddyLoadingBounce 0.46s ease-in-out infinite;
+}
+
+.buddy-loading-spark {
+  position: absolute;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(255, 201, 225, 0.8));
+  opacity: 0;
+  animation: buddyLoadingSpark 1.8s linear infinite;
+}
+
+.buddy-loading-spark-one {
+  left: 20%;
+  top: 44%;
+  height: 0.6rem;
+  width: 0.6rem;
+  animation-delay: 0s;
+}
+
+.buddy-loading-spark-two {
+  right: 24%;
+  top: 28%;
+  height: 0.45rem;
+  width: 0.45rem;
+  animation-delay: 0.55s;
+}
+
+.buddy-loading-spark-three {
+  right: 28%;
+  bottom: 24%;
+  height: 0.7rem;
+  width: 0.7rem;
+  animation-delay: 1s;
+}
+
+.buddy-loading-title {
+  position: relative;
+  z-index: 1;
+  margin-top: 0.85rem;
+  font-size: clamp(1.9rem, 4vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.buddy-loading-note {
+  position: relative;
+  z-index: 1;
+  margin-top: 0.45rem;
+  color: var(--ink-soft);
+  font-size: 0.98rem;
+  line-height: 1.75;
+}
+
 .party-tab {
   display: inline-flex;
   min-height: 2.9rem;
@@ -1265,6 +1491,14 @@ body::after {
     0 16px 22px rgba(90, 123, 255, 0.08);
 }
 
+.campus-lobby-crew-card-active {
+  border-color: rgba(85, 178, 255, 0.7);
+  background: linear-gradient(135deg, rgba(232, 245, 255, 0.98), rgba(255, 246, 252, 0.96));
+  box-shadow:
+    0 10px 0 rgba(143, 196, 255, 0.2),
+    0 20px 30px rgba(90, 123, 255, 0.14);
+}
+
 .campus-lobby-pad {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1690,6 +1924,48 @@ body::after {
   opacity: 0;
   animation: consoleFlash 0.75s ease-out 1;
 }
+
+@keyframes buddyLoadingSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes buddyLoadingRunLoop {
+  from {
+    transform: rotate(0deg) translateY(-5.8rem) rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg) translateY(-5.8rem) rotate(-360deg);
+  }
+}
+
+@keyframes buddyLoadingBounce {
+  0%,
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.02, 0.98);
+  }
+}
+
+@keyframes buddyLoadingSpark {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  35%,
+  55% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -1717,6 +1993,10 @@ body::after {
   .hotspot-ring,
   .hotspot-scan-line,
   .hotspot-badge,
+  .buddy-loading-orbit,
+  .buddy-loading-runner,
+  .buddy-loading-pet,
+  .buddy-loading-spark,
   .quest-console-enter,
   .quest-console-flicker::before,
   .quest-console-flash::after,

@@ -38,6 +38,8 @@ import {
   type BuddyVariant,
 } from "@/components/home/buddy-companion";
 import { type Locale } from "@/lib/i18n/dictionaries";
+import { type ScheduleGoal } from "@/lib/schedule";
+import { startNavigationLoading } from "@/lib/navigation-loading";
 import { cn } from "@/lib/utils";
 
 type LobbyVector = {
@@ -89,12 +91,16 @@ export function BuddyCampusLobby({
   nextQuestHref,
   buddyStage,
   buddyFocus,
+  selectedGoal,
+  onSelectGoal,
 }: {
   locale: Locale;
   levelPrefix: string;
   nextQuestHref: string;
   buddyStage: BuddyStage;
   buddyFocus: BuddyFocus;
+  selectedGoal: ScheduleGoal;
+  onSelectGoal?: (goal: ScheduleGoal) => void;
 }) {
   const router = useRouter();
   const arenaRef = useRef<HTMLDivElement>(null);
@@ -234,6 +240,7 @@ export function BuddyCampusLobby({
       id: string;
       title: string;
       note: string;
+      goal: ScheduleGoal;
       stage: BuddyStage;
       focus: BuddyFocus;
       variant: BuddyVariant;
@@ -242,6 +249,7 @@ export function BuddyCampusLobby({
     () => [
       {
         id: "cloud-bun",
+        goal: "research",
         title: locale === "zh" ? "云朵兔" : "Cloud Bun",
         note: locale === "zh" ? "偏研究型陪练" : "Research buddy",
         stage: "fresh",
@@ -250,6 +258,7 @@ export function BuddyCampusLobby({
       },
       {
         id: "spark-cat",
+        goal: "seminar",
         title: locale === "zh" ? "星闪猫" : "Spark Cat",
         note: locale === "zh" ? "偏表达与对话" : "Speaking buddy",
         stage: "growing",
@@ -258,6 +267,7 @@ export function BuddyCampusLobby({
       },
       {
         id: "compass-bear",
+        goal: "coursework",
         title: locale === "zh" ? "指南熊" : "Compass Bear",
         note: locale === "zh" ? "偏任务与节奏" : "Quest buddy",
         stage: "explorer",
@@ -413,6 +423,7 @@ export function BuddyCampusLobby({
         destinationRef.current = null;
         keysRef.current.down = true;
       } else if (event.key === "Enter" && activeZone) {
+        startNavigationLoading(activeZone.href);
         router.push(activeZone.href);
       } else if (event.key === "Escape") {
         clearDirections();
@@ -741,7 +752,16 @@ export function BuddyCampusLobby({
 
         <div className="campus-lobby-crew mt-4 grid-cols-1 md:grid-cols-3">
           {buddyCrew.map((buddy) => (
-            <div key={buddy.id} className="campus-lobby-crew-card">
+            <button
+              key={buddy.id}
+              type="button"
+              onClick={() => onSelectGoal?.(buddy.goal)}
+              className={cn(
+                "campus-lobby-crew-card text-left transition hover:-translate-y-0.5",
+                selectedGoal === buddy.goal && "campus-lobby-crew-card-active",
+              )}
+              aria-pressed={selectedGoal === buddy.goal}
+            >
               <BuddyCompanion
                 stage={buddy.stage}
                 focus={buddy.focus}
@@ -754,7 +774,7 @@ export function BuddyCampusLobby({
                 <p className="text-sm font-semibold text-[var(--ink)]">{buddy.title}</p>
                 <p className="mt-1 text-xs leading-5 text-[var(--ink-soft)]">{buddy.note}</p>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </div>
