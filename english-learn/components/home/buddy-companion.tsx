@@ -266,8 +266,8 @@ function renderBuddyGlasses(outfit: BuddyOutfit, trim: string) {
         <rect x="72" y="96" width="43" height="36" rx="11" fill="rgba(255,255,255,0.26)" stroke={trim} strokeWidth="5" />
         <rect x="125" y="96" width="43" height="36" rx="11" fill="rgba(255,255,255,0.26)" stroke={trim} strokeWidth="5" />
         <path d="M115 114c2-1 8-1 10 0" fill="none" stroke={trim} strokeWidth="4.5" strokeLinecap="round" />
-        <path d="M72 114H61" stroke={trim} strokeWidth="5" strokeLinecap="round" />
-        <path d="M179 114h-11" stroke={trim} strokeWidth="5" strokeLinecap="round" />
+        <path d="M69 112c-4 0-8 3-10 7" fill="none" stroke={trim} strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M171 112c4 0 8 3 10 7" fill="none" stroke={trim} strokeWidth="4.5" strokeLinecap="round" />
       </>
     );
   }
@@ -278,8 +278,8 @@ function renderBuddyGlasses(outfit: BuddyOutfit, trim: string) {
         <rect x="70" y="97" width="44" height="31" rx="11" fill="#2d2948" stroke={trim} strokeWidth="5" />
         <rect x="126" y="97" width="44" height="31" rx="11" fill="#2d2948" stroke={trim} strokeWidth="5" />
         <path d="M114 111c3-1 9-1 12 0" fill="none" stroke={trim} strokeWidth="4.5" strokeLinecap="round" />
-        <path d="M70 112H59" stroke={trim} strokeWidth="5" strokeLinecap="round" />
-        <path d="M181 112h-11" stroke={trim} strokeWidth="5" strokeLinecap="round" />
+        <path d="M67 110c-4 0-8 3-10 6" fill="none" stroke={trim} strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M173 110c4 0 8 3 10 6" fill="none" stroke={trim} strokeWidth="4.5" strokeLinecap="round" />
         <path d="M79 104c8-3 17-4 26-2" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" opacity="0.45" />
         <path d="M135 104c8-3 17-4 26-2" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" opacity="0.45" />
       </>
@@ -292,8 +292,8 @@ function renderBuddyGlasses(outfit: BuddyOutfit, trim: string) {
         <path d="m95 92 7 14 15 2-11 10 3 15-14-8-14 8 3-15-11-10 15-2Z" fill="#ffe27a" stroke={trim} strokeWidth="4.5" strokeLinejoin="round" />
         <path d="m145 92 7 14 15 2-11 10 3 15-14-8-14 8 3-15-11-10 15-2Z" fill="#ffe27a" stroke={trim} strokeWidth="4.5" strokeLinejoin="round" />
         <path d="M113 112c2-1 12-1 14 0" fill="none" stroke={trim} strokeWidth="4.2" strokeLinecap="round" />
-        <path d="M80 110H67" stroke={trim} strokeWidth="4.5" strokeLinecap="round" />
-        <path d="M173 110h-13" stroke={trim} strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M77 109c-4 0-8 3-10 7" fill="none" stroke={trim} strokeWidth="4.2" strokeLinecap="round" />
+        <path d="M163 109c4 0 8 3 10 7" fill="none" stroke={trim} strokeWidth="4.2" strokeLinecap="round" />
       </>
     );
   }
@@ -301,11 +301,8 @@ function renderBuddyGlasses(outfit: BuddyOutfit, trim: string) {
   if (outfit.glasses === "heart") {
     return (
       <>
-        <path d="M75 103c0-8 6-13 13-13 5 0 9 3 12 8 3-5 7-8 12-8 7 0 13 5 13 13 0 8-7 15-25 29-18-14-25-21-25-29Z" fill="#ff8fb3" stroke={trim} strokeWidth="4.5" strokeLinejoin="round" />
-        <path d="M127 103c0-8 6-13 13-13 5 0 9 3 12 8 3-5 7-8 12-8 7 0 13 5 13 13 0 8-7 15-25 29-18-14-25-21-25-29Z" fill="#ff8fb3" stroke={trim} strokeWidth="4.5" strokeLinejoin="round" />
-        <path d="M116 111c1-1 7-1 8 0" fill="none" stroke={trim} strokeWidth="4" strokeLinecap="round" />
-        <path d="M75 112H64" stroke={trim} strokeWidth="4.5" strokeLinecap="round" />
-        <path d="M176 112h-11" stroke={trim} strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M69 104c0-9 7-15 15-15 6 0 10 4 13 9 3-5 7-9 13-9 8 0 15 6 15 15 0 10-8 18-28 33-20-15-28-23-28-33Z" fill="#ff8fb3" stroke={trim} strokeWidth="4.5" strokeLinejoin="round" />
+        <path d="M121 104c0-9 7-15 15-15 6 0 10 4 13 9 3-5 7-9 13-9 8 0 15 6 15 15 0 10-8 18-28 33-20-15-28-23-28-33Z" fill="#ff8fb3" stroke={trim} strokeWidth="4.5" strokeLinejoin="round" />
       </>
     );
   }
@@ -387,10 +384,10 @@ function renderBuddyHeldItem(outfit: BuddyOutfit, trim: string, accent: string) 
   if (outfit.heldItem === "flower") {
     return (
       <>
-        <path d="M153 154l12 24" stroke="#4aa867" strokeWidth="5" strokeLinecap="round" />
-        <circle cx="168" cy="149" r="7" fill="#ff9db0" stroke={trim} strokeWidth="4" />
-        <circle cx="174" cy="154" r="6" fill="#ffd35d" stroke={trim} strokeWidth="4" />
-        <circle cx="161" cy="157" r="6" fill="#8ed8ff" stroke={trim} strokeWidth="4" />
+        <path d="M153 154 165 178" stroke="#4aa867" strokeWidth="5" strokeLinecap="round" />
+        <circle cx="160" cy="156" r="8.5" fill="#ff9db0" stroke={trim} strokeWidth="4" />
+        <circle cx="168" cy="162" r="7.5" fill="#ffd35d" stroke={trim} strokeWidth="4" />
+        <circle cx="151" cy="165" r="7.5" fill="#8ed8ff" stroke={trim} strokeWidth="4" />
       </>
     );
   }
@@ -398,10 +395,10 @@ function renderBuddyHeldItem(outfit: BuddyOutfit, trim: string, accent: string) 
   if (outfit.heldItem === "tea") {
     return (
       <>
-        <path d="M150 148h20l-3 24h-14Z" fill="#fff8f1" stroke={trim} strokeWidth="4.5" strokeLinejoin="round" />
-        <path d="M155 140v9" stroke="#ff9b95" strokeWidth="4" strokeLinecap="round" />
-        <path d="M165 140v9" stroke="#ff9b95" strokeWidth="4" strokeLinecap="round" />
-        <path d="M150 156h20" stroke={accent} strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M148 146h24l-3 28h-18Z" fill="#fff8f1" stroke={trim} strokeWidth="4.5" strokeLinejoin="round" />
+        <path d="M155 137v10" stroke="#ff9b95" strokeWidth="4" strokeLinecap="round" />
+        <path d="M166 137v10" stroke="#ff9b95" strokeWidth="4" strokeLinecap="round" />
+        <path d="M148 156h24" stroke={accent} strokeWidth="4.5" strokeLinecap="round" />
       </>
     );
   }
@@ -409,8 +406,8 @@ function renderBuddyHeldItem(outfit: BuddyOutfit, trim: string, accent: string) 
   if (outfit.heldItem === "starwand") {
     return (
       <>
-        <path d="M152 154l14 22" stroke="#8b6cf7" strokeWidth="5" strokeLinecap="round" />
-        <path d="m169 142 3 7 8 1-6 5 2 7-7-4-7 4 2-7-6-5 8-1Z" fill="#ffd35d" stroke={trim} strokeWidth="4" strokeLinejoin="round" />
+        <path d="M152 154 167 176" stroke="#8b6cf7" strokeWidth="5" strokeLinecap="round" />
+        <path d="m158 143 4 9 10 1-7 6 2 9-8-5-8 5 2-9-7-6 10-1Z" fill="#ffd35d" stroke={trim} strokeWidth="4" strokeLinejoin="round" />
       </>
     );
   }

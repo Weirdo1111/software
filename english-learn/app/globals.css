@@ -469,6 +469,317 @@ body::after {
 
 .buddy-wardrobe-tab,
 .buddy-wardrobe-option {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.buddy-wardrobe-option-preview {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  flex: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: inset 0 0 0 1px rgba(90, 123, 255, 0.08);
+}
+
+.buddy-preview-none {
+  width: 1rem;
+  height: 0.2rem;
+  border-radius: 999px;
+  background: rgba(58, 53, 86, 0.4);
+}
+
+.buddy-preview-hat {
+  position: relative;
+  display: block;
+  width: 1.45rem;
+  height: 1.1rem;
+}
+
+.buddy-preview-hat-top,
+.buddy-preview-hat-brim {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 2px solid #3a3556;
+}
+
+.buddy-preview-hat-top {
+  top: 0.05rem;
+  width: 0.9rem;
+  height: 0.6rem;
+  border-bottom: 0;
+  border-radius: 0.7rem 0.7rem 0 0;
+}
+
+.buddy-preview-hat-brim {
+  bottom: 0;
+  width: 1.45rem;
+  height: 0.34rem;
+  border-radius: 999px;
+}
+
+.buddy-preview-hat-sun .buddy-preview-hat-top,
+.buddy-preview-hat-sun .buddy-preview-hat-brim {
+  background: #ffd77e;
+}
+
+.buddy-preview-hat-straw .buddy-preview-hat-top,
+.buddy-preview-hat-straw .buddy-preview-hat-brim {
+  background: #efd08b;
+}
+
+.buddy-preview-hat-cap .buddy-preview-hat-top {
+  width: 1rem;
+  height: 0.65rem;
+  background: #8eb0ff;
+}
+
+.buddy-preview-hat-cap .buddy-preview-hat-brim {
+  width: 1rem;
+  right: 0.05rem;
+  left: auto;
+  transform: none;
+  background: #dbe7ff;
+  border-radius: 0 999px 999px 0;
+}
+
+.buddy-preview-bottom {
+  display: block;
+  border: 2px solid #3a3556;
+}
+
+.buddy-preview-bottom-shorts {
+  width: 1.45rem;
+  height: 1rem;
+  border-radius: 0.7rem 0.7rem 0.95rem 0.95rem;
+  background: #8ed8ff;
+}
+
+.buddy-preview-bottom-jeans {
+  width: 1.5rem;
+  height: 1.1rem;
+  border-radius: 0.6rem 0.6rem 0.85rem 0.85rem;
+  background: #6f87ff;
+}
+
+.buddy-preview-bottom-bloomers {
+  width: 1.6rem;
+  height: 1.05rem;
+  border-radius: 0.75rem 0.75rem 1rem 1rem;
+  background: #ff9db0;
+}
+
+.buddy-preview-glasses {
+  position: relative;
+  display: block;
+  width: 1.45rem;
+  height: 0.8rem;
+}
+
+.buddy-preview-glasses::before,
+.buddy-preview-glasses::after {
+  position: absolute;
+  top: 0.05rem;
+  content: "";
+}
+
+.buddy-preview-glasses-square::before,
+.buddy-preview-glasses-square::after,
+.buddy-preview-glasses-sun::before,
+.buddy-preview-glasses-sun::after {
+  width: 0.55rem;
+  height: 0.52rem;
+  border: 2px solid #3a3556;
+  border-radius: 0.22rem;
+}
+
+.buddy-preview-glasses-square::before {
+  left: 0.06rem;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.buddy-preview-glasses-square::after {
+  right: 0.06rem;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.buddy-preview-glasses-sun::before {
+  left: 0.02rem;
+  background: #2d2948;
+}
+
+.buddy-preview-glasses-sun::after {
+  right: 0.02rem;
+  background: #2d2948;
+}
+
+.buddy-preview-glasses-square {
+  background: linear-gradient(transparent 44%, #3a3556 44%, #3a3556 56%, transparent 56%);
+}
+
+.buddy-preview-glasses-sun {
+  background: linear-gradient(transparent 45%, #3a3556 45%, #3a3556 55%, transparent 55%);
+}
+
+.buddy-preview-glasses-star::before,
+.buddy-preview-glasses-star::after {
+  top: 0.02rem;
+  font-size: 0.62rem;
+  color: #ffd35d;
+  text-shadow: 0 0 0 #3a3556;
+}
+
+.buddy-preview-glasses-star::before {
+  left: 0.02rem;
+  content: "★";
+}
+
+.buddy-preview-glasses-star::after {
+  right: 0.02rem;
+  content: "★";
+}
+
+.buddy-preview-glasses-heart::before,
+.buddy-preview-glasses-heart::after {
+  top: -0.02rem;
+  font-size: 0.7rem;
+  color: #ff8fb3;
+  text-shadow: 0 0 0 #3a3556;
+}
+
+.buddy-preview-glasses-heart::before {
+  left: 0.02rem;
+  content: "♥";
+}
+
+.buddy-preview-glasses-heart::after {
+  right: 0.02rem;
+  content: "♥";
+}
+
+.buddy-preview-held {
+  position: relative;
+  display: block;
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+.buddy-preview-held::before {
+  position: absolute;
+  left: 50%;
+  bottom: 0.05rem;
+  content: "";
+  width: 0.15rem;
+  height: 0.72rem;
+  transform: translateX(-50%);
+  border-radius: 999px;
+}
+
+.buddy-preview-held-flower::before {
+  background: #4aa867;
+}
+
+.buddy-preview-held-flower::after {
+  position: absolute;
+  left: 50%;
+  top: 0.12rem;
+  width: 0.95rem;
+  height: 0.95rem;
+  content: "";
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 50%, #ffd35d 0 24%, transparent 25%),
+    radial-gradient(circle at 28% 42%, #ff9db0 0 28%, transparent 29%),
+    radial-gradient(circle at 70% 42%, #8ed8ff 0 28%, transparent 29%),
+    radial-gradient(circle at 50% 75%, #ffd35d 0 28%, transparent 29%);
+}
+
+.buddy-preview-held-tea::before {
+  display: none;
+}
+
+.buddy-preview-held-tea::after {
+  position: absolute;
+  left: 50%;
+  top: 0.18rem;
+  width: 0.95rem;
+  height: 1rem;
+  content: "";
+  transform: translateX(-50%);
+  border: 2px solid #3a3556;
+  border-radius: 0.2rem 0.2rem 0.35rem 0.35rem;
+  background:
+    linear-gradient(180deg, transparent 0 38%, #5a7bff 38% 50%, transparent 50% 100%),
+    #fff8f1;
+}
+
+.buddy-preview-held-starwand::before {
+  background: #8b6cf7;
+}
+
+.buddy-preview-held-starwand::after {
+  position: absolute;
+  left: 50%;
+  top: 0.06rem;
+  content: "★";
+  transform: translateX(-50%);
+  font-size: 0.9rem;
+  line-height: 1;
+  color: #ffd35d;
+  text-shadow: 0 0 0 #3a3556;
+}
+
+.buddy-wardrobe-option-active .buddy-wardrobe-option-preview {
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.32);
+}
+
+.buddy-wardrobe-option-active .buddy-preview-none {
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.buddy-wardrobe-option-active .buddy-preview-glasses-square,
+.buddy-wardrobe-option-active .buddy-preview-glasses-sun {
+  background: linear-gradient(transparent 44%, rgba(255, 255, 255, 0.9) 44%, rgba(255, 255, 255, 0.9) 56%, transparent 56%);
+}
+
+.buddy-wardrobe-option-active .buddy-preview-hat-top,
+.buddy-wardrobe-option-active .buddy-preview-hat-brim,
+.buddy-wardrobe-option-active .buddy-preview-bottom,
+.buddy-wardrobe-option-active .buddy-preview-glasses::before,
+.buddy-wardrobe-option-active .buddy-preview-glasses::after,
+.buddy-wardrobe-option-active .buddy-preview-held-tea::after {
+  border-color: rgba(255, 255, 255, 0.92);
+}
+
+.buddy-wardrobe-option-active .buddy-preview-held::before {
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.buddy-wardrobe-option-active .buddy-preview-glasses-star::before,
+.buddy-wardrobe-option-active .buddy-preview-glasses-star::after,
+.buddy-wardrobe-option-active .buddy-preview-glasses-heart::before,
+.buddy-wardrobe-option-active .buddy-preview-glasses-heart::after,
+.buddy-wardrobe-option-active .buddy-preview-held-starwand::after {
+  text-shadow: 0 0 0 rgba(255, 255, 255, 0.92);
+}
+
+.buddy-wardrobe-option-active span:last-child {
+  color: inherit;
+}
+
+.buddy-wardrobe-option span:last-child {
+  min-width: 0;
+}
+
+.buddy-wardrobe-option {
   border-radius: 1.2rem;
   border: 2px solid rgba(255, 255, 255, 0.92);
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(241, 248, 255, 0.94));
@@ -495,9 +806,14 @@ body::after {
   min-height: 0;
   display: flex;
   align-items: center;
+  gap: 0.5rem;
   justify-content: center;
   text-align: center;
   border-color: rgba(255, 255, 255, 0.96);
+}
+
+.buddy-wardrobe-tab-icon {
+  flex: none;
 }
 
 .buddy-wardrobe-tab:nth-child(2) {

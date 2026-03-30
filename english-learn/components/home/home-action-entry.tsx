@@ -12,12 +12,16 @@ import {
   Flame,
   FileText,
   Gamepad2,
+  Glasses,
+  Hand,
+  HatGlasses,
   Headphones,
   LibraryBig,
   Mic,
   PawPrint,
   PenLine,
   Sparkles,
+  Shirt,
   Target,
   Trophy,
   WandSparkles,
@@ -226,6 +230,51 @@ const buddyWardrobeCopy = {
     starwand: { zh: "\u661f\u661f\u68d2", en: "Star Wand" },
   } satisfies Record<BuddyHeldItem, { zh: string; en: string }>,
 };
+
+function renderWardrobePreviewIcon(
+  category: "hat" | "clothing" | "glasses" | "heldItem",
+  value: string,
+) {
+  return (
+    <span className="buddy-wardrobe-option-preview" aria-hidden="true">
+      {category === "hat" && value === "none" ? <span className="buddy-preview-none" /> : null}
+      {category === "hat" && value === "sunhat" ? (
+        <span className="buddy-preview-hat buddy-preview-hat-sun">
+          <span className="buddy-preview-hat-top" />
+          <span className="buddy-preview-hat-brim" />
+        </span>
+      ) : null}
+      {category === "hat" && value === "strawhat" ? (
+        <span className="buddy-preview-hat buddy-preview-hat-straw">
+          <span className="buddy-preview-hat-top" />
+          <span className="buddy-preview-hat-brim" />
+        </span>
+      ) : null}
+      {category === "hat" && value === "cap" ? (
+        <span className="buddy-preview-hat buddy-preview-hat-cap">
+          <span className="buddy-preview-hat-top" />
+          <span className="buddy-preview-hat-brim" />
+        </span>
+      ) : null}
+
+      {category === "clothing" && value === "none" ? <span className="buddy-preview-none" /> : null}
+      {category === "clothing" && value === "shorts" ? <span className="buddy-preview-bottom buddy-preview-bottom-shorts" /> : null}
+      {category === "clothing" && value === "jeans" ? <span className="buddy-preview-bottom buddy-preview-bottom-jeans" /> : null}
+      {category === "clothing" && value === "bloomers" ? <span className="buddy-preview-bottom buddy-preview-bottom-bloomers" /> : null}
+
+      {category === "glasses" && value === "none" ? <span className="buddy-preview-none" /> : null}
+      {category === "glasses" && value === "square" ? <span className="buddy-preview-glasses buddy-preview-glasses-square" /> : null}
+      {category === "glasses" && value === "sunglasses" ? <span className="buddy-preview-glasses buddy-preview-glasses-sun" /> : null}
+      {category === "glasses" && value === "star" ? <span className="buddy-preview-glasses buddy-preview-glasses-star" /> : null}
+      {category === "glasses" && value === "heart" ? <span className="buddy-preview-glasses buddy-preview-glasses-heart" /> : null}
+
+      {category === "heldItem" && value === "none" ? <span className="buddy-preview-none" /> : null}
+      {category === "heldItem" && value === "flower" ? <span className="buddy-preview-held buddy-preview-held-flower" /> : null}
+      {category === "heldItem" && value === "tea" ? <span className="buddy-preview-held buddy-preview-held-tea" /> : null}
+      {category === "heldItem" && value === "starwand" ? <span className="buddy-preview-held buddy-preview-held-starwand" /> : null}
+    </span>
+  );
+}
 
 export function HomeActionEntry({ locale }: { locale: Locale }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -704,19 +753,20 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                   <div className="buddy-wardrobe-tabs">
                     {(
                       [
-                        ["hat", locale === "zh" ? "帽子" : "Hats"],
-                        ["clothing", locale === "zh" ? "服装" : "Bottoms"],
-                        ["glasses", locale === "zh" ? "眼镜" : "Glasses"],
-                        ["heldItem", locale === "zh" ? "手持物" : "Handhelds"],
+                        ["hat", locale === "zh" ? "帽子" : "Hats", HatGlasses],
+                        ["clothing", locale === "zh" ? "服装" : "Bottoms", Shirt],
+                        ["glasses", locale === "zh" ? "眼镜" : "Glasses", Glasses],
+                        ["heldItem", locale === "zh" ? "手持物" : "Handhelds", Hand],
                       ] as const
-                    ).map(([tab, label]) => (
+                    ).map(([tab, label, Icon]) => (
                       <button
                         key={tab}
                         type="button"
                         onClick={() => handleWardrobeTabChange(tab)}
                         className={`buddy-wardrobe-tab${wardrobeTab === tab ? " buddy-wardrobe-tab-active" : ""}`}
                       >
-                        {label}
+                        <Icon className="buddy-wardrobe-tab-icon size-4.5" />
+                        <span>{label}</span>
                       </button>
                     ))}
                   </div>
@@ -744,7 +794,8 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                               onClick={() => updateBuddyOutfit({ hat: key })}
                               className={`buddy-wardrobe-option${buddyOutfit.hat === key ? " buddy-wardrobe-option-active" : ""}`}
                             >
-                              {copy[locale]}
+                              {renderWardrobePreviewIcon("hat", key)}
+                              <span>{copy[locale]}</span>
                             </button>
                           ))
                         : null}
@@ -756,7 +807,8 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                               onClick={() => updateBuddyOutfit({ clothing: key })}
                               className={`buddy-wardrobe-option${buddyOutfit.clothing === key ? " buddy-wardrobe-option-active" : ""}`}
                             >
-                              {copy[locale]}
+                              {renderWardrobePreviewIcon("clothing", key)}
+                              <span>{copy[locale]}</span>
                             </button>
                           ))
                         : null}
@@ -768,7 +820,8 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                               onClick={() => updateBuddyOutfit({ glasses: key })}
                               className={`buddy-wardrobe-option${buddyOutfit.glasses === key ? " buddy-wardrobe-option-active" : ""}`}
                             >
-                              {copy[locale]}
+                              {renderWardrobePreviewIcon("glasses", key)}
+                              <span>{copy[locale]}</span>
                             </button>
                           ))
                         : null}
@@ -780,7 +833,8 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                               onClick={() => updateBuddyOutfit({ heldItem: key })}
                               className={`buddy-wardrobe-option${buddyOutfit.heldItem === key ? " buddy-wardrobe-option-active" : ""}`}
                             >
-                              {copy[locale]}
+                              {renderWardrobePreviewIcon("heldItem", key)}
+                              <span>{copy[locale]}</span>
                             </button>
                           ))
                         : null}
