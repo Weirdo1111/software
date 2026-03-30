@@ -6,6 +6,12 @@ import { useSearchParams } from "next/navigation";
 
 import { AIAnalysisState } from "@/components/forms/ai-analysis-state";
 import { ContextDock } from "@/components/context-comments/context-dock";
+import {
+  difficultyOptions,
+  getDifficultyLabel,
+  getLevelForDifficulty,
+  type DifficultyLabel,
+} from "@/lib/level-labels";
 import { getPassageForLevel, type ReadingPracticePassage } from "@/lib/reading-passages";
 import type { ReadingFeedback } from "@/types/learning";
 
@@ -26,7 +32,8 @@ export function ReadingFeedbackForm({
 }) {
   const searchParams = useSearchParams();
   const locale = searchParams.get("lang") === "zh" ? "zh" : "en";
-  const [targetLevel, setTargetLevel] = useState<ReadingLevel>(defaultLevel);
+  const easyBaseline: "A1" | "A2" = defaultLevel === "A1" ? "A1" : "A2";
+  const [targetDifficulty, setTargetDifficulty] = useState<DifficultyLabel>(getDifficultyLabel(defaultLevel));
   const [claim, setClaim] = useState("");
   const [evidence, setEvidence] = useState("");
   const [contrastSignal, setContrastSignal] = useState("");
@@ -36,6 +43,7 @@ export function ReadingFeedbackForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [vocabSaved, setVocabSaved] = useState(false);
 
+  const targetLevel = getLevelForDifficulty(targetDifficulty, easyBaseline) as ReadingLevel;
   const activePassage = syncPassageWithTargetLevel ? getPassageForLevel(targetLevel) : passage;
   const activeLessonId = syncPassageWithTargetLevel ? getLessonIdForLevel(targetLevel) : lessonId;
   const isReady = claim.trim().length > 5 && evidence.trim().length > 5 && contrastSignal.trim().length > 0;
@@ -102,8 +110,8 @@ export function ReadingFeedbackForm({
     [activeLessonId, activePassage.title, locale],
   );
 
-  function handleTargetLevelChange(nextLevel: ReadingLevel) {
-    setTargetLevel(nextLevel);
+  function handleTargetDifficultyChange(nextDifficulty: DifficultyLabel) {
+    setTargetDifficulty(nextDifficulty);
 
     if (!syncPassageWithTargetLevel) return;
 
@@ -224,7 +232,7 @@ export function ReadingFeedbackForm({
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--ink-soft)]">Passage</p>
           <span className="rounded-full bg-[rgba(123,75,20,0.1)] px-3 py-1 text-xs font-semibold text-[#7b4b14]">
-            {activePassage.band} | {activePassage.level}
+            {activePassage.band} | {getDifficultyLabel(activePassage.level)}
           </span>
         </div>
         <h3 className="mt-3 text-sm font-semibold text-[var(--ink)]">{activePassage.title}</h3>
@@ -238,16 +246,17 @@ export function ReadingFeedbackForm({
       </div>
 
       <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-        Target level
+        Target difficulty
         <select
-          value={targetLevel}
-          onChange={(event) => handleTargetLevelChange(event.target.value as ReadingLevel)}
+          value={targetDifficulty}
+          onChange={(event) => handleTargetDifficultyChange(event.target.value as DifficultyLabel)}
           className="w-fit rounded-[1.1rem] border border-[rgba(20,50,75,0.16)] bg-white/75 px-4 py-3 text-sm outline-none"
         >
-          <option value="A1">A1</option>
-          <option value="A2">A2</option>
-          <option value="B1">B1</option>
-          <option value="B2">B2</option>
+          {difficultyOptions.map((difficulty) => (
+            <option key={difficulty} value={difficulty}>
+              {difficulty}
+            </option>
+          ))}
         </select>
         <span className="text-xs font-normal leading-6 text-[var(--ink-soft)]">
           {syncPassageWithTargetLevel

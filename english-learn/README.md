@@ -1,54 +1,73 @@
-# English Learn MVP
+# English Learn
 
-English learning web app for non-native speakers (CEFR A1-B2), implemented with Next.js + Supabase + an OpenAI-compatible AI provider + Stripe.
-The onboarding flow is skill-first: listening/speaking/reading/writing sessions come before optional placement test.
+An AI-assisted English learning platform for non-native speakers, built to feel like a real product rather than a worksheet app.
 
-## Stack
+This repository combines structured learning flows, AI-powered practice, review systems, progress tracking, community features, and lightweight game-like quests such as **Midnight Library Escape**.
 
-- Next.js 16 (App Router) + TypeScript + Tailwind CSS
-- Supabase (Auth, Postgres, Storage, RLS)
-- OpenAI-compatible AI API for speaking/writing/reading feedback
-- Stripe Checkout + webhook for subscription
-- PostHog analytics + Sentry monitoring
-- Vitest for unit testing
+Authorship note: parts of the 2026 Buddy Campus home refresh were drafted with AI assistance and then reviewed, edited, and integrated by the project team.
 
-## Local Setup
+## Overview
 
-1. Install dependencies
+`English Learn` is designed for learners in roughly the **CEFR A1-B2** range and aims to balance:
+
+- four-skill learning: listening, speaking, reading, writing
+- onboarding and placement-based personalization
+- practical AI feedback where it adds real value
+- review, progress, and retention loops
+- a more memorable demo layer through playful quest content
+
+The product already includes:
+
+- a learning hub
+- listening and reading practice routes
+- speaking and writing support
+- onboarding and placement flows
+- review and progress modules
+- discussion and activity features
+- pricing, auth, settings, dashboard, and admin routes
+- a dedicated **Game Center** with a browser-based educational escape room
+
+## Documentation Map
+
+For a cleaner structure, detailed documentation now lives in `docs/`:
+
+- [docs/architecture.md](./docs/architecture.md): system structure, feature organization, data layers, and engineering notes
+- [docs/demo-guide.md](./docs/demo-guide.md): recommended demo flows, stage highlights, audience-specific storytelling, and presentation tips
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 20+
+- npm
+- a MySQL database if you want Prisma-backed flows locally
+- Supabase credentials if you want Supabase-backed flows fully enabled
+
+### Install
 
 ```bash
 npm install
 ```
 
-2. Configure env
+### Configure environment variables
 
 ```bash
 cp .env.example .env.local
 ```
 
-Fill required keys in `.env.local`.
+Then update `.env.local` with your own credentials.
 
-For OpenAI, set:
-
-```bash
-OPENAI_API_KEY=your_openai_key
-```
-
-For GLM-4.7-Flash via Zhipu's OpenAI-compatible API, set:
-
-```bash
-AI_API_KEY=your_zhipu_key
-AI_BASE_URL=https://open.bigmodel.cn/api/paas/v4/
-AI_MODEL=glm-4.7-flash
-```
-
-3. Run dev server
+### Start the app
 
 ```bash
 npm run dev
 ```
 
-4. Run tests/lint/typecheck
+Local URL:
+
+- [http://localhost:3000](http://localhost:3000)
+
+### Quality checks
 
 ```bash
 npm run test
@@ -56,43 +75,146 @@ npm run lint
 npm run typecheck
 ```
 
-## Supabase SQL
+## Main Routes
 
-1. Apply migration from [supabase/migrations/001_init.sql](supabase/migrations/001_init.sql)
-2. Optional seed data from [supabase/seed.sql](supabase/seed.sql)
+### Product
 
-## Routes
-
-- `/` Home
-- `/learn` Four-skill learning hub
-- `/auth/sign-in`, `/auth/sign-up`
-- `/onboarding`
-- `/placement-test`
-- `/dashboard`
-- `/lesson/[id]`
+- `/`
+- `/learn`
+- `/listening`
+- `/reading`
 - `/review`
 - `/progress`
+- `/dashboard`
 - `/pricing`
 - `/settings`
-- `/admin`
 
-## API Endpoints
+### Auth & Entry
 
-- `POST /api/onboarding`
-- `POST /api/placement/start`
-- `POST /api/placement/submit`
-- `GET /api/plan/today`
-- `POST /api/attempts`
-- `POST /api/ai/feedback/speaking`
-- `POST /api/ai/feedback/writing`
-- `GET /api/progress/summary?range=7d|30d`
-- `POST /api/subscription/checkout`
-- `POST /api/webhooks/stripe`
-- `POST /api/auth/sign-up`
-- `POST /api/auth/sign-in`
+- `/auth/sign-in`
+- `/auth/sign-up`
+- `/onboarding`
+- `/placement-test`
+
+### Community & Planning
+
+- `/discussion`
+- `/activity`
+- `/schedule`
+
+### Game Layer
+
+- `/games`
+- `/games/escape-room`
+- `/quests/escape-room`
+
+## Environment Variables
+
+Key groups from `.env.example`:
+
+### App
+
+```bash
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+### Database
+
+```bash
+DATABASE_URL="mysql://root:password@127.0.0.1:3306/english_learn"
+```
+
+### Supabase
+
+```bash
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+```
+
+### AI Provider
+
+```bash
+AI_API_KEY=
+AI_BASE_URL=
+AI_MODEL=
+
+OPENAI_API_KEY=
+```
+
+The app uses an **OpenAI-compatible** integration pattern, so you can swap compatible providers by changing the base URL and model.
+
+### Stripe
+
+```bash
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+STRIPE_PRICE_MONTHLY=
+STRIPE_PRICE_YEARLY=
+```
+
+### Analytics & Monitoring
+
+```bash
+NEXT_PUBLIC_POSTHOG_KEY=
+NEXT_PUBLIC_POSTHOG_HOST=
+
+SENTRY_ORG=
+SENTRY_PROJECT=
+```
+
+## Core Scripts
+
+```bash
+npm run dev
+npm run build
+npm run start
+npm run lint
+npm run test
+npm run test:watch
+npm run typecheck
+npm run prisma:generate
+npm run prisma:seed
+npm run audio:listening
+npm run seed:listening
+```
+
+## Testing
+
+The `tests/` directory already covers multiple domains, including:
+
+- listening content
+- reading content
+- placement logic
+- speaking prompt logic
+- schedule import and image-template logic
+- SRS helpers
+- audio helpers
+- escape-room puzzle logic
+
+Run everything:
+
+```bash
+npm run test
+```
+
+Run one file:
+
+```bash
+npm test -- tests/escape-room-engine.test.ts
+```
 
 ## Notes
 
-- If env keys are missing, APIs return mock fallback values to keep local demo runnable.
-- Stripe webhook endpoint validates signature only when `STRIPE_WEBHOOK_SECRET` is configured.
-- Supabase RLS is enabled for user-owned tables.
+- If external service keys are missing, some flows fall back to mock/demo-friendly behavior.
+- Stripe webhook verification only works when `STRIPE_WEBHOOK_SECRET` is configured.
+- The repository currently includes both **Supabase-backed** and **Prisma/MySQL-backed** pieces; see [docs/architecture.md](./docs/architecture.md) for the exact explanation.
+
+## Recommended Reading Order
+
+1. Start here in `README.md`
+2. Read [docs/architecture.md](./docs/architecture.md) for technical understanding
+3. Read [docs/demo-guide.md](./docs/demo-guide.md) if you want to present the product professionally

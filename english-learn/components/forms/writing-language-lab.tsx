@@ -5,10 +5,15 @@ import { BookText, CheckCircle2, Lightbulb, Tags } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 
 import { writingDisciplineLabels, type WritingDiscipline } from "@/lib/writing-language-bank";
+import {
+  difficultyOptions,
+  getDifficultyLabel,
+  getLevelForDifficulty,
+  type DifficultyLabel,
+} from "@/lib/level-labels";
 import type { CEFRLevel } from "@/types/learning";
 
 const disciplines: WritingDiscipline[] = ["computing", "transport", "maths", "mechanical", "civil"];
-const levels: CEFRLevel[] = ["A1", "A2", "B1", "B2"];
 
 type StudyItem = {
   id: string;
@@ -32,14 +37,7 @@ type SnapshotResponse = {
 };
 
 function formatDifficulty(level: CEFRLevel) {
-  const descriptions: Record<CEFRLevel, string> = {
-    A1: "Foundation",
-    A2: "Developing",
-    B1: "Academic",
-    B2: "Advanced",
-  };
-
-  return `${level} · ${descriptions[level]}`;
+  return getDifficultyLabel(level);
 }
 
 async function fetchSnapshot(userKey: string, discipline: WritingDiscipline, level: CEFRLevel) {
@@ -61,7 +59,9 @@ async function fetchSnapshot(userKey: string, discipline: WritingDiscipline, lev
 
 export function WritingLanguageLab({ defaultLevel = "B1" }: { defaultLevel?: CEFRLevel }) {
   const [discipline, setDiscipline] = useState<WritingDiscipline>("computing");
-  const [targetLevel, setTargetLevel] = useState<CEFRLevel>(defaultLevel);
+  const easyBaseline: "A1" | "A2" = defaultLevel === "A1" ? "A1" : "A2";
+  const [targetDifficulty, setTargetDifficulty] = useState<DifficultyLabel>(getDifficultyLabel(defaultLevel));
+  const targetLevel = getLevelForDifficulty(targetDifficulty, easyBaseline);
   const [userKey, setUserKey] = useState("guest");
   const [userReady, setUserReady] = useState(false);
   const [snapshot, setSnapshot] = useState<SnapshotResponse | null>(null);
@@ -165,13 +165,13 @@ export function WritingLanguageLab({ defaultLevel = "B1" }: { defaultLevel?: CEF
           <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
             Difficulty
             <select
-              value={targetLevel}
-              onChange={(event) => setTargetLevel(event.target.value as CEFRLevel)}
+              value={targetDifficulty}
+              onChange={(event) => setTargetDifficulty(event.target.value as DifficultyLabel)}
               className="rounded-[1.1rem] border border-[rgba(20,50,75,0.16)] bg-white/75 px-4 py-3 text-sm outline-none"
             >
-              {levels.map((level) => (
-                <option key={level} value={level}>
-                  {formatDifficulty(level)}
+              {difficultyOptions.map((difficulty) => (
+                <option key={difficulty} value={difficulty}>
+                  {difficulty}
                 </option>
               ))}
             </select>
@@ -222,7 +222,7 @@ export function WritingLanguageLab({ defaultLevel = "B1" }: { defaultLevel?: CEF
                     {writingDisciplineLabels[item.discipline]}
                   </span>
                   <span className="rounded-full bg-[rgba(186,122,47,0.1)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8f5c1b]">
-                    {item.level}
+                    {getDifficultyLabel(item.level)}
                   </span>
                 </div>
                 <button
@@ -258,7 +258,7 @@ export function WritingLanguageLab({ defaultLevel = "B1" }: { defaultLevel?: CEF
                     {writingDisciplineLabels[item.discipline]}
                   </span>
                   <span className="rounded-full bg-[rgba(186,122,47,0.1)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8f5c1b]">
-                    {item.level}
+                    {getDifficultyLabel(item.level)}
                   </span>
                   <span className="rounded-full bg-[rgba(20,50,75,0.08)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
                     {item.detail}

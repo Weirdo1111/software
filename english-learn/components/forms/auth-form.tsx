@@ -14,7 +14,7 @@ const modeCopy = {
     title: "Return to your learner workspace",
     button: "Sign in",
     statusReady: "Signed in. Your dashboard is ready.",
-    helper: "Use the same email you used for placement, progress tracking, and AI feedback.",
+    helper: "Use the same account or email linked to your placement, progress tracking, and AI feedback.",
     altLabel: "Need a new account?",
     altHref: "/auth/sign-up",
     altCta: "Create one",
@@ -32,7 +32,7 @@ const modeCopy = {
 
 export function AuthForm({ mode, locale }: { mode: AuthMode; locale: Locale }) {
   const copy = modeCopy[mode];
-  const [email, setEmail] = useState("");
+  const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [status, setStatus] = useState("");
@@ -40,7 +40,7 @@ export function AuthForm({ mode, locale }: { mode: AuthMode; locale: Locale }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const canSubmit = useMemo(() => {
-    if (!email || !password) {
+    if (!account || !password) {
       return false;
     }
 
@@ -49,7 +49,7 @@ export function AuthForm({ mode, locale }: { mode: AuthMode; locale: Locale }) {
     }
 
     return true;
-  }, [confirmPassword, email, mode, password]);
+  }, [account, confirmPassword, mode, password]);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -64,10 +64,15 @@ export function AuthForm({ mode, locale }: { mode: AuthMode; locale: Locale }) {
     setIsSubmitting(true);
 
     try {
+      const payload =
+        mode === "sign-in"
+          ? { identifier: account, password }
+          : { email: account, password };
+
       const response = await fetch(`/api/auth/${mode}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -95,13 +100,13 @@ export function AuthForm({ mode, locale }: { mode: AuthMode; locale: Locale }) {
 
       <div className="grid gap-4">
         <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-          Email
+          {mode === "sign-in" ? "Email / Account" : "Email"}
           <input
-            name="email"
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@university.edu"
+            name={mode === "sign-in" ? "identifier" : "email"}
+            type={mode === "sign-in" ? "text" : "email"}
+            value={account}
+            onChange={(event) => setAccount(event.target.value)}
+            placeholder={mode === "sign-in" ? "admin or you@university.edu" : "you@university.edu"}
             className="rounded-[1.1rem] border border-[rgba(20,50,75,0.16)] bg-white/75 px-4 py-3 text-sm outline-none transition focus:border-[var(--navy)] focus:ring-2 focus:ring-[rgba(20,50,75,0.08)]"
           />
         </label>

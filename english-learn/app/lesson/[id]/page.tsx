@@ -8,11 +8,12 @@ import { WritingFeedbackForm } from "@/components/forms/writing-feedback-form";
 import { WritingHub } from "@/components/forms/writing-hub";
 import { WritingLanguageLab } from "@/components/forms/writing-language-lab";
 import { PageFrame } from "@/components/page-frame";
+import type { Locale } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { getListeningMaterialsCatalog } from "@/lib/listening-materials-repository";
 import { buildPracticePassageFromArticle, getReadingArticleById } from "@/lib/reading-articles";
 import { getPassageForLevel } from "@/lib/reading-passages";
-import { isSpeakingModuleId } from "@/lib/speaking-modules";
+import { isSpeakingModuleRouteId, normalizeSpeakingModuleId } from "@/lib/speaking-modules";
 import { isWritingModuleId } from "@/lib/writing-modules";
 import type { CEFRLevel } from "@/types/learning";
 
@@ -25,7 +26,6 @@ function detectMode(id: string): LessonMode {
   return "writing";
 }
 
-/** Extract the CEFR level prefix from a lesson id like "B1-reading-starter" */
 function extractLevel(id: string): CEFRLevel {
   const match = id.match(/^(A1|A2|B1|B2)/i);
   return (match ? match[1].toUpperCase() : "B1") as CEFRLevel;
@@ -114,21 +114,21 @@ function renderWorkbench(
   mode: LessonMode,
   lessonId: string,
   listeningMaterials: Awaited<ReturnType<typeof getListeningMaterialsCatalog>> | null,
-  locale: "zh" | "en",
-  speakingModule?: string,
+  locale: Locale,
+  module: string | undefined,
   articleId?: string,
 ) {
   const level = extractLevel(lessonId);
 
   if (mode === "speaking") {
-    if (!isSpeakingModuleId(speakingModule)) {
+    if (!isSpeakingModuleRouteId(module)) {
       return <SpeakingHub locale={locale} lessonId={lessonId} />;
     }
 
     return (
       <SpeakingFeedbackForm
         defaultLevel={level}
-        module={speakingModule}
+        module={normalizeSpeakingModuleId(module)}
         locale={locale}
         hubHref={`/lesson/${lessonId}?lang=${locale}`}
       />
@@ -140,11 +140,11 @@ function renderWorkbench(
   }
 
   if (mode === "writing") {
-    if (!isWritingModuleId(speakingModule)) {
+    if (!isWritingModuleId(module)) {
       return <WritingHub locale={locale} lessonId={lessonId} />;
     }
 
-    if (speakingModule === "language-lab") {
+    if (module === "language-lab") {
       return <WritingLanguageLab defaultLevel={level} />;
     }
 
@@ -201,9 +201,6 @@ export default async function LessonPage({
   const showStandaloneLessonBrief = mode !== "speaking" && mode !== "writing" && mode !== "listening";
   const showLowerPanels = mode !== "speaking" && mode !== "listening" && mode !== "writing";
   const showPageHeader = false;
-  // Date: 2026/3/18
-  // Author: Tianbo Cao
-  // Keep the speaking lesson page focused on the core studio by hiding the extra lesson framing panels and shared page header.
 
   return (
     <PageFrame locale={locale} title={meta.label} description={description} showHeader={showPageHeader}>

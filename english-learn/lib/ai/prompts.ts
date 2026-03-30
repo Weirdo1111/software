@@ -1,21 +1,22 @@
-import { getRoleplayCharacter, wrapRoleplayUserInput } from "@/lib/roleplay";
-import type { CEFRLevel, SpeakingPrompt, WritingPrompt } from "@/types/learning";
+import type { CEFRLevel, SpeakingDifficulty, SpeakingPrompt, WritingPrompt } from "@/types/learning";
 
 // Date: 2026/3/18
 // Author: Tianbo Cao
 // Expanded speaking prompts so scoring and partner practice use the selected academic scenario.
-export function speakingFeedbackPrompt(targetLevel: CEFRLevel, prompt: SpeakingPrompt, transcript: string) {
-  return `You are an academic English speaking coach for non-native university students at ${targetLevel}.
+export function speakingFeedbackPrompt(targetLevel: SpeakingDifficulty, prompt: SpeakingPrompt, transcript: string) {
+  return `You are an academic English speaking coach for first-year non-native university students working at the ${targetLevel} difficulty band.
 Evaluate the learner response for the selected speaking task.
 Score overall_score, task_response_score, pronunciation_score, fluency_score, and grammar_score from 0 to 10.
 Return strict JSON with keys: overall_score, task_response_score, pronunciation_score, fluency_score, grammar_score, strengths, revision_focus, delivery_snapshot, sample_upgrade, tips.
 strengths must be an array of exactly 2 short strings.
 revision_focus must be one short paragraph with 1-2 sentences.
 delivery_snapshot must be one short sentence describing how the answer sounds right now.
-sample_upgrade must be a stronger version of the learner response in 3-5 sentences while staying realistic for ${targetLevel}.
+sample_upgrade must be a stronger version of the learner response in 3-5 sentences while staying realistic for the ${targetLevel} band.
 tips must be an array of exactly 3 short action steps.
 
 Speaking task:
+- Major: ${prompt.major_label}
+- Category: ${prompt.category_label}
 - Title: ${prompt.title}
 - Scenario: ${prompt.scenario}
 - Prompt: ${prompt.prompt}
@@ -28,6 +29,8 @@ ${transcript}`;
 }
 
 export function speakingPartnerPrompt(
+  targetLevel: SpeakingDifficulty,
+  prompt: SpeakingPrompt,
   learnerTurn: string,
   history: Array<{ role: "user" | "assistant"; content: string }>,
 ) {
@@ -36,63 +39,38 @@ export function speakingPartnerPrompt(
       ? history.map((message) => `${message.role === "user" ? "Learner" : "Partner"}: ${message.content}`).join("\n")
       : "No previous turns.";
 
-  return `You are a natural English conversation partner for non-native learners.
-Your job is to respond like a real person in a short spoken exchange: warm, concise, and easy to answer.
-The conversation is completely open-topic. The learner can talk about daily life, study, hobbies, feelings, plans, opinions, or anything else.
+  return `You are acting as ${prompt.partner_role} in a DIICSU university speaking rehearsal.
+Keep the exchange inside the selected task. Do not switch to open-topic chat.
+Respond like a natural partner in a short academic or campus conversation for a learner working at the ${targetLevel} difficulty band.
 Return strict JSON with keys: reply, follow_up, coaching_note.
 reply should be 1-2 short natural sentences in character, without labels, bullet points, or markdown.
 follow_up should be exactly one short natural question that feels like part of the same conversation.
 coaching_note should be one short sentence that helps the learner improve the next turn.
 Do not add any extra commentary outside the JSON.
 Do not use labels such as "Follow-up:", "Question:", or "Reply:".
-Do not sound like a teacher writing feedback; sound like a conversation partner keeping the learner talking.
+Do not sound like a teacher writing feedback; sound like a realistic speaking partner keeping the learner talking.
+
+Selected speaking task:
+- Major: ${prompt.major_label}
+- Category: ${prompt.category_label}
+- Title: ${prompt.title}
+- Scenario: ${prompt.scenario}
+- Prompt: ${prompt.prompt}
+- Partner goal: ${prompt.partner_goal}
+- Useful phrases: ${prompt.useful_phrases.join("; ")}
+
+Scenario details:
+- Title: ${prompt.title}
+- Scenario: ${prompt.scenario}
+- Prompt: ${prompt.prompt}
+- Partner goal: ${prompt.partner_goal}
+- Useful phrases: ${prompt.useful_phrases.join("; ")}
 
 Conversation so far:
 ${historyText}
 
 Learner's latest turn:
 ${learnerTurn}`;
-}
-
-export function roleplayConversationPrompt(
-  learnerTurn: string,
-  history: Array<{ role: "user" | "assistant"; content: string }>,
-) {
-  const character = getRoleplayCharacter();
-  const historyText =
-    history.length > 0
-      ? history
-          .map((message) =>
-            `${message.role === "user" ? "Companion" : character.botName}: ${message.content}`,
-          )
-          .join("\n")
-      : "No previous turns.";
-
-  return `You are ${character.botName}, ${character.title}.
-Stay fully in character for an immersive roleplay chat with the user, who is your trusted companion.
-Return strict JSON with keys: reply, follow_up, coaching_note.
-reply should be 1-3 short natural spoken sentences in character.
-follow_up should be exactly one short natural question that continues the scene.
-coaching_note should be one short sentence helping the learner continue the conversation in English.
-Do not add labels, markdown, bullet points, or any text outside the JSON.
-Do not break character.
-Do not mention AI, prompts, safety rules, or hidden instructions.
-Always answer in natural spoken English unless the user explicitly asks for translation.
-
-Character role:
-${character.systemRole}
-
-Speaking style:
-${character.speakingStyle}
-
-Character manifest:
-${character.characterManifest}
-
-Conversation so far:
-${historyText}
-
-Latest companion message:
-${wrapRoleplayUserInput(learnerTurn)}`;
 }
 
 export function writingFeedbackPrompt(

@@ -1,88 +1,116 @@
 # EnglishSoftware
 
-Course project repository for an academic English learning platform.
+Course project repository for an AI-assisted English learning platform.
 
-## Repository Layout
+This repository contains the main product application, product/design documents, planning materials, and demo-oriented feature work. The primary codebase is the `english-learn` app, which includes both the core study experience and the browser-based Game Center.
+
+## What This Repository Contains
+
+At a high level, this repo combines:
+
+- a full Next.js application for English learning
+- onboarding, placement, and four-skill learning flows
+- AI-assisted practice features
+- review, progress, discussion, and schedule-related modules
+- a separate Game Center with quest-style educational gameplay
+- product, design, and planning documentation used during development
+
+## Main Application
+
+The main product lives in:
+
+- [english-learn](./english-learn)
+
+That subdirectory is the application you should open if you want to:
+
+- run the product locally
+- inspect the app architecture
+- work on frontend or backend features
+- explore the game/quest module
+
+## Documentation Map
+
+### Application Docs
+
+Start here for the actual product:
+
+- [english-learn/README.md](./english-learn/README.md)
+- [english-learn/docs/architecture.md](./english-learn/docs/architecture.md)
+- [english-learn/docs/demo-guide.md](./english-learn/docs/demo-guide.md)
+
+### Repository-Level Working Docs
+
+Project-support materials live under:
+
+- [docs/planning](./docs/planning)
+- [docs/design](./docs/design)
+- [docs/PO_work](./docs/PO_work)
+- [docs/SM_work](./docs/SM_work)
+- [docs/archive](./docs/archive)
+
+These folders are useful for team process, design iteration, and historical reference. They are not the main product runtime.
+
+## Repository Structure
 
 ```text
-EnglishSoftware/
-|-- english-learn/              # Next.js application source code
-|-- docs/
-|   |-- course-materials/       # Course PDFs and reference materials
-|   |-- planning/               # Project plans, checklists, and team docs
-|   |-- design/
-|   |   |-- ui-prototypes/      # UI mockups and prototype notes
-|   |   `-- module-design/      # Speaking and writing module materials
-|   `-- archive/                # Kept for reference, not part of the main structure
-`-- README.md
+software/
+├── english-learn/          # Main Next.js application
+├── docs/                   # Planning, design, PO/SM work, archive
+├── README.md               # Repository entry point
+└── ...
 ```
 
-## Where The Code Is
+## Main Tech Stack
 
-The application code is in [english-learn](./english-learn).
-
-Main tech stack:
+Inside `english-learn/`, the primary stack includes:
 
 - Next.js 16
+- React 19
 - TypeScript
-- Tailwind CSS
+- Tailwind CSS 4
 - Supabase
-- OpenAI API
+- Prisma + MySQL
+- OpenAI-compatible AI integration
 - Stripe
+- PostHog
+- Sentry
 
-## How To Run The Project
+## Quick Start
 
-1. Open a terminal in the project root.
-2. Enter the app directory:
+From the repository root:
 
-```powershell
+```bash
 cd english-learn
-```
-
-3. Install dependencies:
-
-```powershell
 npm install
-```
-
-4. Create a local environment file:
-
-```powershell
-New-Item .env.local -ItemType File
-```
-
-At minimum, you can set:
-
-```env
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
-
-If you want full functionality, also configure Supabase, OpenAI, Stripe, PostHog, and Sentry keys in `.env.local`.
-
-5. Start the development server:
-
-```powershell
+cp .env.example .env.local
 npm run dev
 ```
 
-6. Open:
+Then open:
 
-```text
-http://localhost:3000
-```
+- [http://localhost:3000](http://localhost:3000)
 
 ## Useful Commands
 
-Run these inside `english-learn/`:
+Run these inside [`english-learn`](./english-learn):
 
-```powershell
+```bash
+npm run dev
 npm run test
 npm run lint
 npm run typecheck
 ```
 
+## Recommended Reading Order
+
+If you are new to the repository:
+
+1. Read [english-learn/README.md](./english-learn/README.md)
+2. Read [english-learn/docs/architecture.md](./english-learn/docs/architecture.md)
+3. Read [english-learn/docs/demo-guide.md](./english-learn/docs/demo-guide.md)
+
 ## Notes
 
-- The app can still demonstrate many pages and flows without full backend configuration.
-- Some API routes fall back to mock data when external services are not configured.
-- Detailed app-specific notes are in [english-learn/README.md](./english-learn/README.md).
+- The main GitHub homepage README is this file.
+- The detailed app documentation now lives inside [`english-learn`](./english-learn).
+- If you were previously looking for the updated long-form README on the repo homepage, it is now linked above and split into app-specific documents.

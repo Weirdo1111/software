@@ -1,9 +1,27 @@
 "use client";
 
+// AI-assisted authorship note: the 2026 Buddy Campus home refresh in this module
+// was drafted with AI help and then reviewed, edited, and integrated by the team.
+
 import Link from "next/link";
-import { ArrowRight, Settings, X } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarDays,
+  Compass,
+  Flame,
+  Headphones,
+  LibraryBig,
+  Mic,
+  PawPrint,
+  Sparkles,
+  Target,
+  Trophy,
+  WandSparkles,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import { BuddyCampusLobby } from "@/components/home/buddy-campus-lobby";
+import { BuddyCompanion } from "@/components/home/buddy-companion";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { type Locale } from "@/lib/i18n/dictionaries";
 import {
@@ -29,13 +47,6 @@ function normalizeLevel(raw: string | null) {
   return "A2";
 }
 
-function getStage(level: string, locale: Locale) {
-  const upper = level.toUpperCase();
-  if (upper === "A1" || upper === "A2") return locale === "zh" ? "基础阶段" : "Foundation stage";
-  if (upper === "B1" || upper === "B2") return locale === "zh" ? "进阶阶段" : "Developing stage";
-  return locale === "zh" ? "提升阶段" : "Advanced stage";
-}
-
 function toDisplayName(raw: string | null) {
   const cleaned = String(raw ?? "").trim();
   if (!cleaned) return "Learner";
@@ -43,30 +54,134 @@ function toDisplayName(raw: string | null) {
   return cleaned;
 }
 
-function pressureColor(pressure: number) {
-  if (pressure <= 35) return "bg-emerald-400/80";
-  if (pressure <= 55) return "bg-amber-400/80";
-  if (pressure <= 72) return "bg-orange-400/80";
-  return "bg-red-400/80";
+function clampPercent(value: number) {
+  return Math.max(0, Math.min(100, Math.round(value)));
 }
 
-const blockTypeBadge = {
-  anchor: "bg-[rgba(20,50,75,0.10)] text-[var(--ink)]",
-  support: "bg-[rgba(20,50,75,0.06)] text-[var(--ink-soft)]",
-  memory: "bg-violet-50 text-violet-700",
-  custom: "bg-sky-50 text-sky-700",
-} as const;
+function getAccuracy(correct: number, attempts: number) {
+  if (attempts <= 0) return 0;
+  return Math.round((correct / attempts) * 100);
+}
 
-const skillLabelMap: Record<string, { en: string; zh: string }> = {
-  listening: { en: "Listening", zh: "听力" },
-  speaking: { en: "Speaking", zh: "口语" },
-  reading: { en: "Reading", zh: "阅读" },
-  writing: { en: "Writing", zh: "写作" },
-  review: { en: "Review", zh: "复习" },
-};
+function getBuddyStage(xp: number, locale: Locale) {
+  if (xp >= 780) {
+    return {
+      id: "scholar" as const,
+      title: locale === "zh" ? "学者学伴" : "Scholar Buddy",
+      note:
+        locale === "zh"
+          ? "你的学伴已经进入展示期，适合承担更完整的听说任务。"
+          : "Your buddy is now in showcase mode and ready for longer listening and speaking quests.",
+      nextXp: 980,
+      mood: "proud" as const,
+    };
+  }
 
-const DAY_NAMES_EN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const DAY_NAMES_ZH = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+  if (xp >= 440) {
+    return {
+      id: "explorer" as const,
+      title: locale === "zh" ? "校园探索者" : "Campus Explorer",
+      note:
+        locale === "zh"
+          ? "正在主动探索讲座、场景口语和校园交流。"
+          : "Actively exploring lectures, speaking scenes, and community tasks.",
+      nextXp: 780,
+      mood: "happy" as const,
+    };
+  }
+
+  if (xp >= 180) {
+    return {
+      id: "growing" as const,
+      title: locale === "zh" ? "成长学伴" : "Growing Buddy",
+      note:
+        locale === "zh"
+          ? "已经养成基础学习节奏，继续完成任务就会明显进化。"
+          : "A steady rhythm is forming. Keep completing quests to trigger the next evolution.",
+      nextXp: 440,
+      mood: "happy" as const,
+    };
+  }
+
+  return {
+    id: "fresh" as const,
+    title: locale === "zh" ? "新生学伴" : "Fresh Buddy",
+    note:
+      locale === "zh"
+        ? "这是你的新学伴，先完成第一批任务让它长大。"
+        : "This is your new companion. Finish the first few quests to help it grow.",
+    nextXp: 180,
+    mood: "calm" as const,
+  };
+}
+
+function getStageLabel(level: string, locale: Locale) {
+  if (level === "A1" || level === "A2") return locale === "zh" ? "基础阶段" : "Foundation stage";
+  if (level === "B1" || level === "B2") return locale === "zh" ? "进阶阶段" : "Developing stage";
+  return locale === "zh" ? "提升阶段" : "Advanced stage";
+}
+
+function getGoalFocus(goal: ScheduleGoal) {
+  if (goal === "research") return "research" as const;
+  if (goal === "seminar") return "seminar" as const;
+  return "coursework" as const;
+}
+
+function getGoalLabel(goal: ScheduleGoal, locale: Locale) {
+  if (goal === "research") return locale === "zh" ? "研究模式" : "Research mode";
+  if (goal === "seminar") return locale === "zh" ? "研讨模式" : "Seminar mode";
+  return locale === "zh" ? "课程模式" : "Coursework mode";
+}
+
+function getQuestVisual(skill: string) {
+  if (skill === "listening") {
+    return {
+      Icon: Headphones,
+      accent: "from-[#66c4ff] to-[#7be3d2]",
+      iconBg: "bg-[#e4f7ff] text-[#2065a5]",
+    };
+  }
+
+  if (skill === "speaking") {
+    return {
+      Icon: Mic,
+      accent: "from-[#ffb98a] to-[#ff8f9c]",
+      iconBg: "bg-[#fff0e7] text-[#bf6638]",
+    };
+  }
+
+  if (skill === "reading") {
+    return {
+      Icon: LibraryBig,
+      accent: "from-[#9bd7b0] to-[#84c8ff]",
+      iconBg: "bg-[#ebfff2] text-[#2a7a5e]",
+    };
+  }
+
+  if (skill === "writing") {
+    return {
+      Icon: WandSparkles,
+      accent: "from-[#ffd35d] to-[#ff9bb2]",
+      iconBg: "bg-[#fff9df] text-[#95630a]",
+    };
+  }
+
+  return {
+    Icon: Sparkles,
+    accent: "from-[#d8e9ff] to-[#ffe1bf]",
+    iconBg: "bg-[#f2f8ff] text-[#587089]",
+  };
+}
+
+const majorStickers = [
+  "Civil Engineering",
+  "Mathematics",
+  "Computing Science",
+  "Mechanical Engineering",
+  "Transportation",
+] as const;
+
+const weekdayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export function HomeActionEntry({ locale }: { locale: Locale }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -74,70 +189,6 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   const [levelPrefix, setLevelPrefix] = useState("A2");
   const [snapshot, setSnapshot] = useState(() => createEmptyLearningTrackerSnapshot());
   const [preferences, setPreferences] = useState(() => loadSchedulePreferencesFromStorage(locale));
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [expandedDay, setExpandedDay] = useState<string | null>(null);
-
-  const copy =
-    locale === "zh"
-      ? {
-          welcome: "欢迎回来",
-          loginTitle: "请先登录",
-          loginBody: "登录后会显示每日学习计划、本周日历和设置入口。",
-          loginCta: "去登录",
-          registerCta: "注册",
-          currentStage: "当前阶段",
-          todayPlanTitle: "Today's plan",
-          settingsTitle: "计划设置",
-          settingsClose: "关闭",
-          goalLabel: "学习目标",
-          goals: { coursework: "课程作业", research: "学术研究", seminar: "研讨课" },
-          minutesLabel: "每日时长",
-          minutesSuffix: "分钟",
-          modeLabel: "学习强度",
-          modes: { light: "轻松", standard: "标准", intensive: "强化" },
-          windowLabel: "学习时段",
-          windows: { early: "早晨", midday: "中午", evening: "晚上" },
-          fullSchedule: "查看完整计划",
-          blockType: { anchor: "核心", support: "辅助", memory: "复习" },
-          startTask: "开始",
-          weekTitle: "本周安排",
-          noBlocks: "今日无任务",
-          deadlineLabel: "截止",
-          minuteShort: "分",
-          atGlanceCompleted: "已完成",
-        }
-      : {
-          welcome: "Welcome back",
-          loginTitle: "Please sign in first",
-          loginBody: "After sign-in you'll see your daily plan, this-week calendar, and schedule settings.",
-          loginCta: "Go to login",
-          registerCta: "Register",
-          currentStage: "Current stage",
-          todayPlanTitle: "Today's plan",
-          settingsTitle: "Schedule settings",
-          settingsClose: "Close",
-          goalLabel: "Learning goal",
-          goals: { coursework: "Coursework", research: "Research", seminar: "Seminar" },
-          minutesLabel: "Daily time",
-          minutesSuffix: "min",
-          modeLabel: "Intensity",
-          modes: { light: "Light", standard: "Standard", intensive: "Intensive" },
-          windowLabel: "Study window",
-          windows: { early: "Morning", midday: "Midday", evening: "Evening" },
-          fullSchedule: "Full schedule",
-          blockType: { anchor: "Anchor", support: "Support", memory: "Memory" },
-          startTask: "Start",
-          weekTitle: "This week",
-          noBlocks: "No tasks today",
-          deadlineLabel: "Due",
-          minuteShort: "min",
-          atGlanceCompleted: "Completed",
-        };
-  const blockTypeText = {
-    ...copy.blockType,
-    custom: locale === "zh" ? "\u624b\u52a8" : "Custom",
-  };
-  const scheduleJumpLabel = locale === "zh" ? "\u5728\u8ba1\u5212\u9875\u6253\u5f00" : "Open in schedule";
 
   useEffect(() => {
     const refresh = () => {
@@ -179,304 +230,641 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     });
   }, [preferences, snapshot, locale, levelPrefix]);
 
-  const todayPlan = weeklySchedule.days.find((d) => d.isToday) ?? weeklySchedule.days[0];
+  const todayPlan = weeklySchedule.days.find((day) => day.isToday) ?? weeklySchedule.days[0];
+  const totalSummary = useMemo(() => {
+    const skillSnapshots = [
+      snapshot.skills.listening,
+      snapshot.skills.speaking,
+      snapshot.skills.reading,
+      snapshot.skills.writing,
+    ];
+    const totalCompleted = skillSnapshots.reduce((sum, skill) => sum + skill.completed, 0);
+    const totalAttempts = skillSnapshots.reduce((sum, skill) => sum + skill.attempts, 0);
+    const totalMinutes = Number(
+      skillSnapshots.reduce((sum, skill) => sum + skill.minutes, 0).toFixed(1),
+    );
+    const totalCorrect = skillSnapshots.reduce((sum, skill) => sum + skill.correct, 0);
+
+    return {
+      totalCompleted,
+      totalAttempts,
+      totalMinutes,
+      totalCorrect,
+      overallAccuracy: getAccuracy(totalCorrect, totalAttempts),
+    };
+  }, [snapshot]);
+  const { totalCompleted, totalAttempts, totalMinutes, overallAccuracy } = totalSummary;
+
+  const xp = totalCompleted * 65 + Math.round(totalMinutes * 7) + totalAttempts * 14;
+  const buddyStage = getBuddyStage(xp, locale);
+  const currentStageProgress = clampPercent((xp / buddyStage.nextXp) * 100);
+  const nextQuestHref =
+    todayPlan.blocks.find((block) => block.skill !== "review")?.href ?? `/schedule?lang=${locale}`;
 
   const updatePrefs = (partial: Partial<typeof preferences>) => {
     const updated = saveSchedulePreferencesToStorage({ ...preferences, ...partial });
     setPreferences(updated);
   };
 
-  const totalCompleted = useMemo(() => {
-    return Object.values(snapshot.skills).reduce((sum, s) => sum + s.completed, 0);
-  }, [snapshot]);
+  const growthRows: Array<{ label: string; value: number; hint: string }> = [
+    {
+      label: locale === "zh" ? "知识值" : "Knowledge",
+      value:
+        clampPercent(
+          (getAccuracy(snapshot.skills.listening.correct, snapshot.skills.listening.attempts) +
+            getAccuracy(snapshot.skills.reading.correct, snapshot.skills.reading.attempts) +
+            snapshot.skills.listening.completed * 12 +
+            snapshot.skills.reading.completed * 12) /
+            2.6,
+        ) || 12,
+      hint:
+        locale === "zh"
+          ? "由听力与阅读输入推动。"
+          : "Driven by lecture listening and reading input.",
+    },
+    {
+      label: locale === "zh" ? "表达值" : "Voice",
+      value:
+        clampPercent(
+          getAccuracy(snapshot.skills.speaking.correct, snapshot.skills.speaking.attempts) +
+            snapshot.skills.speaking.completed * 14,
+        ) || 10,
+      hint:
+        locale === "zh"
+          ? "来自场景口语和 AI 对话。"
+          : "Boosted by speaking scenes and AI dialogue.",
+    },
+    {
+      label: locale === "zh" ? "写作值" : "Craft",
+      value:
+        clampPercent(
+          getAccuracy(snapshot.skills.writing.correct, snapshot.skills.writing.attempts) +
+            snapshot.skills.writing.completed * 12,
+        ) || 10,
+      hint:
+        locale === "zh"
+          ? "连接学术表达与输出质量。"
+          : "Tied to academic expression and output quality.",
+    },
+    {
+      label: locale === "zh" ? "节奏值" : "Rhythm",
+      value: clampPercent((totalMinutes / Math.max(35, weeklySchedule.weeklyTargetMinutes)) * 100),
+      hint:
+        locale === "zh"
+          ? "参考本周目标时长和完成节奏。"
+          : "Tracks pace against this week's target minutes.",
+    },
+  ];
 
-  const getScheduleDayHref = (dateISO: string) => `/schedule?lang=${locale}&focus=${encodeURIComponent(dateISO)}#schedule-week`;
+  const weeklyMissions: Array<{
+    title: string;
+    note: string;
+    progress: number;
+    target: number;
+    href: string;
+  }> = [
+    {
+      title: locale === "zh" ? "资源库冲刺" : "Library Sprint",
+      note:
+        locale === "zh"
+          ? "完成 2 个听力资源卡片，给 Buddy 加知识值。"
+          : "Finish 2 listening cards to feed your buddy's knowledge bar.",
+      progress: Math.min(snapshot.skills.listening.completed, 2),
+      target: 2,
+      href: `/listening?lang=${locale}`,
+    },
+    {
+      title: locale === "zh" ? "场景回应" : "Scene Reply",
+      note:
+        locale === "zh"
+          ? "做 1 次口语场景练习，提升 Voice。"
+          : "Run 1 speaking scene to raise the voice stat.",
+      progress: Math.min(snapshot.skills.speaking.completed, 1),
+      target: 1,
+      href: `/lesson/${levelPrefix}-speaking-starter?lang=${locale}`,
+    },
+    {
+      title: locale === "zh" ? "每周节奏" : "Weekly Rhythm",
+      note:
+        locale === "zh"
+          ? "本周学习时长达到目标值。"
+          : "Reach your target minutes for this week.",
+      progress: Math.min(Math.round(totalMinutes), weeklySchedule.weeklyTargetMinutes),
+      target: weeklySchedule.weeklyTargetMinutes,
+      href: `/schedule?lang=${locale}`,
+    },
+  ];
 
   if (!isLoggedIn) {
     return (
-      <section className="mt-6 surface-panel reveal-up rounded-[2rem] p-6 sm:p-8">
-        <h2 className="font-display mt-1 text-4xl tracking-tight text-[var(--ink)] sm:text-5xl">{copy.loginTitle}</h2>
-        <p className="mt-4 max-w-3xl text-sm leading-7 text-[var(--ink-soft)] sm:text-base">{copy.loginBody}</p>
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link href={`/login?lang=${locale}`} className="inline-flex items-center gap-2 rounded-full bg-[var(--navy)] px-5 py-3 text-sm font-semibold text-[#f7efe3] transition hover:translate-y-[-1px]">
-            {copy.loginCta}
-            <ArrowRight className="size-4" />
-          </Link>
-          <Link href={`/register?lang=${locale}`} className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white/80 px-5 py-3 text-sm font-semibold text-[var(--ink)] transition hover:bg-[rgba(20,50,75,0.08)]">
-            {copy.registerCta}
-          </Link>
+      <section className="mt-6 grid gap-5 reveal-up">
+        <article className="sky-panel rounded-[2.5rem] px-6 py-7 sm:px-8 sm:py-9">
+          <span className="party-floater left-6 top-6 h-11 w-11">
+            <Sparkles className="size-5" />
+          </span>
+          <span className="party-floater right-8 top-12 h-12 w-12">
+            <Trophy className="size-5" />
+          </span>
+          <span className="party-floater bottom-[4.5rem] right-[28%] h-10 w-10">
+            <Mic className="size-4.5" />
+          </span>
+          <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+            <div className="relative z-10">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="buddy-chip">
+                  <Sparkles className="size-4 text-[var(--navy)]" />
+                  {locale === "zh" ? "卡通学伴校园" : "Cartoon Buddy Campus"}
+                </span>
+                <span className="buddy-chip">
+                  <PawPrint className="size-4 text-[var(--coral)]" />
+                  {locale === "zh" ? "桌宠成长系统" : "Pet growth system"}
+                </span>
+              </div>
+
+              <h2 className="font-display game-title mt-5 max-w-3xl text-4xl tracking-tight text-[var(--ink)] sm:text-5xl">
+                {locale === "zh"
+                  ? "为 DIICSU 新生打造的英语冒险校园。"
+                  : "A DIICSU English adventure campus built for first-year students."}
+              </h2>
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--ink-soft)] sm:text-base">
+                {locale === "zh"
+                  ? "把 TED 听力、学术口语、论坛互动和每周挑战放进一个更友好、更有吸引力的卡通校园里。你的 Buddy 会随着学习逐步成长。"
+                  : "TED listening, academic speaking, community tasks, and weekly quests all live inside one playful campus. Your buddy grows as you keep learning."}
+              </p>
+
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link href={`/register?lang=${locale}`} className="party-button">
+                  {locale === "zh" ? "创建你的学伴" : "Create your buddy"}
+                  <ArrowRight className="size-4" />
+                </Link>
+                <Link href={`/placement-test?lang=${locale}`} className="party-button-ghost">
+                  {locale === "zh" ? "开始分级测试" : "Start placement test"}
+                </Link>
+              </div>
+
+              <div className="mt-6 flex flex-wrap gap-2.5">
+                {majorStickers.map((item) => (
+                  <span key={item} className="pet-sticker">
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative z-10">
+              <div className="mx-auto max-w-[24rem] rounded-[2.2rem] border-2 border-white/90 bg-[rgba(255,255,255,0.72)] p-4 shadow-[0_16px_0_rgba(255,201,225,0.26),0_28px_56px_rgba(90,123,255,0.14)] backdrop-blur-xl">
+                <div className="buddy-bubble p-4">
+                  <p className="text-sm font-semibold text-[var(--ink)]">
+                    {locale === "zh"
+                      ? "Hi, I am your DIICSU Buddy. Finish quests and I will grow with you."
+                      : "Hi, I am your DIICSU Buddy. Finish quests and I will grow with you."}
+                  </p>
+                </div>
+                <div className="party-stage mt-4 px-5 pb-5 pt-3">
+                  <div className="pet-spotlight" />
+                  <BuddyCompanion stage="fresh" focus="coursework" mood="happy" className="mx-auto" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          {[
+            {
+              title: locale === "zh" ? "真实听力" : "Real Listening",
+              note:
+                locale === "zh"
+                  ? "TED、公开讲座和播客资源卡片式浏览，更像内容平台。"
+                  : "Browse TED talks, lectures, and podcasts in a content-library style.",
+              Icon: Headphones,
+            },
+            {
+              title: locale === "zh" ? "AI 口语场景" : "AI Speaking Scenes",
+              note:
+                locale === "zh"
+                  ? "让 AI 扮演 tutor、classmate、team leader。"
+                  : "Let AI act as a tutor, classmate, or team leader in speaking tasks.",
+              Icon: WandSparkles,
+            },
+            {
+              title: locale === "zh" ? "每周学伴任务" : "Weekly Buddy Missions",
+              note:
+                locale === "zh"
+                  ? "通过 XP、成长和任务板让学生更愿意回来。"
+                  : "Bring students back with XP, growth, and a weekly mission board.",
+              Icon: Trophy,
+            },
+          ].map((item) => (
+            <article
+              key={item.title}
+              className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(244,248,255,0.92),rgba(255,242,247,0.86))] p-5"
+            >
+              <div className="quest-orb h-12 w-12">
+                <item.Icon className="size-5 text-[var(--navy)]" />
+              </div>
+              <h3 className="mt-4 text-lg font-semibold text-[var(--ink)]">{item.title}</h3>
+              <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">{item.note}</p>
+            </article>
+          ))}
         </div>
       </section>
     );
   }
 
   return (
-    <section className="mt-6 space-y-5 reveal-up">
-      {/* Welcome strip */}
-      <article className="surface-panel rounded-[1.8rem] p-5 sm:p-6">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h2 className="font-display text-3xl tracking-tight text-[var(--ink)] sm:text-4xl">
-              {copy.welcome}, {displayName}
-            </h2>
-            <p className="mt-1 text-sm text-[var(--ink-soft)]">
-              {getStage(levelPrefix, locale)} · {levelPrefix} · {copy.atGlanceCompleted}: {totalCompleted}
+    <section className="mt-6 grid gap-5 reveal-up">
+      <article className="sky-panel rounded-[2.5rem] px-6 py-7 sm:px-8 sm:py-8">
+        <span className="party-floater left-6 top-7 h-11 w-11">
+          <Sparkles className="size-5" />
+        </span>
+        <span className="party-floater right-10 top-14 h-12 w-12">
+          <Trophy className="size-5" />
+        </span>
+        <span className="party-floater bottom-16 right-[32%] h-10 w-10">
+          <Compass className="size-4.5" />
+        </span>
+        <div className="grid gap-8 xl:grid-cols-[1.08fr_0.92fr] xl:items-center">
+          <div className="relative z-10">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="buddy-chip">
+                  <Sparkles className="size-4 text-[var(--navy)]" />
+                  {buddyStage.title}
+                </span>
+                <span className="buddy-chip">
+                  <Target className="size-4 text-[var(--teal)]" />
+                  {getGoalLabel(preferences.goal, locale)}
+                </span>
+                <span className="buddy-chip">
+                  <Flame className="size-4 text-[var(--coral)]" />
+                  XP {xp}
+                </span>
+              </div>
+              <LanguageSwitcher locale={locale} />
+            </div>
+
+            <p className="mt-5 text-sm font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
+              {locale === "zh" ? "欢迎回来" : "Welcome back"} · {getStageLabel(levelPrefix, locale)} · {levelPrefix}
             </p>
-          </div>
-          <LanguageSwitcher locale={locale} />
-        </div>
-      </article>
+            <h2 className="font-display game-title mt-3 max-w-3xl text-4xl tracking-tight text-[var(--ink)] sm:text-5xl">
+              {locale === "zh"
+                ? `你好，${displayName}。今天让你的 Buddy 再进化一点。`
+                : `Hi, ${displayName}. Let's help your buddy evolve a little more today.`}
+            </h2>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--ink-soft)] sm:text-base">
+              {locale === "zh"
+                ? "首页已经切换成游戏化校园入口。先完成今日任务，再进入听力资源库、场景口语和学伴广场。"
+                : "Your home now works like a playful campus hub. Finish today's quest first, then move into the listening library, speaking scenes, and the buddy square."}
+            </p>
 
-      {/* Today's Plan */}
-      <article className="surface-panel rounded-[1.8rem] p-5 sm:p-6">
-        <div className="flex items-center justify-between gap-3">
-          <h3 className="font-display text-3xl tracking-tight text-[var(--ink)]">{copy.todayPlanTitle}</h3>
-          <div className="flex items-center gap-2">
-            <Link
-              href={`/schedule?lang=${locale}`}
-              className="text-xs font-medium text-[var(--ink-soft)] hover:text-[var(--ink)] transition"
-            >
-              {copy.fullSchedule} →
-            </Link>
-            <button
-              onClick={() => setSettingsOpen((v) => !v)}
-              className="flex size-8 items-center justify-center rounded-full border border-[rgba(20,50,75,0.14)] bg-white/80 text-[var(--ink-soft)] transition hover:bg-[rgba(20,50,75,0.08)] hover:text-[var(--ink)]"
-              aria-label={copy.settingsTitle}
-            >
-              {settingsOpen ? <X className="size-4" /> : <Settings className="size-4" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Settings drawer */}
-        {settingsOpen && (
-          <div className="mt-4 rounded-[1.2rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.92)] p-4">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-soft)]">{copy.settingsTitle}</p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {/* Goal */}
-              <div>
-                <p className="mb-1.5 text-xs font-medium text-[var(--ink-soft)]">{copy.goalLabel}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {(["coursework", "research", "seminar"] as ScheduleGoal[]).map((g) => (
-                    <button
-                      key={g}
-                      onClick={() => updatePrefs({ goal: g })}
-                      className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-                        preferences.goal === g
-                          ? "bg-[var(--navy)] text-[#f7efe3]"
-                          : "border border-[rgba(20,50,75,0.14)] bg-white/80 text-[var(--ink)] hover:bg-[rgba(20,50,75,0.08)]"
-                      }`}
-                    >
-                      {copy.goals[g]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Daily minutes */}
-              <div>
-                <p className="mb-1.5 text-xs font-medium text-[var(--ink-soft)]">{copy.minutesLabel}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {([20, 35, 50] as const).map((m) => (
-                    <button
-                      key={m}
-                      onClick={() => updatePrefs({ dailyMinutes: m })}
-                      className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-                        preferences.dailyMinutes === m
-                          ? "bg-[var(--navy)] text-[#f7efe3]"
-                          : "border border-[rgba(20,50,75,0.14)] bg-white/80 text-[var(--ink)] hover:bg-[rgba(20,50,75,0.08)]"
-                      }`}
-                    >
-                      {m} {copy.minutesSuffix}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Mode */}
-              <div>
-                <p className="mb-1.5 text-xs font-medium text-[var(--ink-soft)]">{copy.modeLabel}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {(["light", "standard", "intensive"] as ScheduleMode[]).map((m) => (
-                    <button
-                      key={m}
-                      onClick={() => updatePrefs({ mode: m })}
-                      className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-                        preferences.mode === m
-                          ? "bg-[var(--navy)] text-[#f7efe3]"
-                          : "border border-[rgba(20,50,75,0.14)] bg-white/80 text-[var(--ink)] hover:bg-[rgba(20,50,75,0.08)]"
-                      }`}
-                    >
-                      {copy.modes[m]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Study window */}
-              <div>
-                <p className="mb-1.5 text-xs font-medium text-[var(--ink-soft)]">{copy.windowLabel}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {(["early", "midday", "evening"] as StudyWindow[]).map((w) => (
-                    <button
-                      key={w}
-                      onClick={() => updatePrefs({ studyWindow: w })}
-                      className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-                        preferences.studyWindow === w
-                          ? "bg-[var(--navy)] text-[#f7efe3]"
-                          : "border border-[rgba(20,50,75,0.14)] bg-white/80 text-[var(--ink)] hover:bg-[rgba(20,50,75,0.08)]"
-                      }`}
-                    >
-                      {copy.windows[w]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Link to full schedule setup */}
-            <div className="mt-4 border-t border-[rgba(20,50,75,0.08)] pt-4">
-              <Link
-                href={`/schedule?lang=${locale}`}
-                className="inline-flex w-full items-center justify-between rounded-[0.9rem] border border-[rgba(20,50,75,0.14)] bg-[rgba(20,50,75,0.04)] px-4 py-3 text-sm font-semibold text-(--ink) transition hover:bg-[rgba(20,50,75,0.09)]"
-              >
-                <span>{locale === "zh" ? "📅 完善课程表 & 截止任务" : "📅 Set up classes & deadlines"}</span>
-                <ArrowRight className="size-4 text-(--ink-soft)" />
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link href={nextQuestHref} className="party-button">
+                {locale === "zh" ? "开始今日任务" : "Start today's quest"}
+                <ArrowRight className="size-4" />
               </Link>
-              <p className="mt-1.5 text-[11px] text-[var(--ink-soft)]">
-                {locale === "zh"
-                  ? "录入你的课程安排和截止任务，计划会更精准。"
-                  : "Add your classes and deadlines for a more accurate plan."}
-              </p>
+              <Link href={`/discussion?lang=${locale}`} className="party-button-ghost">
+                {locale === "zh" ? "打开学伴广场" : "Open Buddy Square"}
+              </Link>
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-2.5">
+              {majorStickers.map((item) => (
+                <span key={item} className="pet-sticker">
+                  {item}
+                </span>
+              ))}
             </div>
           </div>
-        )}
 
-        {/* Today's blocks */}
-        <div className="mt-4 grid gap-3">
-          {todayPlan.blocks.length === 0 ? (
-            <p className="text-sm text-[var(--ink-soft)]">{copy.noBlocks}</p>
-          ) : (
-            todayPlan.blocks.map((block) => (
-              <div
-                key={block.id}
-                className="grid gap-3 rounded-[1.2rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.78)] p-4 sm:grid-cols-[1fr_auto] sm:items-center"
-              >
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${blockTypeBadge[block.type]}`}>
-                      {blockTypeText[block.type]}
-                    </span>
-                    <p className="text-sm font-semibold text-[var(--ink)]">{block.title}</p>
-                  </div>
-                  <p className="mt-1 text-xs text-[var(--ink-soft)]">
-                    {skillLabelMap[block.skill]?.[locale] ?? block.skill} · {block.minutes} {copy.minuteShort} · {block.timeLabel}
-                  </p>
-                  <p className="mt-0.5 text-xs text-[var(--ink-soft)]">{block.reason}</p>
-                </div>
-                {block.skill !== "review" && (
-                  <Link
-                    href={block.href}
-                    className="inline-flex items-center justify-center gap-1 rounded-full border border-[rgba(20,50,75,0.16)] bg-white/90 px-4 py-2 text-xs font-semibold text-[var(--ink)] transition hover:bg-[rgba(20,50,75,0.08)]"
-                  >
-                    {copy.startTask}
-                    <ArrowRight className="size-3" />
-                  </Link>
-                )}
+          <div className="relative z-10">
+            <div className="mx-auto max-w-[26rem] rounded-[2.2rem] border-2 border-white/90 bg-[rgba(255,255,255,0.72)] p-4 shadow-[0_16px_0_rgba(255,201,225,0.26),0_28px_56px_rgba(90,123,255,0.14)] backdrop-blur-xl">
+              <div className="buddy-bubble p-4">
+                <p className="text-sm font-semibold text-[var(--ink)]">{buddyStage.note}</p>
               </div>
-            ))
-          )}
+
+              <div className="party-stage mt-4 px-5 pb-5 pt-3">
+                <div className="pet-spotlight" />
+                <BuddyCompanion
+                  stage={buddyStage.id}
+                  focus={getGoalFocus(preferences.goal)}
+                  mood={buddyStage.mood}
+                  className="mx-auto"
+                />
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-[1.45rem] border-2 border-white/90 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(232,244,255,0.92))] p-3 shadow-[0_8px_0_rgba(143,196,255,0.2),0_16px_24px_rgba(90,123,255,0.08)]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">XP</p>
+                  <p className="mt-2 text-2xl font-semibold text-[var(--ink)]">{xp}</p>
+                </div>
+                <div className="rounded-[1.45rem] border-2 border-white/90 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(239,255,248,0.92))] p-3 shadow-[0_8px_0_rgba(143,240,211,0.2),0_16px_24px_rgba(90,123,255,0.08)]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+                    {locale === "zh" ? "已完成任务" : "Tasks done"}
+                  </p>
+                  <p className="mt-2 text-2xl font-semibold text-[var(--ink)]">{totalCompleted}</p>
+                </div>
+                <div className="rounded-[1.45rem] border-2 border-white/90 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(255,243,247,0.94))] p-3 shadow-[0_8px_0_rgba(255,201,225,0.24),0_16px_24px_rgba(90,123,255,0.08)]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+                    {locale === "zh" ? "准确率" : "Accuracy"}
+                  </p>
+                  <p className="mt-2 text-2xl font-semibold text-[var(--ink)]">{overallAccuracy}%</p>
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <div className="mb-2 flex items-center justify-between gap-3 text-sm">
+                  <span className="font-semibold text-[var(--ink)]">
+                    {locale === "zh" ? "进化进度" : "Evolution progress"}
+                  </span>
+                  <span className="text-[var(--ink-soft)]">
+                    {xp} / {buddyStage.nextXp}
+                  </span>
+                </div>
+                <div className="buddy-stage-bar h-3">
+                  <div className="buddy-progress-fill" style={{ width: `${currentStageProgress}%` }} />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </article>
 
-      {/* This Week calendar strip */}
-      <article className="surface-panel rounded-[1.8rem] p-5 sm:p-6">
-        <h3 className="font-display text-3xl tracking-tight text-[var(--ink)]">{copy.weekTitle}</h3>
-        <div className="mt-4 grid grid-cols-7 gap-1.5">
-          {weeklySchedule.days.map((day) => {
-            const dayNames = locale === "zh" ? DAY_NAMES_ZH : DAY_NAMES_EN;
-            const label = dayNames[day.day];
-            const isExpanded = expandedDay === day.dateISO;
-            const isToday = day.isToday;
-            const hasDeadline = day.deadlines.length > 0;
+      <BuddyCampusLobby
+        locale={locale}
+        levelPrefix={levelPrefix}
+        nextQuestHref={nextQuestHref}
+        buddyStage={buddyStage.id}
+        buddyFocus={getGoalFocus(preferences.goal)}
+      />
 
-            return (
-              <div key={day.dateISO} className="flex flex-col gap-1">
-                <button
-                  onClick={() => setExpandedDay(isExpanded ? null : day.dateISO)}
-                  className={`relative flex flex-col items-center rounded-[0.8rem] border px-1 py-2 transition ${
-                    isToday
-                      ? "border-[var(--navy)] bg-[rgba(20,50,75,0.08)]"
-                      : `border-[rgba(20,50,75,0.10)] bg-white/70 hover:bg-[rgba(20,50,75,0.05)]`
+      <div className="grid gap-5 xl:grid-cols-[1.04fr_0.96fr]">
+        <article className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(246,250,255,0.92),rgba(255,241,248,0.88))] p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="section-label">
+                <Compass className="size-3.5" />
+                {locale === "zh" ? "今日任务" : "Today's Quests"}
+              </p>
+              <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
+                {locale === "zh" ? "从最重要的 3 个任务开始。" : "Start with the 3 quests that matter most."}
+              </h3>
+            </div>
+            <Link href={`/schedule?lang=${locale}`} className="pet-sticker">
+              <CalendarDays className="mr-1 size-3.5" />
+              {locale === "zh" ? "完整计划" : "Full plan"}
+            </Link>
+          </div>
+
+          <div className="mt-5 grid gap-3">
+            {todayPlan.blocks.slice(0, 3).map((block, index) => {
+              const visual = getQuestVisual(block.skill);
+              return (
+                <div
+                  key={block.id}
+                  className="rounded-[1.6rem] border border-[rgba(42,107,180,0.1)] bg-white/88 p-4 shadow-[0_14px_32px_rgba(42,107,180,0.06)]"
+                >
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-start gap-4">
+                      <div className={`quest-orb h-12 w-12 rounded-[1rem] bg-gradient-to-br ${visual.iconBg}`}>
+                        <visual.Icon className="size-5" />
+                      </div>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={index === 0 ? "mission-badge mission-badge-win" : "mission-badge mission-badge-live"}>
+                            {index === 0 ? (locale === "zh" ? "主任务" : "Main quest") : locale === "zh" ? "支线任务" : "Side quest"}
+                          </span>
+                          <p className="text-sm font-semibold text-[var(--ink)]">{block.title}</p>
+                        </div>
+                        <p className="mt-1 text-sm text-[var(--ink-soft)]">
+                          {block.minutes} min · {block.timeLabel || (locale === "zh" ? "灵活安排" : "Flexible")}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-[var(--ink-soft)]">{block.reason}</p>
+                      </div>
+                    </div>
+                    <Link
+                      href={block.href}
+                      className={`inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r px-4 py-2.5 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(42,107,180,0.16)] ${visual.accent}`}
+                    >
+                      {locale === "zh" ? "进入任务" : "Launch"}
+                      <ArrowRight className="size-4" />
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+
+            {todayPlan.blocks.length === 0 ? (
+              <div className="rounded-[1.4rem] border border-dashed border-[rgba(42,107,180,0.16)] bg-white/70 p-5 text-sm text-[var(--ink-soft)]">
+                {locale === "zh"
+                  ? "今天还没有生成任务，你可以先去设置计划或打开资源库。"
+                  : "No quests are queued yet. Open your planner or jump into the library first."}
+              </div>
+            ) : null}
+          </div>
+        </article>
+
+        <article className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(248,247,255,0.92),rgba(237,254,248,0.9))] p-6">
+          <p className="section-label">
+            <Trophy className="size-3.5" />
+            {locale === "zh" ? "每周任务板" : "Weekly Mission Board"}
+          </p>
+          <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
+            {locale === "zh" ? "让 Buddy 每周都稳定成长。" : "Give your buddy a reason to grow every week."}
+          </h3>
+
+          <div className="mt-5 grid gap-3">
+            {weeklyMissions.map((mission) => {
+              const ratio = clampPercent((mission.progress / Math.max(1, mission.target)) * 100);
+              const done = mission.progress >= mission.target;
+              return (
+                <div
+                  key={mission.title}
+                  className="rounded-[1.4rem] border border-[rgba(42,107,180,0.1)] bg-white/88 p-4 shadow-[0_14px_32px_rgba(42,107,180,0.06)]"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className={done ? "mission-badge mission-badge-win" : "mission-badge mission-badge-live"}>
+                          {done ? (locale === "zh" ? "已完成" : "Done") : locale === "zh" ? "进行中" : "In progress"}
+                        </span>
+                        <h4 className="text-sm font-semibold text-[var(--ink)]">{mission.title}</h4>
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">{mission.note}</p>
+                    </div>
+                    <Link href={mission.href} className="pet-sticker shrink-0">
+                      {locale === "zh" ? "打开" : "Open"}
+                    </Link>
+                  </div>
+                  <div className="mt-4">
+                    <div className="mb-2 flex items-center justify-between gap-3 text-xs font-semibold text-[var(--ink-soft)]">
+                      <span>
+                        {mission.progress} / {mission.target}
+                      </span>
+                      <span>{ratio}%</span>
+                    </div>
+                    <div className="buddy-stage-bar h-2.5">
+                      <div className="buddy-progress-fill" style={{ width: `${ratio}%` }} />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </article>
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-[0.88fr_1.12fr]">
+        <article className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(255,244,248,0.92),rgba(244,248,255,0.9))] p-6">
+          <p className="section-label">
+            <PawPrint className="size-3.5" />
+            {locale === "zh" ? "学伴成长" : "Buddy Growth"}
+          </p>
+          <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
+            {locale === "zh" ? "宠物成长跟着学习数据走。" : "The pet grows with your learning signals."}
+          </h3>
+
+          <div className="mt-5 grid gap-4">
+            {growthRows.map((row) => (
+              <div key={row.label} className="rounded-[1.4rem] border border-[rgba(42,107,180,0.1)] bg-white/88 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-[var(--ink)]">{row.label}</p>
+                  <p className="text-sm font-semibold text-[var(--ink-soft)]">{row.value}%</p>
+                </div>
+                <div className="mt-3 buddy-stage-bar h-2.5">
+                  <div className="buddy-progress-fill" style={{ width: `${row.value}%` }} />
+                </div>
+                <p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">{row.hint}</p>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <div className="grid gap-5">
+          <article className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(243,248,255,0.92),rgba(255,247,239,0.9))] p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="section-label">
+                  <Sparkles className="size-3.5" />
+                  {locale === "zh" ? "任务控制台" : "Mission Controls"}
+                </p>
+                <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
+                  {locale === "zh" ? "直接调整学习模式。" : "Tune the study loop directly from home."}
+                </h3>
+              </div>
+              <Link href={`/schedule?lang=${locale}`} className="pet-sticker">
+                {locale === "zh" ? "打开计划页" : "Open planner"}
+              </Link>
+            </div>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-3">
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+                  {locale === "zh" ? "目标" : "Goal"}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {(["coursework", "research", "seminar"] as ScheduleGoal[]).map((goal) => (
+                    <button
+                      key={goal}
+                      type="button"
+                      onClick={() => updatePrefs({ goal })}
+                      className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
+                        preferences.goal === goal
+                          ? "bg-[linear-gradient(135deg,#2a6bb4,#55b2ff)] text-white shadow-[0_10px_20px_rgba(42,107,180,0.18)]"
+                          : "border border-[rgba(42,107,180,0.12)] bg-white text-[var(--ink)] hover:bg-[rgba(145,220,255,0.14)]"
+                      }`}
+                    >
+                      {getGoalLabel(goal, locale)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+                  {locale === "zh" ? "强度" : "Intensity"}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {(["light", "standard", "intensive"] as ScheduleMode[]).map((mode) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => updatePrefs({ mode })}
+                      className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
+                        preferences.mode === mode
+                          ? "bg-[linear-gradient(135deg,#2a6bb4,#55b2ff)] text-white shadow-[0_10px_20px_rgba(42,107,180,0.18)]"
+                          : "border border-[rgba(42,107,180,0.12)] bg-white text-[var(--ink)] hover:bg-[rgba(145,220,255,0.14)]"
+                      }`}
+                    >
+                      {mode}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+                  {locale === "zh" ? "学习时段" : "Study Window"}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {(["early", "midday", "evening"] as StudyWindow[]).map((windowName) => (
+                    <button
+                      key={windowName}
+                      type="button"
+                      onClick={() => updatePrefs({ studyWindow: windowName })}
+                      className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
+                        preferences.studyWindow === windowName
+                          ? "bg-[linear-gradient(135deg,#2a6bb4,#55b2ff)] text-white shadow-[0_10px_20px_rgba(42,107,180,0.18)]"
+                          : "border border-[rgba(42,107,180,0.12)] bg-white text-[var(--ink)] hover:bg-[rgba(145,220,255,0.14)]"
+                      }`}
+                    >
+                      {windowName}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(242,249,255,0.92),rgba(246,255,247,0.9))] p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="section-label">
+                  <CalendarDays className="size-3.5" />
+                  {locale === "zh" ? "本周节奏" : "Campus Week"}
+                </p>
+                <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
+                  {locale === "zh" ? "本周学习节奏一眼可见。" : "See the week rhythm at a glance."}
+                </h3>
+              </div>
+              <span className="pet-sticker">
+                {locale === "zh" ? "目标" : "Target"} {weeklySchedule.weeklyTargetMinutes} min
+              </span>
+            </div>
+
+            <div className="mt-5 grid grid-cols-7 gap-2">
+              {weeklySchedule.days.map((day) => (
+                <Link
+                  key={day.dateISO}
+                  href={`/schedule?lang=${locale}&focus=${encodeURIComponent(day.dateISO)}#schedule-week`}
+                  className={`rounded-[1.15rem] border p-3 text-center transition ${
+                    day.isToday
+                      ? "border-[rgba(42,107,180,0.32)] bg-[rgba(145,220,255,0.18)]"
+                      : "border-[rgba(42,107,180,0.1)] bg-white/88 hover:bg-[rgba(145,220,255,0.14)]"
                   }`}
                 >
-                  <span className={`text-[10px] font-semibold ${isToday ? "text-[var(--navy)]" : "text-[var(--ink-soft)]"}`}>
-                    {label}
-                  </span>
-                  <span
-                    className={`mt-1.5 flex size-6 items-center justify-center rounded-full text-[10px] font-bold text-white ${pressureColor(day.pressure)}`}
-                    title={`Pressure: ${day.pressure}`}
-                  />
-                  {hasDeadline && (
-                    <span className="absolute right-1 top-1 size-1.5 rounded-full bg-red-500" title={copy.deadlineLabel} />
-                  )}
-                  <span className="mt-1 text-[9px] text-[var(--ink-soft)]">{day.targetMinutes}{copy.minuteShort}</span>
-                </button>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Expanded day blocks */}
-        {expandedDay && (() => {
-          const day = weeklySchedule.days.find((d) => d.dateISO === expandedDay);
-          if (!day) return null;
-          const dayNames = locale === "zh" ? DAY_NAMES_ZH : DAY_NAMES_EN;
-          return (
-            <div className="mt-4 rounded-[1.2rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.88)] p-4">
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
-                  {dayNames[day.day]} · {day.dateISO}
-                </p>
-                <div className="flex items-center gap-2">
-                  {day.deadlines.length > 0 && (
-                    <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-600">
-                      {copy.deadlineLabel}: {day.deadlines.map((d) => d.title).join(", ")}
-                    </span>
-                  )}
-                  <Link
-                    href={getScheduleDayHref(day.dateISO)}
-                    className="rounded-full border border-[rgba(20,50,75,0.12)] bg-white/85 px-3 py-1 text-[10px] font-semibold text-[var(--navy)] transition hover:bg-[rgba(20,50,75,0.06)]"
-                  >
-                    {scheduleJumpLabel}
-                  </Link>
-                </div>
-              </div>
-              <div className="grid gap-2">
-                {day.blocks.map((block) => (
-                  <div key={block.id} className="flex items-center gap-3">
-                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${blockTypeBadge[block.type]}`}>
-                      {blockTypeText[block.type]}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <span className="text-xs font-semibold text-[var(--ink)]">{block.title}</span>
-                      <span className="ml-2 text-[10px] text-[var(--ink-soft)]">{block.minutes}{copy.minuteShort}</span>
-                    </div>
-                    {block.skill !== "review" && (
-                      <Link
-                        href={block.href}
-                        className="shrink-0 text-[10px] font-semibold text-[var(--navy)] hover:underline"
-                      >
-                        {copy.startTask} →
-                      </Link>
-                    )}
-                  </div>
-                ))}
-              </div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+                    {weekdayNames[day.day]}
+                  </p>
+                  <p className="mt-2 text-lg font-semibold text-[var(--ink)]">{day.targetMinutes}</p>
+                  <p className="mt-1 text-[10px] text-[var(--ink-soft)]">{day.deadlines.length} due</p>
+                </Link>
+              ))}
             </div>
-          );
-        })()}
-      </article>
+          </article>
+        </div>
+      </div>
+
     </section>
   );
 }

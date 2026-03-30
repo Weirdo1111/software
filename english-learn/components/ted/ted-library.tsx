@@ -23,11 +23,11 @@ import {
   subscribeListeningLibrary,
 } from "@/lib/listening-library";
 import { type Locale } from "@/lib/i18n/dictionaries";
+import { getDifficultyLabel, type DifficultyLabel } from "@/lib/level-labels";
 import { cn } from "@/lib/utils";
-import type { CEFRLevel } from "@/types/learning";
 
 type MajorFilter = "all" | DIICSUMajorId;
-type LevelFilter = "all" | CEFRLevel;
+type DifficultyFilter = "all" | DifficultyLabel;
 type RegionFilter = "all" | SpeakerRegion;
 type AccentFilter = "all" | ListeningAccent;
 type ResourceFilter = "all" | ListeningResourceType;
@@ -125,7 +125,7 @@ export function TedLibrary({
   const [searchValue, setSearchValue] = useState("");
   const deferredSearchValue = useDeferredValue(searchValue);
   const [selectedMajorFilter, setSelectedMajorFilter] = useState<MajorFilter>("all");
-  const [selectedLevelFilter, setSelectedLevelFilter] = useState<LevelFilter>("all");
+  const [selectedDifficultyFilter, setSelectedDifficultyFilter] = useState<DifficultyFilter>("all");
   const [selectedRegionFilter, setSelectedRegionFilter] = useState<RegionFilter>("all");
   const [selectedAccentFilter, setSelectedAccentFilter] = useState<AccentFilter>("all");
   const [selectedResourceFilter, setSelectedResourceFilter] = useState<ResourceFilter>("all");
@@ -143,9 +143,14 @@ export function TedLibrary({
     [librarySnapshot.completions],
   );
 
-  const levelOptions = useMemo(() => {
-    const levels = Array.from(new Set(catalog.map((material) => material.recommendedLevel)));
-    return ["all", ...levels] as LevelFilter[];
+  const difficultyOptions = useMemo(() => {
+    const difficulties = Array.from(
+      new Set(catalog.map((material) => getDifficultyLabel(material.recommendedLevel))),
+    );
+    return (["all", ...difficulties] as DifficultyFilter[]).sort((left, right) => {
+      const order: Record<DifficultyFilter, number> = { all: -1, Easy: 0, Medium: 1, Difficult: 2 };
+      return order[left] - order[right];
+    });
   }, [catalog]);
 
   const availableRegions = useMemo(() => {
@@ -166,8 +171,9 @@ export function TedLibrary({
     return catalog.filter((material) => {
       const matchesMajor =
         selectedMajorFilter === "all" || material.majorId === selectedMajorFilter;
-      const matchesLevel =
-        selectedLevelFilter === "all" || material.recommendedLevel === selectedLevelFilter;
+      const matchesDifficulty =
+        selectedDifficultyFilter === "all" ||
+        getDifficultyLabel(material.recommendedLevel) === selectedDifficultyFilter;
       const matchesRegion =
         selectedRegionFilter === "all" || material.speakerRegion === selectedRegionFilter;
       const matchesAccent =
@@ -193,7 +199,7 @@ export function TedLibrary({
 
       return (
         matchesMajor &&
-        matchesLevel &&
+        matchesDifficulty &&
         matchesRegion &&
         matchesAccent &&
         matchesResource &&
@@ -205,7 +211,7 @@ export function TedLibrary({
     catalog,
     deferredSearchValue,
     selectedAccentFilter,
-    selectedLevelFilter,
+    selectedDifficultyFilter,
     selectedMajorFilter,
     selectedRegionFilter,
     selectedResourceFilter,
@@ -265,15 +271,15 @@ export function TedLibrary({
           </label>
 
           <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-            <span className="sr-only">Level</span>
+            <span className="sr-only">Difficulty</span>
             <select
-              value={selectedLevelFilter}
-              onChange={(event) => setSelectedLevelFilter(event.target.value as LevelFilter)}
+              value={selectedDifficultyFilter}
+              onChange={(event) => setSelectedDifficultyFilter(event.target.value as DifficultyFilter)}
               className="rounded-[1rem] border border-[rgba(20,50,75,0.14)] bg-[rgba(247,250,252,0.9)] px-4 py-3 text-sm outline-none"
             >
-              {levelOptions.map((level) => (
-                <option key={level} value={level}>
-                  {level === "all" ? "All levels" : `Level ${level}`}
+              {difficultyOptions.map((difficulty) => (
+                <option key={difficulty} value={difficulty}>
+                  {difficulty === "all" ? "All difficulties" : difficulty}
                 </option>
               ))}
             </select>
@@ -423,6 +429,10 @@ export function TedLibrary({
           {filteredMaterials.map((material) => {
             const completion = completionMap.get(material.materialGroupId);
             const hasInlinePreview = hasStableInlinePreview(material);
+            const hasInAppAudio =
+              !hasInlinePreview &&
+              typeof material.audioSrc === "string" &&
+              material.audioSrc.length > 0;
 
             return (
               <Link
@@ -471,7 +481,7 @@ export function TedLibrary({
                         {material.accentLabel}
                       </span>
                       <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-2.5 py-1">
-                        Level {material.recommendedLevel}
+                        {getDifficultyLabel(material.recommendedLevel)}
                       </span>
                       {material.isCrossDisciplinary ? (
                         <span className="rounded-full border border-[rgba(107,79,44,0.18)] bg-[rgba(247,239,227,0.92)] px-2.5 py-1 text-[#6b4f2c]">
@@ -492,7 +502,7 @@ export function TedLibrary({
                         <span
                           className={cn(
                             "rounded-full px-2.5 py-1 text-[11px] font-semibold",
-                            hasInlinePreview
+                            hasInlinePreview || hasInAppAudio
                               ? "bg-[rgba(35,95,79,0.1)] text-[#315f4f]"
                               : "bg-[rgba(20,50,75,0.08)] text-[var(--ink-soft)]",
                           )}
@@ -501,6 +511,10 @@ export function TedLibrary({
                             ? locale === "zh"
                               ? "站内预览"
                               : "In-app preview"
+                            : hasInAppAudio
+                              ? locale === "zh"
+                                ? "站内音频"
+                                : "In-app audio"
                             : locale === "zh"
                               ? "来源打开"
                               : "Open source"}

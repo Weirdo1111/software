@@ -15,7 +15,7 @@ const schema = z.object({
   audio_url: z.string().url().optional(),
   transcript: z.string().min(1).optional(),
   prompt_id: z.string().min(1),
-  target_level: z.enum(["A1", "A2", "B1", "B2"]),
+  target_level: z.enum(["low", "medium", "high"]),
 });
 
 export async function POST(request: Request) {

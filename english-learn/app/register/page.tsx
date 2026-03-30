@@ -2,17 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Cormorant_Garamond, Inter } from "next/font/google";
-
-const serif = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-const sans = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
 
 export default function RegisterPage() {
   const [lang, setLang] = useState<"zh" | "en">("en");
@@ -128,7 +117,7 @@ export default function RegisterPage() {
 
   return (
     <main
-      className={`${sans.className} min-h-screen bg-[#f3efe6] text-[#22314d]`}
+      className="min-h-screen bg-[#f3efe6] text-[#22314d]"
     >
       <div
         className="min-h-screen"
@@ -210,7 +199,7 @@ export default function RegisterPage() {
                 </div>
 
                 <h1
-                  className={`${serif.className} max-w-[760px] text-[46px] leading-[1.05] tracking-[-0.035em] text-[#1f2b43] md:text-[62px] lg:text-[74px]`}
+                  className="font-display max-w-[760px] text-[46px] leading-[1.05] tracking-[-0.035em] text-[#1f2b43] md:text-[62px] lg:text-[74px]"
                 >
                   {copy.title}
                 </h1>
@@ -259,7 +248,7 @@ export default function RegisterPage() {
                 </div>
 
                 <h2
-                  className={`${serif.className} mt-5 text-[40px] leading-none tracking-[-0.03em] text-white md:text-[52px]`}
+                  className="font-display mt-5 text-[40px] leading-none tracking-[-0.03em] text-white md:text-[52px]"
                 >
                   {copy.panelTitle}
                 </h2>

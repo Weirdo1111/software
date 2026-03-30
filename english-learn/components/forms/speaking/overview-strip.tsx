@@ -29,29 +29,22 @@ export function SpeakingOverviewStrip({
   const wordCount = transcript.trim().split(/\s+/).filter(Boolean).length;
 
   return (
-    <div className="grid gap-3 lg:grid-cols-3">
-      <div className="rounded-[1.3rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.72)] px-4 py-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Prompt pace</p>
-        <p className="mt-2 text-sm font-semibold text-[var(--ink)]">{selectedPrompt.response_time_sec} seconds target</p>
-        <p className="mt-1 text-sm leading-6 text-[var(--ink-soft)]">{selectedPrompt.scenario}</p>
-      </div>
-      <div className="rounded-[1.3rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.72)] px-4 py-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Recorder</p>
-        <p className="mt-2 text-sm font-semibold text-[var(--ink)]">
-          {getRecorderSummary(recorderStatus, audioClip, isRecorderSupported)}
-        </p>
-        <p className="mt-1 text-sm leading-6 text-[var(--ink-soft)]">
-          {!isRecorderSupported
-            ? "Recording depends on browser microphone support."
-            : audioClip
-              ? "A speaking take is ready for review."
-              : "Use one full take before scoring."}
-        </p>
-      </div>
-      <div className="rounded-[1.3rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.72)] px-4 py-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Draft length</p>
-        <p className="mt-2 text-sm font-semibold text-[var(--ink)]">{wordCount} words in the current scoring draft</p>
-        <p className="mt-1 text-sm leading-6 text-[var(--ink-soft)]">Refine this version after recording or partner practice.</p>
+    <div className="rounded-[1.3rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.72)] px-4 py-3">
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Active task</p>
+          <p className="mt-1 text-sm font-semibold text-[var(--ink)]">{selectedPrompt.title}</p>
+          <p className="mt-1 text-sm leading-6 text-[var(--ink-soft)]">{selectedPrompt.prompt}</p>
+        </div>
+        <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)] xl:max-w-[48%] xl:justify-end">
+          <span className="rounded-full bg-[rgba(20,50,75,0.05)] px-3 py-1.5">{selectedPrompt.major_label}</span>
+          <span className="rounded-full bg-[rgba(20,50,75,0.05)] px-3 py-1.5">{selectedPrompt.category_label}</span>
+          <span className="rounded-full bg-[rgba(20,50,75,0.05)] px-3 py-1.5">{selectedPrompt.response_time_sec}s</span>
+          <span className="rounded-full bg-[rgba(20,50,75,0.05)] px-3 py-1.5">{wordCount} words</span>
+          <span className="rounded-full bg-[rgba(20,50,75,0.05)] px-3 py-1.5">
+            {getRecorderSummary(recorderStatus, audioClip, isRecorderSupported)}
+          </span>
+        </div>
       </div>
     </div>
   );

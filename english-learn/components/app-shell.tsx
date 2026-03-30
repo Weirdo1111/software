@@ -2,7 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogIn, LogOut, User } from "lucide-react";
+import {
+  Compass,
+  Gamepad2,
+  LibraryBig,
+  LogIn,
+  LogOut,
+  MessageSquareMore,
+  Sparkles,
+  Trophy,
+  User,
+  WandSparkles,
+} from "lucide-react";
 import { useEffect, useSyncExternalStore, useState } from "react";
 
 import { InstitutionBrand } from "@/components/institution-brand";
@@ -10,45 +21,37 @@ import { ProtectedAction } from "@/components/protected-action";
 import { type Locale } from "@/lib/i18n/dictionaries";
 import { cn } from "@/lib/utils";
 
-const moduleNav = [
+const primaryNav = [
   {
-    id: "dashboard",
-    href: "/dashboard",
-    label: { zh: "\u603b\u89c8", en: "Dashboard" },
-    protected: true,
+    id: "quests",
+    label: { zh: "任务地图", en: "Quests" },
+    Icon: Compass,
   },
   {
-    id: "schedule",
-    href: "/schedule",
-    label: { zh: "\u8ba1\u5212", en: "Schedule" },
-    protected: true,
+    id: "library",
+    label: { zh: "资源库", en: "Library" },
+    Icon: LibraryBig,
   },
   {
-    id: "listening",
-    label: { zh: "\u542c\u529b", en: "Listening" },
-    protected: true,
+    id: "scenes",
+    label: { zh: "场景口语", en: "Scenes" },
+    Icon: WandSparkles,
   },
   {
-    id: "speaking",
-    label: { zh: "\u53e3\u8bed", en: "Speaking" },
-    protected: true,
+    id: "square",
+    label: { zh: "学伴广场", en: "Buddy Square" },
+    Icon: MessageSquareMore,
   },
   {
-    id: "reading",
-    href: "/reading",
-    label: { zh: "\u9605\u8bfb", en: "Reading" },
-    protected: true,
+    id: "rewards",
+    label: { zh: "成长奖励", en: "Rewards" },
+    Icon: Trophy,
   },
   {
-    id: "writing",
-    label: { zh: "\u5199\u4f5c", en: "Writing" },
-    protected: true,
-  },
-  {
-    id: "discussion",
-    href: "/discussion",
-    label: { zh: "\u8ba8\u8bba", en: "Discussion" },
-    protected: true,
+    id: "games",
+    label: { zh: "游戏中心", en: "Games" },
+    Icon: Gamepad2,
+    protected: false,
   },
 ] as const;
 
@@ -83,10 +86,11 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
   const isLoggedIn = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const [levelPrefix, setLevelPrefix] = useState("A2");
 
-  const accountLabel = locale === "zh" ? "\u6211\u7684\u8d26\u6237" : "My account";
-  const loginLabel = locale === "zh" ? "\u767b\u5f55" : "Log in";
-  const logoutLabel = locale === "zh" ? "\u9000\u51fa\u767b\u5f55" : "Log out";
-  const homeLabel = locale === "zh" ? "\u9996\u9875" : "Home";
+  const accountLabel = locale === "zh" ? "个人主页" : "Profile";
+  const loginLabel = locale === "zh" ? "登录" : "Log in";
+  const logoutLabel = locale === "zh" ? "退出" : "Log out";
+  const homeLabel = locale === "zh" ? "首页" : "Home";
+  const buddyLabel = locale === "zh" ? "DIICSU Buddy Campus" : "DIICSU Buddy Campus";
 
   useEffect(() => {
     const refreshLevel = () => {
@@ -110,62 +114,68 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
     window.location.href = "/";
   };
 
-  const lessonHref = (skill: "listening" | "speaking" | "writing") =>
-    `/lesson/${levelPrefix}-${skill}-starter?lang=${locale}`;
+  const speakingHref = `/lesson/${levelPrefix}-speaking-starter?lang=${locale}`;
 
-  const resolveHref = (id: (typeof moduleNav)[number]["id"]) => {
-    if (id === "dashboard") return `/dashboard?lang=${locale}`;
-    if (id === "schedule") return `/schedule?lang=${locale}`;
-    if (id === "reading") return `/reading?lang=${locale}`;
-    if (id === "listening") return `/listening?lang=${locale}`;
-    if (id === "speaking") return lessonHref("speaking");
-    if (id === "discussion") return `/discussion?lang=${locale}`;
-    return lessonHref("writing");
+  const resolveHref = (id: (typeof primaryNav)[number]["id"]) => {
+    if (id === "quests") return `/schedule?lang=${locale}`;
+    if (id === "library") return `/listening?lang=${locale}`;
+    if (id === "scenes") return speakingHref;
+    if (id === "square") return `/discussion?lang=${locale}`;
+    if (id === "games") return `/games?lang=${locale}`;
+    return `/progress?lang=${locale}`;
   };
 
   const isHomeActive = pathname === "/";
 
-  const isModuleActive = (id: (typeof moduleNav)[number]["id"]) => {
-    if (id === "dashboard") return pathname?.startsWith("/dashboard");
-    if (id === "schedule") return pathname?.startsWith("/schedule");
-    if (id === "listening") return pathname?.startsWith("/listening");
-    if (id === "speaking") return pathname?.includes("/lesson/") && pathname?.includes("speaking");
-    if (id === "writing") return pathname?.includes("/lesson/") && pathname?.includes("writing");
-    if (id === "reading") return pathname?.startsWith("/reading");
-    if (id === "discussion") return pathname?.startsWith("/discussion");
-    return false;
+  const isPrimaryActive = (id: (typeof primaryNav)[number]["id"]) => {
+    if (id === "quests") return pathname?.startsWith("/schedule");
+    if (id === "library") return pathname?.startsWith("/listening");
+    if (id === "scenes") return pathname?.includes("/lesson/") && pathname?.includes("speaking");
+    if (id === "square") return pathname?.startsWith("/discussion");
+    if (id === "games") return pathname?.startsWith("/games");
+    return pathname?.startsWith("/progress");
   };
 
   return (
     <nav
       className={cn(
-        "rounded-[1.1rem] border border-[rgba(36,88,164,0.24)] bg-gradient-to-r from-[#2f64ba] via-[#3b74cc] to-[#2f64ba] p-1.5 shadow-[0_12px_26px_rgba(39,72,130,0.24)]",
+        "party-nav-shell p-2.5",
         fixed
           ? "fixed left-1/2 top-4 z-[80] w-[min(1500px,calc(100%-1.75rem))] -translate-x-1/2"
           : "w-full",
       )}
     >
-      <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
-        <div className="inline-flex min-h-10 items-center rounded-[0.9rem] border border-white/28 bg-white/10 px-3">
+      <div className="grid gap-2 xl:grid-cols-[auto_1fr_auto] xl:items-center">
+        <div className="flex items-center justify-between gap-3 rounded-[1.55rem] border-2 border-white/85 bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(240,247,255,0.9))] px-3 py-2.5 shadow-[0_10px_0_rgba(255,201,225,0.24),0_18px_28px_rgba(90,123,255,0.1)]">
           <InstitutionBrand locale={locale} embedded />
+          <span className="hidden items-center gap-1 rounded-full border-2 border-white/90 bg-[linear-gradient(135deg,rgba(255,242,165,0.95),rgba(255,212,231,0.9))] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--navy)] shadow-[0_8px_0_rgba(255,201,225,0.25),0_14px_22px_rgba(90,123,255,0.12)] lg:inline-flex">
+            <Sparkles className="size-3.5" />
+            {buddyLabel}
+          </span>
         </div>
 
         <div className="min-w-0 overflow-x-auto">
-          <div className="flex w-max min-w-full items-center gap-1 whitespace-nowrap">
+          <div className="party-nav-track flex w-max min-w-full items-center gap-1.5 p-1.5 whitespace-nowrap">
             <Link
               href={`/?lang=${locale}`}
-              className={`inline-flex min-h-10 items-center rounded-[0.8rem] px-3 text-[17px] font-semibold transition ${
-                isHomeActive ? "bg-white text-[#1d3f77]" : "text-[#edf5ff] hover:bg-white/20"
-              }`}
+              className={`party-tab ${isHomeActive ? "party-tab-active" : ""}`}
             >
+              <Sparkles className="size-4" />
               {homeLabel}
             </Link>
 
-            {moduleNav.map((item) => {
-              const active = isModuleActive(item.id);
-              const className = `inline-flex min-h-10 items-center rounded-[0.8rem] px-3 text-[17px] font-semibold transition ${
-                active ? "bg-white text-[#1d3f77]" : "text-[#edf5ff] hover:bg-white/20"
-              }`;
+            {primaryNav.map((item) => {
+              const active = isPrimaryActive(item.id);
+              const className = `party-tab ${active ? "party-tab-active" : ""}`;
+
+              if ("protected" in item && item.protected === false) {
+                return (
+                  <Link key={item.id} href={resolveHref(item.id)} className={className}>
+                    <item.Icon className="size-4" />
+                    {item.label[locale]}
+                  </Link>
+                );
+              }
 
               return (
                 <ProtectedAction
@@ -175,6 +185,7 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
                   isLoggedIn={isLoggedIn}
                   className={className}
                 >
+                  <item.Icon className="size-4" />
                   {item.label[locale]}
                 </ProtectedAction>
               );
@@ -182,32 +193,32 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-1.5 pl-1">
+        <div className="flex shrink-0 items-center justify-end gap-2">
           {isLoggedIn ? (
             <>
               <Link
                 href={`/dashboard?lang=${locale}`}
-                className="inline-flex min-h-10 items-center gap-2 rounded-[0.8rem] border border-white/35 bg-white/12 px-3 text-[17px] font-semibold text-[#edf5ff] transition hover:bg-white/20"
+                className="party-button-ghost"
               >
                 <User className="size-4" />
-                <span>{accountLabel}</span>
+                {accountLabel}
               </Link>
               <button
                 type="button"
                 onClick={handleLogout}
-                className="inline-flex min-h-10 items-center gap-2 rounded-[0.8rem] border border-[#ffd0c5] bg-[#fff1ed] px-3 text-[17px] font-semibold text-[#b3472f] transition hover:bg-[#ffe3db]"
+                className="inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-white/90 bg-[linear-gradient(135deg,#ffac9a,#ff8ac8)] px-4 text-[15px] font-semibold text-white shadow-[0_9px_0_rgba(230,107,133,0.28),0_18px_26px_rgba(255,138,200,0.18)] transition hover:translate-y-[-1px]"
               >
                 <LogOut className="size-4" />
-                <span>{logoutLabel}</span>
+                {logoutLabel}
               </button>
             </>
           ) : (
             <Link
               href={`/login?lang=${locale}`}
-              className="inline-flex min-h-10 items-center gap-2 rounded-[0.8rem] border border-white/35 bg-white/12 px-3 text-[17px] font-semibold text-[#edf5ff] transition hover:bg-white/20"
+              className="party-button"
             >
               <LogIn className="size-4" />
-              <span>{loginLabel}</span>
+              {loginLabel}
             </Link>
           )}
         </div>

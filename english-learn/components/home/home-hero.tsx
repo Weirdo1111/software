@@ -17,7 +17,7 @@ export function HomeHero({ locale }: { locale: Locale }) {
           A focused academic English platform built around assessment, banding, and four-skill study.
         </h2>
         <p className="mt-4 max-w-3xl text-sm leading-7 text-[var(--ink-soft)] sm:text-base">
-          The first release should feel clear and credible: learners enter, complete a placement test, receive a Low / Medium / High
+          The first release should feel clear and credible: learners enter, complete a placement test, receive an Easy / Medium / Difficult
           recommendation, then move into academic listening, speaking, reading, and writing tasks designed for their band.
         </p>
 

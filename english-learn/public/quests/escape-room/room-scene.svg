@@ -1,0 +1,66 @@
+<svg width="1600" height="960" viewBox="0 0 1600 960" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="800" y1="0" x2="800" y2="960" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#19324A" />
+      <stop offset="1" stop-color="#0D1B2B" />
+    </linearGradient>
+    <linearGradient id="floor" x1="800" y1="640" x2="800" y2="960" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#203A52" />
+      <stop offset="1" stop-color="#102030" />
+    </linearGradient>
+    <linearGradient id="lamp" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#FDE68A" stop-opacity="0.82" />
+      <stop offset="1" stop-color="#FDE68A" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="960" fill="url(#bg)" />
+  <rect y="650" width="1600" height="310" fill="url(#floor)" />
+
+  <rect x="0" y="0" width="1600" height="120" fill="#12263A" />
+  <rect x="150" y="0" width="36" height="180" rx="18" fill="#274860" />
+  <rect x="780" y="0" width="36" height="180" rx="18" fill="#274860" />
+  <rect x="1414" y="0" width="36" height="180" rx="18" fill="#274860" />
+  <ellipse cx="168" cy="168" rx="120" ry="220" fill="url(#lamp)" />
+  <ellipse cx="798" cy="168" rx="120" ry="220" fill="url(#lamp)" />
+  <ellipse cx="1432" cy="168" rx="120" ry="220" fill="url(#lamp)" />
+
+  <rect x="78" y="170" width="250" height="170" rx="26" fill="#E6F0F4" />
+  <rect x="102" y="194" width="202" height="122" rx="18" fill="#FAFCFD" stroke="#C5D3DD" stroke-width="4" />
+  <text x="124" y="236" fill="#3A5367" font-family="Avenir Next, Segoe UI, sans-serif" font-size="28" font-weight="700">Library closes at 9:15 PM</text>
+  <text x="124" y="272" fill="#5A7388" font-family="Avenir Next, Segoe UI, sans-serif" font-size="18">Emergency exit access is restricted</text>
+  <text x="124" y="304" fill="#5A7388" font-family="Avenir Next, Segoe UI, sans-serif" font-size="18">Ask staff if you need help finding a section</text>
+
+  <rect x="300" y="292" width="390" height="390" rx="28" fill="#17324A" />
+  <rect x="326" y="318" width="338" height="338" rx="18" fill="#21445E" />
+  <rect x="338" y="336" width="314" height="58" rx="14" fill="#2C5673" />
+  <rect x="338" y="412" width="314" height="58" rx="14" fill="#2C5673" />
+  <rect x="338" y="488" width="314" height="58" rx="14" fill="#2C5673" />
+  <rect x="338" y="564" width="314" height="58" rx="14" fill="#2C5673" />
+  <text x="352" y="373" fill="#EAF5FF" font-family="Avenir Next, Segoe UI, sans-serif" font-size="26" font-weight="700">History Section - Shelf 204</text>
+  <rect x="354" y="430" width="28" height="22" rx="6" fill="#F97316" />
+  <rect x="392" y="430" width="24" height="22" rx="6" fill="#34D399" />
+  <rect x="426" y="430" width="32" height="22" rx="6" fill="#60A5FA" />
+  <rect x="470" y="430" width="26" height="22" rx="6" fill="#FCD34D" />
+  <rect x="354" y="506" width="22" height="22" rx="6" fill="#C084FC" />
+  <rect x="386" y="506" width="32" height="22" rx="6" fill="#FB7185" />
+  <rect x="430" y="506" width="26" height="22" rx="6" fill="#2DD4BF" />
+  <rect x="466" y="506" width="20" height="22" rx="6" fill="#38BDF8" />
+
+  <rect x="1160" y="196" width="164" height="96" rx="22" fill="#172B40" />
+  <rect x="1186" y="224" width="112" height="12" rx="6" fill="#8FB9D1" />
+  <rect x="1186" y="246" width="88" height="12" rx="6" fill="#8FB9D1" />
+
+  <rect x="905" y="424" width="330" height="188" rx="28" fill="#153247" />
+  <rect x="958" y="458" width="224" height="110" rx="18" fill="#E4F2FF" />
+  <rect x="986" y="598" width="168" height="16" rx="8" fill="#2A4C63" />
+  <rect x="1004" y="628" width="132" height="18" rx="9" fill="#203A52" opacity="0.55" />
+  <text x="992" y="516" fill="#23445C" font-family="Avenir Next, Segoe UI, sans-serif" font-size="26" font-weight="700">AI Librarian</text>
+  <text x="992" y="550" fill="#47637A" font-family="Avenir Next, Segoe UI, sans-serif" font-size="18">Ask politely for a hint.</text>
+
+  <rect x="1370" y="268" width="150" height="330" rx="28" fill="#21445E" />
+  <rect x="1418" y="396" width="54" height="100" rx="27" fill="#8FB9D1" opacity="0.28" />
+  <rect x="1402" y="306" width="86" height="20" rx="10" fill="#8FB9D1" opacity="0.36" />
+
+  <rect x="0" y="694" width="1600" height="24" fill="#0B1825" opacity="0.44" />
+</svg>

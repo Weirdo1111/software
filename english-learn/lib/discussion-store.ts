@@ -2,6 +2,7 @@ import type {
   DiscussionComment,
   DiscussionPost,
 } from "@/components/discussion/types";
+import { normalizeDiscussionCategory } from "@/components/discussion/types";
 
 export const DISCUSSION_STORAGE_KEY = "discussion_posts_v1";
 const DISCUSSION_CHANGE_EVENT = "discussion-posts-changed";
@@ -13,7 +14,7 @@ export const defaultDiscussionPosts: DiscussionPost[] = [
     content:
       "My current band is Medium. I want to know whether I should spend more time on speaking or reading before the next reassessment window opens.",
     author: "Shengze",
-    tag: "Assessment",
+    tag: normalizeDiscussionCategory("Assessment"),
     likes: 8,
     liked: false,
     pinned: true,
@@ -27,6 +28,7 @@ export const defaultDiscussionPosts: DiscussionPost[] = [
         createdAt: "2026-03-20 10:10",
       },
     ],
+    views: 96,
   },
   {
     id: "p2",
@@ -34,12 +36,13 @@ export const defaultDiscussionPosts: DiscussionPost[] = [
     content:
       "I started splitting notes into keywords, argument flow, and evidence. It reduced overload during longer listening tasks.",
     author: "Mia",
-    tag: "Listening",
+    tag: normalizeDiscussionCategory("Listening"),
     likes: 5,
     liked: false,
     pinned: false,
     createdAt: "2026-03-19 18:20",
     comments: [],
+    views: 54,
   },
 ];
 
@@ -71,6 +74,7 @@ function isDiscussionPost(value: unknown): value is DiscussionPost {
     typeof record.liked === "boolean" &&
     typeof record.pinned === "boolean" &&
     typeof record.createdAt === "string" &&
+    typeof record.views === "number" &&
     Array.isArray(record.comments) &&
     record.comments.every(isDiscussionComment)
   );
