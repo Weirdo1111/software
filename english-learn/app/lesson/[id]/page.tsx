@@ -199,8 +199,8 @@ export default async function LessonPage({
     isWritingMode || isReadingMode ? "mt-6 grid gap-5" : "mt-6 grid gap-5 lg:grid-cols-[1.02fr_0.98fr]";
   const listeningMaterials = isListeningMode ? await getListeningMaterialsCatalog() : null;
   const showStandaloneLessonBrief = mode !== "speaking" && mode !== "writing" && mode !== "listening";
-  const showLowerPanels = mode !== "speaking" && mode !== "listening" && mode !== "writing";
-  const showPageHeader = false;
+  const showLowerPanels = mode === "reading";
+  const showPageHeader = mode === "listening";
 
   return (
     <PageFrame locale={locale} title={meta.label} description={description} showHeader={showPageHeader}>
