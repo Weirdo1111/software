@@ -29,7 +29,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 
 import { BuddyCampusLobby } from "@/components/home/buddy-campus-lobby";
-import { BuddyCompanion } from "@/components/home/buddy-companion";
+import { BuddyCompanion, type BuddyVariant } from "@/components/home/buddy-companion";
 import { HomeLearningModules } from "@/components/home/home-learning-modules";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { type Locale } from "@/lib/i18n/dictionaries";
@@ -145,6 +145,12 @@ function getGoalFocus(goal: ScheduleGoal) {
   if (goal === "research") return "research" as const;
   if (goal === "seminar") return "seminar" as const;
   return "coursework" as const;
+}
+
+function getGoalVariant(goal: ScheduleGoal): BuddyVariant {
+  if (goal === "research") return "bunny";
+  if (goal === "seminar") return "cat";
+  return "bear";
 }
 
 function getGoalLabel(goal: ScheduleGoal, locale: Locale) {
@@ -589,7 +595,14 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                 </div>
                 <div className="party-stage mt-4 px-5 pb-5 pt-3">
                   <div className="pet-spotlight" />
-                  <BuddyCompanion stage="fresh" focus="coursework" mood="happy" outfit={buddyOutfit} className="mx-auto" />
+                  <BuddyCompanion
+                    stage="fresh"
+                    focus={getGoalFocus(preferences.goal)}
+                    variant={getGoalVariant(preferences.goal)}
+                    mood="happy"
+                    outfit={buddyOutfit}
+                    className="mx-auto"
+                  />
                 </div>
               </div>
             </div>
@@ -727,6 +740,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                   <BuddyCompanion
                     stage={buddyStage.id}
                     focus={getGoalFocus(preferences.goal)}
+                    variant={getGoalVariant(preferences.goal)}
                     mood={buddyStage.mood}
                     outfit={buddyOutfit}
                     className="mx-auto"
@@ -888,6 +902,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                       <BuddyCompanion
                         stage={buddyStage.id}
                         focus={getGoalFocus(preferences.goal)}
+                        variant={getGoalVariant(preferences.goal)}
                         mood="happy"
                         outfit={buddyOutfit}
                         className="mx-auto"
