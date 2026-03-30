@@ -722,31 +722,41 @@ export function BuddyCampusLobby({
                 : "On desktop, click the lobby then use WASD or the arrow keys. On mobile, use this on-screen pad."}
             </p>
           </div>
+        </aside>
+      </div>
 
-          <div className="campus-lobby-panel-card">
+      <div className="campus-lobby-panel-card mt-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
               {locale === "zh" ? "桌宠小队" : "Buddy crew"}
             </p>
-            <div className="campus-lobby-crew mt-4">
-              {buddyCrew.map((buddy) => (
-                <div key={buddy.id} className="campus-lobby-crew-card">
-                  <BuddyCompanion
-                    stage={buddy.stage}
-                    focus={buddy.focus}
-                    variant={buddy.variant}
-                    mood="happy"
-                    float={false}
-                    className="w-[3.9rem] max-w-[3.9rem]"
-                  />
-                  <div>
-                    <p className="text-sm font-semibold text-[var(--ink)]">{buddy.title}</p>
-                    <p className="mt-1 text-xs leading-5 text-[var(--ink-soft)]">{buddy.note}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
+              {locale === "zh"
+                ? "不同风格的学习搭子都在这里，方便你按任务切换陪练重心。"
+                : "Switch between different buddy styles depending on the kind of study support you want."}
+            </p>
           </div>
-        </aside>
+        </div>
+
+        <div className="campus-lobby-crew mt-4 grid-cols-1 md:grid-cols-3">
+          {buddyCrew.map((buddy) => (
+            <div key={buddy.id} className="campus-lobby-crew-card">
+              <BuddyCompanion
+                stage={buddy.stage}
+                focus={buddy.focus}
+                variant={buddy.variant}
+                mood="happy"
+                float={false}
+                className="w-[3.9rem] max-w-[3.9rem]"
+              />
+              <div>
+                <p className="text-sm font-semibold text-[var(--ink)]">{buddy.title}</p>
+                <p className="mt-1 text-xs leading-5 text-[var(--ink-soft)]">{buddy.note}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </article>
   );
