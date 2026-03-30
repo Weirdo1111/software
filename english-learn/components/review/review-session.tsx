@@ -2,6 +2,7 @@
 
 import { Eye, LoaderCircle, RotateCcw, Trophy } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { recordReviewSessionCompletionInStorage } from "@/lib/review-progress";
 
 interface ReviewCard {
   id: string;
@@ -105,6 +106,7 @@ export function ReviewSession() {
       setCurrentIndex((prev) => prev + 1);
       setFlipped(false);
     } else {
+      recordReviewSessionCompletionInStorage();
       setSessionDone(true);
     }
   }

@@ -40,6 +40,7 @@ import {
   recordListeningHistoryInStorage,
   subscribeListeningLibrary,
 } from "@/lib/listening-library";
+import { recordSkillAttemptInStorage } from "@/lib/learning-tracker";
 import { cn } from "@/lib/utils";
 import { getDifficultyLabel } from "@/lib/level-labels";
 import type { CEFRLevel, ListeningAIFeedback } from "@/types/learning";
@@ -307,6 +308,11 @@ export function ListeningFeedbackForm({
       );
 
       const durationSec = Math.max(45, Math.round((Date.now() - attemptStartedAt) / 1000));
+      recordSkillAttemptInStorage("listening", {
+        correct: nextResult.passed,
+        durationSec,
+        markCompleted: true,
+      });
 
       fetch("/api/attempts", {
         method: "POST",
@@ -950,4 +956,3 @@ export function ListeningFeedbackForm({
     </section>
   );
 }
-
