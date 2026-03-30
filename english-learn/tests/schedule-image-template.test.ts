@@ -34,7 +34,8 @@ function buildTemplateRectangles() {
   let colorIndex = 0;
 
   return [...grouped.entries()].flatMap(([key, items]) => {
-    const [dayText, slot] = key.split("-");
+    const [dayText, ...slotParts] = key.split("-");
+    const slot = slotParts.join("-");
     const column = dayToColumn(Number(dayText));
     const row = SLOT_BY_ID[slot as keyof typeof SLOT_BY_ID];
     const centerX = DAY_CENTERS[column] ?? DAY_CENTERS[0];

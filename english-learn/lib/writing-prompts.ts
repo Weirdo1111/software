@@ -183,7 +183,7 @@ export const writingPrompts: WritingPrompt[] = [
       "Better site note-taking helps students avoid plagiarism because it makes the difference between copied technical wording and personal summary much clearer. When notes are disorganized, students may forget which details came from a source and which observations are their own. Clear labels for quotations, paraphrases, and source details therefore support both honest citation and stronger report planning.",
   },
   {
-    id: "b2-attendance-policy-argument",
+    id: "b2-public-transport-investment-argument",
     level: "B2",
     title: "Public transport investment argument",
     scenario: "A city transport committee is reviewing whether it should invest more heavily in public transport after repeated congestion problems.",
@@ -541,7 +541,7 @@ const writingPromptDisciplines: Record<string, WritingDiscipline> = {
   "b1-online-reading-balance": "maths",
   "b1-tutorial-participation-support": "mechanical",
   "b1-note-taking-and-plagiarism": "civil",
-  "b2-attendance-policy-argument": "transport",
+  "b2-public-transport-investment-argument": "transport",
   "b2-research-reading-support": "maths",
   "b2-peer-review-requirement": "mechanical",
   "b2-ai-feedback-policy": "computing",
