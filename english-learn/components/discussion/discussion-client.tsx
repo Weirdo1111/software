@@ -285,6 +285,7 @@ export function DiscussionClient({
           view={view}
           search={search}
           roleplayHref={`/discussion/roleplay?lang=${locale}`}
+          seminarHref={`/discussion/seminars?lang=${locale}`}
           onSearchChange={setSearch}
           onSelectTag={setSelectedTag}
           onSelectView={setView}

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import {
   getCurrentAuthIdentity,
   requireCurrentDiscussionUser,
@@ -15,7 +16,7 @@ export async function GET(req: NextRequest) {
     const view = searchParams.get("view");
     const search = searchParams.get("search");
 
-    const where: any = {};
+    const where: Prisma.DiscussionPostWhereInput = {};
 
     if (category && category !== "all") {
       where.category = category;
@@ -30,7 +31,10 @@ export async function GET(req: NextRequest) {
       ];
     }
 
-    let orderBy: any[] = [{ pinned: "desc" }, { createdAt: "desc" }];
+    let orderBy: Prisma.DiscussionPostOrderByWithRelationInput[] = [
+      { pinned: "desc" },
+      { createdAt: "desc" },
+    ];
 
     if (view === "latest") {
       orderBy = [{ createdAt: "desc" }];
@@ -60,7 +64,7 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(
-      posts.map((post: any) => toDiscussionPost(post, currentUser?.id ?? BigInt(-1)))
+      posts.map((post) => toDiscussionPost(post, currentUser?.id ?? BigInt(-1)))
     );
   } catch (error) {
     console.error("discussion posts GET failed", error);

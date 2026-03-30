@@ -35,6 +35,7 @@ interface DiscussionBoardProps {
   view: ViewMode;
   search: string;
   roleplayHref: string;
+  seminarHref: string;
   onOpenComposer: () => void;
   onToggleLike?: (postId: string) => void;
   onSearchChange: (value: string) => void;
@@ -119,6 +120,7 @@ export function DiscussionBoard({
   view,
   search,
   roleplayHref,
+  seminarHref,
   onOpenComposer,
   onToggleLike,
   onSearchChange,
@@ -139,6 +141,7 @@ export function DiscussionBoard({
       empty: "当前暂无讨论内容。",
       forumCn: "学术论坛",
       roleplay: "Roleplay",
+      seminars: "Seminar Rooms",
       queryAll: "查看社区里的最新讨论动态",
       querySearch: "当前结果来自论坛实时查询：",
     },
@@ -153,6 +156,7 @@ export function DiscussionBoard({
       empty: "No discussions found.",
       forumCn: "Academic Forum",
       roleplay: "Roleplay",
+      seminars: "Seminar Rooms",
       queryAll: "Explore the latest community updates",
       querySearch: "Results are now driven by the live forum query:",
     },
@@ -217,6 +221,14 @@ export function DiscussionBoard({
             >
               <Bot className="size-4" />
               {text.roleplay}
+            </Link>
+
+            <Link
+              href={seminarHref}
+              className="hidden items-center gap-2 rounded-full border border-[#d8e1ee] bg-white px-4 py-2.5 text-sm font-medium text-[#1f2937] shadow-sm transition hover:bg-[#f8fbff] lg:inline-flex"
+            >
+              <MessageCircle className="size-4" />
+              {text.seminars}
             </Link>
 
             <button

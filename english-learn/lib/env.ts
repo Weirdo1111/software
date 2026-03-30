@@ -21,6 +21,7 @@ export const env = {
     SUPABASE_URL: getEnvValue("SUPABASE_URL", false),
     SUPABASE_ANON_KEY: getEnvValue("SUPABASE_ANON_KEY", false),
     SUPABASE_SERVICE_ROLE_KEY: getEnvValue("SUPABASE_SERVICE_ROLE_KEY", false),
+    SUPABASE_STORAGE_BUCKET_SEMINARS: getEnvValue("SUPABASE_STORAGE_BUCKET_SEMINARS", false),
     AI_API_KEY: getEnvValue("AI_API_KEY", false),
     AI_BASE_URL: getEnvValue("AI_BASE_URL", false),
     AI_MODEL: getEnvValue("AI_MODEL", false),

@@ -143,6 +143,16 @@ export async function requireCurrentDiscussionUser() {
   });
 }
 
+export async function getCurrentDiscussionUser() {
+  const identity = await getCurrentAuthIdentity();
+
+  if (!identity) {
+    return null;
+  }
+
+  return requireCurrentDiscussionUser();
+}
+
 export async function getCurrentDiscussionUserId() {
   const user = await requireCurrentDiscussionUser();
   return user.id;

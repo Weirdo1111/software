@@ -120,6 +120,48 @@ async function main() {
       ],
     });
   }
+
+  const existingSeminar = await prisma.seminarRoom.findFirst({
+    where: {
+      title: "Weekly Seminar Room: Better Evidence in EMI Presentations",
+    },
+  });
+
+  if (!existingSeminar) {
+    const room = await prisma.seminarRoom.create({
+      data: {
+        ownerId: tutor.id,
+        title: "Weekly Seminar Room: Better Evidence in EMI Presentations",
+        description:
+          "Use this room to rehearse short seminar turns, compare examples, and share supporting materials before Friday's presentation clinic.",
+        topicTag: "speaking",
+        visibility: "PUBLIC",
+        status: "ACTIVE",
+        lastActiveAt: new Date(),
+        members: {
+          create: [
+            {
+              userId: tutor.id,
+              role: "OWNER",
+            },
+            {
+              userId: you.id,
+              role: "MEMBER",
+            },
+          ],
+        },
+      },
+    });
+
+    await prisma.seminarRoomMessage.create({
+      data: {
+        roomId: room.id,
+        senderId: tutor.id,
+        content:
+          "Start with one claim, one piece of evidence, and one short explanation. If you want feedback on your wording, drop it here before Thursday night.",
+      },
+    });
+  }
 }
 
 main()
