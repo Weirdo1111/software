@@ -1,10 +1,14 @@
 import DiscussionDetailClient from "@/components/discussion/discussion-detail-client";
+import { getLocale } from "@/lib/i18n/get-locale";
 
 export default async function PostDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ lang?: string }>;
 }) {
   const { id } = await params;
-  return <DiscussionDetailClient locale="en" postId={id} />;
+  const locale = await getLocale(searchParams);
+  return <DiscussionDetailClient locale={locale} postId={id} />;
 }

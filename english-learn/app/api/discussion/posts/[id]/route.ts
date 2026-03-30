@@ -16,17 +16,22 @@ export async function GET(
     const { id } = await params;
     const postId = BigInt(id);
 
-    await prisma.discussionPost.update({
+    const post = await prisma.discussionPost.findUnique({
+      where: { id: postId },
+      select: { id: true },
+    });
+
+    if (!post) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    const updatedPost = await prisma.discussionPost.update({
       where: { id: postId },
       data: {
         viewsCount: {
           increment: 1,
         },
       },
-    });
-
-    const post = await prisma.discussionPost.findUnique({
-      where: { id: postId },
       include: {
         author: true,
         comments: {
@@ -43,11 +48,7 @@ export async function GET(
       },
     });
 
-    if (!post) {
-      return NextResponse.json({ error: "Post not found" }, { status: 404 });
-    }
-
-    return NextResponse.json(toDiscussionPost(post, currentUser?.id ?? BigInt(-1)));
+    return NextResponse.json(toDiscussionPost(updatedPost, currentUser?.id ?? BigInt(-1)));
   } catch (error) {
     console.error("discussion post detail GET failed", error);
     return NextResponse.json({ error: "Failed to load post" }, { status: 500 });

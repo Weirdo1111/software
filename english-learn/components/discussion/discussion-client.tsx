@@ -1,7 +1,14 @@
 "use client";
 
+<<<<<<< Updated upstream
 import { useEffect, useState } from "react";
 import { Send, X } from "lucide-react";
+=======
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useDeferredValue, useEffect, useMemo, useState, startTransition } from "react";
+import { Bot, Send, X } from "lucide-react";
+>>>>>>> Stashed changes
 
 import { DiscussionBoard } from "@/components/discussion/discussion-board";
 import type {
@@ -10,6 +17,8 @@ import type {
   DiscussionPost,
   Locale,
 } from "@/components/discussion/types";
+
+type DiscussionViewMode = "all" | "latest" | "popular";
 
 async function readJsonOrFallback<T>(response: Response, fallback: T): Promise<T> {
   const text = await response.text();
@@ -22,7 +31,43 @@ async function readJsonOrFallback<T>(response: Response, fallback: T): Promise<T
   }
 }
 
+<<<<<<< Updated upstream
 export function DiscussionClient({ locale }: { locale: Locale }) {
+=======
+function normalizeCategory(value?: string): DiscussionCategory | "all" {
+  if (!value || value === "all") return "all";
+
+  const valid: Array<DiscussionCategory> = [
+    "grammar",
+    "listening",
+    "reading",
+    "writing",
+    "speaking",
+    "assessment",
+    "experience",
+  ];
+
+  return valid.includes(value as DiscussionCategory) ? (value as DiscussionCategory) : "all";
+}
+
+function normalizeView(value?: string): DiscussionViewMode {
+  return value === "latest" || value === "popular" ? value : "all";
+}
+
+export function DiscussionClient({
+  locale,
+  initialCategory,
+  initialView,
+  initialSearch,
+}: {
+  locale: Locale;
+  initialCategory?: string;
+  initialView?: string;
+  initialSearch?: string;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+>>>>>>> Stashed changes
   const [openComposer, setOpenComposer] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -31,11 +76,19 @@ export function DiscussionClient({ locale }: { locale: Locale }) {
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState<DiscussionPost[]>([]);
   const [notifications, setNotifications] = useState<DiscussionNotification[]>([]);
+  const [selectedTag, setSelectedTag] = useState<DiscussionCategory | "all">(() => normalizeCategory(initialCategory));
+  const [view, setView] = useState<DiscussionViewMode>(() => normalizeView(initialView));
+  const [search, setSearch] = useState(initialSearch ?? "");
+  const deferredSearch = useDeferredValue(search);
 
   const text = {
     zh: {
       dialogTitle: "发起新讨论",
+<<<<<<< Updated upstream
       dialogSubtitle: "首页只展示摘要，完整内容会在帖子详情页中展示。",
+=======
+      dialogSubtitle: "论坛现在独立承担帖子、评论与通知流；角色扮演入口已拆分为单独空间。",
+>>>>>>> Stashed changes
       category: "分类",
       title: "标题",
       content: "正文",
@@ -46,20 +99,31 @@ export function DiscussionClient({ locale }: { locale: Locale }) {
       titleRequired: "标题和正文不能为空",
       titleShort: "标题至少 6 个字符",
       contentShort: "正文至少 20 个字符",
+<<<<<<< Updated upstream
+=======
+      openRoleplay: "进入 Roleplay",
+>>>>>>> Stashed changes
       categories: {
         grammar: "语法",
         listening: "听力",
         reading: "阅读",
         writing: "写作",
         speaking: "口语",
+<<<<<<< Updated upstream
         experience: "经验分享",
         assessment: "测评",
       },
+=======
+        assessment: "测评",
+        experience: "经验分享",
+      },
+      loading: "加载中...",
+>>>>>>> Stashed changes
     },
     en: {
       dialogTitle: "Start New Discussion",
       dialogSubtitle:
-        "The homepage shows summaries only; full content appears on the detail page.",
+        "The forum now focuses on posts, comments, and notifications. Roleplay has been moved into its own space.",
       category: "Category",
       title: "Title",
       content: "Content",
@@ -71,6 +135,7 @@ export function DiscussionClient({ locale }: { locale: Locale }) {
       titleRequired: "Title and content are required",
       titleShort: "Title must be at least 6 characters",
       contentShort: "Content must be at least 20 characters",
+      openRoleplay: "Open Roleplay",
       categories: {
         grammar: "Grammar",
         listening: "Listening",
@@ -80,36 +145,79 @@ export function DiscussionClient({ locale }: { locale: Locale }) {
         experience: "Experience",
         assessment: "Assessment",
       },
+<<<<<<< Updated upstream
+=======
+      loading: "Loading...",
+>>>>>>> Stashed changes
     },
   }[locale];
 
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-
+    const loadNotifications = async () => {
       try {
-        const [postsRes, activityRes] = await Promise.all([
-          fetch("/api/discussion/posts", { cache: "no-store" }),
-          fetch("/api/discussion/activity", { cache: "no-store" }),
-        ]);
-
-        const [postsJson, activityJson] = await Promise.all([
-          readJsonOrFallback<DiscussionPost[]>(postsRes, []),
-          readJsonOrFallback<{ notifications?: DiscussionNotification[] }>(activityRes, {}),
-        ]);
-
-        setPosts(postsJson);
+        const activityRes = await fetch("/api/discussion/activity", { cache: "no-store" });
+        const activityJson = await readJsonOrFallback<{ notifications?: DiscussionNotification[] }>(activityRes, {});
         setNotifications(activityJson.notifications ?? []);
       } catch {
-        setPosts([]);
         setNotifications([]);
-      } finally {
-        setLoading(false);
       }
     };
 
-    void loadData();
+    void loadNotifications();
   }, []);
+
+  const postsQuery = useMemo(() => {
+    const params = new URLSearchParams();
+    if (selectedTag !== "all") params.set("category", selectedTag);
+    if (view !== "all") params.set("view", view);
+    if (deferredSearch.trim()) params.set("search", deferredSearch.trim());
+    return params.toString();
+  }, [deferredSearch, selectedTag, view]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadPosts = async () => {
+      setLoading(true);
+
+      try {
+        const postsRes = await fetch(`/api/discussion/posts${postsQuery ? `?${postsQuery}` : ""}`, {
+          cache: "no-store",
+        });
+        const postsJson = await readJsonOrFallback<DiscussionPost[]>(postsRes, []);
+
+        if (!cancelled) {
+          setPosts(postsJson);
+        }
+      } catch {
+        if (!cancelled) {
+          setPosts([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void loadPosts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [postsQuery]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    params.set("lang", locale);
+    if (selectedTag !== "all") params.set("category", selectedTag);
+    if (view !== "all") params.set("view", view);
+    if (deferredSearch.trim()) params.set("search", deferredSearch.trim());
+
+    startTransition(() => {
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    });
+  }, [deferredSearch, locale, pathname, router, selectedTag, view]);
 
   const handleSubmit = async () => {
     const trimmedTitle = title.trim();
@@ -138,10 +246,14 @@ export function DiscussionClient({ locale }: { locale: Locale }) {
       body: JSON.stringify({ title: trimmedTitle, content: trimmedContent, category }),
     });
 
+<<<<<<< Updated upstream
     const result = await readJsonOrFallback<DiscussionPost | { error?: string } | null>(
       res,
       null
     );
+=======
+    const result = await readJsonOrFallback<DiscussionPost | { error?: string } | null>(res, null);
+>>>>>>> Stashed changes
 
     if (!res.ok) {
       const message =
@@ -203,6 +315,7 @@ export function DiscussionClient({ locale }: { locale: Locale }) {
 
   return (
     <>
+<<<<<<< Updated upstream
       <DiscussionBoard
         locale={locale}
         posts={posts}
@@ -210,6 +323,36 @@ export function DiscussionClient({ locale }: { locale: Locale }) {
         onOpenComposer={() => setOpenComposer(true)}
         onToggleLike={handleToggleLike}
       />
+=======
+      <div className="mx-auto flex max-w-7xl justify-end px-4 pt-6 sm:px-6">
+        <Link
+          href={`/discussion/roleplay?lang=${locale}`}
+          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+        >
+          <Bot className="size-4" />
+          {text.openRoleplay}
+        </Link>
+      </div>
+
+      {loading ? (
+        <div className="p-8 text-sm text-slate-500">{text.loading}</div>
+      ) : (
+        <DiscussionBoard
+          locale={locale}
+          posts={posts}
+          notifications={notifications}
+          selectedTag={selectedTag}
+          view={view}
+          search={search}
+          roleplayHref={`/discussion/roleplay?lang=${locale}`}
+          onSearchChange={setSearch}
+          onSelectTag={setSelectedTag}
+          onSelectView={setView}
+          onOpenComposer={() => setOpenComposer(true)}
+          onToggleLike={handleToggleLike}
+        />
+      )}
+>>>>>>> Stashed changes
 
       {openComposer && (
         <div
@@ -257,6 +400,7 @@ export function DiscussionClient({ locale }: { locale: Locale }) {
                   <option value="reading">{text.categories.reading}</option>
                   <option value="writing">{text.categories.writing}</option>
                   <option value="speaking">{text.categories.speaking}</option>
+                  <option value="assessment">{text.categories.assessment}</option>
                   <option value="experience">{text.categories.experience}</option>
                   <option value="assessment">{text.categories.assessment}</option>
                 </select>

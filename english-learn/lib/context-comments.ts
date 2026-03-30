@@ -1,6 +1,4 @@
-import type { Locale } from "@/lib/i18n/dictionaries";
 import { normalizeDiscussionCategory } from "@/components/discussion/types";
-import { appendDiscussionPost } from "@/lib/discussion-store";
 
 export type ContextCommentModule =
   | "listening"
@@ -59,8 +57,6 @@ type ContextCommentDraft = {
   anchorLabel?: string;
   anchorText?: string;
   author?: string;
-  promoteToDiscussion?: boolean;
-  locale?: Locale;
 };
 
 const CONTEXT_STORAGE_KEY = "context_comment_threads_v1";
@@ -74,10 +70,6 @@ function buildCommentId() {
 
 function buildThreadId(module: ContextCommentModule, targetId: string) {
   return `${module}:${targetId}`;
-}
-
-function formatPlazaDate(date: Date) {
-  return date.toISOString().slice(0, 16).replace("T", " ");
 }
 
 function isContextComment(value: unknown): value is ContextComment {
@@ -218,6 +210,17 @@ function buildDiscussionContent(comment: ContextComment) {
   return comment.content;
 }
 
+async function readJsonOrNull<T>(response: Response) {
+  const text = await response.text();
+  if (!text.trim()) return null;
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return null;
+  }
+}
+
 export function subscribeContextComments(onStoreChange: () => void) {
   if (typeof window === "undefined") {
     return () => {};
@@ -356,6 +359,46 @@ async function persistContextLikeToServer(commentId: string) {
   }
 }
 
+async function persistContextPromotionToServer(
+  commentId: string,
+  promotedAt: string,
+) {
+  if (typeof window === "undefined") return false;
+  if (!/^[0-9a-fA-F-]{36}$/.test(commentId)) return false;
+
+  try {
+    const response = await fetch("/api/context-comments", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ commentId, promotedAt }),
+    });
+
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+function markContextCommentPromoted(
+  context: ContextCommentContext,
+  commentId: string,
+  promotedAt: string,
+) {
+  const threads = readThreads();
+  const currentThread = getContextThread(context);
+  const nextThread: ContextCommentThread = {
+    ...hydrateThread(currentThread, context),
+    comments: currentThread.comments.map((comment) =>
+      comment.id === commentId ? { ...comment, promotedAt } : comment,
+    ),
+  };
+
+  writeThreads(upsertThread(threads, nextThread));
+  void persistContextPromotionToServer(commentId, promotedAt);
+}
+
 export function appendContextComment(
   context: ContextCommentContext,
   draft: ContextCommentDraft,
@@ -373,7 +416,6 @@ export function appendContextComment(
     liked: false,
     anchorLabel: draft.anchorLabel,
     anchorText: draft.anchorText,
-    promotedAt: draft.promoteToDiscussion ? now.toISOString() : undefined,
   };
 
   const nextThread: ContextCommentThread = {
@@ -385,23 +427,52 @@ export function appendContextComment(
   writeThreads(upsertThread(threads, nextThread));
   void persistContextCommentToServer(context, nextComment);
 
-  if (draft.promoteToDiscussion) {
-    appendDiscussionPost({
-      id: globalThis.crypto?.randomUUID?.() ?? `plaza-${Date.now()}`,
-      title: buildDiscussionTitle(context, nextComment),
-      content: buildDiscussionContent(nextComment),
-      author: nextComment.author,
-      tag: normalizeDiscussionCategory(context.plazaTag),
-      likes: 0,
-      liked: false,
-      pinned: false,
-      createdAt: formatPlazaDate(now),
-      comments: [],
-      views: 0,
-    });
+  return nextComment;
+}
+
+export async function shareContextCommentToDiscussion(
+  context: ContextCommentContext,
+  comment: ContextComment,
+) {
+  if (typeof window === "undefined") {
+    return {
+      ok: false as const,
+      error: "Forum sharing is only available in the browser.",
+    };
   }
 
-  return nextComment;
+  try {
+    const response = await fetch("/api/discussion/posts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: buildDiscussionTitle(context, comment),
+        content: buildDiscussionContent(comment),
+        category: normalizeDiscussionCategory(context.plazaTag),
+      }),
+    });
+
+    if (!response.ok) {
+      const payload = await readJsonOrNull<{ error?: string }>(response);
+
+      return {
+        ok: false as const,
+        error: payload?.error ?? "Failed to share this comment to the forum.",
+      };
+    }
+
+    const promotedAt = new Date().toISOString();
+    markContextCommentPromoted(context, comment.id, promotedAt);
+
+    return { ok: true as const };
+  } catch {
+    return {
+      ok: false as const,
+      error: "Network error. The comment stayed on this page.",
+    };
+  }
 }
 
 export function toggleContextCommentLike(

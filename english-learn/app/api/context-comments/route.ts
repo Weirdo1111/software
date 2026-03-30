@@ -32,6 +32,11 @@ const toggleLikeSchema = z.object({
   commentId: z.string().uuid(),
 });
 
+const promoteCommentSchema = z.object({
+  commentId: z.string().uuid(),
+  promotedAt: z.string().min(1),
+});
+
 function mapThreadResponse(input: {
   context: z.infer<typeof contextSchema>;
   updatedAt: string;
@@ -262,5 +267,34 @@ export async function PUT(request: Request) {
     }
 
     return jsonError("Failed to update like", 500);
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json();
+    const payload = promoteCommentSchema.parse(body);
+    const supabase = createSupabaseServiceClient();
+
+    if (!supabase) {
+      return NextResponse.json({ saved: false, fallback: true });
+    }
+
+    const { error } = await supabase
+      .from("context_comments")
+      .update({ promoted_at: payload.promotedAt })
+      .eq("id", payload.commentId);
+
+    if (error) {
+      return jsonError("Failed to update discussion share status", 500);
+    }
+
+    return NextResponse.json({ saved: true });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return jsonError(error.issues[0]?.message ?? "Invalid payload", 422);
+    }
+
+    return jsonError("Failed to update share status", 500);
   }
 }

@@ -13,6 +13,7 @@ import {
   getContextCommentsSnapshot,
   getContextThread,
   hydrateContextThreadFromServer,
+  shareContextCommentToDiscussion,
   subscribeContextComments,
   toggleContextCommentLike,
 } from "@/lib/context-comments";
@@ -63,7 +64,7 @@ export function ContextDock({
   const [draft, setDraft] = useState("");
   const [selectedTopic, setSelectedTopic] = useState(context.topics[0] ?? "");
   const [status, setStatus] = useState("");
-  const [hasMounted, setHasMounted] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
   const copy =
     locale === "zh"
@@ -78,6 +79,8 @@ export function ContextDock({
           comments: "条评论",
           lastActive: "最近活跃",
           synced: "已同步论坛",
+          syncing: "正在同步到论坛...",
+          syncFailed: "同步失败，当前评论仍保留在本页。",
         }
       : {
           title: "Page discussion",
@@ -85,11 +88,13 @@ export function ContextDock({
           collapse: "Collapse",
           placeholder: "Write your thought",
           publish: "Post",
-          publishToPlaza: "Share to plaza",
+          publishToPlaza: "Share to forum",
           empty: "No comments yet",
           comments: "comments",
           lastActive: "Latest",
-          synced: "Shared",
+          synced: "Shared to forum",
+          syncing: "Sharing to forum...",
+          syncFailed: "Forum sharing failed. The comment stayed on this page.",
         };
 
   const thread = useMemo(
@@ -108,31 +113,37 @@ export function ContextDock({
     [comments, context.topics],
   );
   const lastActive = comments[0]?.createdAt
-    ? hasMounted
-      ? formatCommentTime(locale, comments[0].createdAt)
-      : formatCommentTimeFallback(comments[0].createdAt)
+    ? formatCommentTime(locale, comments[0].createdAt)
     : null;
 
   useEffect(() => {
     void hydrateContextThreadFromServer(context);
   }, [context]);
 
-  useEffect(() => {
-    setHasMounted(true);
-  }, []);
+  async function handlePublish(promoteToDiscussion: boolean) {
+    if (isSharing) return;
 
-  function handlePublish(promoteToDiscussion: boolean) {
     const trimmed = draft.trim();
     if (!trimmed) return;
 
-    appendContextComment(context, {
+    const nextComment = appendContextComment(context, {
       content: trimmed,
       topic: selectedTopic || undefined,
-      promoteToDiscussion,
-      locale,
     });
     setDraft("");
-    setStatus(promoteToDiscussion ? copy.synced : "");
+
+    if (!promoteToDiscussion) {
+      setStatus("");
+      return;
+    }
+
+    setIsSharing(true);
+    setStatus(copy.syncing);
+
+    const result = await shareContextCommentToDiscussion(context, nextComment);
+
+    setStatus(result.ok ? copy.synced : result.error ?? copy.syncFailed);
+    setIsSharing(false);
   }
 
   return (
@@ -175,7 +186,7 @@ export function ContextDock({
         </span>
         {lastActive ? (
           <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5 text-xs font-semibold text-[var(--ink-soft)]">
-            {copy.lastActive} {lastActive}
+            {copy.lastActive} <span suppressHydrationWarning>{lastActive}</span>
           </span>
         ) : null}
         {summaryTopics.map((topic) => (
@@ -240,7 +251,8 @@ export function ContextDock({
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={() => handlePublish(false)}
+                  onClick={() => void handlePublish(false)}
+                  disabled={isSharing}
                   className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.12)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition-colors hover:border-[var(--navy)] hover:text-[var(--navy)]"
                 >
                   <Send className="size-4" />
@@ -248,8 +260,9 @@ export function ContextDock({
                 </button>
                 <button
                   type="button"
-                  onClick={() => handlePublish(true)}
-                  className="inline-flex items-center gap-2 rounded-full bg-[var(--navy)] px-4 py-2.5 text-sm font-semibold text-[#f7efe3] transition hover:opacity-95"
+                  onClick={() => void handlePublish(true)}
+                  disabled={isSharing}
+                  className="inline-flex items-center gap-2 rounded-full bg-[var(--navy)] px-4 py-2.5 text-sm font-semibold text-[#f7efe3] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Sparkles className="size-4" />
                   {copy.publishToPlaza}
@@ -285,10 +298,8 @@ export function ContextDock({
                           </span>
                         ) : null}
                       </div>
-                      <p className="mt-1 text-xs text-[var(--ink-soft)]">
-                        {hasMounted
-                          ? formatCommentTime(locale, comment.createdAt)
-                          : formatCommentTimeFallback(comment.createdAt)}
+                      <p className="mt-1 text-xs text-[var(--ink-soft)]" suppressHydrationWarning>
+                        {formatCommentTime(locale, comment.createdAt) || formatCommentTimeFallback(comment.createdAt)}
                       </p>
                     </div>
                     <button

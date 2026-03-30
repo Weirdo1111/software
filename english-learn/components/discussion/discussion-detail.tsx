@@ -275,7 +275,7 @@ export function DiscussionDetail({
             LearnEnglishRight
           </span>
           <Link
-            href="/discussion"
+            href={`/discussion?lang=${locale}`}
             className="inline-flex items-center gap-2 text-sm font-medium text-[#45474C]"
           >
             <ChevronLeft className="size-4" />

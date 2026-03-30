@@ -150,7 +150,7 @@ export function DiscussionActivityClient({ locale }: { locale: Locale }) {
           </div>
 
           <Link
-            href="/"
+            href={`/discussion?lang=${locale}`}
             className="border border-[#dde2f3] bg-white px-4 py-2 text-sm font-medium text-[#030813]"
           >
             {text.back}
@@ -176,7 +176,7 @@ export function DiscussionActivityClient({ locale }: { locale: Locale }) {
               notifications.map((item) => (
                 <Link
                   key={item.id}
-                  href={`/posts/${item.postId}`}
+                  href={`/posts/${item.postId}?lang=${locale}`}
                   className={`block border-l-4 bg-white px-5 py-5 shadow-sm transition hover:bg-[#eef2ff] ${
                     item.type === "like" ? "border-[#d64545]" : "border-[#3f6ad8]"
                   }`}
@@ -232,7 +232,7 @@ export function DiscussionActivityClient({ locale }: { locale: Locale }) {
               myPosts.map((post) => (
                 <Link
                   key={post.id}
-                  href={`/posts/${post.id}`}
+                  href={`/posts/${post.id}?lang=${locale}`}
                   className="block bg-white px-5 py-5 shadow-sm transition hover:bg-[#eef2ff]"
                 >
                   <h3 className="font-serif text-xl text-[#030813]">{post.title}</h3>
@@ -266,7 +266,7 @@ export function DiscussionActivityClient({ locale }: { locale: Locale }) {
               likedPosts.map((post) => (
                 <Link
                   key={post.id}
-                  href={`/posts/${post.id}`}
+                  href={`/posts/${post.id}?lang=${locale}`}
                   className="block bg-white px-5 py-5 shadow-sm transition hover:bg-[#eef2ff]"
                 >
                   <h3 className="font-serif text-xl text-[#030813]">{post.title}</h3>
@@ -297,7 +297,7 @@ export function DiscussionActivityClient({ locale }: { locale: Locale }) {
               commentedPosts.map((post) => (
                 <Link
                   key={post.id}
-                  href={`/posts/${post.id}`}
+                  href={`/posts/${post.id}?lang=${locale}`}
                   className="block bg-white px-5 py-5 shadow-sm transition hover:bg-[#eef2ff]"
                 >
                   <h3 className="font-serif text-xl text-[#030813]">{post.title}</h3>
@@ -334,7 +334,7 @@ export function DiscussionActivityClient({ locale }: { locale: Locale }) {
                       {text.commentOn}
                     </div>
                     <Link
-                      href={`/posts/${item.postId}`}
+                      href={`/posts/${item.postId}?lang=${locale}`}
                       className="mt-1 block font-serif text-xl text-[#030813] hover:text-[#675E43]"
                     >
                       {item.postTitle}

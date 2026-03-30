@@ -72,7 +72,7 @@ export function DiscussionDetailClient({
           <h1 className="font-serif text-3xl text-[#030813]">Post not found</h1>
           <button
             type="button"
-            onClick={() => router.push("/discussion")}
+            onClick={() => router.push(`/discussion?lang=${locale}`)}
             className="mt-6 bg-[#030813] px-5 py-3 text-sm font-medium text-white"
           >
             Back
