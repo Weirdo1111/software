@@ -38,11 +38,10 @@ import {
   getActiveWeekPlanOverrides,
   hydrateSchedulePreferencesFromServer,
   loadSchedulePreferencesFromStorage,
-  saveSchedulePreferencesToStorage,
   subscribeSchedulePreferences,
   type ScheduleGoal,
-  type ScheduleMode,
-  type StudyWindow,
+  type ScheduleSkill,
+  type ScheduleWeekMode,
 } from "@/lib/schedule";
 
 function normalizeLevel(raw: string | null) {
@@ -135,6 +134,22 @@ function getGoalLabel(goal: ScheduleGoal, locale: Locale) {
   if (goal === "research") return locale === "zh" ? "研究模式" : "Research mode";
   if (goal === "seminar") return locale === "zh" ? "研讨模式" : "Seminar mode";
   return locale === "zh" ? "课程模式" : "Coursework mode";
+}
+
+function getWeekModeLabel(mode: ScheduleWeekMode, locale: Locale) {
+  if (mode === "heavy-reading") return locale === "zh" ? "\u9605\u8bfb\u63a8\u8fdb\u5468" : "Reading week";
+  if (mode === "presentation") return locale === "zh" ? "\u5c55\u793a\u51c6\u5907\u5468" : "Presentation week";
+  if (mode === "deadline-rescue") return locale === "zh" ? "\u8d76 due \u5468" : "Deadline week";
+  if (mode === "recovery") return locale === "zh" ? "\u7f13\u51b2\u5468" : "Recovery week";
+  return locale === "zh" ? "\u5e38\u89c4\u5468" : "Normal week";
+}
+
+function getSkillLabel(skill: ScheduleSkill, locale: Locale) {
+  if (skill === "listening") return locale === "zh" ? "\u542c\u529b" : "Listening";
+  if (skill === "speaking") return locale === "zh" ? "\u53e3\u8bed" : "Speaking";
+  if (skill === "reading") return locale === "zh" ? "\u9605\u8bfb" : "Reading";
+  if (skill === "writing") return locale === "zh" ? "\u5199\u4f5c" : "Writing";
+  return locale === "zh" ? "\u590d\u4e60" : "Review";
 }
 
 function getQuestVisual(skill: string) {
@@ -270,11 +285,49 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       ? levelPrefix
       : "B2";
   const writingHref = `/lesson/${writingLevel}-writing-starter?lang=${locale}`;
-
-  const updatePrefs = (partial: Partial<typeof preferences>) => {
-    const updated = saveSchedulePreferencesToStorage({ ...preferences, ...partial });
-    setPreferences(updated);
-  };
+  const totalWeekDeadlines = weeklySchedule.days.reduce((sum, day) => sum + day.deadlines.length, 0);
+  const totalWeekClasses = weeklySchedule.days.reduce((sum, day) => sum + day.classes.length, 0);
+  const totalWeekQuests = weeklySchedule.days.reduce((sum, day) => sum + day.blocks.length, 0);
+  const activeRouteDays = weeklySchedule.days.filter((day) => day.blocks.length > 0).length;
+  const weekSnapshotHref = `/schedule?lang=${locale}&focus=${encodeURIComponent(todayPlan.dateISO)}#schedule-week`;
+  const homePlannerText =
+    locale === "zh"
+      ? {
+          snapshotLabel: "\u672c\u5468\u6982\u89c8",
+          snapshotTitle: "\u4e00\u773c\u770b\u6e05\u672c\u5468\u8def\u7ebf",
+          snapshotNote: "\u9996\u9875\u53ea\u770b\u9884\u89c8\uff0c\u8c03\u6574\u8def\u7ebf\u53bb\u4efb\u52a1\u5730\u56fe\u3002",
+          openMap: "\u6253\u5f00\u4efb\u52a1\u5730\u56fe",
+          fullPlan: "\u4efb\u52a1\u5730\u56fe",
+          routeTheme: "\u8def\u7ebf\u4e3b\u9898",
+          focus: "\u4e3b\u7ebf",
+          routeState: "\u72b6\u6001",
+          due: "due",
+          activeDays: "\u5df2\u5c55\u5f00",
+          classes: "\u8bfe\u7a0b",
+          quests: "\u4efb\u52a1",
+          routeReady: "\u672c\u5468\u8def\u7ebf\u5df2\u5c31\u7eea",
+          routePending: "\u8fd8\u53ef\u4ee5\u751f\u6210\u6216\u5b8c\u5584\u8def\u7ebf",
+          noPlan: "\u4eca\u5929\u8fd8\u6ca1\u6709\u4efb\u52a1\uff0c\u53ef\u4ee5\u5148\u53bb\u4efb\u52a1\u5730\u56fe\u751f\u6210\u6216\u8c03\u6574\u8def\u7ebf\u3002",
+          launch: "\u8fdb\u5165",
+        }
+      : {
+          snapshotLabel: "Week Snapshot",
+          snapshotTitle: "See this week's route in one glance",
+          snapshotNote: "Keep the overview here and adjust the route inside Quest Map.",
+          openMap: "Open Quest Map",
+          fullPlan: "Quest Map",
+          routeTheme: "Route theme",
+          focus: "Focus lane",
+          routeState: "State",
+          due: "due",
+          activeDays: "Active days",
+          classes: "Classes",
+          quests: "Quests",
+          routeReady: "This week's route is already in motion.",
+          routePending: "You can still generate or refine the route.",
+          noPlan: "No quests are queued yet. Head to Quest Map to generate or refine the route.",
+          launch: "Launch",
+        };
 
   const growthRows: Array<{ label: string; value: number; hint: string }> = [
     {
@@ -628,7 +681,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
 
       <HomeLearningModules locale={locale} />
 
-      <div className="grid gap-5 xl:grid-cols-[1.04fr_0.96fr]">
+      <div className="grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
         <article className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(246,250,255,0.92),rgba(255,241,248,0.88))] p-6">
           <div className="flex items-center justify-between gap-3">
             <div>
@@ -637,12 +690,14 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                 {locale === "zh" ? "今日任务" : "Today's Quests"}
               </p>
               <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
-                {locale === "zh" ? "从最重要的 3 个任务开始。" : "Start with the 3 quests that matter most."}
+                {locale === "zh"
+                  ? "从今天最值得先做的 3 个任务开始。"
+                  : "Start with the 3 quests worth doing first."}
               </h3>
             </div>
             <Link href={`/schedule?lang=${locale}`} className="pet-sticker">
               <CalendarDays className="mr-1 size-3.5" />
-              {locale === "zh" ? "完整计划" : "Full plan"}
+              {homePlannerText.fullPlan}
             </Link>
           </div>
 
@@ -662,7 +717,13 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <span className={index === 0 ? "mission-badge mission-badge-win" : "mission-badge mission-badge-live"}>
-                            {index === 0 ? (locale === "zh" ? "主任务" : "Main quest") : locale === "zh" ? "支线任务" : "Side quest"}
+                            {index === 0
+                              ? locale === "zh"
+                                ? "主线任务"
+                                : "Main quest"
+                              : locale === "zh"
+                                ? "支线任务"
+                                : "Side quest"}
                           </span>
                           <p className="text-sm font-semibold text-[var(--ink)]">{block.title}</p>
                         </div>
@@ -676,7 +737,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                       href={block.href}
                       className={`inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r px-4 py-2.5 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(42,107,180,0.16)] ${visual.accent}`}
                     >
-                      {locale === "zh" ? "进入任务" : "Launch"}
+                      {homePlannerText.launch}
                       <ArrowRight className="size-4" />
                     </Link>
                   </div>
@@ -686,21 +747,141 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
 
             {todayPlan.blocks.length === 0 ? (
               <div className="rounded-[1.4rem] border border-dashed border-[rgba(42,107,180,0.16)] bg-white/70 p-5 text-sm text-[var(--ink-soft)]">
-                {locale === "zh"
-                  ? "今天还没有生成任务，你可以先去设置计划或打开资源库。"
-                  : "No quests are queued yet. Open your planner or jump into the library first."}
+                {homePlannerText.noPlan}
               </div>
             ) : null}
+          </div>
+        </article>
+
+        <article className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(243,248,255,0.92),rgba(240,255,247,0.9))] p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="section-label">
+                <CalendarDays className="size-3.5" />
+                {homePlannerText.snapshotLabel}
+              </p>
+              <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
+                {homePlannerText.snapshotTitle}
+              </h3>
+            </div>
+            <Link href={weekSnapshotHref} className="pet-sticker">
+              <Compass className="mr-1 size-3.5" />
+              {homePlannerText.openMap}
+            </Link>
+          </div>
+
+          <div className="mt-5 flex flex-wrap gap-2">
+            <span className="mission-badge mission-badge-live">
+              {homePlannerText.routeTheme} · {getWeekModeLabel(weeklySchedule.weekMode, locale)}
+            </span>
+            <span className="mission-badge mission-badge-win">
+              {homePlannerText.focus} · {getSkillLabel(weeklySchedule.primarySkill, locale)}
+            </span>
+          </div>
+
+          <p className="mt-4 text-sm text-[var(--ink-soft)]">{homePlannerText.snapshotNote}</p>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-[1.4rem] border border-[rgba(42,107,180,0.1)] bg-white/88 p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+                {homePlannerText.routeState}
+              </p>
+              <p className="mt-2 text-lg font-semibold text-[var(--ink)]">
+                {totalWeekQuests > 0 ? homePlannerText.routeReady : homePlannerText.routePending}
+              </p>
+            </div>
+            <div className="rounded-[1.4rem] border border-[rgba(42,107,180,0.1)] bg-white/88 p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+                {locale === "zh" ? "目标" : "Target"}
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-[var(--ink)]">{weeklySchedule.weeklyTargetMinutes} min</p>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-4 gap-3">
+            <div className="rounded-[1.2rem] border border-[rgba(42,107,180,0.1)] bg-white/82 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+                {homePlannerText.due}
+              </p>
+              <p className="mt-2 text-xl font-semibold text-[var(--ink)]">{totalWeekDeadlines}</p>
+            </div>
+            <div className="rounded-[1.2rem] border border-[rgba(42,107,180,0.1)] bg-white/82 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+                {homePlannerText.activeDays}
+              </p>
+              <p className="mt-2 text-xl font-semibold text-[var(--ink)]">{activeRouteDays}</p>
+            </div>
+            <div className="rounded-[1.2rem] border border-[rgba(42,107,180,0.1)] bg-white/82 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+                {homePlannerText.classes}
+              </p>
+              <p className="mt-2 text-xl font-semibold text-[var(--ink)]">{totalWeekClasses}</p>
+            </div>
+            <div className="rounded-[1.2rem] border border-[rgba(42,107,180,0.1)] bg-white/82 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+                {homePlannerText.quests}
+              </p>
+              <p className="mt-2 text-xl font-semibold text-[var(--ink)]">{totalWeekQuests}</p>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-7 gap-2">
+            {weeklySchedule.days.map((day) => (
+              <Link
+                key={day.dateISO}
+                href={`/schedule?lang=${locale}&focus=${encodeURIComponent(day.dateISO)}#schedule-week`}
+                className={`rounded-[1.15rem] border px-2 py-3 text-center transition ${
+                  day.isToday
+                    ? "border-[rgba(42,107,180,0.32)] bg-[rgba(145,220,255,0.18)]"
+                    : "border-[rgba(42,107,180,0.1)] bg-white/88 hover:bg-[rgba(145,220,255,0.14)]"
+                }`}
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+                  {weekdayNames[day.day]}
+                </p>
+                <p className="mt-2 text-sm font-semibold text-[var(--ink)]">{day.blocks.length}</p>
+                <p className="mt-1 text-[10px] text-[var(--ink-soft)]">
+                  {day.deadlines.length} {homePlannerText.due}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </article>
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-[0.86fr_1.14fr]">
+        <article className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(255,244,248,0.92),rgba(244,248,255,0.9))] p-6">
+          <p className="section-label">
+            <PawPrint className="size-3.5" />
+            {locale === "zh" ? "学伴成长" : "Buddy Growth"}
+          </p>
+          <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
+            {locale === "zh" ? "让 Buddy 的成长跟着你的学习节奏走。" : "Let your buddy grow with your learning rhythm."}
+          </h3>
+
+          <div className="mt-5 grid gap-4">
+            {growthRows.map((row) => (
+              <div key={row.label} className="rounded-[1.4rem] border border-[rgba(42,107,180,0.1)] bg-white/88 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-[var(--ink)]">{row.label}</p>
+                  <p className="text-sm font-semibold text-[var(--ink-soft)]">{row.value}%</p>
+                </div>
+                <div className="mt-3 buddy-stage-bar h-2.5">
+                  <div className="buddy-progress-fill" style={{ width: `${row.value}%` }} />
+                </div>
+                <p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">{row.hint}</p>
+              </div>
+            ))}
           </div>
         </article>
 
         <article className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(248,247,255,0.92),rgba(237,254,248,0.9))] p-6">
           <p className="section-label">
             <Trophy className="size-3.5" />
-            {locale === "zh" ? "每周任务板" : "Weekly Mission Board"}
+            {locale === "zh" ? "每周挑战" : "Weekly Mission Board"}
           </p>
           <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
-            {locale === "zh" ? "让 Buddy 每周都稳定成长。" : "Give your buddy a reason to grow every week."}
+            {locale === "zh" ? "让本周的挑战和成长一起向前。" : "Keep this week's challenges and growth moving together."}
           </h3>
 
           <div className="mt-5 grid gap-3">
@@ -742,157 +923,6 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
             })}
           </div>
         </article>
-      </div>
-
-      <div className="grid gap-5 xl:grid-cols-[0.88fr_1.12fr]">
-        <article className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(255,244,248,0.92),rgba(244,248,255,0.9))] p-6">
-          <p className="section-label">
-            <PawPrint className="size-3.5" />
-            {locale === "zh" ? "学伴成长" : "Buddy Growth"}
-          </p>
-          <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
-            {locale === "zh" ? "宠物成长跟着学习数据走。" : "The pet grows with your learning signals."}
-          </h3>
-
-          <div className="mt-5 grid gap-4">
-            {growthRows.map((row) => (
-              <div key={row.label} className="rounded-[1.4rem] border border-[rgba(42,107,180,0.1)] bg-white/88 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-semibold text-[var(--ink)]">{row.label}</p>
-                  <p className="text-sm font-semibold text-[var(--ink-soft)]">{row.value}%</p>
-                </div>
-                <div className="mt-3 buddy-stage-bar h-2.5">
-                  <div className="buddy-progress-fill" style={{ width: `${row.value}%` }} />
-                </div>
-                <p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">{row.hint}</p>
-              </div>
-            ))}
-          </div>
-        </article>
-
-        <div className="grid gap-5">
-          <article className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(243,248,255,0.92),rgba(255,247,239,0.9))] p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="section-label">
-                  <Sparkles className="size-3.5" />
-                  {locale === "zh" ? "任务控制台" : "Mission Controls"}
-                </p>
-                <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
-                  {locale === "zh" ? "直接调整学习模式。" : "Tune the study loop directly from home."}
-                </h3>
-              </div>
-              <Link href={`/schedule?lang=${locale}`} className="pet-sticker">
-                {locale === "zh" ? "打开计划页" : "Open planner"}
-              </Link>
-            </div>
-
-            <div className="mt-5 grid gap-4 sm:grid-cols-3">
-              <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
-                  {locale === "zh" ? "目标" : "Goal"}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {(["coursework", "research", "seminar"] as ScheduleGoal[]).map((goal) => (
-                    <button
-                      key={goal}
-                      type="button"
-                      onClick={() => updatePrefs({ goal })}
-                      className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
-                        preferences.goal === goal
-                          ? "bg-[linear-gradient(135deg,#2a6bb4,#55b2ff)] text-white shadow-[0_10px_20px_rgba(42,107,180,0.18)]"
-                          : "border border-[rgba(42,107,180,0.12)] bg-white text-[var(--ink)] hover:bg-[rgba(145,220,255,0.14)]"
-                      }`}
-                    >
-                      {getGoalLabel(goal, locale)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
-                  {locale === "zh" ? "强度" : "Intensity"}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {(["light", "standard", "intensive"] as ScheduleMode[]).map((mode) => (
-                    <button
-                      key={mode}
-                      type="button"
-                      onClick={() => updatePrefs({ mode })}
-                      className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
-                        preferences.mode === mode
-                          ? "bg-[linear-gradient(135deg,#2a6bb4,#55b2ff)] text-white shadow-[0_10px_20px_rgba(42,107,180,0.18)]"
-                          : "border border-[rgba(42,107,180,0.12)] bg-white text-[var(--ink)] hover:bg-[rgba(145,220,255,0.14)]"
-                      }`}
-                    >
-                      {mode}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
-                  {locale === "zh" ? "学习时段" : "Study Window"}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {(["early", "midday", "evening"] as StudyWindow[]).map((windowName) => (
-                    <button
-                      key={windowName}
-                      type="button"
-                      onClick={() => updatePrefs({ studyWindow: windowName })}
-                      className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
-                        preferences.studyWindow === windowName
-                          ? "bg-[linear-gradient(135deg,#2a6bb4,#55b2ff)] text-white shadow-[0_10px_20px_rgba(42,107,180,0.18)]"
-                          : "border border-[rgba(42,107,180,0.12)] bg-white text-[var(--ink)] hover:bg-[rgba(145,220,255,0.14)]"
-                      }`}
-                    >
-                      {windowName}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <article className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(242,249,255,0.92),rgba(246,255,247,0.9))] p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="section-label">
-                  <CalendarDays className="size-3.5" />
-                  {locale === "zh" ? "本周节奏" : "Campus Week"}
-                </p>
-                <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
-                  {locale === "zh" ? "本周学习节奏一眼可见。" : "See the week rhythm at a glance."}
-                </h3>
-              </div>
-              <span className="pet-sticker">
-                {locale === "zh" ? "目标" : "Target"} {weeklySchedule.weeklyTargetMinutes} min
-              </span>
-            </div>
-
-            <div className="mt-5 grid grid-cols-7 gap-2">
-              {weeklySchedule.days.map((day) => (
-                <Link
-                  key={day.dateISO}
-                  href={`/schedule?lang=${locale}&focus=${encodeURIComponent(day.dateISO)}#schedule-week`}
-                  className={`rounded-[1.15rem] border p-3 text-center transition ${
-                    day.isToday
-                      ? "border-[rgba(42,107,180,0.32)] bg-[rgba(145,220,255,0.18)]"
-                      : "border-[rgba(42,107,180,0.1)] bg-white/88 hover:bg-[rgba(145,220,255,0.14)]"
-                  }`}
-                >
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
-                    {weekdayNames[day.day]}
-                  </p>
-                  <p className="mt-2 text-lg font-semibold text-[var(--ink)]">{day.targetMinutes}</p>
-                  <p className="mt-1 text-[10px] text-[var(--ink-soft)]">{day.deadlines.length} due</p>
-                </Link>
-              ))}
-            </div>
-          </article>
-        </div>
       </div>
 
     </section>

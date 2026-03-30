@@ -77,11 +77,63 @@ const weekModeLabels: Record<ScheduleWeekMode, { zh: string; en: string }> = {
   "deadline-rescue": { zh: "赶 due 周", en: "Deadline week" },
   recovery: { zh: "缓冲周", en: "Recovery week" },
 };
-const classTone = {
-  lecture: "bg-[#ff8a3d] text-white",
-  seminar: "bg-[#6b58d6] text-white",
-  lab: "bg-[#21b7c8] text-white",
-} satisfies Record<ScheduleClassType, string>;
+type CoursePalette = {
+  card: string;
+  chip: string;
+  remove: string;
+  more: string;
+};
+
+const coursePalettes = [
+  {
+    card: "border-[#f3a268] bg-[linear-gradient(135deg,#ffb56f,#ff8f5f)] text-white shadow-[0_12px_24px_rgba(255,143,95,0.18)]",
+    chip: "bg-white/20 text-white/95",
+    remove: "bg-white/24 text-white hover:bg-white/36",
+    more: "bg-[rgba(255,143,95,0.14)] text-[#b95c25]",
+  },
+  {
+    card: "border-[#7cc6ff] bg-[linear-gradient(135deg,#66b4ff,#4f8cff)] text-white shadow-[0_12px_24px_rgba(79,140,255,0.18)]",
+    chip: "bg-white/20 text-white/95",
+    remove: "bg-white/24 text-white hover:bg-white/36",
+    more: "bg-[rgba(79,140,255,0.14)] text-[#2d5cb3]",
+  },
+  {
+    card: "border-[#7ad2b6] bg-[linear-gradient(135deg,#5ec8ae,#35a996)] text-white shadow-[0_12px_24px_rgba(53,169,150,0.18)]",
+    chip: "bg-white/20 text-white/95",
+    remove: "bg-white/24 text-white hover:bg-white/36",
+    more: "bg-[rgba(53,169,150,0.14)] text-[#1f7667]",
+  },
+  {
+    card: "border-[#a98cff] bg-[linear-gradient(135deg,#927bff,#6b58d6)] text-white shadow-[0_12px_24px_rgba(107,88,214,0.18)]",
+    chip: "bg-white/20 text-white/95",
+    remove: "bg-white/24 text-white hover:bg-white/36",
+    more: "bg-[rgba(107,88,214,0.14)] text-[#5541a8]",
+  },
+  {
+    card: "border-[#f2a1c8] bg-[linear-gradient(135deg,#f2a1c8,#dc6fa5)] text-white shadow-[0_12px_24px_rgba(220,111,165,0.18)]",
+    chip: "bg-white/20 text-white/95",
+    remove: "bg-white/24 text-white hover:bg-white/36",
+    more: "bg-[rgba(220,111,165,0.14)] text-[#ac4877]",
+  },
+  {
+    card: "border-[#ffd27c] bg-[linear-gradient(135deg,#ffd27c,#f6ac4b)] text-[#663d08] shadow-[0_12px_24px_rgba(246,172,75,0.2)]",
+    chip: "bg-white/55 text-[#7f4a09]",
+    remove: "bg-white/60 text-[#7f4a09] hover:bg-white",
+    more: "bg-[rgba(246,172,75,0.18)] text-[#9a5b12]",
+  },
+  {
+    card: "border-[#98c0ff] bg-[linear-gradient(135deg,#dceaff,#bed6ff)] text-[#254879] shadow-[0_12px_24px_rgba(120,160,235,0.16)]",
+    chip: "bg-white/65 text-[#2f568f]",
+    remove: "bg-white/70 text-[#2f568f] hover:bg-white",
+    more: "bg-[rgba(120,160,235,0.16)] text-[#35598d]",
+  },
+  {
+    card: "border-[#a8dfcf] bg-[linear-gradient(135deg,#e1fbf0,#c2f0df)] text-[#1d6b59] shadow-[0_12px_24px_rgba(102,191,163,0.16)]",
+    chip: "bg-white/65 text-[#1f7a65]",
+    remove: "bg-white/70 text-[#1f7a65] hover:bg-white",
+    more: "bg-[rgba(102,191,163,0.16)] text-[#257a66]",
+  },
+] satisfies CoursePalette[];
 const skillMeta = {
   listening: { label: { zh: "听力", en: "Listening" }, Icon: Headphones },
   speaking: { label: { zh: "口语", en: "Speaking" }, Icon: Mic },
@@ -89,6 +141,22 @@ const skillMeta = {
   writing: { label: { zh: "写作", en: "Writing" }, Icon: PenTool },
   review: { label: { zh: "复习", en: "Review" }, Icon: BrainCircuit },
 } as const;
+
+function hashCourseTitle(value: string) {
+  let hash = 0;
+  for (const char of value.trim().toLowerCase()) {
+    hash = (hash * 31 + char.charCodeAt(0)) % 2147483647;
+  }
+  return hash;
+}
+
+function getCoursePalette(title: string, type: ScheduleClassType) {
+  return coursePalettes[hashCourseTitle(`${type}:${title}`) % coursePalettes.length];
+}
+
+function getClassTypeLabel(type: ScheduleClassType, locale: Locale) {
+  return classTypeOptions.find((option) => option.value === type)?.label[locale] ?? type;
+}
 
 const compactInputCls =
   "w-full rounded-[0.9rem] border border-[rgba(20,50,75,0.14)] bg-white/90 px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[rgba(28,78,149,0.28)] focus:ring-2 focus:ring-[rgba(28,78,149,0.08)]";
@@ -235,7 +303,7 @@ export function ScheduleShell({
   const [generatedSchedule, setGeneratedSchedule] = useState<WeeklySchedule | null>(null);
   const [generatedExpandedDay, setGeneratedExpandedDay] = useState<number | null>(null);
   const [plannerMode, setPlannerMode] = useState<PlannerMode>("manual");
-  const [isPlannerOpen, setIsPlannerOpen] = useState(false);
+  const [isPlannerOpen, setIsPlannerOpen] = useState(true);
 
   const excelInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -428,12 +496,6 @@ export function ScheduleShell({
     lastAppliedFocusDateRef.current = initialFocusDateISO;
   }, [initialFocusDateISO, weeklySchedule.days]);
 
-  useEffect(() => {
-    if (typeof expandedDay === "number") return;
-    if (!todaySchedule) return;
-    setExpandedDay(todaySchedule.day);
-  }, [expandedDay, todaySchedule]);
-
   const timetableMap = useMemo(() => {
     const next = new Map<string, ScheduleClassSession[]>();
     for (const item of [...preferences.classes].sort(compareScheduleClasses)) {
@@ -524,7 +586,10 @@ export function ScheduleShell({
     SCHEDULE_TIME_SLOTS.find((slot) => slot.id === classDraft.slot)?.label[locale] ?? classDraft.slot;
   const routeSummary = `${skillMeta[suggestedWeeklySchedule.primarySkill].label[locale]} / ${skillMeta[suggestedWeeklySchedule.weakestSkill].label[locale]}`;
   const routeTip = getRouteTip(locale, suggestedWeeklySchedule, todaySchedule);
-  const selectedDay = weeklySchedule.days.find((day) => day.day === expandedDay) ?? todaySchedule;
+  const selectedDay =
+    typeof expandedDay === "number"
+      ? weeklySchedule.days.find((day) => day.day === expandedDay) ?? null
+      : null;
   const uiText =
     locale === "zh"
       ? {
@@ -1080,14 +1145,14 @@ export function ScheduleShell({
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
           {weeklySchedule.days.map((day) => {
-            const isSelected = selectedDay.day === day.day;
+            const isSelected = expandedDay === day.day;
             const pressure = pressureTone(day.pressure);
 
             return (
               <button
                 key={day.dateISO}
                 type="button"
-                onClick={() => setExpandedDay(day.day)}
+                onClick={() => setExpandedDay(isSelected ? null : day.day)}
                 className={`rounded-[1.4rem] border-2 p-4 text-left shadow-[0_10px_24px_rgba(90,123,255,0.06)] transition ${
                   isSelected
                     ? "border-[rgba(28,78,149,0.26)] bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(231,243,255,0.94),rgba(255,243,248,0.9))]"
@@ -1098,13 +1163,18 @@ export function ScheduleShell({
                   <span className="font-display text-2xl tracking-tight text-[var(--ink)]">
                     {dayLabels[locale][day.day]}
                   </span>
-                  {day.isToday ? (
-                    <span className="rounded-full bg-[var(--navy)] px-2.5 py-1 text-[10px] font-semibold text-[#f7efe3]">
-                      {copy.todayBadge}
-                    </span>
-                  ) : (
-                    <span className={`size-2.5 rounded-full ${pressure.dot}`} />
-                  )}
+                  <div className="flex items-center gap-2">
+                    {day.isToday ? (
+                      <span className="rounded-full bg-[var(--navy)] px-2.5 py-1 text-[10px] font-semibold text-[#f7efe3]">
+                        {copy.todayBadge}
+                      </span>
+                    ) : (
+                      <span className={`size-2.5 rounded-full ${pressure.dot}`} />
+                    )}
+                    <ChevronDown
+                      className={`size-4 text-[var(--ink-soft)] transition ${isSelected ? "rotate-180" : ""}`}
+                    />
+                  </div>
                 </div>
                 <p className="mt-3 line-clamp-2 text-sm font-semibold text-[var(--ink)]">
                   {getDayPreview(day, locale)}
@@ -1615,7 +1685,7 @@ export function ScheduleShell({
                       return (
                         <td key={`${day}-${slot.id}`} className="border-t border-[rgba(20,50,75,0.08)] p-1 align-top">
                           <div
-                            className={`group h-[84px] rounded-[0.85rem] border p-1 transition cursor-pointer ${
+                            className={`group h-[96px] rounded-[0.95rem] border p-1.5 transition cursor-pointer ${
                               isClassEditorOpen && classDraft.day === day && classDraft.slot === slot.id
                                 ? "border-[rgba(28,78,149,0.24)] bg-[rgba(28,78,149,0.06)]"
                                 : "border-transparent bg-[rgba(20,50,75,0.02)] hover:border-[rgba(20,50,75,0.12)]"
@@ -1629,34 +1699,59 @@ export function ScheduleShell({
                                 </div>
                               ) : (
                                 <>
-                                  {visibleItems.map((item) => (
-                                    <div
-                                      key={item.id}
-                                      onDoubleClick={(event) => {
-                                        event.stopPropagation();
-                                        beginEditClass(item);
-                                      }}
-                                      title={item.title}
-                                      className={`flex h-[30px] w-full cursor-pointer items-center gap-1.5 rounded-[0.8rem] px-2 ${classTone[item.type]}`}
-                                    >
-                                      <div className="min-w-0 flex-1 text-[11px] font-semibold leading-none">
-                                        <span className="block truncate">{item.title}</span>
-                                      </div>
-                                      <button
-                                        type="button"
-                                        aria-label={copy.remove}
-                                        onClick={(event) => {
+                                  {visibleItems.map((item) => {
+                                    const palette = getCoursePalette(item.title, item.type);
+                                    const isSingleItem = cellItems.length === 1;
+                                    return (
+                                      <div
+                                        key={item.id}
+                                        onDoubleClick={(event) => {
                                           event.stopPropagation();
-                                          removeClass(item.id);
+                                          beginEditClass(item);
                                         }}
-                                        className="inline-flex size-4.5 shrink-0 items-center justify-center rounded-full bg-white/20 transition hover:bg-white/30"
+                                        title={`${item.title} · ${getClassTypeLabel(item.type, locale)}`}
+                                        className={`relative w-full overflow-hidden rounded-[0.9rem] border px-2.5 py-2 transition ${palette.card} ${
+                                          isSingleItem ? "min-h-[64px]" : "min-h-[36px]"
+                                        }`}
                                       >
-                                        <X className="size-2.5" />
-                                      </button>
-                                    </div>
-                                  ))}
+                                        <button
+                                          type="button"
+                                          aria-label={copy.remove}
+                                          onClick={(event) => {
+                                            event.stopPropagation();
+                                            removeClass(item.id);
+                                          }}
+                                          className={`absolute right-1.5 top-1.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full transition ${palette.remove}`}
+                                        >
+                                          <X className="size-3" />
+                                        </button>
+
+                                        <div className="min-w-0 pr-7">
+                                          <div
+                                            className="text-[11px] font-semibold leading-[1.18]"
+                                            style={{
+                                              display: "-webkit-box",
+                                              overflow: "hidden",
+                                              WebkitBoxOrient: "vertical",
+                                              WebkitLineClamp: isSingleItem ? 2 : 1,
+                                            }}
+                                          >
+                                            {item.title}
+                                          </div>
+
+                                          {isSingleItem ? (
+                                            <div className="mt-2 flex items-center gap-1.5">
+                                              <span className={`inline-flex max-w-full items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${palette.chip}`}>
+                                                {getClassTypeLabel(item.type, locale)}
+                                              </span>
+                                            </div>
+                                          ) : null}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
                                   {hiddenCount > 0 ? (
-                                    <span className="inline-flex h-5 items-center justify-center self-start rounded-full bg-[rgba(20,50,75,0.08)] px-2 text-[10px] font-semibold text-[var(--ink-soft)]">
+                                    <span className={`inline-flex h-5 items-center justify-center self-start rounded-full px-2 text-[10px] font-semibold ${getCoursePalette(cellItems[0]?.title ?? String(day), cellItems[0]?.type ?? "lecture").more}`}>
                                       +{hiddenCount}
                                     </span>
                                   ) : null}

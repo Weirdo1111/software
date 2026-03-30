@@ -661,6 +661,33 @@ function targetMinutesForDay(baseMinutes: number, mode: ScheduleMode, classes: n
   return clamp(Math.round(baseMinutes * modeFactor) + classes * 6 + deadlines * 8, 18, 72);
 }
 
+function getWeakSkillLoad(snapshot: LearningTrackerSnapshot, weakestSkill: TrackedSkill) {
+  const weakness = snapshot.skills[weakestSkill];
+  if (weakness.attempts === 0) return 8;
+
+  const accuracy = weakness.correct / Math.max(weakness.attempts, 1);
+  const accuracyLoad = clamp(Math.round((0.82 - accuracy) * 20), 0, 8);
+  const exposureLoad = weakness.minutes < 15 ? 3 : weakness.minutes < 35 ? 1 : 0;
+
+  return clamp(2 + accuracyLoad + exposureLoad, 2, 10);
+}
+
+function getModeLoad(weekMode: ScheduleWeekMode) {
+  if (weekMode === "deadline-rescue") return 10;
+  if (weekMode === "presentation") return 7;
+  if (weekMode === "heavy-reading") return 6;
+  if (weekMode === "recovery") return 2;
+  return 4;
+}
+
+function getReviewLoad(reviewDue: number) {
+  return clamp(Math.round(Math.min(reviewDue, 18) * 0.65), 0, 12);
+}
+
+function getStudyLoad(targetMinutes: number) {
+  return clamp(Math.round((targetMinutes - 20) * 0.35), 0, 14);
+}
+
 function pressureForDay(args: {
   today: boolean;
   classes: number;
@@ -670,32 +697,42 @@ function pressureForDay(args: {
   weekMode: ScheduleWeekMode;
   weakestSkill: TrackedSkill;
   snapshot: LearningTrackerSnapshot;
+  targetMinutes: number;
 }) {
-  const weakness = args.snapshot.skills[args.weakestSkill];
-  const weakPenalty =
-    weakness.attempts === 0 ? 10 : weakness.attempts > 0 && weakness.correct / weakness.attempts < 0.7 ? 8 : 4;
-  const modePenalty =
-    args.weekMode === "deadline-rescue"
-      ? 14
-      : args.weekMode === "presentation"
-        ? 10
-        : args.weekMode === "heavy-reading"
-          ? 8
-          : args.weekMode === "recovery"
-            ? 2
-            : 5;
+  // Keep the score interpretable: baseline + schedule load + study load + review debt + weak-skill risk.
+  const scheduleLoad = args.classes * 11 + args.deadlinesToday * 16 + (args.deadlineSoon ? 8 : 0);
 
   return clamp(
-    24 +
-      (args.today ? 8 : 0) +
-      args.classes * 12 +
-      args.deadlinesToday * 18 +
-      (args.deadlineSoon ? 10 : 0) +
-      Math.min(args.reviewDue, 14) +
-      weakPenalty +
-      modePenalty,
+    18 +
+      (args.today ? 4 : 0) +
+      scheduleLoad +
+      getStudyLoad(args.targetMinutes) +
+      getReviewLoad(args.reviewDue) +
+      getWeakSkillLoad(args.snapshot, args.weakestSkill) +
+      getModeLoad(args.weekMode),
     18,
     96,
+  );
+}
+
+function getShockIndex(days: DailySchedule[], reviewDue: number, weekMode: ScheduleWeekMode) {
+  const averagePressure =
+    days.length > 0 ? days.reduce((sum, day) => sum + day.pressure, 0) / days.length : 0;
+  const peakPressure = days.reduce((max, day) => Math.max(max, day.pressure), 0);
+  const busyDays = days.filter((day) => day.pressure >= 68).length;
+  const deadlineDays = days.filter((day) => day.deadlines.length > 0).length;
+
+  return clamp(
+    Math.round(
+      averagePressure * 0.68 +
+        peakPressure * 0.18 +
+        Math.min(reviewDue, 12) * 0.55 +
+        busyDays * 1.8 +
+        deadlineDays * 1.2 +
+        (weekMode === "deadline-rescue" ? 4 : 0),
+    ),
+    22,
+    95,
   );
 }
 
@@ -837,6 +874,7 @@ export function generateWeeklySchedule(input: {
         weekMode,
         weakestSkill,
         snapshot: input.snapshot,
+        targetMinutes,
       }),
       targetMinutes,
       isToday: dateISO === formatISODate(referenceDate),
@@ -848,15 +886,7 @@ export function generateWeeklySchedule(input: {
   });
 
   const weeklyTargetMinutes = input.preferences.dailyMinutes * 7;
-  const shockIndex = clamp(
-    Math.round(
-      days.reduce((sum, day) => sum + day.pressure, 0) / days.length +
-        (input.reviewDue > 10 ? 6 : 0) +
-        (weekMode === "deadline-rescue" ? 8 : 0),
-    ),
-    22,
-    95,
-  );
+  const shockIndex = getShockIndex(days, input.reviewDue, weekMode);
 
   return {
     weekMode,
