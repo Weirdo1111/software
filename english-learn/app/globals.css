@@ -549,6 +549,70 @@ body::after {
   border-radius: 0 999px 999px 0;
 }
 
+.buddy-preview-hat-magic .buddy-preview-hat-top {
+  width: 0;
+  height: 0;
+  top: -0.02rem;
+  border: 0;
+  border-left: 0.46rem solid transparent;
+  border-right: 0.46rem solid transparent;
+  border-bottom: 0.95rem solid #6f64ee;
+  border-radius: 0;
+}
+
+.buddy-preview-hat-magic .buddy-preview-hat-brim {
+  background: #8f86ff;
+}
+
+.buddy-preview-hat-chef .buddy-preview-hat-top {
+  width: 1.1rem;
+  height: 0.8rem;
+  background: #fffaf8;
+  border-bottom: 2px solid #3a3556;
+  border-radius: 0.8rem 0.8rem 0.45rem 0.45rem;
+}
+
+.buddy-preview-hat-chef .buddy-preview-hat-brim {
+  width: 1.2rem;
+  background: #f2efed;
+}
+
+.buddy-preview-hat-catears {
+  position: relative;
+  display: block;
+  width: 1.5rem;
+  height: 1rem;
+}
+
+.buddy-preview-hat-catears::before,
+.buddy-preview-hat-catears::after {
+  position: absolute;
+  top: 0.04rem;
+  content: "";
+  width: 0.56rem;
+  height: 0.7rem;
+  background: #ffd8e8;
+  border: 2px solid #3a3556;
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+}
+
+.buddy-preview-hat-catears::before {
+  left: 0.08rem;
+}
+
+.buddy-preview-hat-catears::after {
+  right: 0.08rem;
+}
+
+.buddy-preview-hat-beret .buddy-preview-hat-top {
+  width: 1.28rem;
+  height: 0.72rem;
+  top: 0.14rem;
+  background: #ff88a8;
+  border-radius: 999px;
+  border-bottom: 2px solid #3a3556;
+}
+
 .buddy-preview-bottom {
   display: block;
   border: 2px solid #3a3556;
@@ -573,6 +637,30 @@ body::after {
   height: 1.05rem;
   border-radius: 0.75rem 0.75rem 1rem 1rem;
   background: #ff9db0;
+}
+
+.buddy-preview-bottom-jk {
+  width: 1.55rem;
+  height: 1rem;
+  border-radius: 0.5rem 0.5rem 0.95rem 0.95rem;
+  background:
+    linear-gradient(180deg, #f7f8ff 0 20%, #3857c9 20% 100%);
+}
+
+.buddy-preview-bottom-pleated {
+  width: 1.6rem;
+  height: 1rem;
+  border-radius: 0.55rem 0.55rem 0.95rem 0.95rem;
+  background:
+    repeating-linear-gradient(90deg, #ffb7cf 0 0.22rem, #ffd8e6 0.22rem 0.34rem);
+}
+
+.buddy-preview-bottom-petal {
+  width: 1.6rem;
+  height: 1rem;
+  border-radius: 0.55rem 0.55rem 1rem 1rem;
+  background: #ff94b6;
+  clip-path: ellipse(48% 50% at 50% 50%);
 }
 
 .buddy-preview-glasses {
@@ -625,6 +713,47 @@ body::after {
 
 .buddy-preview-glasses-sun {
   background: linear-gradient(transparent 45%, #3a3556 45%, #3a3556 55%, transparent 55%);
+}
+
+.buddy-preview-glasses-round::before,
+.buddy-preview-glasses-round::after,
+.buddy-preview-glasses-goggles::before,
+.buddy-preview-glasses-goggles::after {
+  width: 0.58rem;
+  height: 0.58rem;
+  border: 2px solid #3a3556;
+}
+
+.buddy-preview-glasses-round::before {
+  left: 0.08rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.buddy-preview-glasses-round::after {
+  right: 0.08rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.buddy-preview-glasses-round {
+  background: linear-gradient(transparent 47%, #3a3556 47%, #3a3556 54%, transparent 54%);
+}
+
+.buddy-preview-glasses-goggles::before {
+  left: 0.04rem;
+  border-radius: 999px;
+  background: rgba(142, 216, 255, 0.85);
+}
+
+.buddy-preview-glasses-goggles::after {
+  right: 0.04rem;
+  border-radius: 999px;
+  background: rgba(142, 216, 255, 0.85);
+}
+
+.buddy-preview-glasses-goggles {
+  background: linear-gradient(transparent 46%, #3a3556 46%, #3a3556 56%, transparent 56%);
 }
 
 .buddy-preview-glasses-star::before,
@@ -731,6 +860,59 @@ body::after {
   content: "★";
   transform: translateX(-50%);
   font-size: 0.9rem;
+  line-height: 1;
+  color: #ffd35d;
+  text-shadow: 0 0 0 #3a3556;
+}
+
+.buddy-preview-held-notebook::before {
+  display: none;
+}
+
+.buddy-preview-held-notebook::after {
+  position: absolute;
+  left: 50%;
+  top: 0.14rem;
+  width: 0.9rem;
+  height: 1rem;
+  content: "";
+  transform: translateX(-50%);
+  border: 2px solid #3a3556;
+  border-radius: 0.2rem;
+  background:
+    linear-gradient(90deg, #ff9db0 0 18%, transparent 18% 100%),
+    #fff7ee;
+}
+
+.buddy-preview-held-paintbrush::before {
+  background: #c48a54;
+}
+
+.buddy-preview-held-paintbrush::after {
+  position: absolute;
+  left: 50%;
+  top: 0.08rem;
+  content: "";
+  width: 0.72rem;
+  height: 0.42rem;
+  transform: translateX(-50%) rotate(-12deg);
+  border-radius: 0.4rem 0.4rem 0.25rem 0.25rem;
+  background:
+    linear-gradient(90deg, #ff8fb3 0 34%, #7cc5ff 34% 100%);
+  border: 2px solid #3a3556;
+}
+
+.buddy-preview-held-moonwand::before {
+  background: #7c67f4;
+}
+
+.buddy-preview-held-moonwand::after {
+  position: absolute;
+  left: 50%;
+  top: 0.02rem;
+  content: "☾";
+  transform: translateX(-50%);
+  font-size: 0.88rem;
   line-height: 1;
   color: #ffd35d;
   text-shadow: 0 0 0 #3a3556;

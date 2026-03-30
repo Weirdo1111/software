@@ -260,6 +260,30 @@ function hasCustomHeldItem(outfit: BuddyOutfit) {
 }
 
 function renderBuddyGlasses(outfit: BuddyOutfit, trim: string) {
+  if (outfit.glasses === "round") {
+    return (
+      <>
+        <circle cx="93" cy="114" r="18" fill="rgba(255,255,255,0.18)" stroke={trim} strokeWidth="5" />
+        <circle cx="147" cy="114" r="18" fill="rgba(255,255,255,0.18)" stroke={trim} strokeWidth="5" />
+        <path d="M111 114c2-1 16-1 18 0" fill="none" stroke={trim} strokeWidth="4.2" strokeLinecap="round" />
+        <path d="M75 111c-4 0-8 3-10 7" fill="none" stroke={trim} strokeWidth="4.2" strokeLinecap="round" />
+        <path d="M165 111c4 0 8 3 10 7" fill="none" stroke={trim} strokeWidth="4.2" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.glasses === "goggles") {
+    return (
+      <>
+        <rect x="70" y="99" width="48" height="30" rx="15" fill="#8ed8ff" opacity="0.6" stroke={trim} strokeWidth="5" />
+        <rect x="122" y="99" width="48" height="30" rx="15" fill="#8ed8ff" opacity="0.6" stroke={trim} strokeWidth="5" />
+        <path d="M112 112c3-1 13-1 16 0" fill="none" stroke={trim} strokeWidth="4.4" strokeLinecap="round" />
+        <path d="M67 112c-4 0-8 3-10 6" fill="none" stroke={trim} strokeWidth="4.4" strokeLinecap="round" />
+        <path d="M173 112c4 0 8 3 10 6" fill="none" stroke={trim} strokeWidth="4.4" strokeLinecap="round" />
+      </>
+    );
+  }
+
   if (outfit.glasses === "square") {
     return (
       <>
@@ -311,6 +335,46 @@ function renderBuddyGlasses(outfit: BuddyOutfit, trim: string) {
 }
 
 function renderBuddyHat(outfit: BuddyOutfit, trim: string) {
+  if (outfit.hat === "magichat") {
+    return (
+      <>
+        <path d="M120 -12 174 78H66Z" fill="#5a4fd6" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <ellipse cx="120" cy="78" rx="72" ry="14" fill="#8277ff" stroke={trim} strokeWidth="5" />
+        <path d="M88 32h48" stroke="#ffd35d" strokeWidth="5" strokeLinecap="round" />
+        <circle cx="145" cy="21" r="6.5" fill="#fff7ee" stroke={trim} strokeWidth="3" />
+      </>
+    );
+  }
+
+  if (outfit.hat === "chefhat") {
+    return (
+      <>
+        <path d="M68 79c-10-24 8-42 27-37 6-11 22-16 34-8 11-8 30-6 37 8 17-3 34 13 25 37Z" fill="#fffaf8" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <rect x="72" y="74" width="88" height="18" rx="9" fill="#f6f2f0" stroke={trim} strokeWidth="5" />
+      </>
+    );
+  }
+
+  if (outfit.hat === "catears") {
+    return (
+      <>
+        <path d="M72 80 90 34l28 33" fill="#ffd8e8" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <path d="m168 80-18-46-28 33" fill="#ffd8e8" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <path d="M86 67 95 47l13 16" fill="#fff4f8" stroke={trim} strokeWidth="3.5" strokeLinejoin="round" />
+        <path d="m154 67-9-20-13 16" fill="#fff4f8" stroke={trim} strokeWidth="3.5" strokeLinejoin="round" />
+      </>
+    );
+  }
+
+  if (outfit.hat === "beret") {
+    return (
+      <>
+        <path d="M44 66c15-28 107-38 143-6-5 28-33 37-75 37-39 0-57-9-68-31Z" fill="#ff7f9e" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <path d="M124 22v15" stroke={trim} strokeWidth="4.5" strokeLinecap="round" />
+      </>
+    );
+  }
+
   if (outfit.hat === "sunhat") {
     return (
       <>
@@ -344,6 +408,37 @@ function renderBuddyHat(outfit: BuddyOutfit, trim: string) {
 }
 
 function renderBuddyClothing(outfit: BuddyOutfit, trim: string) {
+  if (outfit.clothing === "jk") {
+    return (
+      <>
+        <path d="M68 176c16-6 34-9 52-9s36 3 52 9l16 14c-19 7-42 10-68 10s-49-3-68-10Z" fill="#3857c9" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <path d="M80 178c9 9 23 14 40 14s31-5 40-14" fill="none" stroke="#f7f8ff" strokeWidth="5" strokeLinecap="round" />
+        <path d="M92 171h56" stroke="#f7f8ff" strokeWidth="4.5" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.clothing === "pleated") {
+    return (
+      <>
+        <path d="M66 176c16-7 34-10 54-10s38 3 54 10l15 16c-19 8-42 12-69 12s-50-4-69-12Z" fill="#ffb7cf" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <path d="M89 172v26" stroke="#ffe5ef" strokeWidth="4.2" strokeLinecap="round" />
+        <path d="M106 169v31" stroke="#ffe5ef" strokeWidth="4.2" strokeLinecap="round" />
+        <path d="M134 169v31" stroke="#ffe5ef" strokeWidth="4.2" strokeLinecap="round" />
+        <path d="M151 172v26" stroke="#ffe5ef" strokeWidth="4.2" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.clothing === "petal") {
+    return (
+      <>
+        <path d="M68 177c16-7 34-10 52-10s36 3 52 10c-4 15-22 26-52 26s-48-11-52-26Z" fill="#ff94b6" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <path d="M82 178c6 11 19 18 38 18s32-7 38-18" fill="none" stroke="#ffd6e3" strokeWidth="5" strokeLinecap="round" />
+      </>
+    );
+  }
+
   if (outfit.clothing === "shorts") {
     return (
       <>
@@ -381,6 +476,36 @@ function renderBuddyClothing(outfit: BuddyOutfit, trim: string) {
 }
 
 function renderBuddyHeldItem(outfit: BuddyOutfit, trim: string, accent: string) {
+  if (outfit.heldItem === "notebook") {
+    return (
+      <>
+        <rect x="150" y="147" width="22" height="28" rx="4" fill="#fff7ee" stroke={trim} strokeWidth="4.5" />
+        <path d="M157 149v24" stroke="#ff9db0" strokeWidth="3.8" strokeLinecap="round" />
+        <path d="M160 156h8" stroke={accent} strokeWidth="3.8" strokeLinecap="round" />
+        <path d="M160 163h8" stroke={accent} strokeWidth="3.8" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.heldItem === "paintbrush") {
+    return (
+      <>
+        <path d="M151 154 168 175" stroke="#c48a54" strokeWidth="5" strokeLinecap="round" />
+        <path d="M148 150c4-6 10-8 15-5-1 6-4 10-10 12Z" fill="#7cc5ff" stroke={trim} strokeWidth="4" strokeLinejoin="round" />
+        <path d="M145 153c2-4 5-7 10-7" stroke="#ff8fb3" strokeWidth="4" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.heldItem === "moonwand") {
+    return (
+      <>
+        <path d="M152 154 167 176" stroke="#7c67f4" strokeWidth="5" strokeLinecap="round" />
+        <path d="M167 145c0-7 5-12 12-12-5 2-8 6-8 11 0 5 3 9 8 11-7 0-12-5-12-10Z" fill="#ffe27a" stroke={trim} strokeWidth="4" strokeLinejoin="round" />
+      </>
+    );
+  }
+
   if (outfit.heldItem === "flower") {
     return (
       <>

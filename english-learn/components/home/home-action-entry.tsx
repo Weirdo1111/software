@@ -209,12 +209,19 @@ const buddyWardrobeCopy = {
     sunhat: { zh: "\u906e\u9633\u5e3d", en: "Sun Hat" },
     strawhat: { zh: "\u8349\u5e3d", en: "Straw Hat" },
     cap: { zh: "\u9e2d\u820c\u5e3d", en: "Cap" },
+    magichat: { zh: "\u9b54\u672f\u5e3d", en: "Magic Hat" },
+    chefhat: { zh: "\u53a8\u5e08\u5e3d", en: "Chef Hat" },
+    catears: { zh: "\u732b\u8033\u6735", en: "Cat Ears" },
+    beret: { zh: "\u8d1d\u96f7\u5e3d", en: "Beret" },
   } satisfies Record<BuddyHat, { zh: string; en: string }>,
   clothing: {
     none: { zh: "\u9ed8\u8ba4", en: "Default" },
     shorts: { zh: "\u77ed\u88e4", en: "Shorts" },
     jeans: { zh: "\u725b\u4ed4\u88e4", en: "Jeans" },
     bloomers: { zh: "\u706f\u7b3c\u88e4", en: "Bloomers" },
+    jk: { zh: "JK\u88d9", en: "JK Skirt" },
+    pleated: { zh: "\u767e\u8936\u88d9", en: "Pleated Skirt" },
+    petal: { zh: "\u82b1\u74e3\u88d9", en: "Petal Skirt" },
   } satisfies Record<BuddyClothing, { zh: string; en: string }>,
   glasses: {
     none: { zh: "\u4e0d\u6234", en: "None" },
@@ -222,12 +229,17 @@ const buddyWardrobeCopy = {
     heart: { zh: "\u7231\u5fc3\u6846", en: "Heart Frames" },
     square: { zh: "\u65b9\u5f62\u6846", en: "Square Frames" },
     sunglasses: { zh: "\u58a8\u955c", en: "Sunglasses" },
+    round: { zh: "\u5706\u6846\u773c\u955c", en: "Round Frames" },
+    goggles: { zh: "\u62a4\u76ee\u955c", en: "Goggles" },
   } satisfies Record<BuddyGlasses, { zh: string; en: string }>,
   heldItems: {
     none: { zh: "\u7a7a\u624b", en: "Empty Hands" },
     flower: { zh: "\u5c0f\u82b1\u675f", en: "Flower" },
     tea: { zh: "\u5976\u8336\u676f", en: "Tea Cup" },
     starwand: { zh: "\u661f\u661f\u68d2", en: "Star Wand" },
+    notebook: { zh: "\u5c0f\u7b14\u8bb0\u672c", en: "Notebook" },
+    paintbrush: { zh: "\u753b\u7b14", en: "Paintbrush" },
+    moonwand: { zh: "\u6708\u4eae\u68d2", en: "Moon Wand" },
   } satisfies Record<BuddyHeldItem, { zh: string; en: string }>,
 };
 
@@ -256,22 +268,48 @@ function renderWardrobePreviewIcon(
           <span className="buddy-preview-hat-brim" />
         </span>
       ) : null}
+      {category === "hat" && value === "magichat" ? (
+        <span className="buddy-preview-hat buddy-preview-hat-magic">
+          <span className="buddy-preview-hat-top" />
+          <span className="buddy-preview-hat-brim" />
+        </span>
+      ) : null}
+      {category === "hat" && value === "chefhat" ? (
+        <span className="buddy-preview-hat buddy-preview-hat-chef">
+          <span className="buddy-preview-hat-top" />
+          <span className="buddy-preview-hat-brim" />
+        </span>
+      ) : null}
+      {category === "hat" && value === "catears" ? <span className="buddy-preview-hat buddy-preview-hat-catears" /> : null}
+      {category === "hat" && value === "beret" ? (
+        <span className="buddy-preview-hat buddy-preview-hat-beret">
+          <span className="buddy-preview-hat-top" />
+        </span>
+      ) : null}
 
       {category === "clothing" && value === "none" ? <span className="buddy-preview-none" /> : null}
       {category === "clothing" && value === "shorts" ? <span className="buddy-preview-bottom buddy-preview-bottom-shorts" /> : null}
       {category === "clothing" && value === "jeans" ? <span className="buddy-preview-bottom buddy-preview-bottom-jeans" /> : null}
       {category === "clothing" && value === "bloomers" ? <span className="buddy-preview-bottom buddy-preview-bottom-bloomers" /> : null}
+      {category === "clothing" && value === "jk" ? <span className="buddy-preview-bottom buddy-preview-bottom-jk" /> : null}
+      {category === "clothing" && value === "pleated" ? <span className="buddy-preview-bottom buddy-preview-bottom-pleated" /> : null}
+      {category === "clothing" && value === "petal" ? <span className="buddy-preview-bottom buddy-preview-bottom-petal" /> : null}
 
       {category === "glasses" && value === "none" ? <span className="buddy-preview-none" /> : null}
       {category === "glasses" && value === "square" ? <span className="buddy-preview-glasses buddy-preview-glasses-square" /> : null}
       {category === "glasses" && value === "sunglasses" ? <span className="buddy-preview-glasses buddy-preview-glasses-sun" /> : null}
       {category === "glasses" && value === "star" ? <span className="buddy-preview-glasses buddy-preview-glasses-star" /> : null}
       {category === "glasses" && value === "heart" ? <span className="buddy-preview-glasses buddy-preview-glasses-heart" /> : null}
+      {category === "glasses" && value === "round" ? <span className="buddy-preview-glasses buddy-preview-glasses-round" /> : null}
+      {category === "glasses" && value === "goggles" ? <span className="buddy-preview-glasses buddy-preview-glasses-goggles" /> : null}
 
       {category === "heldItem" && value === "none" ? <span className="buddy-preview-none" /> : null}
       {category === "heldItem" && value === "flower" ? <span className="buddy-preview-held buddy-preview-held-flower" /> : null}
       {category === "heldItem" && value === "tea" ? <span className="buddy-preview-held buddy-preview-held-tea" /> : null}
       {category === "heldItem" && value === "starwand" ? <span className="buddy-preview-held buddy-preview-held-starwand" /> : null}
+      {category === "heldItem" && value === "notebook" ? <span className="buddy-preview-held buddy-preview-held-notebook" /> : null}
+      {category === "heldItem" && value === "paintbrush" ? <span className="buddy-preview-held buddy-preview-held-paintbrush" /> : null}
+      {category === "heldItem" && value === "moonwand" ? <span className="buddy-preview-held buddy-preview-held-moonwand" /> : null}
     </span>
   );
 }

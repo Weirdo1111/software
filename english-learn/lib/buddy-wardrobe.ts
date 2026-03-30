@@ -1,7 +1,7 @@
-export type BuddyHat = "none" | "sunhat" | "strawhat" | "cap";
-export type BuddyClothing = "none" | "shorts" | "jeans" | "bloomers";
-export type BuddyGlasses = "none" | "star" | "heart" | "square" | "sunglasses";
-export type BuddyHeldItem = "none" | "flower" | "tea" | "starwand";
+export type BuddyHat = "none" | "sunhat" | "strawhat" | "cap" | "magichat" | "chefhat" | "catears" | "beret";
+export type BuddyClothing = "none" | "shorts" | "jeans" | "bloomers" | "jk" | "pleated" | "petal";
+export type BuddyGlasses = "none" | "star" | "heart" | "square" | "sunglasses" | "round" | "goggles";
+export type BuddyHeldItem = "none" | "flower" | "tea" | "starwand" | "notebook" | "paintbrush" | "moonwand";
 
 export type BuddyOutfit = {
   hat: BuddyHat;
@@ -20,19 +20,19 @@ export const DEFAULT_BUDDY_OUTFIT: BuddyOutfit = {
 };
 
 function isHat(value: unknown): value is BuddyHat {
-  return value === "none" || value === "sunhat" || value === "strawhat" || value === "cap";
+  return value === "none" || value === "sunhat" || value === "strawhat" || value === "cap" || value === "magichat" || value === "chefhat" || value === "catears" || value === "beret";
 }
 
 function isClothing(value: unknown): value is BuddyClothing {
-  return value === "none" || value === "shorts" || value === "jeans" || value === "bloomers";
+  return value === "none" || value === "shorts" || value === "jeans" || value === "bloomers" || value === "jk" || value === "pleated" || value === "petal";
 }
 
 function isGlasses(value: unknown): value is BuddyGlasses {
-  return value === "none" || value === "star" || value === "heart" || value === "square" || value === "sunglasses";
+  return value === "none" || value === "star" || value === "heart" || value === "square" || value === "sunglasses" || value === "round" || value === "goggles";
 }
 
 function isHeldItem(value: unknown): value is BuddyHeldItem {
-  return value === "none" || value === "flower" || value === "tea" || value === "starwand";
+  return value === "none" || value === "flower" || value === "tea" || value === "starwand" || value === "notebook" || value === "paintbrush" || value === "moonwand";
 }
 
 export function loadBuddyOutfitFromStorage(): BuddyOutfit {
