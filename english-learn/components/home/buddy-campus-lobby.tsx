@@ -11,6 +11,7 @@ import {
   ArrowRight,
   ArrowUp,
   Compass,
+  Gamepad2,
   Headphones,
   MessageSquareMore,
   Mic,
@@ -189,6 +190,23 @@ export function BuddyCampusLobby({
         entry: { x: 0.25, y: 0.76 },
         gradient: ["#9fd76f", "#69d4c1"],
         Icon: MessageSquareMore,
+      },
+      {
+        id: "game-center",
+        title: locale === "zh" ? "游戏中心" : "Game Center",
+        note:
+          locale === "zh"
+            ? "直接进入公开的密室逃脱与关卡街机页，不用先登录也能查看。"
+            : "Jump straight into the public arcade and escape-room stages without relying on the nav bar.",
+        hint: locale === "zh" ? "密室逃脱入口" : "Escape room arcade",
+        href: `/games?lang=${locale}`,
+        x: 0.4,
+        y: 0.56,
+        width: 0.2,
+        height: 0.23,
+        entry: { x: 0.5, y: 0.77 },
+        gradient: ["#ffd36f", "#ff9c8f"],
+        Icon: Gamepad2,
       },
       {
         id: "reward-port",
@@ -479,8 +497,8 @@ export function BuddyCampusLobby({
           </h3>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-[var(--ink-soft)]">
             {locale === "zh"
-              ? "现在首页不只是入口列表，而是一个可以控制 Buddy 移动的大厅。走到听力、口语、论坛和奖励区附近，就能直接进入对应模块。"
-              : "Home is no longer just a list of links. Move your buddy across the lobby and step near listening, speaking, forum, and reward spaces to open them."}
+              ? "现在首页不只是入口列表，而是一个可以控制 Buddy 移动的大厅。走到听力、口语、论坛、游戏中心和奖励区附近，就能直接进入对应模块。"
+              : "Home is no longer just a list of links. Move your buddy across the lobby and step near listening, speaking, forum, game-center, and reward spaces to open them."}
           </p>
         </div>
 

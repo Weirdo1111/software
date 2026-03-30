@@ -9,6 +9,7 @@ import {
   CalendarDays,
   Compass,
   Flame,
+  Gamepad2,
   Headphones,
   LibraryBig,
   Mic,
@@ -400,6 +401,10 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                 <Link href={`/placement-test?lang=${locale}`} className="party-button-ghost">
                   {locale === "zh" ? "开始分级测试" : "Start placement test"}
                 </Link>
+                <Link href={`/games?lang=${locale}`} className="party-button-ghost">
+                  <Gamepad2 className="size-4" />
+                  {locale === "zh" ? "试玩游戏中心" : "Preview Game Center"}
+                </Link>
               </div>
 
               <div className="mt-6 flex flex-wrap gap-2.5">
@@ -525,6 +530,10 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
               </Link>
               <Link href={`/discussion?lang=${locale}`} className="party-button-ghost">
                 {locale === "zh" ? "打开学伴广场" : "Open Buddy Square"}
+              </Link>
+              <Link href={`/games?lang=${locale}`} className="party-button-ghost">
+                <Gamepad2 className="size-4" />
+                {locale === "zh" ? "打开游戏中心" : "Open Game Center"}
               </Link>
             </div>
 
