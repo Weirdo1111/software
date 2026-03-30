@@ -534,12 +534,6 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                 ? `你好，${displayName}。今天让你的 Buddy 再进化一点。`
                 : `Hi, ${displayName}. Let's help your buddy evolve a little more today.`}
             </h2>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--ink-soft)] sm:text-base">
-              {locale === "zh"
-                ? "首页已经切换成游戏化校园入口。先完成今日任务，再进入听力资源库、场景口语和学伴广场。"
-                : "Your home now works like a playful campus hub. Finish today's quest first, then move into the listening library, speaking scenes, and the buddy square."}
-            </p>
-
             <div className="mt-6 flex flex-wrap gap-3">
               <Link href={nextQuestHref} className="party-button">
                 {locale === "zh" ? "开始今日任务" : "Start today's quest"}

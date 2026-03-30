@@ -268,7 +268,11 @@ export function DiscussionBoard({
                 <h1 className="text-4xl font-black tracking-tight text-slate-900">
                   {text.heroTitle}
                 </h1>
-                <p className="mt-2 text-slate-500">{selectedTag === 'all' ? '探索社区最新动态' : `正在浏览 ${getCategoryLabel(selectedTag as DiscussionCategory, locale)}`}</p>
+                <p className="mt-2 text-slate-500">
+                  {selectedTag === "all"
+                    ? "Explore the latest community updates"
+                    : `Browsing ${getCategoryLabel(selectedTag as DiscussionCategory, locale)}`}
+                </p>
               </div>
 
               <div className="flex gap-1 rounded-xl bg-slate-200/50 p-1">

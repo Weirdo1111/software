@@ -12,7 +12,7 @@ export const officialGameLevels: GameLevel[] = [
     mission: "Read the closing board, pull the cart lead, recover the desk key, verify the PA order, and unlock the library exit.",
     reward: "+50 XP · Midnight Reader",
     href: "/games/escape-room",
-    accent: "from-[#19d3c5] via-[#2c8cff] to-[#ffd166]",
+    accent: "from-[#7cbcff] via-[#4b7dff] to-[#9ed8ff]",
     cover: "/quests/escape-room/library.png",
   },
   {
@@ -26,7 +26,7 @@ export const officialGameLevels: GameLevel[] = [
     mission: "Read the dorm notices, trace the right unit, recover the returned passcard, and unlock the hallway exit.",
     reward: "+60 XP · Night Owl Resident",
     href: "/games/dorm-lockout",
-    accent: "from-[#67e8f9] via-[#0f766e] to-[#bef264]",
+    accent: "from-[#8fd2ff] via-[#4f86ff] to-[#b7e6ff]",
     cover: "/quests/escape-room/dorm.png",
   },
   {
@@ -40,7 +40,7 @@ export const officialGameLevels: GameLevel[] = [
     mission: "Read the route board, print the reissue slip, search the right bench bag, and clear the station gate before the last shuttle leaves.",
     reward: "+70 XP · Last Train Rider",
     href: "/games/last-train-escape",
-    accent: "from-[#f59e0b] via-[#ef4444] to-[#fb7185]",
+    accent: "from-[#90c4ff] via-[#436dff] to-[#7dd8ff]",
     cover: "/quests/escape-room/station.png",
   },
 ];
