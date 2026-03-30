@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Send, X } from "lucide-react";
 
 import { DiscussionBoard } from "@/components/discussion/discussion-board";
@@ -49,9 +49,11 @@ export function DiscussionClient({ locale }: { locale: Locale }) {
       categories: {
         grammar: "语法",
         listening: "听力",
+        reading: "阅读",
         writing: "写作",
         speaking: "口语",
         experience: "经验分享",
+        assessment: "测评",
       },
     },
     en: {
@@ -72,9 +74,11 @@ export function DiscussionClient({ locale }: { locale: Locale }) {
       categories: {
         grammar: "Grammar",
         listening: "Listening",
+        reading: "Reading",
         writing: "Writing",
         speaking: "Speaking",
         experience: "Experience",
+        assessment: "Assessment",
       },
     },
   }[locale];
@@ -250,9 +254,11 @@ export function DiscussionClient({ locale }: { locale: Locale }) {
                 >
                   <option value="grammar">{text.categories.grammar}</option>
                   <option value="listening">{text.categories.listening}</option>
+                  <option value="reading">{text.categories.reading}</option>
                   <option value="writing">{text.categories.writing}</option>
                   <option value="speaking">{text.categories.speaking}</option>
                   <option value="experience">{text.categories.experience}</option>
+                  <option value="assessment">{text.categories.assessment}</option>
                 </select>
               </div>
 
