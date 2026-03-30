@@ -111,7 +111,11 @@ function mergeWithLocalFallback(material: ListeningMaterial): ListeningMaterial 
   return {
     ...localFallback,
     ...material,
-    thumbnailUrl: material.thumbnailUrl ?? localFallback.thumbnailUrl,
+    transcriptUrl: localFallback.transcriptUrl ?? material.transcriptUrl,
+    officialUrl: localFallback.officialUrl ?? material.officialUrl,
+    embedUrl: localFallback.embedUrl ?? material.embedUrl,
+    thumbnailUrl: localFallback.thumbnailUrl ?? material.thumbnailUrl,
+    audioSrc: localFallback.audioSrc ?? material.audioSrc,
   };
 }
 

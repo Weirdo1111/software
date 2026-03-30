@@ -3268,7 +3268,7 @@ export const authenticListeningMaterials: ListeningMaterial[] = authenticListeni
         vocabulary: blueprint.vocabulary,
         questions: blueprint.questions,
         followUpTask: blueprint.followUpTask,
-        audioSrc: null,
+        audioSrc: blueprint.audioSrc ?? null,
         audioVoice: null,
         voiceLocales: [],
       },

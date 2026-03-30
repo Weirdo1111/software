@@ -49,6 +49,7 @@ export interface AuthenticListeningBlueprint {
   officialUrl: string;
   embedUrl?: string;
   thumbnailUrl?: string;
+  audioSrc?: string;
   recommendedLevel: CEFRLevel;
   durationLabel: string;
   supportFocus: string;
@@ -141,31 +142,48 @@ export const authenticListeningBlueprints: AuthenticListeningBlueprint[] = [
     resourceType: "interview",
     accent: "american",
     speakerRegion: "north-america",
-    title: "Navigating Sustainability Mandates in the Built Industry",
-    source: "Expert interview on sustainability regulation and reporting in construction.",
+    title: "Managing Floods in Haiti",
+    source:
+      "ASME interview on flood-risk management systems for Haiti and other developing nations.",
     sourceName: "ASME TechCast",
     speakerRole: "Podcast interview guest",
-    speakerName: "Tommy Linstroth",
+    speakerName: "Raha Hakimdavar",
     scenario:
-      "Industry interview listening on sustainability mandates, ESG reporting, and digital tools for construction and infrastructure.",
+      "Civil-engineering interview listening on flood risk, missing baseline data, and practical planning for resilient infrastructure.",
     transcript:
-      "The interview focuses on how engineers in the built industry are responding to sustainability rules and reporting demands. It highlights the need to track compliance, ESG metrics, and construction data in a practical way. The guest argues that digital tools can reduce administrative burden and make sustainable construction easier to deliver at scale.",
+      "The interview explains that flood management in developing regions is often limited by missing baseline data and weak risk mapping. The speaker describes why a structured flood-risk management program is needed for planning and disaster response. A key message is that better data and local implementation can improve resilience and reduce repeated losses.",
     officialUrl:
-      "https://www.asme.org/topics-resources/content/podcast-navigating-sustainability-mandates-in-the-built-industry",
+      "https://www.asme.org/topics-resources/content/podcast-managing-floods-in-haiti",
+    embedUrl:
+      "https://players.brightcove.net/1711318824001/default_default/index.html?videoId=2494890025001",
+    thumbnailUrl:
+      "https://www.asme.org/getmedia/c1d0d864-abe2-4697-b1e1-7a942b8b8193/managing-floods-in-haiti.jpg?width=640&height=360&ext=.jpg",
     recommendedLevel: "B1",
     durationLabel: "Podcast interview",
     supportFocus:
-      "Listen for how policy language is translated into practical construction workflows and reporting tasks.",
+      "Listen for how the speaker links data gaps, flood-risk mapping, and decision-making in civil-engineering practice.",
     notePrompts: [
-      "What new pressure is affecting the built industry?",
-      "Which reporting systems or standards are mentioned?",
-      "How can software reduce sustainability workload?",
-      "Which construction term should stay in your notes?",
+      "What flood-management challenge is highlighted first?",
+      "Which type of data is missing or hard to collect?",
+      "Why does the speaker argue for a formal management program?",
+      "Which civil-engineering term should stay in your notes?",
     ],
     vocabulary: [
-      { term: "ESG", definition: "environmental, social, and governance indicators used to assess organisational responsibility" },
-      { term: "compliance", definition: "meeting a rule, standard, or legal requirement" },
-      { term: "LEED", definition: "a widely used building certification system for sustainable design and construction" },
+      {
+        term: "flood risk",
+        definition:
+          "the likelihood and potential impact of flood events on people, assets, or infrastructure",
+      },
+      {
+        term: "baseline data",
+        definition:
+          "reference information collected before planning so engineers can compare and model risk",
+      },
+      {
+        term: "resilience planning",
+        definition:
+          "designing systems and procedures so infrastructure can withstand and recover from shocks",
+      },
     ],
     questions: [
       {
@@ -173,37 +191,50 @@ export const authenticListeningBlueprints: AuthenticListeningBlueprint[] = [
         prompt: "What is the main topic of the interview?",
         placeholder: "Write the main topic in one or two sentences.",
         modelAnswer:
-          "The interview explains how the built industry is adapting to sustainability mandates and compliance reporting.",
-        rubricNote: "Mention both sustainability rules and practical engineering response.",
-        matchGroups: [["sustainability", "sustainable"], ["built industry", "construction", "building"], ["mandate", "compliance", "report"]],
+          "The interview explains why Haiti needs stronger flood-risk management supported by better engineering data.",
+        rubricNote: "Mention both flood management and the data problem.",
+        matchGroups: [
+          ["flood", "risk", "management"],
+          ["haiti"],
+          ["data", "mapping", "baseline"],
+        ],
       },
       {
         id: "detail",
-        prompt: "Which type of metrics or standards does the guest discuss?",
+        prompt: "What practical gap does the speaker identify as a major obstacle?",
         placeholder: "Name one or two examples.",
-        modelAnswer: "A strong answer includes ESG metrics or LEED compliance.",
-        rubricNote: "Capture one named reporting system rather than only saying 'rules'.",
-        matchGroups: [["esg"], ["leed", "compliance", "metrics"]],
+        modelAnswer:
+          "A strong answer mentions missing baseline data, weak flood records, or limited risk information.",
+        rubricNote: "The detail should describe a concrete information gap.",
+        matchGroups: [
+          ["missing", "lack", "baseline"],
+          ["data", "records", "information", "mapping"],
+        ],
       },
       {
         id: "signpost",
-        prompt: "Why are digital tools important in this conversation?",
+        prompt: "Why does the speaker say a structured flood-management program matters?",
         placeholder: "Write one practical reason.",
-        modelAnswer: "They help automate reporting and make sustainable construction data easier to manage.",
-        rubricNote: "The answer should show operational value, not only general innovation.",
-        matchGroups: [["automate", "software", "digital"], ["report", "data", "manage"]],
+        modelAnswer:
+          "It helps turn risk knowledge into practical planning and can reduce repeated damage in vulnerable areas.",
+        rubricNote: "Link the program to implementation and resilience outcomes.",
+        matchGroups: [
+          ["planning", "program", "management"],
+          ["resilience", "reduce", "damage", "disaster"],
+        ],
       },
       {
         id: "term",
         prompt: "Which built-environment term should you keep from this interview?",
         placeholder: "Write one technical term.",
-        modelAnswer: "A correct term is 'ESG', 'compliance', or 'LEED'.",
-        rubricNote: "Choose a term you can reuse in project and policy discussions.",
-        matchGroups: [["esg", "compliance", "leed"]],
+        modelAnswer:
+          "A correct term is 'flood risk', 'baseline data', or 'resilience planning'.",
+        rubricNote: "Choose one term you can reuse in civil-infrastructure discussions.",
+        matchGroups: [["flood risk", "baseline data", "resilience planning"]],
       },
     ],
     followUpTask:
-      "Use your notes to explain how civil-engineering teams could balance sustainability reporting with day-to-day construction delivery.",
+      "Use your notes to explain how a data-led flood-risk program could improve infrastructure planning in another vulnerable city.",
   },
   {
     groupId: "maths-uncertainty-oxford",
@@ -497,6 +528,10 @@ export const authenticListeningBlueprints: AuthenticListeningBlueprint[] = [
       "The episode explains a 3D printer that can switch rapidly among several materials in one build process. It highlights fast printhead switching, finer control over volume elements, and uses such as flexible electronics or soft robotics. The report frames this as a step toward more complex devices made in one manufacturing run.",
     transcriptUrl: "https://www.nature.com/articles/d41586-019-03507-2",
     officialUrl: "https://www.nature.com/articles/d41586-019-03507-2",
+    thumbnailUrl:
+      "https://media.nature.com/lw1200/magazine-assets/d41586-019-03507-2/d41586-019-03507-2_17372594.jpg",
+    audioSrc:
+      "https://media.nature.com/original/magazine-assets/d41586-019-03507-2/d41586-019-03507-2_17381816.mpga",
     recommendedLevel: "B1",
     durationLabel: "Nature podcast episode",
     supportFocus:
@@ -556,31 +591,48 @@ export const authenticListeningBlueprints: AuthenticListeningBlueprint[] = [
     resourceType: "interview",
     accent: "global",
     speakerRegion: "north-america",
-    title: "Inside the Engineering of a Czinger Hypercar",
-    source: "Engineering interview on 3D-printed vehicle structures and production methods.",
+    title: "How 3D Printed Structures Are Changing Bioengineering",
+    source:
+      "ASME interview on 3D bioprinted structures, scaffold design, and structural uniformity.",
     sourceName: "ASME TechCast",
     speakerRole: "Podcast interview guest",
-    speakerName: "Ewan Baldry",
+    speakerName: "Roger Narayan",
     scenario:
-      "Industry interview listening on additive manufacturing, lightweight vehicle structures, and iterative design in high-performance engineering.",
+      "Mechanical and bioengineering interview listening on 3D printed scaffolds, lattices, and design quality in biomedical applications.",
     transcript:
-      "The interview looks at how additive manufacturing is used inside a hypercar programme. It emphasises lightweight structures, rapid iteration, and the freedom to revise designs without committing to fixed tooling. The speaker presents additive manufacturing as both a design method and a production strategy for future vehicle engineering.",
+      "The interview explains how 3D bioprinted structures such as scaffolds and lattices are being used in bioengineering. It highlights that structural uniformity and repeatable geometry matter for practical outcomes. A key idea is that additive manufacturing is not only about speed, but also about controllable structure and application-specific performance.",
     officialUrl:
-      "https://www.asme.org/Topics-Resources/Content/Podcast-Inside-the-Engineering-of-a-Czinger-Hypercar",
+      "https://www.asme.org/topics-resources/content/podcast-3d-printed-structures-changing",
+    embedUrl:
+      "https://players.brightcove.net/1711318824001/default_default/index.html?videoId=5524719189001",
+    thumbnailUrl:
+      "https://www.asme.org/getmedia/bba32584-a2d7-4460-9d79-64f077e12c5d/how-3d-printed-structures-are-changing-bioengineering.jpg?width=1280&height=720&ext=.jpg",
     recommendedLevel: "B1",
     durationLabel: "Podcast interview",
     supportFocus:
-      "Listen for how the guest links additive manufacturing with iteration speed, structural efficiency, and future automotive production.",
+      "Listen for how the speaker links printed geometry, uniformity, and biomedical function.",
     notePrompts: [
-      "What makes additive manufacturing attractive in this vehicle project?",
-      "How does it change the design cycle?",
-      "Why are lightweight structures important here?",
-      "Which vehicle-engineering term should stay in your notes?",
+      "What structures are repeatedly mentioned in the interview?",
+      "Why does the speaker stress uniformity?",
+      "How does this use of 3D printing differ from simple rapid prototyping?",
+      "Which additive-manufacturing term should stay in your notes?",
     ],
     vocabulary: [
-      { term: "additive manufacturing", definition: "building parts by adding material layer by layer" },
-      { term: "tooling", definition: "special equipment or moulds used to manufacture parts" },
-      { term: "iteration", definition: "repeating and refining a design through multiple versions" },
+      {
+        term: "scaffold",
+        definition:
+          "a three-dimensional support structure used to guide cell growth or tissue engineering",
+      },
+      {
+        term: "lattice",
+        definition:
+          "a repeating geometric structure used to control stiffness, weight, or flow behavior",
+      },
+      {
+        term: "uniformity",
+        definition:
+          "the consistency of structure and properties across printed parts or regions",
+      },
     ],
     questions: [
       {
@@ -588,37 +640,45 @@ export const authenticListeningBlueprints: AuthenticListeningBlueprint[] = [
         prompt: "What is the main engineering idea in the interview?",
         placeholder: "Write the main idea in one or two sentences.",
         modelAnswer:
-          "The interview explains how additive manufacturing helps engineers build lightweight hypercar structures and iterate designs more quickly.",
-        rubricNote: "Mention both structure and iteration speed.",
-        matchGroups: [["additive manufacturing", "3d"], ["lightweight", "structures", "hypercar"], ["iterate", "iteration", "quick"]],
+          "The interview explains how 3D printed scaffolds and lattices are changing bioengineering, with emphasis on structural control and consistency.",
+        rubricNote: "Mention both printed structures and why they matter.",
+        matchGroups: [
+          ["3d", "printed", "bioprinted", "additive"],
+          ["scaffold", "lattice"],
+          ["uniformity", "control", "consistency"],
+        ],
       },
       {
         id: "detail",
-        prompt: "Which traditional production constraint does the guest say engineers can avoid more easily?",
+        prompt: "Which specific structure types does the speaker discuss?",
         placeholder: "Write one short answer.",
-        modelAnswer: "He highlights the ability to avoid being locked into fixed tooling or mould-based decisions.",
-        rubricNote: "Capture the manufacturing constraint, not only the design benefit.",
-        matchGroups: [["tooling", "mold", "fixed"]],
+        modelAnswer: "A strong answer includes scaffolds and lattices.",
+        rubricNote: "Capture concrete structure terms, not only '3D printing' in general.",
+        matchGroups: [["scaffold", "lattice"]],
       },
       {
         id: "signpost",
-        prompt: "Why does the guest connect this process to future vehicle production?",
+        prompt: "Why is uniformity important in this context?",
         placeholder: "Write one practical reason.",
-        modelAnswer: "Because it can reduce part constraints, support redesign, and improve structural efficiency in future production.",
-        rubricNote: "The answer should show how the method scales beyond one car.",
-        matchGroups: [["future", "production"], ["redesign", "efficiency", "structural"]],
+        modelAnswer:
+          "Because reliable biomedical structures need consistent geometry and material behavior across prints.",
+        rubricNote: "Link uniformity to reliability and practical application.",
+        matchGroups: [
+          ["uniformity", "consistent", "consistency"],
+          ["reliable", "biomedical", "application", "geometry"],
+        ],
       },
       {
         id: "term",
-        prompt: "Which vehicle-engineering term should you keep from this interview?",
+        prompt: "Which additive-manufacturing term should you keep from this interview?",
         placeholder: "Write one technical term.",
-        modelAnswer: "A correct term is 'additive manufacturing', 'tooling', or 'iteration'.",
-        rubricNote: "Choose a term that fits both manufacturing and design discussions.",
-        matchGroups: [["additive manufacturing", "tooling", "iteration"]],
+        modelAnswer: "A correct term is 'scaffold', 'lattice', or 'uniformity'.",
+        rubricNote: "Keep a term that helps you describe printed-structure quality.",
+        matchGroups: [["scaffold", "lattice", "uniformity"]],
       },
     ],
     followUpTask:
-      "Use your notes to explain how additive manufacturing changes the trade-off between speed, tooling, and performance in vehicle design.",
+      "Use your notes to explain how structure-level control in 3D printing can improve mechanical performance in biomedical design.",
   },
   {
     groupId: "transport-highway-decarbonisation-cambridge",
@@ -705,6 +765,10 @@ export const authenticListeningBlueprints: AuthenticListeningBlueprint[] = [
       "The podcast focuses on a student engineering team working on Hyperloop pod design. It highlights systems integration, competition constraints, and the challenge of turning transport ideas into workable prototypes. The discussion shows how high-speed transport design depends on mechanics, control, and team coordination.",
     officialUrl:
       "https://www.asme.org/topics-resources/content/podcast-mit-student-engineers-team-leads",
+    embedUrl:
+      "https://players.brightcove.net/1711318824001/default_default/index.html?videoId=4825130975001",
+    thumbnailUrl:
+      "https://www.asme.org/getmedia/6cd22ff6-bd8b-4b74-9cf0-b10b5352b560/Podcast-MIT-Student-Engineers-Team-Leads-Hyperloop-Effort_hero.jpg.aspx?width=460&height=360&ext=.jpg",
     recommendedLevel: "B1",
     durationLabel: "Podcast interview",
     supportFocus:

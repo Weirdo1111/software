@@ -41,6 +41,13 @@
       "email": "user434272@example.com",
       "passwordHash": "758e6fa11e4344b3a2e5e9dd562a7422:4ff4fbd5c56ec61cac53adef901cfbcb457ceae8e5b2f1f45061361a8c63e88fe92fb295e1ab33dc977e94889b8a778b30d5f3cf9c4b9a320ecc34f20cce1967",
       "createdAt": "2026-03-25T14:48:31.832Z"
+    },
+    {
+      "id": "98d4e4ad-d28d-4920-9bdf-c82804bca4a0",
+      "username": "Edison",
+      "email": "2617341@dundee.ac.uk",
+      "passwordHash": "ef4c0897b44643f7a4efd2788df44e0b:81c7f63317e97f7ad609bf61cd112c6990d871eb73904971df5990940a591d71013eb0817e860b2c896eec7cf6e64aee0aee855611c122695f4ae60d0740db91",
+      "createdAt": "2026-03-21T07:16:17.061Z"
     }
   ]
 }

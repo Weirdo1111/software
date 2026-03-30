@@ -429,6 +429,10 @@ export function TedLibrary({
           {filteredMaterials.map((material) => {
             const completion = completionMap.get(material.materialGroupId);
             const hasInlinePreview = hasStableInlinePreview(material);
+            const hasInAppAudio =
+              !hasInlinePreview &&
+              typeof material.audioSrc === "string" &&
+              material.audioSrc.length > 0;
 
             return (
               <Link
@@ -498,7 +502,7 @@ export function TedLibrary({
                         <span
                           className={cn(
                             "rounded-full px-2.5 py-1 text-[11px] font-semibold",
-                            hasInlinePreview
+                            hasInlinePreview || hasInAppAudio
                               ? "bg-[rgba(35,95,79,0.1)] text-[#315f4f]"
                               : "bg-[rgba(20,50,75,0.08)] text-[var(--ink-soft)]",
                           )}
@@ -507,6 +511,10 @@ export function TedLibrary({
                             ? locale === "zh"
                               ? "站内预览"
                               : "In-app preview"
+                            : hasInAppAudio
+                              ? locale === "zh"
+                                ? "站内音频"
+                                : "In-app audio"
                             : locale === "zh"
                               ? "来源打开"
                               : "Open source"}

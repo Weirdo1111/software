@@ -102,7 +102,7 @@ export function TedDetail({
   const recordedRef = useRef(false);
 
   const canPreviewInline = hasStableInlinePreview(material);
-  const thumbnail = canPreviewInline ? getMaterialThumbnail(material) : null;
+  const thumbnail = getMaterialThumbnail(material);
   const noteWordCount = countWords(notes);
   const answeredCount = material.questions.filter(
     (question) => (answers[question.id] ?? "").trim().length >= 2,
@@ -331,6 +331,19 @@ export function TedDetail({
               )}
             </div>
           </div>
+
+          {!canPreviewInline && material.audioSrc ? (
+            <div className="mt-4 rounded-[1rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] p-4">
+              <p className="text-sm font-semibold text-[var(--ink)]">
+                {locale === "zh" ? "站内音频播放" : "In-app audio playback"}
+              </p>
+              <audio controls preload="none" className="mt-3 w-full" src={material.audioSrc}>
+                {locale === "zh"
+                  ? "当前浏览器不支持音频播放器。"
+                  : "Your browser does not support the audio player."}
+              </audio>
+            </div>
+          ) : null}
 
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             {material.notePrompts.map((prompt, index) => (
