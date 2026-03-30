@@ -66,9 +66,9 @@ body::after {
   position: fixed;
   inset: -8% -10%;
   pointer-events: none;
-  opacity: 0.84;
+  opacity: 0.66;
   background:
-    linear-gradient(180deg, transparent 0%, transparent 71%, rgba(133, 224, 104, 0.26) 71%, rgba(109, 208, 84, 0.4) 100%),
+    linear-gradient(180deg, transparent 0%, transparent 74%, rgba(132, 206, 255, 0.1) 82%, rgba(255, 198, 227, 0.12) 100%),
     radial-gradient(circle at 16% 20%, rgba(90, 123, 255, 0.12), transparent 18%),
     radial-gradient(circle at 84% 12%, rgba(255, 190, 73, 0.2), transparent 16%),
     radial-gradient(circle at 52% 103%, rgba(255, 172, 207, 0.22), transparent 20%);
@@ -396,7 +396,7 @@ body::after {
   height: 8rem;
   background:
     radial-gradient(circle at 20% 8%, rgba(255, 255, 255, 0.3), transparent 9%),
-    linear-gradient(180deg, rgba(141, 224, 106, 0), rgba(141, 224, 106, 0.54));
+    linear-gradient(180deg, rgba(126, 216, 255, 0), rgba(255, 212, 233, 0.28));
   pointer-events: none;
 }
 
@@ -577,7 +577,7 @@ body::after {
     radial-gradient(circle at 48% 44%, rgba(255, 207, 225, 0.54), transparent 26%),
     radial-gradient(circle at 14% 18%, rgba(255, 228, 196, 0.42), transparent 18%),
     radial-gradient(circle at 83% 19%, rgba(255, 247, 217, 0.4), transparent 18%),
-    linear-gradient(180deg, #a8d8ff 0%, #cfe9ff 28%, #f2d8f0 64%, #d7efb5 65%, #9ad6ae 100%);
+    linear-gradient(180deg, #a8d8ff 0%, #cfe9ff 28%, #f2d8f0 62%, #f6e4d0 63%, #f8efe4 100%);
   box-shadow:
     inset 0 2px 0 rgba(255, 255, 255, 0.58),
     0 14px 0 rgba(143, 196, 255, 0.28),
@@ -596,10 +596,10 @@ body::after {
   border-radius: 50%;
   background:
     radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.38), transparent 22%),
-    linear-gradient(180deg, rgba(225, 250, 187, 0.98), rgba(147, 212, 163, 0.98));
+    linear-gradient(180deg, rgba(255, 244, 211, 0.98), rgba(245, 226, 208, 0.98));
   box-shadow:
     inset 0 2px 0 rgba(255, 255, 255, 0.64),
-    0 18px 40px rgba(60, 130, 109, 0.16);
+    0 18px 40px rgba(153, 118, 98, 0.12);
 }
 
 .campus-lobby::after {
