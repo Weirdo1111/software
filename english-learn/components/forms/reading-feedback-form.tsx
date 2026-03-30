@@ -12,6 +12,7 @@ import {
   getLevelForDifficulty,
   type DifficultyLabel,
 } from "@/lib/level-labels";
+import { recordSkillAttemptInStorage } from "@/lib/learning-tracker";
 import { getPassageForLevel, type ReadingPracticePassage } from "@/lib/reading-passages";
 import type { ReadingFeedback } from "@/types/learning";
 
@@ -42,6 +43,7 @@ export function ReadingFeedbackForm({
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [vocabSaved, setVocabSaved] = useState(false);
+  const [startedAt, setStartedAt] = useState(() => Date.now());
 
   const targetLevel = getLevelForDifficulty(targetDifficulty, easyBaseline) as ReadingLevel;
   const activePassage = syncPassageWithTargetLevel ? getPassageForLevel(targetLevel) : passage;
@@ -122,6 +124,7 @@ export function ReadingFeedbackForm({
     setResult(null);
     setStatus("");
     setVocabSaved(false);
+    setStartedAt(Date.now());
   }
 
   function toggleVocab(word: string) {
@@ -138,8 +141,6 @@ export function ReadingFeedbackForm({
     setResult(null);
     setIsSubmitting(true);
     setVocabSaved(false);
-
-    const startTime = Date.now();
 
     try {
       const response = await fetch("/api/ai/feedback/reading", {
@@ -164,8 +165,13 @@ export function ReadingFeedbackForm({
 
       setResult(data);
 
-      const durationSec = Math.max(1, Math.round((Date.now() - startTime) / 1000));
+      const durationSec = Math.max(45, Math.round((Date.now() - startedAt) / 1000));
       const passed = (data.comprehension_score as number) >= 6;
+      recordSkillAttemptInStorage("reading", {
+        correct: passed,
+        durationSec,
+        markCompleted: true,
+      });
 
       fetch("/api/attempts", {
         method: "POST",

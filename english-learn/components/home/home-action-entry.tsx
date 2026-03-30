@@ -7,6 +7,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   CalendarDays,
+  CircleHelp,
   Compass,
   Flame,
   FileText,
@@ -27,12 +28,13 @@ import { BuddyCampusLobby } from "@/components/home/buddy-campus-lobby";
 import { BuddyCompanion } from "@/components/home/buddy-companion";
 import { HomeLearningModules } from "@/components/home/home-learning-modules";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { BUDDY_XP_RULES } from "@/lib/buddy-xp-config";
 import { type Locale } from "@/lib/i18n/dictionaries";
 import {
   createEmptyLearningTrackerSnapshot,
   loadLearningTrackerSnapshotFromStorage,
-  subscribeLearningTracker,
 } from "@/lib/learning-tracker";
+import { getBuddyXpSummaryFromStorage, subscribeBuddyXpSources } from "@/lib/buddy-xp";
 import {
   generateWeeklySchedule,
   getActiveWeekPlanOverrides,
@@ -65,6 +67,31 @@ function clampPercent(value: number) {
 function getAccuracy(correct: number, attempts: number) {
   if (attempts <= 0) return 0;
   return Math.round((correct / attempts) * 100);
+}
+
+const LEVEL_XP_BASE = 100;
+const LEVEL_XP_STEP = 40;
+
+function getXpForLevel(level: number) {
+  if (level <= 1) return 0;
+
+  let total = 0;
+  for (let currentLevel = 1; currentLevel < level; currentLevel += 1) {
+    total += LEVEL_XP_BASE + (currentLevel - 1) * LEVEL_XP_STEP;
+  }
+  return total;
+}
+
+function getBuddyLevel(xp: number) {
+  let level = 1;
+  while (xp >= getXpForLevel(level + 1)) {
+    level += 1;
+  }
+  return level;
+}
+
+function getXpNeededForNextLevel(level: number) {
+  return LEVEL_XP_BASE + (level - 1) * LEVEL_XP_STEP;
 }
 
 function getBuddyStage(xp: number, locale: Locale) {
@@ -186,13 +213,17 @@ const majorStickers = [
 ] as const;
 
 const weekdayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const LAST_SEEN_BUDDY_LEVEL_KEY = "english-learn:buddy:last-seen-level";
 
 export function HomeActionEntry({ locale }: { locale: Locale }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [displayName, setDisplayName] = useState("Learner");
   const [levelPrefix, setLevelPrefix] = useState("A2");
   const [snapshot, setSnapshot] = useState(() => createEmptyLearningTrackerSnapshot());
+  const [xpSummary, setXpSummary] = useState(() => getBuddyXpSummaryFromStorage());
   const [preferences, setPreferences] = useState(() => loadSchedulePreferencesFromStorage(locale));
+  const [showLevelRules, setShowLevelRules] = useState(false);
+  const [levelUpNotice, setLevelUpNotice] = useState<{ level: number; stageTitle: string } | null>(null);
 
   useEffect(() => {
     const refresh = () => {
@@ -200,12 +231,13 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       setDisplayName(toDisplayName(window.localStorage.getItem("demo_user")));
       setLevelPrefix(normalizeLevel(window.localStorage.getItem("demo_level")));
       setSnapshot(loadLearningTrackerSnapshotFromStorage());
+      setXpSummary(getBuddyXpSummaryFromStorage());
       setPreferences(loadSchedulePreferencesFromStorage(locale));
     };
 
     refresh();
     void hydrateSchedulePreferencesFromServer(locale);
-    const unsubTracker = subscribeLearningTracker(refresh);
+    const unsubXp = subscribeBuddyXpSources(refresh);
     const unsubPrefs = subscribeSchedulePreferences(refresh);
 
     window.addEventListener("storage", refresh);
@@ -213,7 +245,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     window.addEventListener("demo-placement-changed", refresh as EventListener);
 
     return () => {
-      unsubTracker();
+      unsubXp();
       unsubPrefs();
       window.removeEventListener("storage", refresh);
       window.removeEventListener("demo-auth-changed", refresh as EventListener);
@@ -257,11 +289,18 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       overallAccuracy: getAccuracy(totalCorrect, totalAttempts),
     };
   }, [snapshot]);
-  const { totalCompleted, totalAttempts, totalMinutes, overallAccuracy } = totalSummary;
+  const { totalCompleted, totalAttempts, totalMinutes } = totalSummary;
 
-  const xp = totalCompleted * 65 + Math.round(totalMinutes * 7) + totalAttempts * 14;
+  const xp = xpSummary.totalXp;
+  const buddyLevel = getBuddyLevel(xp);
+  const levelStartXp = getXpForLevel(buddyLevel);
+  const nextLevelXp = getXpForLevel(buddyLevel + 1);
+  const levelXpProgress = xp - levelStartXp;
+  const levelXpSpan = Math.max(1, nextLevelXp - levelStartXp);
+  const nextLevelNeed = getXpNeededForNextLevel(buddyLevel);
   const buddyStage = getBuddyStage(xp, locale);
-  const currentStageProgress = clampPercent((xp / buddyStage.nextXp) * 100);
+  const currentLevelProgress = clampPercent((levelXpProgress / levelXpSpan) * 100);
+  const totalCompletedAcrossSources = xpSummary.totalCompletedSources;
   const nextQuestHref =
     todayPlan.blocks.find((block) => block.skill !== "review")?.href ?? `/schedule?lang=${locale}`;
   const readingHref = `/reading?lang=${locale}`;
@@ -275,6 +314,31 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     const updated = saveSchedulePreferencesToStorage({ ...preferences, ...partial });
     setPreferences(updated);
   };
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !isLoggedIn) return;
+
+    const stored = window.localStorage.getItem(LAST_SEEN_BUDDY_LEVEL_KEY);
+    if (stored === null) {
+      window.localStorage.setItem(LAST_SEEN_BUDDY_LEVEL_KEY, String(buddyLevel));
+      return;
+    }
+
+    const previousLevel = Number(stored);
+    if (!Number.isFinite(previousLevel)) {
+      window.localStorage.setItem(LAST_SEEN_BUDDY_LEVEL_KEY, String(buddyLevel));
+      return;
+    }
+
+    if (buddyLevel > previousLevel) {
+      setLevelUpNotice({ level: buddyLevel, stageTitle: buddyStage.title });
+      return;
+    }
+
+    if (buddyLevel < previousLevel) {
+      window.localStorage.setItem(LAST_SEEN_BUDDY_LEVEL_KEY, String(buddyLevel));
+    }
+  }, [buddyLevel, buddyStage.title, isLoggedIn]);
 
   const growthRows: Array<{ label: string; value: number; hint: string }> = [
     {
@@ -364,6 +428,24 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       href: `/schedule?lang=${locale}`,
     },
   ];
+
+  const levelRuleRows = Array.from({ length: 6 }, (_, index) => {
+    const level = index + 1;
+    const nextLevel = level + 1;
+    const neededXp = getXpNeededForNextLevel(level);
+    const startXp = getXpForLevel(level);
+    const endXp = getXpForLevel(nextLevel) - 1;
+
+    return {
+      level,
+      nextLevel,
+      neededXp,
+      rangeLabel:
+        locale === "zh"
+          ? `总 XP ${startXp}-${endXp}`
+          : `Total XP ${startXp}-${endXp}`,
+    };
+  });
 
   if (!isLoggedIn) {
     return (
@@ -515,6 +597,10 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                   {buddyStage.title}
                 </span>
                 <span className="buddy-chip">
+                  <PawPrint className="size-4 text-[var(--navy)]" />
+                  {locale === "zh" ? `等级 ${buddyLevel}` : `Level ${buddyLevel}`}
+                </span>
+                <span className="buddy-chip">
                   <Target className="size-4 text-[var(--teal)]" />
                   {getGoalLabel(preferences.goal, locale)}
                 </span>
@@ -583,40 +669,200 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
 
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 <div className="rounded-[1.45rem] border-2 border-white/90 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(232,244,255,0.92))] p-3 shadow-[0_8px_0_rgba(143,196,255,0.2),0_16px_24px_rgba(90,123,255,0.08)]">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">XP</p>
-                  <p className="mt-2 text-2xl font-semibold text-[var(--ink)]">{xp}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+                    {locale === "zh" ? "等级" : "Level"}
+                  </p>
+                  <p className="mt-2 text-2xl font-semibold text-[var(--ink)]">{buddyLevel}</p>
                 </div>
                 <div className="rounded-[1.45rem] border-2 border-white/90 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(239,255,248,0.92))] p-3 shadow-[0_8px_0_rgba(143,240,211,0.2),0_16px_24px_rgba(90,123,255,0.08)]">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
-                    {locale === "zh" ? "已完成任务" : "Tasks done"}
+                    XP
                   </p>
-                  <p className="mt-2 text-2xl font-semibold text-[var(--ink)]">{totalCompleted}</p>
+                  <p className="mt-2 text-2xl font-semibold text-[var(--ink)]">{xp}</p>
                 </div>
                 <div className="rounded-[1.45rem] border-2 border-white/90 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(255,243,247,0.94))] p-3 shadow-[0_8px_0_rgba(255,201,225,0.24),0_16px_24px_rgba(90,123,255,0.08)]">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
-                    {locale === "zh" ? "准确率" : "Accuracy"}
+                    {locale === "zh" ? "已完成任务" : "Tasks done"}
                   </p>
-                  <p className="mt-2 text-2xl font-semibold text-[var(--ink)]">{overallAccuracy}%</p>
+                  <p className="mt-2 text-2xl font-semibold text-[var(--ink)]">{totalCompletedAcrossSources}</p>
                 </div>
               </div>
 
               <div className="mt-4">
                 <div className="mb-2 flex items-center justify-between gap-3 text-sm">
                   <span className="font-semibold text-[var(--ink)]">
-                    {locale === "zh" ? "进化进度" : "Evolution progress"}
+                    {locale === "zh" ? "XP 进度" : "XP progress"}
                   </span>
                   <span className="text-[var(--ink-soft)]">
-                    {xp} / {buddyStage.nextXp}
+                    {levelXpProgress} / {levelXpSpan}
                   </span>
                 </div>
                 <div className="buddy-stage-bar h-3">
-                  <div className="buddy-progress-fill" style={{ width: `${currentStageProgress}%` }} />
+                  <div className="buddy-progress-fill" style={{ width: `${currentLevelProgress}%` }} />
                 </div>
+                <div className="mt-2 flex items-center justify-between gap-3 text-xs text-[var(--ink-soft)]">
+                  <span>
+                    {locale === "zh" ? `当前等级 ${buddyLevel}` : `Current level ${buddyLevel}`}
+                  </span>
+                  <span>
+                    {locale === "zh" ? `下一级 ${buddyLevel + 1}` : `Next level ${buddyLevel + 1}`}
+                  </span>
+                </div>
+                <div className="mt-3 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowLevelRules(true)}
+                    className="party-button-ghost !px-3 !py-2 !text-sm"
+                  >
+                    <CircleHelp className="size-4" />
+                    {locale === "zh" ? "查看升级规则" : "View level rules"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {levelUpNotice ? (
+              <div className="mx-auto mt-4 max-w-[24rem] animate-[buddyXpToastIn_480ms_ease-out] rounded-[1.8rem] border-2 border-white/90 bg-[linear-gradient(160deg,rgba(255,255,255,0.98),rgba(236,247,255,0.94),rgba(255,241,248,0.92))] p-4 shadow-[0_14px_0_rgba(255,201,225,0.2),0_24px_42px_rgba(90,123,255,0.14)]">
+                <div className="flex items-center gap-3">
+                  <div className="relative h-18 w-18 shrink-0 rounded-[1.4rem] border-2 border-white/90 bg-[radial-gradient(circle_at_30%_25%,rgba(255,255,255,0.98),rgba(220,241,255,0.86)_58%,rgba(255,230,241,0.8))] shadow-[0_10px_0_rgba(143,196,255,0.16)]">
+                    <span className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-[linear-gradient(135deg,#fff2a8,#ffd4ec)] text-[var(--navy)] shadow-[0_6px_0_rgba(255,201,225,0.18)]">
+                      <Trophy className="size-3.5" />
+                    </span>
+                    <BuddyCompanion
+                      stage={buddyStage.id}
+                      focus={getGoalFocus(preferences.goal)}
+                      mood="proud"
+                      float={false}
+                      className="absolute inset-0 mx-auto my-auto w-[4.4rem] animate-[buddyLevelCelebration_1.4s_ease-in-out_infinite]"
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
+                      {locale === "zh" ? "Buddy 升级了" : "Buddy leveled up"}
+                    </p>
+                    <p className="mt-1 text-lg font-semibold text-[var(--ink)]">
+                      {locale === "zh"
+                        ? `已升到 Level ${levelUpNotice.level}`
+                        : `You reached Level ${levelUpNotice.level}`}
+                    </p>
+                    <p className="mt-1 text-sm text-[var(--ink-soft)]">{levelUpNotice.stageTitle}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLevelUpNotice(null);
+                      window.localStorage.setItem(LAST_SEEN_BUDDY_LEVEL_KEY, String(buddyLevel));
+                    }}
+                    className="rounded-full border-2 border-white/90 bg-white/88 px-3 py-1.5 text-sm font-semibold text-[var(--ink)] shadow-[0_8px_0_rgba(143,196,255,0.14)]"
+                  >
+                    {locale === "zh" ? "知道了" : "Nice"}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </article>
+
+      {showLevelRules ? (
+        <div
+          className="fixed inset-0 z-[70] bg-transparent"
+          onClick={() => setShowLevelRules(false)}
+        >
+          <div
+            className="absolute right-[max(1.25rem,calc(50%-35rem))] top-[17.5rem] w-[min(24rem,calc(100vw-2rem))] rounded-[1.7rem] border-2 border-white/90 bg-[linear-gradient(165deg,rgba(255,255,255,0.99),rgba(241,247,255,0.97),rgba(255,246,250,0.94))] p-4 shadow-[0_14px_0_rgba(255,201,225,0.18),0_24px_40px_rgba(90,123,255,0.14)] sm:p-5"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="section-label">
+                  <PawPrint className="size-3.5" />
+                  {locale === "zh" ? "宠物升级规则" : "Buddy level rules"}
+                </p>
+                <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">
+                  {locale === "zh"
+                    ? `第 1 次升级需要 ${LEVEL_XP_BASE} XP，之后每升一级固定多 ${LEVEL_XP_STEP} XP。`
+                    : `The first level-up needs ${LEVEL_XP_BASE} XP, and each later level needs ${LEVEL_XP_STEP} more XP than the one before.`}
+                </p>
+              </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setShowLevelRules(false)}
+                className="rounded-full border-2 border-white/90 bg-white/88 px-3 py-1.5 text-sm font-semibold text-[var(--ink)] shadow-[0_8px_0_rgba(143,196,255,0.14)]"
+              >
+                {locale === "zh" ? "关闭" : "Close"}
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-2.5">
+              {levelRuleRows.slice(0, 3).map((rule) => (
+                <div
+                  key={rule.level}
+                  className="rounded-[1.2rem] border-2 border-white/90 bg-[rgba(255,255,255,0.84)] px-4 py-3 shadow-[0_8px_0_rgba(143,196,255,0.12),0_14px_20px_rgba(90,123,255,0.07)]"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-[var(--ink)]">
+                      {locale === "zh"
+                        ? `例：等级 ${rule.level} -> ${rule.nextLevel}`
+                        : `Example: Level ${rule.level} -> ${rule.nextLevel}`}
+                    </p>
+                    <span className="buddy-chip !px-3 !py-1">{rule.neededXp} XP</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 rounded-[1.2rem] border-2 border-white/90 bg-[rgba(255,255,255,0.84)] px-4 py-3 shadow-[0_8px_0_rgba(143,196,255,0.12),0_14px_20px_rgba(90,123,255,0.07)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+                {locale === "zh" ? "固定 XP 来源" : "Fixed XP sources"}
+              </p>
+              <div className="mt-3 grid gap-2 text-sm text-[var(--ink)]">
+                <p>
+                  {locale === "zh"
+                    ? `Listening 完成 +${BUDDY_XP_RULES.listeningCompletion} XP`
+                    : `Listening completion +${BUDDY_XP_RULES.listeningCompletion} XP`}
+                </p>
+                <p>
+                  {locale === "zh"
+                    ? `Speaking 完成 +${BUDDY_XP_RULES.speakingCompletion} XP`
+                    : `Speaking completion +${BUDDY_XP_RULES.speakingCompletion} XP`}
+                </p>
+                <p>
+                  {locale === "zh"
+                    ? `Reading 完成 +${BUDDY_XP_RULES.readingCompletion} XP`
+                    : `Reading completion +${BUDDY_XP_RULES.readingCompletion} XP`}
+                </p>
+                <p>
+                  {locale === "zh"
+                    ? `Writing 完成 +${BUDDY_XP_RULES.writingCompletion} XP`
+                    : `Writing completion +${BUDDY_XP_RULES.writingCompletion} XP`}
+                </p>
+                <p>
+                  {locale === "zh"
+                    ? `Review 完成 +${BUDDY_XP_RULES.reviewSession} XP`
+                    : `Review completion +${BUDDY_XP_RULES.reviewSession} XP`}
+                </p>
+                <p>
+                  {locale === "zh"
+                    ? `Quest Arcade 通关 +${BUDDY_XP_RULES.escapeRoomClear} XP`
+                    : `Quest Arcade clear +${BUDDY_XP_RULES.escapeRoomClear} XP`}
+                </p>
+                <p>
+                  {locale === "zh"
+                    ? `Dorm Lockout 通关 +${BUDDY_XP_RULES.dormLockoutClear} XP`
+                    : `Dorm Lockout clear +${BUDDY_XP_RULES.dormLockoutClear} XP`}
+                </p>
+                <p>
+                  {locale === "zh"
+                    ? `Last Train Escape 通关 +${BUDDY_XP_RULES.lastTrainClear} XP`
+                    : `Last Train Escape clear +${BUDDY_XP_RULES.lastTrainClear} XP`}
+                </p>
               </div>
             </div>
           </div>
         </div>
-      </article>
+      ) : null}
 
       <BuddyCampusLobby
         locale={locale}

@@ -26,6 +26,7 @@ import {
   recordListeningCompletionInStorage,
   recordListeningHistoryInStorage,
 } from "@/lib/listening-library";
+import { recordSkillAttemptInStorage } from "@/lib/learning-tracker";
 import { getDifficultyLabel } from "@/lib/level-labels";
 import { cn } from "@/lib/utils";
 import type { CEFRLevel, ListeningAIFeedback } from "@/types/learning";
@@ -133,6 +134,11 @@ export function TedDetail({
       );
 
       const durationSec = Math.max(45, Math.round((Date.now() - attemptStartedAt) / 1000));
+      recordSkillAttemptInStorage("listening", {
+        correct: nextResult.passed,
+        durationSec,
+        markCompleted: true,
+      });
 
       fetch("/api/attempts", {
         method: "POST",

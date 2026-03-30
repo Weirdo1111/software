@@ -19,6 +19,7 @@ import { useAudioRecorder } from "@/components/forms/speaking/use-audio-recorder
 import { useSpeakingAttemptHistory } from "@/components/forms/speaking/use-speaking-attempt-history";
 import { type Locale } from "@/lib/i18n/dictionaries";
 import { appendSpeakingAttemptInStorage } from "@/lib/speaking-attempts";
+import { recordSkillAttemptInStorage } from "@/lib/learning-tracker";
 import { speakingModuleCopy } from "@/lib/speaking-modules";
 import {
   getSpeakingPromptById,
@@ -215,6 +216,11 @@ export function SpeakingFeedbackForm({
 
       const durationSec = Math.max(30, Math.round((Date.now() - startedAt) / 1000));
       const passed = feedback.overall_score >= 6;
+      recordSkillAttemptInStorage("speaking", {
+        correct: passed,
+        durationSec,
+        markCompleted: true,
+      });
 
       fetch("/api/attempts", {
         method: "POST",
