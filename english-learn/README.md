@@ -33,6 +33,7 @@ For a cleaner structure, detailed documentation now lives in `docs/`:
 
 - [docs/architecture.md](./docs/architecture.md): system structure, feature organization, data layers, and engineering notes
 - [docs/demo-guide.md](./docs/demo-guide.md): recommended demo flows, stage highlights, audience-specific storytelling, and presentation tips
+- [docs/seminar-rooms.md](./docs/seminar-rooms.md): seminar-room schema, routes, storage behavior, and extension notes
 
 ## Quick Start
 
@@ -99,6 +100,7 @@ npm run typecheck
 ### Community & Planning
 
 - `/discussion`
+- `/discussion/seminars`
 - `/activity`
 - `/schedule`
 
@@ -130,6 +132,7 @@ DATABASE_URL="mysql://root:password@127.0.0.1:3306/english_learn"
 SUPABASE_URL=
 SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+SUPABASE_STORAGE_BUCKET_SEMINARS=
 
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=

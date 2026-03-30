@@ -22,6 +22,10 @@ model User {
   sentNotifs DiscussionNotification[] @relation("NotificationActor")
   recvNotifs DiscussionNotification[] @relation("NotificationReceiver")
   activities DiscussionPost[]         @relation("PostLastActivity")
+  seminarOwnedRooms SeminarRoom[] @relation("SeminarRoomOwner")
+  seminarMemberships SeminarRoomMember[]
+  seminarMessages SeminarRoomMessage[] @relation("SeminarRoomMessageSender")
+  seminarUploadedAttachments SeminarRoomAttachment[] @relation("SeminarRoomAttachmentUploader")
 
   @@unique([authProvider, authUserId])
   @@map("users")
@@ -106,4 +110,85 @@ model DiscussionNotification {
   @@index([userId, isRead])
   @@index([postId])
   @@map("discussion_notifications")
+}
+
+model SeminarRoom {
+  id           BigInt   @id @default(autoincrement())
+  title        String   @db.VarChar(140)
+  description  String?  @db.Text
+  topicTag     String?  @db.VarChar(50)
+  visibility   String   @default("PUBLIC") @db.VarChar(20)
+  passwordHash String?  @db.VarChar(255)
+  status       String   @default("ACTIVE") @db.VarChar(20)
+  ownerId      BigInt
+  lastActiveAt DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  owner    User                    @relation("SeminarRoomOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members  SeminarRoomMember[]
+  messages SeminarRoomMessage[]
+  attachments SeminarRoomAttachment[]
+
+  @@index([ownerId])
+  @@index([status, lastActiveAt])
+  @@index([visibility, status])
+  @@map("seminar_rooms")
+}
+
+model SeminarRoomMember {
+  id         BigInt   @id @default(autoincrement())
+  roomId     BigInt
+  userId     BigInt
+  role       String   @default("MEMBER") @db.VarChar(20)
+  joinedAt   DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  room SeminarRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, userId])
+  @@index([userId])
+  @@index([roomId, role])
+  @@map("seminar_room_members")
+}
+
+model SeminarRoomMessage {
+  id        BigInt   @id @default(autoincrement())
+  roomId     BigInt
+  senderId   BigInt
+  content    String?  @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  room        SeminarRoom             @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sender      User                    @relation("SeminarRoomMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  attachments SeminarRoomAttachment[]
+
+  @@index([roomId, createdAt])
+  @@index([senderId])
+  @@map("seminar_room_messages")
+}
+
+model SeminarRoomAttachment {
+  id            BigInt   @id @default(autoincrement())
+  messageId      BigInt
+  roomId         BigInt
+  uploadedById   BigInt
+  fileName       String   @db.VarChar(255)
+  fileKind       String   @db.VarChar(20)
+  mimeType       String   @db.VarChar(120)
+  fileSize       Int
+  storageDriver  String   @db.VarChar(30)
+  storagePath    String   @db.VarChar(500)
+  createdAt      DateTime @default(now())
+
+  message    SeminarRoomMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  room       SeminarRoom        @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  uploadedBy User               @relation("SeminarRoomAttachmentUploader", fields: [uploadedById], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@index([roomId])
+  @@index([uploadedById])
+  @@map("seminar_room_attachments")
 }
