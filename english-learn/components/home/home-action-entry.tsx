@@ -9,11 +9,13 @@ import {
   CalendarDays,
   Compass,
   Flame,
+  FileText,
   Gamepad2,
   Headphones,
   LibraryBig,
   Mic,
   PawPrint,
+  PenLine,
   Sparkles,
   Target,
   Trophy,
@@ -23,6 +25,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { BuddyCampusLobby } from "@/components/home/buddy-campus-lobby";
 import { BuddyCompanion } from "@/components/home/buddy-companion";
+import { HomeLearningModules } from "@/components/home/home-learning-modules";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { type Locale } from "@/lib/i18n/dictionaries";
 import {
@@ -261,6 +264,12 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   const currentStageProgress = clampPercent((xp / buddyStage.nextXp) * 100);
   const nextQuestHref =
     todayPlan.blocks.find((block) => block.skill !== "review")?.href ?? `/schedule?lang=${locale}`;
+  const readingHref = `/reading?lang=${locale}`;
+  const writingLevel =
+    levelPrefix === "A1" || levelPrefix === "A2" || levelPrefix === "B1" || levelPrefix === "B2"
+      ? levelPrefix
+      : "B2";
+  const writingHref = `/lesson/${writingLevel}-writing-starter?lang=${locale}`;
 
   const updatePrefs = (partial: Partial<typeof preferences>) => {
     const updated = saveSchedulePreferencesToStorage({ ...preferences, ...partial });
@@ -398,6 +407,14 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                   {locale === "zh" ? "创建你的学伴" : "Create your buddy"}
                   <ArrowRight className="size-4" />
                 </Link>
+                <Link href={readingHref} className="party-button-ghost">
+                  <FileText className="size-4" />
+                  {locale === "zh" ? "打开阅读" : "Open Reading"}
+                </Link>
+                <Link href={writingHref} className="party-button-ghost">
+                  <PenLine className="size-4" />
+                  {locale === "zh" ? "打开写作" : "Open Writing"}
+                </Link>
                 <Link href={`/placement-test?lang=${locale}`} className="party-button-ghost">
                   {locale === "zh" ? "开始分级测试" : "Start placement test"}
                 </Link>
@@ -528,6 +545,14 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                 {locale === "zh" ? "开始今日任务" : "Start today's quest"}
                 <ArrowRight className="size-4" />
               </Link>
+              <Link href={readingHref} className="party-button-ghost">
+                <FileText className="size-4" />
+                {locale === "zh" ? "打开阅读" : "Open Reading"}
+              </Link>
+              <Link href={writingHref} className="party-button-ghost">
+                <PenLine className="size-4" />
+                {locale === "zh" ? "打开写作" : "Open Writing"}
+              </Link>
               <Link href={`/discussion?lang=${locale}`} className="party-button-ghost">
                 {locale === "zh" ? "打开学伴广场" : "Open Buddy Square"}
               </Link>
@@ -606,6 +631,8 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
         buddyStage={buddyStage.id}
         buddyFocus={getGoalFocus(preferences.goal)}
       />
+
+      <HomeLearningModules locale={locale} />
 
       <div className="grid gap-5 xl:grid-cols-[1.04fr_0.96fr]">
         <article className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(246,250,255,0.92),rgba(255,241,248,0.88))] p-6">

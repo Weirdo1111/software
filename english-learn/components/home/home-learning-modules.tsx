@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { Ear, FileText, Mic, PenLine, Target } from "lucide-react";
 
 import { learningModules } from "@/lib/academic-ui";
+import { type Locale } from "@/lib/i18n/dictionaries";
 
 const skillIcons = {
   listening: Ear,
@@ -9,7 +11,7 @@ const skillIcons = {
   writing: PenLine,
 } as const;
 
-export function HomeLearningModules() {
+export function HomeLearningModules({ locale }: { locale: Locale }) {
   return (
     <section className="mt-6 reveal-up">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -27,10 +29,12 @@ export function HomeLearningModules() {
       <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {learningModules.map((module) => {
           const Icon = skillIcons[module.skill];
+          const href = `${module.href}?lang=${locale}`;
 
           return (
-            <article
+            <Link
               key={module.skill}
+              href={href}
               className={`rounded-[1.8rem] border border-[rgba(20,50,75,0.12)] bg-gradient-to-br ${module.surfaceClass} p-5 shadow-[0_18px_40px_rgba(23,32,51,0.08)]`}
             >
               <div className="flex items-start justify-between gap-4">
@@ -51,7 +55,10 @@ export function HomeLearningModules() {
                   <span className="font-semibold">Output:</span> {module.deliverable}
                 </p>
               </div>
-            </article>
+              <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--navy)]">
+                {locale === "zh" ? "打开模块" : "Open module"}
+              </span>
+            </Link>
           );
         })}
       </div>
