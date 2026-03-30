@@ -1,6 +1,6 @@
 import type { Locale } from "@/lib/i18n/dictionaries";
+import { normalizeDiscussionCategory } from "@/components/discussion/types";
 import { appendDiscussionPost } from "@/lib/discussion-store";
-import type { DiscussionCategory } from "@/components/discussion/types";
 
 export type ContextCommentModule =
   | "listening"
@@ -218,13 +218,6 @@ function buildDiscussionContent(comment: ContextComment) {
   return comment.content;
 }
 
-function getDiscussionCategory(context: ContextCommentContext): DiscussionCategory {
-  if (context.module === "listening") return "listening";
-  if (context.module === "speaking") return "speaking";
-  if (context.module === "writing") return "writing";
-  return "experience";
-}
-
 export function subscribeContextComments(onStoreChange: () => void) {
   if (typeof window === "undefined") {
     return () => {};
@@ -398,7 +391,7 @@ export function appendContextComment(
       title: buildDiscussionTitle(context, nextComment),
       content: buildDiscussionContent(nextComment),
       author: nextComment.author,
-      tag: getDiscussionCategory(context),
+      tag: normalizeDiscussionCategory(context.plazaTag),
       likes: 0,
       liked: false,
       pinned: false,
