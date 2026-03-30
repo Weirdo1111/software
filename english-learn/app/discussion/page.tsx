@@ -8,10 +8,7 @@ export default async function DiscussionPage({
   searchParams: Promise<{ lang?: string; category?: string; view?: string; search?: string }>;
 }) {
   const locale = await getLocale(searchParams);
-<<<<<<< Updated upstream
-=======
   const params = await searchParams;
->>>>>>> Stashed changes
 
   return (
     <PageFrame

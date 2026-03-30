@@ -1,14 +1,8 @@
 "use client";
 
-<<<<<<< Updated upstream
-import { useEffect, useState } from "react";
-import { Send, X } from "lucide-react";
-=======
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useDeferredValue, useEffect, useMemo, useState, startTransition } from "react";
-import { Bot, Send, X } from "lucide-react";
->>>>>>> Stashed changes
+import { Send, X } from "lucide-react";
 
 import { DiscussionBoard } from "@/components/discussion/discussion-board";
 import type {
@@ -31,9 +25,6 @@ async function readJsonOrFallback<T>(response: Response, fallback: T): Promise<T
   }
 }
 
-<<<<<<< Updated upstream
-export function DiscussionClient({ locale }: { locale: Locale }) {
-=======
 function normalizeCategory(value?: string): DiscussionCategory | "all" {
   if (!value || value === "all") return "all";
 
@@ -67,7 +58,6 @@ export function DiscussionClient({
 }) {
   const router = useRouter();
   const pathname = usePathname();
->>>>>>> Stashed changes
   const [openComposer, setOpenComposer] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -76,7 +66,9 @@ export function DiscussionClient({
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState<DiscussionPost[]>([]);
   const [notifications, setNotifications] = useState<DiscussionNotification[]>([]);
-  const [selectedTag, setSelectedTag] = useState<DiscussionCategory | "all">(() => normalizeCategory(initialCategory));
+  const [selectedTag, setSelectedTag] = useState<DiscussionCategory | "all">(() =>
+    normalizeCategory(initialCategory),
+  );
   const [view, setView] = useState<DiscussionViewMode>(() => normalizeView(initialView));
   const [search, setSearch] = useState(initialSearch ?? "");
   const deferredSearch = useDeferredValue(search);
@@ -84,11 +76,7 @@ export function DiscussionClient({
   const text = {
     zh: {
       dialogTitle: "发起新讨论",
-<<<<<<< Updated upstream
-      dialogSubtitle: "首页只展示摘要，完整内容会在帖子详情页中展示。",
-=======
       dialogSubtitle: "论坛现在独立承担帖子、评论与通知流；角色扮演入口已拆分为单独空间。",
->>>>>>> Stashed changes
       category: "分类",
       title: "标题",
       content: "正文",
@@ -99,26 +87,16 @@ export function DiscussionClient({
       titleRequired: "标题和正文不能为空",
       titleShort: "标题至少 6 个字符",
       contentShort: "正文至少 20 个字符",
-<<<<<<< Updated upstream
-=======
-      openRoleplay: "进入 Roleplay",
->>>>>>> Stashed changes
       categories: {
         grammar: "语法",
         listening: "听力",
         reading: "阅读",
         writing: "写作",
         speaking: "口语",
-<<<<<<< Updated upstream
-        experience: "经验分享",
-        assessment: "测评",
-      },
-=======
         assessment: "测评",
         experience: "经验分享",
       },
       loading: "加载中...",
->>>>>>> Stashed changes
     },
     en: {
       dialogTitle: "Start New Discussion",
@@ -135,20 +113,16 @@ export function DiscussionClient({
       titleRequired: "Title and content are required",
       titleShort: "Title must be at least 6 characters",
       contentShort: "Content must be at least 20 characters",
-      openRoleplay: "Open Roleplay",
       categories: {
         grammar: "Grammar",
         listening: "Listening",
         reading: "Reading",
         writing: "Writing",
         speaking: "Speaking",
-        experience: "Experience",
         assessment: "Assessment",
+        experience: "Experience",
       },
-<<<<<<< Updated upstream
-=======
       loading: "Loading...",
->>>>>>> Stashed changes
     },
   }[locale];
 
@@ -156,7 +130,10 @@ export function DiscussionClient({
     const loadNotifications = async () => {
       try {
         const activityRes = await fetch("/api/discussion/activity", { cache: "no-store" });
-        const activityJson = await readJsonOrFallback<{ notifications?: DiscussionNotification[] }>(activityRes, {});
+        const activityJson = await readJsonOrFallback<{ notifications?: DiscussionNotification[] }>(
+          activityRes,
+          {},
+        );
         setNotifications(activityJson.notifications ?? []);
       } catch {
         setNotifications([]);
@@ -246,20 +223,11 @@ export function DiscussionClient({
       body: JSON.stringify({ title: trimmedTitle, content: trimmedContent, category }),
     });
 
-<<<<<<< Updated upstream
-    const result = await readJsonOrFallback<DiscussionPost | { error?: string } | null>(
-      res,
-      null
-    );
-=======
     const result = await readJsonOrFallback<DiscussionPost | { error?: string } | null>(res, null);
->>>>>>> Stashed changes
 
     if (!res.ok) {
       const message =
-        result && typeof result === "object" && "error" in result
-          ? result.error
-          : undefined;
+        result && typeof result === "object" && "error" in result ? result.error : undefined;
       setError(message || "Failed to create post");
       return;
     }
@@ -286,54 +254,26 @@ export function DiscussionClient({
 
     const data = await readJsonOrFallback<
       { liked: boolean; likes: number } | { error?: string } | null
-    >(
-      res,
-      null
-    );
+    >(res, null);
 
     if (!res.ok || !data || !("liked" in data)) return;
 
     setPosts((prev) =>
       prev.map((post) =>
-        post.id === postId
-          ? { ...post, liked: data.liked, likes: data.likes }
-          : post
-      )
+        post.id === postId ? { ...post, liked: data.liked, likes: data.likes } : post,
+      ),
     );
 
     const activityRes = await fetch("/api/discussion/activity", { cache: "no-store" });
     const activityJson = await readJsonOrFallback<{ notifications?: DiscussionNotification[] }>(
       activityRes,
-      {}
+      {},
     );
     setNotifications(activityJson.notifications ?? []);
   };
 
-  if (loading) {
-    return <div className="p-8 text-sm text-slate-500">Loading...</div>;
-  }
-
   return (
     <>
-<<<<<<< Updated upstream
-      <DiscussionBoard
-        locale={locale}
-        posts={posts}
-        notifications={notifications}
-        onOpenComposer={() => setOpenComposer(true)}
-        onToggleLike={handleToggleLike}
-      />
-=======
-      <div className="mx-auto flex max-w-7xl justify-end px-4 pt-6 sm:px-6">
-        <Link
-          href={`/discussion/roleplay?lang=${locale}`}
-          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
-        >
-          <Bot className="size-4" />
-          {text.openRoleplay}
-        </Link>
-      </div>
-
       {loading ? (
         <div className="p-8 text-sm text-slate-500">{text.loading}</div>
       ) : (
@@ -352,7 +292,6 @@ export function DiscussionClient({
           onToggleLike={handleToggleLike}
         />
       )}
->>>>>>> Stashed changes
 
       {openComposer && (
         <div
@@ -366,12 +305,8 @@ export function DiscussionClient({
             <div className="border-b border-[#dde2f3] px-6 py-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="font-serif text-3xl text-[#030813]">
-                    {text.dialogTitle}
-                  </h2>
-                  <p className="mt-2 text-sm text-[#45474C]">
-                    {text.dialogSubtitle}
-                  </p>
+                  <h2 className="font-serif text-3xl text-[#030813]">{text.dialogTitle}</h2>
+                  <p className="mt-2 text-sm text-[#45474C]">{text.dialogSubtitle}</p>
                 </div>
 
                 <button
@@ -402,7 +337,6 @@ export function DiscussionClient({
                   <option value="speaking">{text.categories.speaking}</option>
                   <option value="assessment">{text.categories.assessment}</option>
                   <option value="experience">{text.categories.experience}</option>
-                  <option value="assessment">{text.categories.assessment}</option>
                 </select>
               </div>
 
