@@ -168,7 +168,7 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
               const active = isPrimaryActive(item.id);
               const className = `party-tab ${active ? "party-tab-active" : ""}`;
 
-              if (item.protected === false) {
+              if ("protected" in item && item.protected === false) {
                 return (
                   <Link key={item.id} href={resolveHref(item.id)} className={className}>
                     <item.Icon className="size-4" />
