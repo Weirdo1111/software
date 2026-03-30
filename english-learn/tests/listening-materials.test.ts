@@ -33,7 +33,7 @@ describe("listening materials", () => {
       expect(tedForMajor).toHaveLength(6);
       expect(authenticForMajor).toHaveLength(2);
       expect(majorMaterials.every((item) => item.contentMode !== "practice")).toBe(true);
-      expect(majorMaterials.every((item) => item.audioSrc === null)).toBe(true);
+      expect(tedForMajor.every((item) => item.audioSrc === null)).toBe(true);
     }
 
     expect(authenticListeningMaterials.some((item) => item.resourceType === "lecture")).toBe(true);
@@ -59,6 +59,22 @@ describe("listening materials", () => {
           typeof item.thumbnailUrl === "string" && item.thumbnailUrl.startsWith("https://"),
       ),
     ).toBe(true);
+  });
+
+  it("keeps cover images for all authentic-source cards and in-app audio for selected items", () => {
+    expect(
+      authenticListeningMaterials.every(
+        (item) =>
+          typeof item.thumbnailUrl === "string" && item.thumbnailUrl.startsWith("https://"),
+      ),
+    ).toBe(true);
+
+    const naturePodcast = authenticListeningMaterials.find(
+      (item) => item.materialGroupId === "mechanical-nature-3d-printer",
+    );
+
+    expect(naturePodcast).toBeTruthy();
+    expect(naturePodcast?.audioSrc).toContain("media.nature.com");
   });
 
   it("keeps only stable inline previews for the main listening gallery", () => {

@@ -14,7 +14,7 @@ export default async function SchedulePage({
 }) {
   const params = await searchParams;
   const locale = await getLocale(params);
-  const title = locale === "zh" ? "\u5b66\u4e60\u8ba1\u5212" : "Schedule";
+  const title = locale === "zh" ? "\u4efb\u52a1\u5730\u56fe" : "Quest Map";
   const initialFocusDateISO = normalizeFocusDate(params.focus);
 
   return (

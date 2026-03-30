@@ -11,10 +11,10 @@ describe("writing prompts", () => {
   });
 
   it("looks up a prompt by id", () => {
-    const prompt = getWritingPromptById("b2-attendance-policy-argument");
+    const prompt = getWritingPromptById("b2-public-transport-investment-argument");
 
-    expect(prompt?.title).toBe("Attendance policy argument");
-    expect(prompt?.scenario).toContain("faculty");
+    expect(prompt?.title).toBe("Public transport investment argument");
+    expect(prompt?.scenario).toContain("transport committee");
   });
 
   it("keeps multiple prompt options available for every CEFR level", () => {

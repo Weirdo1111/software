@@ -141,15 +141,13 @@ export function DiscussionBoard({
       roleplay: "Roleplay",
       queryAll: "查看社区里的最新讨论动态",
       querySearch: "当前结果来自论坛实时查询：",
-      likes: "点赞",
-      replies: "回复",
     },
     en: {
-      sideTitle: "Forum Categories",
-      heroTitle: "Academic Discussion Forum",
-      start: "Start New Discussion",
-      search: "Search discussion topics...",
-      all: "All",
+      sideTitle: "Categories",
+      heroTitle: "Community Forum",
+      start: "New Topic",
+      search: "Search topics...",
+      all: "All Topics",
       latest: "Latest",
       popular: "Popular",
       empty: "No discussions found.",
@@ -157,8 +155,6 @@ export function DiscussionBoard({
       roleplay: "Roleplay",
       queryAll: "Explore the latest community updates",
       querySearch: "Results are now driven by the live forum query:",
-      likes: "Likes",
-      replies: "Replies",
     },
   }[locale];
 
@@ -326,64 +322,63 @@ export function DiscussionBoard({
                     href={`/posts/${post.id}?lang=${locale}`}
                     className="group flex min-h-[300px] flex-col border border-[#edf1f6] bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.05)] transition hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(15,23,42,0.08)]"
                   >
-                    <div className="mb-4 flex items-start justify-between gap-3">
-                      <span className="inline-flex rounded-full bg-[#edf2f8] px-3 py-1 text-[11px] font-semibold text-[#5b6574]">
-                        {getCategoryLabel(post.tag, locale)}
-                      </span>
-
-                      {post.pinned ? (
-                        <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#f6e8c7] text-[#8a6a2f]">
-                          <Pin className="size-4" />
+                    <div>
+                      <div className="mb-4 flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600">
+                          {getCategoryLabel(post.tag, locale)}
                         </span>
-                      ) : (
-                        <span className="h-9 w-9" />
-                      )}
+                        {post.pinned ? (
+                          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#f6e8c7] text-[#8a6a2f]">
+                            <Pin className="size-4" />
+                          </span>
+                        ) : (
+                          <span className="h-9 w-9" />
+                        )}
+                      </div>
+
+                      <h3 className="mb-3 line-clamp-2 text-xl font-bold leading-snug text-slate-900 group-hover:text-blue-600">
+                        {post.title}
+                      </h3>
+                      <p className="line-clamp-2 text-sm leading-relaxed text-slate-500">
+                        {post.excerpt || post.content}
+                      </p>
                     </div>
 
-                    <h3 className="line-clamp-4 text-[24px] font-medium leading-[1.35] tracking-[-0.02em] text-[#111827] transition-colors group-hover:text-[#2f6df6]">
-                      {post.title}
-                    </h3>
-
-                    <div className="mt-4 text-sm leading-6 text-[#8a94a6]">
-                      {getLastActivityText(post, locale)}
-                    </div>
-
-                    <div className="mt-auto pt-10">
-                      <div className="flex items-end justify-between gap-4">
-                        <div className="flex min-w-0 items-center gap-3">
-                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#2f6df6] text-sm font-bold text-white">
-                            {getInitial(post.author)}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="truncate text-sm font-semibold text-[#1f2937]">
-                              {post.author}
-                            </div>
-                          </div>
+                    <div className="mt-8 flex items-center justify-between border-t border-slate-50 pt-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#2f6df6] text-sm font-bold text-white">
+                          {getInitial(post.author)}
                         </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-bold text-slate-800">{post.author}</span>
+                          <span className="text-[11px] text-slate-400">
+                            {getLastActivityText(post, locale)}
+                          </span>
+                        </div>
+                      </div>
 
-                        <div className="flex shrink-0 items-center gap-5 text-sm text-[#6b7280]">
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              onToggleLike?.(post.id);
-                            }}
-                            className={`inline-flex items-center gap-1.5 transition ${
-                              post.liked ? "text-rose-600" : "text-[#6b7280] hover:text-[#2f6df6]"
-                            }`}
-                            aria-pressed={post.liked}
-                          >
-                            <Heart
-                              className={`size-4 ${post.liked ? "fill-current text-rose-600" : ""}`}
-                            />
-                            <span>{post.likes}</span>
-                          </button>
+                      <div className="flex shrink-0 items-center gap-5 text-sm text-[#6b7280]">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            onToggleLike?.(post.id);
+                          }}
+                          className={`inline-flex items-center gap-1.5 transition ${
+                            post.liked ? "text-rose-600" : "text-[#6b7280] hover:text-[#2f6df6]"
+                          }`}
+                          aria-pressed={post.liked}
+                        >
+                          <Heart
+                            className={`size-4 ${post.liked ? "fill-current text-rose-600" : ""}`}
+                          />
+                          <span>{post.likes}</span>
+                        </button>
 
-                          <div className="inline-flex items-center gap-1.5">
-                            <MessageCircle className="size-4" />
-                            <span>{post.comments.length}</span>
-                          </div>
+                        <div className="inline-flex items-center gap-1.5">
+                          <MessageCircle className="size-4" />
+                          <span>{post.comments.length}</span>
                         </div>
                       </div>
                     </div>

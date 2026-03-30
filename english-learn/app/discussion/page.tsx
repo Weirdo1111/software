@@ -11,11 +11,7 @@ export default async function DiscussionPage({
   const params = await searchParams;
 
   return (
-    <PageFrame
-      locale={locale}
-      title={locale === "zh" ? "讨论区" : "Discussion"}
-      showHeader={false}
-    >
+    <PageFrame locale={locale} title={locale === "zh" ? "讨论区" : "Discussion"} showHeader={false}>
       <DiscussionClient
         locale={locale}
         initialCategory={params.category}

@@ -21,17 +21,17 @@ export function PageFrame({
   const frameCopy =
     locale === "zh"
       ? {
-          label: "DIICSU Academic English",
-          eyebrow: "面向 DIICSU 本科生的学术英语支持",
-          chips: ["DIICSU 学术语境", "Seminar / Coursework", "Feedback with progression"],
-          footer: "English Learn Academic - DIICSU interface",
+          label: "DIICSU Buddy Campus",
+          eyebrow: "面向 DIICSU 本科生的卡通化学术英语校园体验",
+          chips: ["Listening + Speaking", "Quest-based campus", "Buddy growth with progress"],
+          footer: "DIICSU Buddy Campus - English adventure prototype",
         }
       : {
-          label: "DIICSU Academic English",
+          label: "DIICSU Buddy Campus",
           eyebrow:
-            "Built for DIICSU undergraduates, English-medium study, and visible academic progression.",
-          chips: ["DIICSU cues", "Seminar / Coursework", "Feedback with progression"],
-          footer: "English Learn Academic - DIICSU interface",
+            "Built for DIICSU undergraduates, playful EMI study, and visible buddy progression.",
+          chips: ["Listening + Speaking", "Quest-based campus", "Buddy growth with progress"],
+          footer: "DIICSU Buddy Campus - English adventure prototype",
         };
 
   return (

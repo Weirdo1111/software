@@ -40,7 +40,7 @@ export function SceneRail({
             className={cn(
               "inline-flex items-center gap-2 rounded-full border font-semibold transition",
               fullscreen ? "px-5 py-3 text-base" : "px-4 py-2.5 text-sm",
-              active ? "border-teal-300 bg-teal-50 text-slate-900 shadow-[0_8px_24px_rgba(20,120,110,0.12)]" : "border-[#d9d7cf] bg-white/88 text-slate-700 hover:bg-white",
+              active ? "border-blue-200 bg-blue-50 text-slate-900 shadow-[0_8px_24px_rgba(37,99,235,0.12)]" : "border-[#d7e6fb] bg-white/88 text-slate-700 hover:bg-white",
             )}
           >
             <Icon className={cn(fullscreen ? "size-5" : "size-4")} />

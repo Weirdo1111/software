@@ -74,6 +74,7 @@ function isDiscussionPost(value: unknown): value is DiscussionPost {
     typeof record.liked === "boolean" &&
     typeof record.pinned === "boolean" &&
     typeof record.createdAt === "string" &&
+    typeof record.views === "number" &&
     Array.isArray(record.comments) &&
     record.comments.every(isDiscussionComment)
   );

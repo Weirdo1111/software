@@ -381,8 +381,8 @@ export function DormLockoutGame({ locale }: { locale: Locale }) {
   );
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#f6f2e8] text-slate-900">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,215,128,0.28),transparent_24%),radial-gradient(circle_at_82%_12%,rgba(123,205,196,0.24),transparent_20%),radial-gradient(circle_at_50%_100%,rgba(112,163,255,0.16),transparent_28%)]" />
+    <main className="min-h-screen overflow-hidden bg-[#eef5ff] text-slate-900">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(147,197,253,0.32),transparent_24%),radial-gradient(circle_at_82%_12%,rgba(191,219,254,0.28),transparent_20%),radial-gradient(circle_at_50%_100%,rgba(112,163,255,0.18),transparent_28%)]" />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(15,23,42,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(15,23,42,0.04)_1px,transparent_1px)] bg-[size:34px_34px]" />
 
       <div
@@ -392,33 +392,33 @@ export function DormLockoutGame({ locale }: { locale: Locale }) {
         )}
       >
         {!isFullscreen ? (
-          <header className="rounded-[1.6rem] border border-[#e8dcc7] bg-[linear-gradient(145deg,rgba(255,252,245,0.96),rgba(248,242,230,0.94))] p-4 shadow-[0_24px_70px_rgba(80,60,20,0.12)]">
+          <header className="rounded-[1.6rem] border border-[#d7e6fb] bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(238,246,255,0.95))] p-4 shadow-[0_24px_70px_rgba(37,99,235,0.12)]">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-wrap items-center gap-3">
                 <Link
                   href={`/games?lang=${locale}`}
-                  className="inline-flex items-center gap-2 rounded-full border border-[#ddd7ca] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-white"
+                  className="inline-flex items-center gap-2 rounded-full border border-[#d7e6fb] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-white"
                 >
                   <ArrowLeft className="size-4" />
                   {copy.back}
                 </Link>
 
-                <div className="rounded-full border border-teal-300 bg-teal-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-teal-800">
+                <div className="rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-blue-800">
                   {copy.stage}
                 </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
-                <div className={`inline-flex items-center gap-2 rounded-full border border-[#ddd7ca] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800 ${chipTone}`}>
-                  {remainingSeconds === 0 ? <TimerOff className="size-4 text-rose-500" /> : <Timer className="size-4 text-teal-700" />}
+                <div className={`inline-flex items-center gap-2 rounded-full border border-[#d7e6fb] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800 ${chipTone}`}>
+                  {remainingSeconds === 0 ? <TimerOff className="size-4 text-rose-500" /> : <Timer className="size-4 text-blue-700" />}
                   {copy.timer}: {countdownLabel}
                 </div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-[#ddd7ca] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800">
-                  <Timer className="size-4 text-teal-700" />
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#d7e6fb] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800">
+                  <Timer className="size-4 text-blue-700" />
                   {copy.runtime}: {elapsedLabel}
                 </div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-[#ddd7ca] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800">
-                  <Trophy className="size-4 text-amber-600" />
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#d7e6fb] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800">
+                  <Trophy className="size-4 text-blue-700" />
                   {copy.best}: {bestLabel}
                 </div>
               </div>
@@ -430,18 +430,18 @@ export function DormLockoutGame({ locale }: { locale: Locale }) {
           <section
             ref={gameViewportRef}
             className={cn(
-              "relative isolate rounded-[2rem] border border-[#e8dcc7] bg-[linear-gradient(145deg,rgba(255,252,245,0.96),rgba(248,242,230,0.94))] p-4 shadow-[0_30px_90px_rgba(80,60,20,0.12)] sm:p-5",
+              "relative isolate rounded-[2rem] border border-[#d7e6fb] bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(238,246,255,0.95))] p-4 shadow-[0_30px_90px_rgba(37,99,235,0.12)] sm:p-5",
               isFullscreen ? "h-screen w-screen overflow-hidden rounded-none border-0 p-0 shadow-none" : "",
             )}
           >
             {isFullscreen ? (
               <div className="pointer-events-none absolute inset-0 z-30">
-                <div className="corner-hud pointer-events-auto absolute left-4 top-4 w-[min(430px,calc(100vw-2rem))] rounded-[1.7rem] border border-[#eadfcb] bg-[rgba(255,250,242,0.78)] p-4 shadow-[0_22px_60px_rgba(80,60,20,0.16)] backdrop-blur-xl">
+                <div className="corner-hud pointer-events-auto absolute left-4 top-4 w-[min(430px,calc(100vw-2rem))] rounded-[1.7rem] border border-[#d7e6fb] bg-[rgba(247,251,255,0.82)] p-4 shadow-[0_22px_60px_rgba(37,99,235,0.14)] backdrop-blur-xl">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-teal-700/70">{copy.stage}</p>
-                      <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#ddd7ca] bg-white/90 px-4 py-2 text-sm font-semibold text-slate-800">
-                        <ScanFace className="size-4 text-teal-700" />
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-blue-700/70">{copy.stage}</p>
+                      <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#d7e6fb] bg-white/90 px-4 py-2 text-sm font-semibold text-slate-800">
+                        <ScanFace className="size-4 text-blue-700" />
                         {statusLabel}
                       </div>
                     </div>
@@ -449,7 +449,7 @@ export function DormLockoutGame({ locale }: { locale: Locale }) {
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/games?lang=${locale}`}
-                        className="inline-flex size-11 items-center justify-center rounded-2xl border border-[#ddd7ca] bg-white/90 text-slate-700 transition hover:bg-white"
+                        className="inline-flex size-11 items-center justify-center rounded-2xl border border-[#d7e6fb] bg-white/90 text-slate-700 transition hover:bg-white"
                         aria-label={copy.back}
                       >
                         <ArrowLeft className="size-4" />
@@ -457,7 +457,7 @@ export function DormLockoutGame({ locale }: { locale: Locale }) {
                       <button
                         type="button"
                         onClick={toggleFullscreen}
-                        className="inline-flex size-11 items-center justify-center rounded-2xl border border-[#ddd7ca] bg-white/90 text-slate-700 transition hover:bg-white"
+                        className="inline-flex size-11 items-center justify-center rounded-2xl border border-[#d7e6fb] bg-white/90 text-slate-700 transition hover:bg-white"
                         aria-label={isFullscreen ? copy.exitFullscreen : copy.fullscreen}
                       >
                         {isFullscreen ? <Minimize2 className="size-4" /> : <Expand className="size-4" />}
@@ -471,35 +471,35 @@ export function DormLockoutGame({ locale }: { locale: Locale }) {
                 </div>
 
                 <div className="corner-hud pointer-events-auto absolute right-4 top-4 flex w-[min(220px,calc(100vw-2rem))] flex-col gap-3">
-                  <div className={cn("rounded-[1.5rem] border border-[#eadfcb] bg-[rgba(255,250,242,0.8)] p-4 shadow-[0_18px_48px_rgba(80,60,20,0.14)] backdrop-blur-xl", chipTone)}>
+                  <div className={cn("rounded-[1.5rem] border border-[#d7e6fb] bg-[rgba(247,251,255,0.84)] p-4 shadow-[0_18px_48px_rgba(37,99,235,0.12)] backdrop-blur-xl", chipTone)}>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">{copy.timer}</p>
                     <div className="mt-2 flex items-center gap-2 text-lg font-semibold text-slate-900">
-                      {remainingSeconds === 0 ? <TimerOff className="size-5 text-rose-500" /> : <Timer className="size-5 text-teal-700" />}
+                      {remainingSeconds === 0 ? <TimerOff className="size-5 text-rose-500" /> : <Timer className="size-5 text-blue-700" />}
                       {countdownLabel}
                     </div>
                   </div>
-                  <div className="rounded-[1.5rem] border border-[#eadfcb] bg-[rgba(255,250,242,0.8)] p-4 shadow-[0_18px_48px_rgba(80,60,20,0.14)] backdrop-blur-xl">
+                  <div className="rounded-[1.5rem] border border-[#d7e6fb] bg-[rgba(247,251,255,0.84)] p-4 shadow-[0_18px_48px_rgba(37,99,235,0.12)] backdrop-blur-xl">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">{copy.runtime}</p>
                     <div className="mt-2 flex items-center gap-2 text-lg font-semibold text-slate-900">
-                      <Timer className="size-5 text-teal-700" />
+                      <Timer className="size-5 text-blue-700" />
                       {elapsedLabel}
                     </div>
                   </div>
-                  <div className="rounded-[1.5rem] border border-[#eadfcb] bg-[rgba(255,250,242,0.8)] p-4 shadow-[0_18px_48px_rgba(80,60,20,0.14)] backdrop-blur-xl">
+                  <div className="rounded-[1.5rem] border border-[#d7e6fb] bg-[rgba(247,251,255,0.84)] p-4 shadow-[0_18px_48px_rgba(37,99,235,0.12)] backdrop-blur-xl">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">{copy.best}</p>
                     <div className="mt-2 flex items-center gap-2 text-lg font-semibold text-slate-900">
-                      <Trophy className="size-5 text-amber-600" />
+                      <Trophy className="size-5 text-blue-700" />
                       {bestLabel}
                     </div>
                   </div>
                 </div>
 
-                <div className="corner-hud pointer-events-auto absolute bottom-4 left-4 w-[min(380px,calc(100vw-2rem))] rounded-[1.6rem] border border-[#eadfcb] bg-[rgba(255,250,242,0.82)] p-4 shadow-[0_18px_48px_rgba(80,60,20,0.14)] backdrop-blur-xl">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-teal-700/70">Objective</p>
+                <div className="corner-hud pointer-events-auto absolute bottom-4 left-4 w-[min(380px,calc(100vw-2rem))] rounded-[1.6rem] border border-[#d7e6fb] bg-[rgba(247,251,255,0.86)] p-4 shadow-[0_18px_48px_rgba(37,99,235,0.12)] backdrop-blur-xl">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-700/70">Objective</p>
                   <p className="mt-2 text-sm font-medium leading-6 text-slate-800">{progress.currentObjective}</p>
-                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#eadfcb]">
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#d7e6fb]">
                     <div
-                      className="progress-stripe h-full rounded-full bg-[linear-gradient(90deg,#19d3c5,#2c8cff,#ffd166)]"
+                      className="progress-stripe h-full rounded-full bg-[linear-gradient(90deg,#9ed8ff,#4b7dff,#7cbcff)]"
                       style={{ width: `${completionPercent}%` }}
                     />
                   </div>
@@ -510,20 +510,20 @@ export function DormLockoutGame({ locale }: { locale: Locale }) {
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                   <div className="flex flex-wrap items-center gap-3">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-[#ddd7ca] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800">
-                      <ScanFace className="size-4 text-teal-700" />
+                    <div className="inline-flex items-center gap-2 rounded-full border border-[#d7e6fb] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800">
+                      <ScanFace className="size-4 text-blue-700" />
                       {statusLabel}
                     </div>
-                    <div className={cn("inline-flex items-center gap-2 rounded-full border border-[#ddd7ca] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800", chipTone)}>
-                      {remainingSeconds === 0 ? <TimerOff className="size-4 text-rose-500" /> : <Timer className="size-4 text-teal-700" />}
+                    <div className={cn("inline-flex items-center gap-2 rounded-full border border-[#d7e6fb] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800", chipTone)}>
+                      {remainingSeconds === 0 ? <TimerOff className="size-4 text-rose-500" /> : <Timer className="size-4 text-blue-700" />}
                       {countdownLabel}
                     </div>
-                    <div className="inline-flex items-center gap-2 rounded-full border border-[#ddd7ca] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800">
-                      <Timer className="size-4 text-teal-700" />
+                    <div className="inline-flex items-center gap-2 rounded-full border border-[#d7e6fb] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800">
+                      <Timer className="size-4 text-blue-700" />
                       {elapsedLabel}
                     </div>
-                    <div className="inline-flex items-center gap-2 rounded-full border border-[#ddd7ca] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800">
-                      <Trophy className="size-4 text-amber-600" />
+                    <div className="inline-flex items-center gap-2 rounded-full border border-[#d7e6fb] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800">
+                      <Trophy className="size-4 text-blue-700" />
                       {bestLabel}
                     </div>
                   </div>
@@ -531,7 +531,7 @@ export function DormLockoutGame({ locale }: { locale: Locale }) {
                   <button
                     type="button"
                     onClick={toggleFullscreen}
-                    className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-[#ddd7ca] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-white"
+                    className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-[#d7e6fb] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-white"
                   >
                     {isFullscreen ? <Minimize2 className="size-4" /> : <Expand className="size-4" />}
                     {isFullscreen ? copy.exitFullscreen : copy.fullscreen}
