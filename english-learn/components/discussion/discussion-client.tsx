@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Send, X } from "lucide-react";
+import { Bot, MessageCircle, Send, X } from "lucide-react";
 
 import { DiscussionBoard } from "@/components/discussion/discussion-board";
+import { DiscussionRoleplayPanel } from "@/components/discussion/discussion-roleplay-panel";
 import type {
   DiscussionCategory,
   DiscussionNotification,
@@ -23,6 +24,7 @@ async function readJsonOrFallback<T>(response: Response, fallback: T): Promise<T
 }
 
 export function DiscussionClient({ locale }: { locale: Locale }) {
+  const [activePanel, setActivePanel] = useState<"discussion" | "roleplay">("discussion");
   const [openComposer, setOpenComposer] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -34,27 +36,30 @@ export function DiscussionClient({ locale }: { locale: Locale }) {
 
   const text = {
     zh: {
-      dialogTitle: "发起新讨论",
-      dialogSubtitle: "首页只展示摘要，完整内容会在帖子详情页中展示。",
-      category: "分类",
-      title: "标题",
-      content: "正文",
-      cancel: "取消",
-      publish: "发布",
-      placeholderTitle: "请输入一个清晰的帖子标题",
-      placeholderContent: "写下你的问题、背景、分析或经验分享……",
-      titleRequired: "标题和正文不能为空",
-      titleShort: "标题至少 6 个字符",
-      contentShort: "正文至少 20 个字符",
+      dialogTitle: "\u53d1\u8d77\u65b0\u8ba8\u8bba",
+      dialogSubtitle: "\u9996\u9875\u53ea\u5c55\u793a\u6458\u8981\uff0c\u5b8c\u6574\u5185\u5bb9\u4f1a\u5728\u5e16\u5b50\u8be6\u60c5\u9875\u4e2d\u663e\u793a\u3002",
+      category: "\u5206\u7c7b",
+      title: "\u6807\u9898",
+      content: "\u6b63\u6587",
+      cancel: "\u53d6\u6d88",
+      publish: "\u53d1\u5e03",
+      placeholderTitle: "\u8bf7\u8f93\u5165\u4e00\u4e2a\u6e05\u6670\u7684\u5e16\u5b50\u6807\u9898",
+      placeholderContent: "\u5199\u4e0b\u4f60\u7684\u95ee\u9898\u3001\u80cc\u666f\u3001\u5206\u6790\u6216\u7ecf\u9a8c\u5206\u4eab\u2026\u2026",
+      titleRequired: "\u6807\u9898\u548c\u6b63\u6587\u4e0d\u80fd\u4e3a\u7a7a",
+      titleShort: "\u6807\u9898\u81f3\u5c11 6 \u4e2a\u5b57\u7b26",
+      contentShort: "\u6b63\u6587\u81f3\u5c11 20 \u4e2a\u5b57\u7b26",
       categories: {
-        grammar: "语法",
-        listening: "听力",
-        reading: "阅读",
-        writing: "写作",
-        speaking: "口语",
-        experience: "经验分享",
-        assessment: "测评",
+        grammar: "\u8bed\u6cd5",
+        listening: "\u542c\u529b",
+        writing: "\u5199\u4f5c",
+        speaking: "\u53e3\u8bed",
+        experience: "\u7ecf\u9a8c\u5206\u4eab",
       },
+      panelDiscussion: "\u8ba8\u8bba\u533a",
+      panelRoleplay: "\u4eba\u673a\u626e\u6f14\u5bf9\u8bdd",
+      panelHintDiscussion: "\u6d4f\u89c8\u5e16\u5b50\u3001\u70b9\u8d5e\u4e92\u52a8\uff0c\u5e76\u53d1\u5e03\u65b0\u7684\u5b66\u4e60\u8bdd\u9898\u3002",
+      panelHintRoleplay: "\u5728\u591a\u4e2a\u89d2\u8272\u4e4b\u95f4\u5207\u6362\uff0c\u8fdb\u884c\u6c89\u6d78\u5f0f\u5b9e\u65f6\u82f1\u8bed\u7ec3\u4e60\u3002",
+      loading: "\u52a0\u8f7d\u4e2d...",
     },
     en: {
       dialogTitle: "Start New Discussion",
@@ -74,12 +79,15 @@ export function DiscussionClient({ locale }: { locale: Locale }) {
       categories: {
         grammar: "Grammar",
         listening: "Listening",
-        reading: "Reading",
         writing: "Writing",
         speaking: "Speaking",
         experience: "Experience",
-        assessment: "Assessment",
       },
+      panelDiscussion: "Discussion",
+      panelRoleplay: "Roleplay Chat",
+      panelHintDiscussion: "Browse posts, react, and publish new topics.",
+      panelHintRoleplay: "Switch between immersive realtime roleplay characters for English practice.",
+      loading: "Loading...",
     },
   }[locale];
 
@@ -140,7 +148,7 @@ export function DiscussionClient({ locale }: { locale: Locale }) {
 
     const result = await readJsonOrFallback<DiscussionPost | { error?: string } | null>(
       res,
-      null
+      null,
     );
 
     if (!res.ok) {
@@ -174,44 +182,93 @@ export function DiscussionClient({ locale }: { locale: Locale }) {
 
     const data = await readJsonOrFallback<
       { liked: boolean; likes: number } | { error?: string } | null
-    >(
-      res,
-      null
-    );
+    >(res, null);
 
     if (!res.ok || !data || !("liked" in data)) return;
 
     setPosts((prev) =>
       prev.map((post) =>
-        post.id === postId
-          ? { ...post, liked: data.liked, likes: data.likes }
-          : post
-      )
+        post.id === postId ? { ...post, liked: data.liked, likes: data.likes } : post,
+      ),
     );
 
     const activityRes = await fetch("/api/discussion/activity", { cache: "no-store" });
     const activityJson = await readJsonOrFallback<{ notifications?: DiscussionNotification[] }>(
       activityRes,
-      {}
+      {},
     );
     setNotifications(activityJson.notifications ?? []);
   };
 
-  if (loading) {
-    return <div className="p-8 text-sm text-slate-500">Loading...</div>;
-  }
-
   return (
     <>
-      <DiscussionBoard
-        locale={locale}
-        posts={posts}
-        notifications={notifications}
-        onOpenComposer={() => setOpenComposer(true)}
-        onToggleLike={handleToggleLike}
-      />
+      <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6">
+        <div className="rounded-[1.8rem] border border-[#dbe5f4] bg-white/90 p-2 shadow-sm">
+          <div className="grid gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setActivePanel("discussion")}
+              className={`rounded-[1.2rem] px-4 py-4 text-left transition ${
+                activePanel === "discussion"
+                  ? "bg-slate-900 text-white"
+                  : "bg-transparent text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              <span className="inline-flex items-center gap-2 text-sm font-semibold">
+                <MessageCircle className="size-4" />
+                {text.panelDiscussion}
+              </span>
+              <p
+                className={`mt-2 text-sm ${
+                  activePanel === "discussion" ? "text-white/75" : "text-slate-500"
+                }`}
+              >
+                {text.panelHintDiscussion}
+              </p>
+            </button>
 
-      {openComposer && (
+            <button
+              type="button"
+              onClick={() => setActivePanel("roleplay")}
+              className={`rounded-[1.2rem] px-4 py-4 text-left transition ${
+                activePanel === "roleplay"
+                  ? "bg-slate-900 text-white"
+                  : "bg-transparent text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              <span className="inline-flex items-center gap-2 text-sm font-semibold">
+                <Bot className="size-4" />
+                {text.panelRoleplay}
+              </span>
+              <p
+                className={`mt-2 text-sm ${
+                  activePanel === "roleplay" ? "text-white/75" : "text-slate-500"
+                }`}
+              >
+                {text.panelHintRoleplay}
+              </p>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {activePanel === "discussion" ? (
+        loading ? (
+          <div className="p-8 text-sm text-slate-500">{text.loading}</div>
+        ) : (
+          <DiscussionBoard
+            locale={locale}
+            posts={posts}
+            notifications={notifications}
+            onOpenComposer={() => setOpenComposer(true)}
+            onToggleLike={handleToggleLike}
+          />
+        )
+      ) : (
+        <DiscussionRoleplayPanel locale={locale} />
+      )}
+
+      {openComposer && activePanel === "discussion" && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
           onClick={() => setOpenComposer(false)}
@@ -223,12 +280,8 @@ export function DiscussionClient({ locale }: { locale: Locale }) {
             <div className="border-b border-[#dde2f3] px-6 py-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="font-serif text-3xl text-[#030813]">
-                    {text.dialogTitle}
-                  </h2>
-                  <p className="mt-2 text-sm text-[#45474C]">
-                    {text.dialogSubtitle}
-                  </p>
+                  <h2 className="font-serif text-3xl text-[#030813]">{text.dialogTitle}</h2>
+                  <p className="mt-2 text-sm text-[#45474C]">{text.dialogSubtitle}</p>
                 </div>
 
                 <button
@@ -254,11 +307,9 @@ export function DiscussionClient({ locale }: { locale: Locale }) {
                 >
                   <option value="grammar">{text.categories.grammar}</option>
                   <option value="listening">{text.categories.listening}</option>
-                  <option value="reading">{text.categories.reading}</option>
                   <option value="writing">{text.categories.writing}</option>
                   <option value="speaking">{text.categories.speaking}</option>
                   <option value="experience">{text.categories.experience}</option>
-                  <option value="assessment">{text.categories.assessment}</option>
                 </select>
               </div>
 

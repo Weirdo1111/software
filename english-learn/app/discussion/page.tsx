@@ -12,7 +12,7 @@ export default async function DiscussionPage({
   return (
     <PageFrame
       locale={locale}
-      title={locale === "zh" ? "讨论区" : "Discussion"}
+      title={locale === "zh" ? "\u8ba8\u8bba\u533a" : "Discussion"}
       showHeader={false}
     >
       <DiscussionClient locale={locale} />
