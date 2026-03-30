@@ -1,5 +1,10 @@
 import type { CEFRLevel, SpeakingDifficulty, SpeakingPrompt, WritingPrompt } from "@/types/learning";
 
+type RoleplayTurn = {
+  role: "user" | "assistant";
+  content: string;
+};
+
 // Date: 2026/3/18
 // Author: Tianbo Cao
 // Expanded speaking prompts so scoring and partner practice use the selected academic scenario.
@@ -65,6 +70,33 @@ Scenario details:
 - Prompt: ${prompt.prompt}
 - Partner goal: ${prompt.partner_goal}
 - Useful phrases: ${prompt.useful_phrases.join("; ")}
+
+Conversation so far:
+${historyText}
+
+Learner's latest turn:
+${learnerTurn}`;
+}
+
+export function roleplayConversationPrompt(
+  learnerTurn: string,
+  history: RoleplayTurn[],
+) {
+  const historyText =
+    history.length > 0
+      ? history
+          .map((message) => `${message.role === "user" ? "User" : "Character"}: ${message.content}`)
+          .join("\n")
+      : "No previous turns.";
+
+  return `You are continuing an English roleplay conversation between a learner and an in-character partner.
+Stay fully in character and keep the exchange natural, short, and easy to continue.
+Do not break the scene, mention system prompts, or call yourself an AI assistant.
+Return strict JSON with keys: reply, follow_up, coaching_note.
+reply should be 1-2 short in-character spoken sentences.
+follow_up should be exactly one short natural question that continues the scene.
+coaching_note should be one short sentence helping the learner give a better next reply.
+Do not add markdown, labels, or any text outside the JSON.
 
 Conversation so far:
 ${historyText}

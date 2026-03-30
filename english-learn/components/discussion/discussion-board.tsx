@@ -59,9 +59,11 @@ function getCategoryLabel(tag: DiscussionCategory, locale: Locale) {
   const map = {
     grammar: { zh: "语法", en: "Grammar" },
     listening: { zh: "听力", en: "Listening" },
+    reading: { zh: "阅读", en: "Reading" },
     writing: { zh: "写作", en: "Writing" },
     experience: { zh: "经验分享", en: "Experience" },
     speaking: { zh: "口语", en: "Speaking" },
+    assessment: { zh: "测评", en: "Assessment" },
   };
   return map[tag][locale];
 }
@@ -71,9 +73,11 @@ function getCategoryIcon(tag: DiscussionCategory | "all") {
     all: Grid2x2,
     grammar: BookOpen,
     listening: Headphones,
+    reading: BookOpen,
     writing: SquarePen,
     speaking: Mic,
-    experience: TrendingUp,
+    assessment: TrendingUp,
+    experience: MessageCircle,
   };
   return iconMap[tag];
 }
@@ -135,7 +139,15 @@ export function DiscussionBoard({
     },
   }[locale];
 
-  const categories: DiscussionCategory[] = ["grammar", "listening", "writing", "speaking", "experience"];
+  const categories: DiscussionCategory[] = [
+    "grammar",
+    "listening",
+    "reading",
+    "writing",
+    "speaking",
+    "assessment",
+    "experience",
+  ];
 
   const filteredPosts = useMemo(() => {
     const keyword = search.trim().toLowerCase();

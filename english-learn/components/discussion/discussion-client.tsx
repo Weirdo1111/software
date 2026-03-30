@@ -51,8 +51,10 @@ export function DiscussionClient({ locale }: { locale: Locale }) {
       categories: {
         grammar: "\u8bed\u6cd5",
         listening: "\u542c\u529b",
+        reading: "\u9605\u8bfb",
         writing: "\u5199\u4f5c",
         speaking: "\u53e3\u8bed",
+        assessment: "\u6d4b\u8bc4",
         experience: "\u7ecf\u9a8c\u5206\u4eab",
       },
       panelDiscussion: "\u8ba8\u8bba\u533a",
@@ -79,8 +81,10 @@ export function DiscussionClient({ locale }: { locale: Locale }) {
       categories: {
         grammar: "Grammar",
         listening: "Listening",
+        reading: "Reading",
         writing: "Writing",
         speaking: "Speaking",
+        assessment: "Assessment",
         experience: "Experience",
       },
       panelDiscussion: "Discussion",
