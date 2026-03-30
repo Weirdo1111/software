@@ -363,6 +363,203 @@ body::after {
     0 14px 22px rgba(90, 123, 255, 0.08);
 }
 
+.buddy-dressup-trigger {
+  transition: transform 180ms ease, filter 180ms ease;
+}
+
+.buddy-dressup-trigger:hover {
+  transform: translateY(-2px) scale(1.01);
+  filter: saturate(1.04);
+}
+
+.buddy-wardrobe-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background:
+    radial-gradient(circle at top left, rgba(255, 211, 93, 0.18), transparent 28%),
+    radial-gradient(circle at top right, rgba(123, 227, 210, 0.16), transparent 24%),
+    rgba(247, 251, 255, 0.64);
+  backdrop-filter: blur(12px);
+}
+
+.buddy-wardrobe-panel {
+  position: relative;
+  width: min(100%, 68rem);
+  border-radius: 2.3rem;
+  border: 2px solid rgba(255, 255, 255, 0.94);
+  background:
+    radial-gradient(circle at top right, rgba(255, 201, 225, 0.28), transparent 24%),
+    linear-gradient(90deg, rgba(251, 244, 229, 0.98) 0%, rgba(255, 251, 243, 0.98) 46%, rgba(239, 246, 255, 0.98) 54%, rgba(247, 251, 255, 0.98) 100%);
+  padding: 1.5rem;
+  box-shadow:
+    0 18px 0 rgba(255, 201, 225, 0.22),
+    0 34px 58px rgba(90, 123, 255, 0.16);
+  overflow: visible;
+}
+
+.buddy-wardrobe-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34), transparent 14%, transparent 86%, rgba(210, 190, 162, 0.16));
+  pointer-events: none;
+}
+
+.buddy-wardrobe-close {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  display: inline-flex;
+  height: 2.3rem;
+  width: 2.3rem;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255, 255, 255, 0.94);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ink);
+  font-size: 1.25rem;
+  box-shadow:
+    0 8px 0 rgba(143, 196, 255, 0.14),
+    0 14px 20px rgba(90, 123, 255, 0.08);
+}
+
+.buddy-wardrobe-layout {
+  display: grid;
+  gap: 1.1rem;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 24rem);
+  position: relative;
+  z-index: 1;
+  padding-left: 4.8rem;
+  align-items: start;
+}
+
+.buddy-wardrobe-page {
+  min-height: 100%;
+}
+
+.buddy-wardrobe-page-left {
+  border-radius: 1.8rem 0.9rem 0.9rem 1.8rem;
+  border: 1px solid rgba(203, 183, 153, 0.36);
+  background:
+    linear-gradient(180deg, rgba(255, 252, 246, 0.98), rgba(250, 244, 233, 0.96)),
+    repeating-linear-gradient(180deg, rgba(168, 145, 116, 0.08), rgba(168, 145, 116, 0.08) 1px, transparent 1px, transparent 2.4rem);
+  padding: 1.2rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset -10px 0 18px rgba(180, 156, 122, 0.08);
+}
+
+.buddy-wardrobe-tabs {
+  position: absolute;
+  left: -2.2rem;
+  top: 0.55rem;
+  z-index: 3;
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+  width: 7rem;
+}
+
+.buddy-wardrobe-tab,
+.buddy-wardrobe-option {
+  border-radius: 1.2rem;
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(241, 248, 255, 0.94));
+  padding: 0.85rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--ink);
+  text-align: left;
+  box-shadow:
+    0 8px 0 rgba(143, 196, 255, 0.16),
+    0 16px 24px rgba(90, 123, 255, 0.08);
+  transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+}
+
+.buddy-wardrobe-tab {
+  position: relative;
+  border-radius: 999px;
+  margin-right: 0;
+  padding: 0.95rem 1rem;
+  background: linear-gradient(135deg, #ffe49b, #ffd1a8);
+  box-shadow:
+    0 10px 0 rgba(255, 188, 107, 0.2),
+    0 16px 24px rgba(90, 123, 255, 0.08);
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-color: rgba(255, 255, 255, 0.96);
+}
+
+.buddy-wardrobe-tab:nth-child(2) {
+  background: linear-gradient(135deg, #ffcedb, #ffb6c8);
+}
+
+.buddy-wardrobe-tab:nth-child(3) {
+  background: linear-gradient(135deg, #bfeaff, #9fd8ff);
+}
+
+.buddy-wardrobe-tab::before {
+  content: "";
+  position: absolute;
+  inset: -0.2rem;
+  border-radius: 999px;
+  border: 1px dashed rgba(255, 255, 255, 0.44);
+  opacity: 0.72;
+}
+
+.buddy-wardrobe-tab:hover,
+.buddy-wardrobe-option:hover {
+  transform: translateY(-2px);
+}
+
+.buddy-wardrobe-tab-active,
+.buddy-wardrobe-option-active {
+  background: linear-gradient(135deg, rgba(123, 135, 255, 0.96), rgba(74, 210, 255, 0.9));
+  color: white;
+  box-shadow:
+    0 10px 0 rgba(93, 104, 220, 0.26),
+    0 18px 28px rgba(90, 123, 255, 0.14);
+}
+
+.buddy-wardrobe-tab-active {
+  transform: translateX(0.35rem) scale(1.02);
+}
+
+.buddy-wardrobe-options {
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding-top: 0.2rem;
+}
+
+.buddy-wardrobe-preview {
+  border-radius: 0.9rem 1.8rem 1.8rem 0.9rem;
+  border: 1px solid rgba(167, 190, 225, 0.28);
+  background:
+    linear-gradient(180deg, rgba(250, 253, 255, 0.98), rgba(238, 246, 255, 0.96)),
+    repeating-linear-gradient(180deg, rgba(137, 171, 215, 0.08), rgba(137, 171, 215, 0.08) 1px, transparent 1px, transparent 2.4rem);
+  padding: 1rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 10px 0 18px rgba(137, 171, 215, 0.08);
+}
+
+.buddy-wardrobe-page-flip {
+  transform-origin: left center;
+  animation: buddyWardrobePageFlip 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .pet-spotlight {
   position: absolute;
   inset: 4% 9% 16%;
@@ -667,6 +864,11 @@ body::after {
   animation: buddyLoadingRunLoop 1.8s linear infinite;
 }
 
+.buddy-loading-runner-core {
+  transform-origin: center bottom;
+  animation: buddyLoadingStride 0.42s ease-in-out infinite;
+}
+
 .buddy-loading-pet {
   width: 5rem;
   max-width: 5rem;
@@ -723,6 +925,165 @@ body::after {
   color: var(--ink-soft);
   font-size: 0.98rem;
   line-height: 1.75;
+}
+
+.global-buddy-shell {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 75;
+  pointer-events: none;
+}
+
+.global-buddy-card {
+  position: relative;
+  width: 7.6rem;
+  min-height: 7.3rem;
+  animation: globalBuddyBob 4.8s ease-in-out infinite;
+}
+
+.global-buddy-card:hover .global-buddy-sound-toggle,
+.global-buddy-card:focus-within .global-buddy-sound-toggle {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.global-buddy-button {
+  position: relative;
+  z-index: 3;
+  display: inline-flex;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.global-buddy-sound-toggle {
+  position: absolute;
+  left: -0.15rem;
+  top: -0.45rem;
+  z-index: 6;
+  display: inline-flex;
+  height: 2rem;
+  width: 2rem;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255, 255, 255, 0.94);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(241, 248, 255, 0.94));
+  box-shadow:
+    0 8px 0 rgba(143, 196, 255, 0.15),
+    0 14px 20px rgba(90, 123, 255, 0.08);
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+  transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease, opacity 140ms ease;
+}
+
+.global-buddy-sound-toggle:hover {
+  transform: translateY(-1px);
+}
+
+.global-buddy-sound-toggle-on {
+  background: linear-gradient(135deg, rgba(255, 246, 204, 0.98), rgba(232, 245, 255, 0.96));
+  box-shadow:
+    0 8px 0 rgba(255, 201, 107, 0.18),
+    0 14px 22px rgba(90, 123, 255, 0.1);
+}
+
+.global-buddy-figure {
+  position: relative;
+  display: inline-flex;
+  transform-origin: center bottom;
+  animation: globalBuddySway 3.1s ease-in-out infinite;
+}
+
+.global-buddy-avatar {
+  position: relative;
+  z-index: 3;
+  width: 7rem;
+  max-width: 7rem;
+}
+
+.global-buddy-shadow {
+  position: absolute;
+  left: 50%;
+  bottom: 0.3rem;
+  z-index: 1;
+  width: 4.8rem;
+  height: 1rem;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: rgba(58, 72, 108, 0.16);
+  filter: blur(7px);
+}
+
+.global-buddy-greeting {
+  position: absolute;
+  right: 0.1rem;
+  bottom: 6.15rem;
+  z-index: 5;
+  max-width: 8.4rem;
+  border-radius: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(244, 249, 255, 0.94));
+  padding: 0.38rem 0.62rem;
+  font-size: 0.74rem;
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--navy);
+  box-shadow:
+    0 8px 0 rgba(143, 196, 255, 0.16),
+    0 14px 20px rgba(90, 123, 255, 0.08);
+  animation: globalBuddyGreeting 1.8s ease both;
+}
+
+.global-buddy-greeting:lang(zh-CN) {
+  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", var(--font-body), sans-serif;
+  letter-spacing: 0;
+  word-break: keep-all;
+}
+
+.global-buddy-greeting::after {
+  position: absolute;
+  right: 0.95rem;
+  bottom: -0.32rem;
+  content: "";
+  width: 0.7rem;
+  height: 0.7rem;
+  transform: rotate(45deg);
+  border-right: 2px solid rgba(255, 255, 255, 0.95);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.95);
+  background: rgba(244, 249, 255, 0.96);
+}
+
+.global-buddy-card-blink .global-buddy-figure {
+  animation: globalBuddyBlinkHit 0.55s ease-in-out both;
+}
+
+.global-buddy-card-puff .global-buddy-figure {
+  animation: globalBuddyPuffHit 0.6s ease-in-out both;
+}
+
+.global-buddy-card-bounce .global-buddy-figure {
+  animation: globalBuddyBounceHit 0.6s ease-in-out both;
+}
+
+.global-buddy-card-wave .global-buddy-figure {
+  animation: globalBuddyWave 0.9s ease-in-out both;
+}
+
+.global-buddy-card-wobble .global-buddy-figure {
+  animation: globalBuddyWobble 0.42s ease-in-out both;
+}
+
+.global-buddy-card-easter .global-buddy-figure {
+  animation: globalBuddyEasterHit 0.9s ease-in-out both;
 }
 
 .party-tab {
@@ -1363,6 +1724,19 @@ body::after {
   animation: lobbyPetStride 420ms ease-in-out infinite;
 }
 
+.campus-lobby-pet[data-facing="left"] .campus-lobby-pet-body {
+  transform: scaleX(-1);
+}
+
+.campus-lobby-pet[data-moving="true"] .campus-lobby-pet-body {
+  animation: lobbyPetBodyStride 420ms ease-in-out infinite;
+}
+
+.campus-lobby-pet-body {
+  transform-origin: center bottom;
+  transition: transform 140ms ease;
+}
+
 .campus-lobby-pet-shadow {
   position: absolute;
   left: 50%;
@@ -1633,6 +2007,16 @@ body::after {
   }
   50% {
     transform: translate(-50%, -80%);
+  }
+}
+
+@keyframes lobbyPetBodyStride {
+  0%,
+  100% {
+    transform: rotate(-3deg) scale(1, 1);
+  }
+  50% {
+    transform: rotate(5deg) scale(0.96, 1.04);
   }
 }
 
@@ -1936,10 +2320,20 @@ body::after {
 
 @keyframes buddyLoadingRunLoop {
   from {
-    transform: rotate(0deg) translateY(-5.8rem) rotate(0deg);
+    transform: rotate(0deg) translateY(-5.8rem) rotate(82deg);
   }
   to {
-    transform: rotate(360deg) translateY(-5.8rem) rotate(-360deg);
+    transform: rotate(360deg) translateY(-5.8rem) rotate(442deg);
+  }
+}
+
+@keyframes buddyLoadingStride {
+  0%,
+  100% {
+    transform: rotate(-8deg) scale(1, 1);
+  }
+  50% {
+    transform: rotate(8deg) scale(0.95, 1.04);
   }
 }
 
@@ -1966,6 +2360,193 @@ body::after {
   }
 }
 
+@keyframes globalBuddyBob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes globalBuddySway {
+  0%,
+  100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+
+@keyframes globalBuddyArmLeft {
+  0%,
+  100% {
+    transform: rotate(18deg);
+  }
+  50% {
+    transform: rotate(34deg);
+  }
+}
+
+@keyframes globalBuddyArmRight {
+  0%,
+  100% {
+    transform: rotate(-18deg);
+  }
+  50% {
+    transform: rotate(-34deg);
+  }
+}
+
+@keyframes globalBuddyTuft {
+  0%,
+  100% {
+    transform: translateX(-50%) rotate(-10deg);
+  }
+  50% {
+    transform: translateX(-50%) rotate(10deg);
+  }
+}
+
+@keyframes globalBuddyExpression {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.82);
+  }
+  20%,
+  80% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.9);
+  }
+}
+
+@keyframes globalBuddyGreeting {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.88);
+  }
+  18%,
+  82% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.94);
+  }
+}
+
+@keyframes globalBuddyBlinkHit {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  30% {
+    transform: rotate(-3deg) scale(0.96, 1.03);
+  }
+  60% {
+    transform: rotate(2deg) scale(1.01, 0.98);
+  }
+}
+
+@keyframes globalBuddyPuffHit {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.08, 0.93);
+  }
+  70% {
+    transform: scale(0.97, 1.02);
+  }
+}
+
+@keyframes globalBuddyBounceHit {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  45% {
+    transform: translateY(-10px) scale(1.06);
+  }
+  75% {
+    transform: translateY(0) scale(0.96);
+  }
+}
+
+@keyframes globalBuddyWave {
+  0%,
+  100% {
+    transform: rotate(0deg) translateY(0);
+  }
+  25% {
+    transform: rotate(-8deg) translateY(-2px);
+  }
+  50% {
+    transform: rotate(8deg) translateY(-3px);
+  }
+  75% {
+    transform: rotate(-5deg) translateY(-1px);
+  }
+}
+
+@keyframes globalBuddyWobble {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+  75% {
+    transform: rotate(-2deg);
+  }
+}
+
+@keyframes globalBuddyEasterHit {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(-10deg) scale(1.05);
+  }
+  50% {
+    transform: rotate(10deg) scale(1.08);
+  }
+  75% {
+    transform: rotate(-6deg) scale(1.02);
+  }
+}
+
+@keyframes buddyWardrobePageFlip {
+  0% {
+    opacity: 0.18;
+    transform: perspective(900px) rotateY(-22deg) scale(0.98);
+    filter: blur(2px);
+  }
+  55% {
+    opacity: 1;
+    transform: perspective(900px) rotateY(6deg) scale(1.01);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(900px) rotateY(0deg) scale(1);
+    filter: blur(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -1982,6 +2563,7 @@ body::after {
   .campus-lobby-fountain-core,
   .campus-lobby-spark,
   .campus-lobby-pet[data-moving="true"],
+  .campus-lobby-pet[data-moving="true"] .campus-lobby-pet-body,
   .campus-lobby-enter,
   .arcade-float,
   .arcade-scene-enter,
@@ -1995,8 +2577,11 @@ body::after {
   .hotspot-badge,
   .buddy-loading-orbit,
   .buddy-loading-runner,
+  .buddy-loading-runner-core,
   .buddy-loading-pet,
   .buddy-loading-spark,
+  .global-buddy-card,
+  .global-buddy-avatar,
   .quest-console-enter,
   .quest-console-flicker::before,
   .quest-console-flash::after,
@@ -2011,6 +2596,17 @@ body::after {
     align-items: stretch;
   }
 
+  .buddy-wardrobe-layout {
+    grid-template-columns: 1fr;
+    padding-left: 0;
+  }
+
+  .buddy-wardrobe-tabs {
+    position: static;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: auto;
+  }
+
   .campus-lobby {
     min-height: 30rem;
   }
@@ -2019,6 +2615,10 @@ body::after {
 @media (max-width: 768px) {
   .institution-brand-image {
     width: 11.3rem;
+  }
+
+  .buddy-wardrobe-options {
+    grid-template-columns: 1fr;
   }
 
   .institution-brand-plate {

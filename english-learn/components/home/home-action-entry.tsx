@@ -1,9 +1,10 @@
-"use client";
+﻿"use client";
 
 // AI-assisted authorship note: the 2026 Buddy Campus home refresh in this module
 // was drafted with AI help and then reviewed, edited, and integrated by the team.
 
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import {
   ArrowRight,
   CalendarDays,
@@ -33,6 +34,16 @@ import {
   loadLearningTrackerSnapshotFromStorage,
   subscribeLearningTracker,
 } from "@/lib/learning-tracker";
+import {
+  DEFAULT_BUDDY_OUTFIT,
+  loadBuddyOutfitFromStorage,
+  saveBuddyOutfitToStorage,
+  subscribeBuddyOutfit,
+  type BuddyClothing,
+  type BuddyHat,
+  type BuddyHeldItem,
+  type BuddyOutfit,
+} from "@/lib/buddy-wardrobe";
 import {
   generateWeeklySchedule,
   getActiveWeekPlanOverrides,
@@ -187,12 +198,37 @@ const majorStickers = [
 
 const weekdayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+const buddyWardrobeCopy = {
+  hats: {
+    none: { zh: "\u4e0d\u6234", en: "Bare Head" },
+    sunhat: { zh: "\u906e\u9633\u5e3d", en: "Sun Hat" },
+    strawhat: { zh: "\u8349\u5e3d", en: "Straw Hat" },
+    cap: { zh: "\u9e2d\u820c\u5e3d", en: "Cap" },
+  } satisfies Record<BuddyHat, { zh: string; en: string }>,
+  clothing: {
+    none: { zh: "\u9ed8\u8ba4", en: "Default" },
+    shorts: { zh: "\u77ed\u88e4", en: "Shorts" },
+    jeans: { zh: "\u725b\u4ed4\u88e4", en: "Jeans" },
+    bloomers: { zh: "\u706f\u7b3c\u88e4", en: "Bloomers" },
+  } satisfies Record<BuddyClothing, { zh: string; en: string }>,
+  heldItems: {
+    none: { zh: "\u7a7a\u624b", en: "Empty Hands" },
+    flower: { zh: "\u5c0f\u82b1\u675f", en: "Flower" },
+    tea: { zh: "\u5976\u8336\u676f", en: "Tea Cup" },
+    starwand: { zh: "\u661f\u661f\u68d2", en: "Star Wand" },
+  } satisfies Record<BuddyHeldItem, { zh: string; en: string }>,
+};
+
 export function HomeActionEntry({ locale }: { locale: Locale }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [displayName, setDisplayName] = useState("Learner");
   const [levelPrefix, setLevelPrefix] = useState("A2");
   const [snapshot, setSnapshot] = useState(() => createEmptyLearningTrackerSnapshot());
   const [preferences, setPreferences] = useState(() => loadSchedulePreferencesFromStorage(locale));
+  const [buddyOutfit, setBuddyOutfit] = useState<BuddyOutfit>(() => loadBuddyOutfitFromStorage());
+  const [wardrobeOpen, setWardrobeOpen] = useState(false);
+  const [wardrobeTab, setWardrobeTab] = useState<"hat" | "clothing" | "heldItem">("hat");
+  const [wardrobeFlipTick, setWardrobeFlipTick] = useState(0);
 
   useEffect(() => {
     const refresh = () => {
@@ -201,12 +237,14 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       setLevelPrefix(normalizeLevel(window.localStorage.getItem("demo_level")));
       setSnapshot(loadLearningTrackerSnapshotFromStorage());
       setPreferences(loadSchedulePreferencesFromStorage(locale));
+      setBuddyOutfit(loadBuddyOutfitFromStorage());
     };
 
     refresh();
     void hydrateSchedulePreferencesFromServer(locale);
     const unsubTracker = subscribeLearningTracker(refresh);
     const unsubPrefs = subscribeSchedulePreferences(refresh);
+    const unsubOutfit = subscribeBuddyOutfit(refresh);
 
     window.addEventListener("storage", refresh);
     window.addEventListener("demo-auth-changed", refresh as EventListener);
@@ -215,6 +253,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     return () => {
       unsubTracker();
       unsubPrefs();
+      unsubOutfit();
       window.removeEventListener("storage", refresh);
       window.removeEventListener("demo-auth-changed", refresh as EventListener);
       window.removeEventListener("demo-placement-changed", refresh as EventListener);
@@ -274,6 +313,17 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   const updatePrefs = (partial: Partial<typeof preferences>) => {
     const updated = saveSchedulePreferencesToStorage({ ...preferences, ...partial });
     setPreferences(updated);
+  };
+
+  const updateBuddyOutfit = (partial: Partial<BuddyOutfit>) => {
+    const updated = saveBuddyOutfitToStorage({ ...buddyOutfit, ...partial });
+    setBuddyOutfit(updated);
+  };
+
+  const handleWardrobeTabChange = (tab: "hat" | "clothing" | "heldItem") => {
+    if (tab === wardrobeTab) return;
+    setWardrobeTab(tab);
+    setWardrobeFlipTick((value) => value + 1);
   };
 
   const growthRows: Array<{ label: string; value: number; hint: string }> = [
@@ -444,7 +494,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                 </div>
                 <div className="party-stage mt-4 px-5 pb-5 pt-3">
                   <div className="pet-spotlight" />
-                  <BuddyCompanion stage="fresh" focus="coursework" mood="happy" className="mx-auto" />
+                  <BuddyCompanion stage="fresh" focus="coursework" mood="happy" outfit={buddyOutfit} className="mx-auto" />
                 </div>
               </div>
             </div>
@@ -573,12 +623,23 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
 
               <div className="party-stage mt-4 px-5 pb-5 pt-3">
                 <div className="pet-spotlight" />
-                <BuddyCompanion
-                  stage={buddyStage.id}
-                  focus={getGoalFocus(preferences.goal)}
-                  mood={buddyStage.mood}
-                  className="mx-auto"
-                />
+                <button
+                  type="button"
+                  onClick={() => setWardrobeOpen(true)}
+                  className="buddy-dressup-trigger mx-auto block rounded-[1.8rem] border-0 bg-transparent p-0"
+                  aria-label={locale === "zh" ? "打开桌宠换装" : "Open buddy wardrobe"}
+                >
+                  <BuddyCompanion
+                    stage={buddyStage.id}
+                    focus={getGoalFocus(preferences.goal)}
+                    mood={buddyStage.mood}
+                    outfit={buddyOutfit}
+                    className="mx-auto"
+                  />
+                </button>
+                <p className="mt-3 text-center text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+                  {locale === "zh" ? "点击桌宠换装" : "Tap buddy to dress up"}
+                </p>
               </div>
 
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -618,12 +679,143 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
         </div>
       </article>
 
+      {wardrobeOpen && typeof document !== "undefined"
+        ? createPortal(
+            <div className="buddy-wardrobe-overlay" role="dialog" aria-modal="true">
+              <div className="buddy-wardrobe-panel">
+                <button
+                  type="button"
+                  onClick={() => setWardrobeOpen(false)}
+                  className="buddy-wardrobe-close"
+                  aria-label={locale === "zh" ? "关闭换装面板" : "Close wardrobe"}
+                >
+                  ×
+                </button>
+
+                <div className="buddy-wardrobe-layout mt-6">
+                  <div className="buddy-wardrobe-tabs">
+                    {(
+                      [
+                        ["hat", locale === "zh" ? "帽子" : "Hats"],
+                        ["clothing", locale === "zh" ? "服装" : "Bottoms"],
+                        ["heldItem", locale === "zh" ? "手持物" : "Handhelds"],
+                      ] as const
+                    ).map(([tab, label]) => (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => handleWardrobeTabChange(tab)}
+                        className={`buddy-wardrobe-tab${wardrobeTab === tab ? " buddy-wardrobe-tab-active" : ""}`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="buddy-wardrobe-page buddy-wardrobe-page-left">
+                    <p className="section-label">
+                      <Sparkles className="size-3.5" />
+                      {locale === "zh" ? "Buddy 换装间" : "Buddy Wardrobe"}
+                    </p>
+                    <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
+                      {locale === "zh" ? "给你的学伴挑一套今天的造型" : "Pick today's look for your buddy"}
+                    </h3>
+                    <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">
+                      {locale === "zh"
+                        ? "帽子、下半身服装和手持物都可以自由搭配，当前分类的选项就显示在这一页。"
+                        : "Mix hats, lower-body outfits, and handheld props freely. The current category appears right on this page."}
+                    </p>
+
+                    <div key={`options-${wardrobeTab}-${wardrobeFlipTick}`} className="buddy-wardrobe-options buddy-wardrobe-page-flip mt-6">
+                      {wardrobeTab === "hat"
+                        ? (Object.entries(buddyWardrobeCopy.hats) as Array<[BuddyHat, { zh: string; en: string }]>).map(([key, copy]) => (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => updateBuddyOutfit({ hat: key })}
+                              className={`buddy-wardrobe-option${buddyOutfit.hat === key ? " buddy-wardrobe-option-active" : ""}`}
+                            >
+                              {copy[locale]}
+                            </button>
+                          ))
+                        : null}
+                      {wardrobeTab === "clothing"
+                        ? (Object.entries(buddyWardrobeCopy.clothing) as Array<[BuddyClothing, { zh: string; en: string }]>).map(([key, copy]) => (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => updateBuddyOutfit({ clothing: key })}
+                              className={`buddy-wardrobe-option${buddyOutfit.clothing === key ? " buddy-wardrobe-option-active" : ""}`}
+                            >
+                              {copy[locale]}
+                            </button>
+                          ))
+                        : null}
+                      {wardrobeTab === "heldItem"
+                        ? (Object.entries(buddyWardrobeCopy.heldItems) as Array<[BuddyHeldItem, { zh: string; en: string }]>).map(([key, copy]) => (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => updateBuddyOutfit({ heldItem: key })}
+                              className={`buddy-wardrobe-option${buddyOutfit.heldItem === key ? " buddy-wardrobe-option-active" : ""}`}
+                            >
+                              {copy[locale]}
+                            </button>
+                          ))
+                        : null}
+                    </div>
+                  </div>
+
+                  <div
+                    key={`preview-${wardrobeTab}-${wardrobeFlipTick}`}
+                    className="buddy-wardrobe-page buddy-wardrobe-page-right buddy-wardrobe-preview buddy-wardrobe-page-flip"
+                  >
+                    <div className="party-stage px-5 pb-5 pt-3">
+                      <div className="pet-spotlight" />
+                      <BuddyCompanion
+                        stage={buddyStage.id}
+                        focus={getGoalFocus(preferences.goal)}
+                        mood="happy"
+                        outfit={buddyOutfit}
+                        className="mx-auto"
+                      />
+                    </div>
+                    <div className="buddy-bubble mt-4 p-4">
+                      <p className="text-sm font-semibold text-[var(--ink)]">
+                        {locale === "zh"
+                          ? `当前搭配：${buddyWardrobeCopy.hats[buddyOutfit.hat].zh} / ${buddyWardrobeCopy.clothing[buddyOutfit.clothing].zh} / ${buddyWardrobeCopy.heldItems[buddyOutfit.heldItem].zh}`
+                          : `Current look: ${buddyWardrobeCopy.hats[buddyOutfit.hat].en} / ${buddyWardrobeCopy.clothing[buddyOutfit.clothing].en} / ${buddyWardrobeCopy.heldItems[buddyOutfit.heldItem].en}`}
+                      </p>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBuddyOutfit(saveBuddyOutfitToStorage(DEFAULT_BUDDY_OUTFIT));
+                        }}
+                        className="party-button-ghost"
+                      >
+                        {locale === "zh" ? "恢复默认" : "Reset"}
+                      </button>
+                      <button type="button" onClick={() => setWardrobeOpen(false)} className="party-button">
+                        {locale === "zh" ? "完成搭配" : "Done"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
+
       <BuddyCampusLobby
         locale={locale}
         levelPrefix={levelPrefix}
         nextQuestHref={nextQuestHref}
         buddyStage={buddyStage.id}
         buddyFocus={getGoalFocus(preferences.goal)}
+        buddyOutfit={buddyOutfit}
         selectedGoal={preferences.goal}
         onSelectGoal={(goal) => updatePrefs({ goal })}
       />

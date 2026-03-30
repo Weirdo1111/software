@@ -1,6 +1,20 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 import { BuddyCompanion } from "@/components/home/buddy-companion";
+import { loadBuddyOutfitFromStorage, subscribeBuddyOutfit, type BuddyOutfit } from "@/lib/buddy-wardrobe";
 
 export default function Loading() {
+  const [outfit, setOutfit] = useState<BuddyOutfit>(() => loadBuddyOutfitFromStorage());
+
+  useEffect(() => {
+    const refresh = () => setOutfit(loadBuddyOutfitFromStorage());
+    refresh();
+    const unsub = subscribeBuddyOutfit(refresh);
+    return () => unsub();
+  }, []);
+
   return (
     <main className="buddy-loading-screen" aria-live="polite" aria-busy="true">
       <div className="buddy-loading-card">
@@ -23,6 +37,7 @@ export default function Loading() {
                 focus="coursework"
                 variant="bear"
                 mood="proud"
+                outfit={outfit}
                 float={false}
                 className="buddy-loading-pet"
               />

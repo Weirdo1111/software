@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { AnalyticsProvider } from "@/components/analytics-provider";
+import { GlobalBuddyCompanion } from "@/components/global-buddy-companion";
 import { NavigationLoadingOverlay } from "@/components/navigation-loading-overlay";
 import "./globals.css";
 
@@ -18,6 +19,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         <AnalyticsProvider />
+        <GlobalBuddyCompanion />
         <NavigationLoadingOverlay />
         {children}
       </body>

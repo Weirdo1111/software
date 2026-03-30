@@ -4,10 +4,12 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { BuddyCompanion } from "@/components/home/buddy-companion";
+import { loadBuddyOutfitFromStorage, subscribeBuddyOutfit, type BuddyOutfit } from "@/lib/buddy-wardrobe";
 import { getNavigationLoadingEventName, startNavigationLoading } from "@/lib/navigation-loading";
 
 const MIN_VISIBLE_MS = 420;
 const MAX_VISIBLE_MS = 12000;
+const ROUTE_SETTLE_MS = 220;
 
 function isModifiedEvent(event: MouseEvent) {
   return event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
@@ -33,9 +35,20 @@ export function NavigationLoadingOverlay() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [visible, setVisible] = useState(false);
+  const [outfit, setOutfit] = useState<BuddyOutfit>(() => loadBuddyOutfitFromStorage());
   const shownAtRef = useRef(0);
   const hideTimerRef = useRef<number | null>(null);
   const forceHideTimerRef = useRef<number | null>(null);
+  const routeAtShowRef = useRef("");
+
+  const routeKey = `${pathname}?${searchParams.toString()}`;
+
+  useEffect(() => {
+    const refresh = () => setOutfit(loadBuddyOutfitFromStorage());
+    refresh();
+    const unsub = subscribeBuddyOutfit(refresh);
+    return () => unsub();
+  }, []);
 
   useEffect(() => {
     const clearTimers = () => {
@@ -53,6 +66,7 @@ export function NavigationLoadingOverlay() {
     const show = () => {
       clearTimers();
       shownAtRef.current = Date.now();
+      routeAtShowRef.current = routeKey;
       setVisible(true);
 
       forceHideTimerRef.current = window.setTimeout(() => {
@@ -97,18 +111,24 @@ export function NavigationLoadingOverlay() {
       document.removeEventListener("click", handleDocumentClick, true);
       window.removeEventListener(getNavigationLoadingEventName(), handleNavigationStart as EventListener);
     };
-  }, [visible]);
+  }, [routeKey]);
 
   useEffect(() => {
     if (!visible) return;
+    if (routeKey === routeAtShowRef.current) return;
 
-    const remaining = Math.max(0, MIN_VISIBLE_MS - (Date.now() - shownAtRef.current));
     if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
+
+    const remaining = Math.max(0, MIN_VISIBLE_MS - (Date.now() - shownAtRef.current)) + ROUTE_SETTLE_MS;
     hideTimerRef.current = window.setTimeout(() => {
-      setVisible(false);
-      hideTimerRef.current = null;
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          setVisible(false);
+          hideTimerRef.current = null;
+        });
+      });
     }, remaining);
-  }, [pathname, searchParams, visible]);
+  }, [routeKey, visible]);
 
   if (!visible) return null;
 
@@ -129,14 +149,17 @@ export function NavigationLoadingOverlay() {
             <span className="buddy-loading-spark buddy-loading-spark-three" />
 
             <div className="buddy-loading-runner">
-              <BuddyCompanion
-                stage="growing"
-                focus="coursework"
-                variant="bear"
-                mood="proud"
-                float={false}
-                className="buddy-loading-pet"
-              />
+              <div className="buddy-loading-runner-core">
+                <BuddyCompanion
+                  stage="growing"
+                  focus="coursework"
+                  variant="bear"
+                  mood="proud"
+                  outfit={outfit}
+                  float={false}
+                  className="buddy-loading-pet"
+                />
+              </div>
             </div>
           </div>
         </div>

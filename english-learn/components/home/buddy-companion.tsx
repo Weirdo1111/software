@@ -1,9 +1,11 @@
 import { cn } from "@/lib/utils";
+import type { BuddyOutfit } from "@/lib/buddy-wardrobe";
 
 export type BuddyStage = "fresh" | "growing" | "explorer" | "scholar";
 export type BuddyMood = "calm" | "happy" | "proud";
 export type BuddyFocus = "coursework" | "research" | "seminar";
 export type BuddyVariant = "classic" | "cat" | "bunny" | "bear";
+export type BuddyFace = "happy" | "blink" | "blush" | "open" | "sleepy" | "surprised";
 
 const paletteByFocus: Record<
   BuddyFocus,
@@ -178,28 +180,212 @@ function renderVariantFace(variant: BuddyVariant, fill: string, trim: string) {
   return null;
 }
 
-export function BuddyCompanion({
-  stage,
-  focus,
-  mood = "happy",
-  variant = "classic",
-  float = true,
-  className,
-}: {
-  stage: BuddyStage;
-  focus: BuddyFocus;
-  mood?: BuddyMood;
-  variant?: BuddyVariant;
-  float?: boolean;
-  className?: string;
-}) {
-  const palette = paletteByFocus[focus];
+function renderBuddyEyes(face: BuddyFace, trim: string) {
+  if (face === "blink") {
+    return (
+      <>
+        <path d="M82 118c8-4 20-4 28 0" fill="none" stroke={trim} strokeWidth="5" strokeLinecap="round" />
+        <path d="M130 118c8-4 20-4 28 0" fill="none" stroke={trim} strokeWidth="5" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (face === "sleepy") {
+    return (
+      <>
+        <path d="M80 120c8-6 21-6 30 0" fill="none" stroke={trim} strokeWidth="5" strokeLinecap="round" />
+        <path d="M130 120c8-6 21-6 30 0" fill="none" stroke={trim} strokeWidth="5" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  const eyeScale = face === "surprised" ? 1.12 : 1;
+  const pupilScale = face === "surprised" ? 1.15 : 1;
+
+  return (
+    <>
+      <ellipse cx="96" cy="118" rx={18 * eyeScale} ry={20 * eyeScale} fill={trim} />
+      <ellipse cx="144" cy="118" rx={18 * eyeScale} ry={20 * eyeScale} fill={trim} />
+      <ellipse cx="101" cy="112" rx={6 * pupilScale} ry={7 * pupilScale} fill="#ffffff" />
+      <ellipse cx="149" cy="112" rx={6 * pupilScale} ry={7 * pupilScale} fill="#ffffff" />
+      <ellipse cx="109" cy="122" rx={3.5 * pupilScale} ry={4 * pupilScale} fill="#ffffff" />
+      <ellipse cx="157" cy="122" rx={3.5 * pupilScale} ry={4 * pupilScale} fill="#ffffff" />
+    </>
+  );
+}
+
+function renderBuddyMouth(face: BuddyFace, mood: BuddyMood, trim: string) {
+  if (face === "open") {
+    return (
+      <>
+        <ellipse cx="120" cy="150" rx="12" ry="10" fill="#fff8fb" stroke={trim} strokeWidth="5" />
+        <path d="M112 152c4 4 12 4 16 0" fill="none" stroke="#ff8d8d" strokeWidth="4" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (face === "surprised") {
+    return <ellipse cx="120" cy="150" rx="9" ry="11" fill="#fff8fb" stroke={trim} strokeWidth="5" />;
+  }
+
   const mouthPath =
     mood === "proud"
       ? "M106 148c8 8 22 8 30 0"
       : mood === "calm"
         ? "M110 148c6 3 15 3 21 0"
         : "M105 146c8 10 24 10 32 0";
+
+  if (face === "sleepy") {
+    return <path d="M108 149c6 2 18 2 24 0" fill="none" stroke={trim} strokeWidth="5" strokeLinecap="round" />;
+  }
+
+  return <path d={mouthPath} fill="none" stroke={trim} strokeWidth="5" strokeLinecap="round" />;
+}
+
+function renderBuddyBlush(face: BuddyFace, fill: string) {
+  const opacity = face === "blush" ? 0.95 : 0.65;
+  const rx = face === "blush" ? 12 : 10;
+  const ry = face === "blush" ? 8 : 7;
+
+  return (
+    <>
+      <ellipse cx="83" cy="143" rx={rx} ry={ry} fill={fill} opacity={opacity} />
+      <ellipse cx="157" cy="143" rx={rx} ry={ry} fill={fill} opacity={opacity} />
+    </>
+  );
+}
+
+function hasCustomHeldItem(outfit: BuddyOutfit) {
+  return outfit.heldItem !== "none";
+}
+
+function renderBuddyHat(outfit: BuddyOutfit, trim: string) {
+  if (outfit.hat === "sunhat") {
+    return (
+      <>
+        <ellipse cx="120" cy="53" rx="66" ry="14" fill="#ffe198" stroke={trim} strokeWidth="5" />
+        <path d="M76 53c0-34 88-34 88 0v13H76Z" fill="#ffd068" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <path d="M91 47h58" stroke="#ff8fb3" strokeWidth="5" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.hat === "strawhat") {
+    return (
+      <>
+        <ellipse cx="120" cy="57" rx="76" ry="17" fill="#eec871" stroke={trim} strokeWidth="5" />
+        <path d="M68 58c2-36 100-36 104 0v17H68Z" fill="#f5d88f" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <path d="M86 51h68" stroke="#5a7bff" strokeWidth="5" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.hat === "cap") {
+    return (
+      <>
+        <path d="M62 68c8-40 108-40 116 0v16H62Z" fill="#7da1ff" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <path d="M96 76c16-4 41 0 58 13-24 5-52 5-76 0 5-7 8-11 18-13Z" fill="#dbe7ff" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+      </>
+    );
+  }
+
+  return null;
+}
+
+function renderBuddyClothing(outfit: BuddyOutfit, trim: string) {
+  if (outfit.clothing === "shorts") {
+    return (
+      <>
+        <path d="M64 176c16-6 35-9 56-9s40 3 56 9l14 18c-19 7-43 10-70 10s-51-3-70-10Z" fill="#8ed8ff" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <path d="M120 169v35" stroke={trim} strokeWidth="5" strokeLinecap="round" opacity="0.55" />
+        <path d="M80 184c11 3 24 5 40 5s29-2 40-5" fill="none" stroke="#dff5ff" strokeWidth="5" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.clothing === "jeans") {
+    return (
+      <>
+        <path d="M66 172c16-6 34-9 54-9s38 3 54 9l16 32c-19 8-43 12-70 12s-51-4-70-12Z" fill="#6f87ff" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <path d="M120 166v44" stroke="#c8d2ff" strokeWidth="5" strokeLinecap="round" />
+        <path d="M74 180h92" stroke="#c8d2ff" strokeWidth="5" strokeLinecap="round" />
+        <path d="M78 203c9 4 20 6 33 6" fill="none" stroke="#dfe6ff" strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M162 203c-9 4-20 6-33 6" fill="none" stroke="#dfe6ff" strokeWidth="4.5" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.clothing === "bloomers") {
+    return (
+      <>
+        <path d="M64 174c16-7 35-10 56-10s40 3 56 10l16 22c-19 9-43 13-72 13s-53-4-72-13Z" fill="#ff9db0" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <path d="M74 187c11 7 26 10 46 10s35-3 46-10" fill="none" stroke="#ffd7e4" strokeWidth="5" strokeLinecap="round" />
+        <circle cx="97" cy="181" r="4.5" fill="#fff7ee" />
+        <circle cx="143" cy="181" r="4.5" fill="#fff7ee" />
+      </>
+    );
+  }
+
+  return null;
+}
+
+function renderBuddyHeldItem(outfit: BuddyOutfit, trim: string, accent: string) {
+  if (outfit.heldItem === "flower") {
+    return (
+      <>
+        <path d="M153 154l12 24" stroke="#4aa867" strokeWidth="5" strokeLinecap="round" />
+        <circle cx="168" cy="149" r="7" fill="#ff9db0" stroke={trim} strokeWidth="4" />
+        <circle cx="174" cy="154" r="6" fill="#ffd35d" stroke={trim} strokeWidth="4" />
+        <circle cx="161" cy="157" r="6" fill="#8ed8ff" stroke={trim} strokeWidth="4" />
+      </>
+    );
+  }
+
+  if (outfit.heldItem === "tea") {
+    return (
+      <>
+        <path d="M150 148h20l-3 24h-14Z" fill="#fff8f1" stroke={trim} strokeWidth="4.5" strokeLinejoin="round" />
+        <path d="M155 140v9" stroke="#ff9b95" strokeWidth="4" strokeLinecap="round" />
+        <path d="M165 140v9" stroke="#ff9b95" strokeWidth="4" strokeLinecap="round" />
+        <path d="M150 156h20" stroke={accent} strokeWidth="4.5" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.heldItem === "starwand") {
+    return (
+      <>
+        <path d="M152 154l14 22" stroke="#8b6cf7" strokeWidth="5" strokeLinecap="round" />
+        <path d="m169 142 3 7 8 1-6 5 2 7-7-4-7 4 2-7-6-5 8-1Z" fill="#ffd35d" stroke={trim} strokeWidth="4" strokeLinejoin="round" />
+      </>
+    );
+  }
+
+  return null;
+}
+
+export function BuddyCompanion({
+  stage,
+  focus,
+  mood = "happy",
+  face = "happy",
+  variant = "classic",
+  outfit,
+  float = true,
+  className,
+}: {
+  stage: BuddyStage;
+  focus: BuddyFocus;
+  mood?: BuddyMood;
+  face?: BuddyFace;
+  variant?: BuddyVariant;
+  outfit?: BuddyOutfit;
+  float?: boolean;
+  className?: string;
+}) {
+  const palette = paletteByFocus[focus];
+  const resolvedOutfit = outfit ?? { hat: "none", clothing: "none", heldItem: "none" };
+  const showDefaultFocusAccessory = !hasCustomHeldItem(resolvedOutfit);
 
   return (
     <div className={cn("relative aspect-square w-full max-w-[22rem]", float && "buddy-float", className)}>
@@ -220,6 +406,7 @@ export function BuddyCompanion({
           opacity="0.52"
         />
 
+        {renderBuddyHat(resolvedOutfit, palette.trim)}
         {renderStageAccessory(stage, palette.accent, palette.trim)}
 
         <ellipse cx="120" cy="166" rx="46" ry="28" fill="#fff7f2" opacity="0.94" />
@@ -227,21 +414,17 @@ export function BuddyCompanion({
         <path d="M170 126c12 5 18 13 18 24 0 9-7 16-18 19" fill={palette.shell} stroke={palette.trim} strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M94 198c-6 8-8 13-7 18 2 5 8 7 16 4" stroke={palette.trim} strokeWidth="6" strokeLinecap="round" />
         <path d="M146 198c6 8 8 13 7 18-2 5-8 7-16 4" stroke={palette.trim} strokeWidth="6" strokeLinecap="round" />
+        {renderBuddyClothing(resolvedOutfit, palette.trim)}
 
-        <ellipse cx="96" cy="118" rx="18" ry="20" fill={palette.trim} />
-        <ellipse cx="144" cy="118" rx="18" ry="20" fill={palette.trim} />
-        <ellipse cx="101" cy="112" rx="6" ry="7" fill="#ffffff" />
-        <ellipse cx="149" cy="112" rx="6" ry="7" fill="#ffffff" />
-        <ellipse cx="109" cy="122" rx="3.5" ry="4" fill="#ffffff" />
-        <ellipse cx="157" cy="122" rx="3.5" ry="4" fill="#ffffff" />
+        {renderBuddyEyes(face, palette.trim)}
 
         <ellipse cx="120" cy="135" rx="9" ry="7" fill="#ff8d8d" />
         {renderVariantFace(variant, palette.accent, palette.trim)}
-        <path d={mouthPath} fill="none" stroke={palette.trim} strokeWidth="5" strokeLinecap="round" />
-        <ellipse cx="83" cy="143" rx="10" ry="7" fill={palette.blush} opacity="0.65" />
-        <ellipse cx="157" cy="143" rx="10" ry="7" fill={palette.blush} opacity="0.65" />
+        {renderBuddyMouth(face, mood, palette.trim)}
+        {renderBuddyBlush(face, palette.blush)}
 
-        {renderFocusAccessory(focus, palette.accent, palette.trim)}
+        {showDefaultFocusAccessory ? renderFocusAccessory(focus, palette.accent, palette.trim) : null}
+        {renderBuddyHeldItem(resolvedOutfit, palette.trim, palette.accent)}
       </svg>
     </div>
   );
