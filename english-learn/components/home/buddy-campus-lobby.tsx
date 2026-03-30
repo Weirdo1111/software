@@ -495,11 +495,6 @@ export function BuddyCampusLobby({
           <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
             {locale === "zh" ? "像进入校园大厅一样进入每个学习板块。" : "Enter each study area the way you would enter a campus hall."}
           </h3>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-[var(--ink-soft)]">
-            {locale === "zh"
-              ? "现在首页不只是入口列表，而是一个可以控制 Buddy 移动的大厅。走到听力、口语、论坛、游戏中心和奖励区附近，就能直接进入对应模块。"
-              : "Home is no longer just a list of links. Move your buddy across the lobby and step near listening, speaking, forum, game-center, and reward spaces to open them."}
-          </p>
         </div>
 
         <div className="flex flex-wrap gap-2">
