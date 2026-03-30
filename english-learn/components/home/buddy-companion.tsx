@@ -1,9 +1,11 @@
 import { cn } from "@/lib/utils";
+import type { BuddyOutfit } from "@/lib/buddy-wardrobe";
 
 export type BuddyStage = "fresh" | "growing" | "explorer" | "scholar";
 export type BuddyMood = "calm" | "happy" | "proud";
 export type BuddyFocus = "coursework" | "research" | "seminar";
 export type BuddyVariant = "classic" | "cat" | "bunny" | "bear";
+export type BuddyFace = "happy" | "blink" | "blush" | "open" | "sleepy" | "surprised";
 
 const paletteByFocus: Record<
   BuddyFocus,
@@ -178,28 +180,388 @@ function renderVariantFace(variant: BuddyVariant, fill: string, trim: string) {
   return null;
 }
 
-export function BuddyCompanion({
-  stage,
-  focus,
-  mood = "happy",
-  variant = "classic",
-  float = true,
-  className,
-}: {
-  stage: BuddyStage;
-  focus: BuddyFocus;
-  mood?: BuddyMood;
-  variant?: BuddyVariant;
-  float?: boolean;
-  className?: string;
-}) {
-  const palette = paletteByFocus[focus];
+function renderBuddyEyes(face: BuddyFace, trim: string) {
+  if (face === "blink") {
+    return (
+      <>
+        <path d="M82 118c8-4 20-4 28 0" fill="none" stroke={trim} strokeWidth="5" strokeLinecap="round" />
+        <path d="M130 118c8-4 20-4 28 0" fill="none" stroke={trim} strokeWidth="5" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (face === "sleepy") {
+    return (
+      <>
+        <path d="M80 120c8-6 21-6 30 0" fill="none" stroke={trim} strokeWidth="5" strokeLinecap="round" />
+        <path d="M130 120c8-6 21-6 30 0" fill="none" stroke={trim} strokeWidth="5" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  const eyeScale = face === "surprised" ? 1.12 : 1;
+  const pupilScale = face === "surprised" ? 1.15 : 1;
+
+  return (
+    <>
+      <ellipse cx="96" cy="118" rx={18 * eyeScale} ry={20 * eyeScale} fill={trim} />
+      <ellipse cx="144" cy="118" rx={18 * eyeScale} ry={20 * eyeScale} fill={trim} />
+      <ellipse cx="101" cy="112" rx={6 * pupilScale} ry={7 * pupilScale} fill="#ffffff" />
+      <ellipse cx="149" cy="112" rx={6 * pupilScale} ry={7 * pupilScale} fill="#ffffff" />
+      <ellipse cx="109" cy="122" rx={3.5 * pupilScale} ry={4 * pupilScale} fill="#ffffff" />
+      <ellipse cx="157" cy="122" rx={3.5 * pupilScale} ry={4 * pupilScale} fill="#ffffff" />
+    </>
+  );
+}
+
+function renderBuddyMouth(face: BuddyFace, mood: BuddyMood, trim: string) {
+  if (face === "open") {
+    return (
+      <>
+        <ellipse cx="120" cy="150" rx="12" ry="10" fill="#fff8fb" stroke={trim} strokeWidth="5" />
+        <path d="M112 152c4 4 12 4 16 0" fill="none" stroke="#ff8d8d" strokeWidth="4" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (face === "surprised") {
+    return <ellipse cx="120" cy="150" rx="9" ry="11" fill="#fff8fb" stroke={trim} strokeWidth="5" />;
+  }
+
   const mouthPath =
     mood === "proud"
       ? "M106 148c8 8 22 8 30 0"
       : mood === "calm"
         ? "M110 148c6 3 15 3 21 0"
         : "M105 146c8 10 24 10 32 0";
+
+  if (face === "sleepy") {
+    return <path d="M108 149c6 2 18 2 24 0" fill="none" stroke={trim} strokeWidth="5" strokeLinecap="round" />;
+  }
+
+  return <path d={mouthPath} fill="none" stroke={trim} strokeWidth="5" strokeLinecap="round" />;
+}
+
+function renderBuddyBlush(face: BuddyFace, fill: string) {
+  const opacity = face === "blush" ? 0.95 : 0.65;
+  const rx = face === "blush" ? 12 : 10;
+  const ry = face === "blush" ? 8 : 7;
+
+  return (
+    <>
+      <ellipse cx="83" cy="143" rx={rx} ry={ry} fill={fill} opacity={opacity} />
+      <ellipse cx="157" cy="143" rx={rx} ry={ry} fill={fill} opacity={opacity} />
+    </>
+  );
+}
+
+function hasCustomHeldItem(outfit: BuddyOutfit) {
+  return outfit.heldItem !== "none";
+}
+
+function renderBuddyGlasses(outfit: BuddyOutfit, trim: string) {
+  if (outfit.glasses === "round") {
+    return (
+      <>
+        <circle cx="93" cy="114" r="18" fill="rgba(255,255,255,0.18)" stroke={trim} strokeWidth="5" />
+        <circle cx="147" cy="114" r="18" fill="rgba(255,255,255,0.18)" stroke={trim} strokeWidth="5" />
+        <path d="M111 114c2-1 16-1 18 0" fill="none" stroke={trim} strokeWidth="4.2" strokeLinecap="round" />
+        <path d="M75 111c-4 0-8 3-10 7" fill="none" stroke={trim} strokeWidth="4.2" strokeLinecap="round" />
+        <path d="M165 111c4 0 8 3 10 7" fill="none" stroke={trim} strokeWidth="4.2" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.glasses === "goggles") {
+    return (
+      <>
+        <rect x="70" y="99" width="48" height="30" rx="15" fill="#8ed8ff" opacity="0.6" stroke={trim} strokeWidth="5" />
+        <rect x="122" y="99" width="48" height="30" rx="15" fill="#8ed8ff" opacity="0.6" stroke={trim} strokeWidth="5" />
+        <path d="M112 112c3-1 13-1 16 0" fill="none" stroke={trim} strokeWidth="4.4" strokeLinecap="round" />
+        <path d="M67 112c-4 0-8 3-10 6" fill="none" stroke={trim} strokeWidth="4.4" strokeLinecap="round" />
+        <path d="M173 112c4 0 8 3 10 6" fill="none" stroke={trim} strokeWidth="4.4" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.glasses === "square") {
+    return (
+      <>
+        <rect x="72" y="96" width="43" height="36" rx="11" fill="rgba(255,255,255,0.26)" stroke={trim} strokeWidth="5" />
+        <rect x="125" y="96" width="43" height="36" rx="11" fill="rgba(255,255,255,0.26)" stroke={trim} strokeWidth="5" />
+        <path d="M115 114c2-1 8-1 10 0" fill="none" stroke={trim} strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M69 112c-4 0-8 3-10 7" fill="none" stroke={trim} strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M171 112c4 0 8 3 10 7" fill="none" stroke={trim} strokeWidth="4.5" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.glasses === "sunglasses") {
+    return (
+      <>
+        <rect x="70" y="97" width="44" height="31" rx="11" fill="#2d2948" stroke={trim} strokeWidth="5" />
+        <rect x="126" y="97" width="44" height="31" rx="11" fill="#2d2948" stroke={trim} strokeWidth="5" />
+        <path d="M114 111c3-1 9-1 12 0" fill="none" stroke={trim} strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M67 110c-4 0-8 3-10 6" fill="none" stroke={trim} strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M173 110c4 0 8 3 10 6" fill="none" stroke={trim} strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M79 104c8-3 17-4 26-2" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" opacity="0.45" />
+        <path d="M135 104c8-3 17-4 26-2" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" opacity="0.45" />
+      </>
+    );
+  }
+
+  if (outfit.glasses === "star") {
+    return (
+      <>
+        <path d="m95 92 7 14 15 2-11 10 3 15-14-8-14 8 3-15-11-10 15-2Z" fill="#ffe27a" stroke={trim} strokeWidth="4.5" strokeLinejoin="round" />
+        <path d="m145 92 7 14 15 2-11 10 3 15-14-8-14 8 3-15-11-10 15-2Z" fill="#ffe27a" stroke={trim} strokeWidth="4.5" strokeLinejoin="round" />
+        <path d="M113 112c2-1 12-1 14 0" fill="none" stroke={trim} strokeWidth="4.2" strokeLinecap="round" />
+        <path d="M77 109c-4 0-8 3-10 7" fill="none" stroke={trim} strokeWidth="4.2" strokeLinecap="round" />
+        <path d="M163 109c4 0 8 3 10 7" fill="none" stroke={trim} strokeWidth="4.2" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.glasses === "heart") {
+    return (
+      <>
+        <path d="M69 104c0-9 7-15 15-15 6 0 10 4 13 9 3-5 7-9 13-9 8 0 15 6 15 15 0 10-8 18-28 33-20-15-28-23-28-33Z" fill="#ff8fb3" stroke={trim} strokeWidth="4.5" strokeLinejoin="round" />
+        <path d="M121 104c0-9 7-15 15-15 6 0 10 4 13 9 3-5 7-9 13-9 8 0 15 6 15 15 0 10-8 18-28 33-20-15-28-23-28-33Z" fill="#ff8fb3" stroke={trim} strokeWidth="4.5" strokeLinejoin="round" />
+      </>
+    );
+  }
+
+  return null;
+}
+
+function renderBuddyHat(outfit: BuddyOutfit, trim: string) {
+  if (outfit.hat === "magichat") {
+    return (
+      <>
+        <path d="M120 -12 174 78H66Z" fill="#5a4fd6" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <ellipse cx="120" cy="78" rx="72" ry="14" fill="#8277ff" stroke={trim} strokeWidth="5" />
+        <path d="M88 32h48" stroke="#ffd35d" strokeWidth="5" strokeLinecap="round" />
+        <circle cx="145" cy="21" r="6.5" fill="#fff7ee" stroke={trim} strokeWidth="3" />
+      </>
+    );
+  }
+
+  if (outfit.hat === "chefhat") {
+    return (
+      <>
+        <path d="M68 79c-10-24 8-42 27-37 6-11 22-16 34-8 11-8 30-6 37 8 17-3 34 13 25 37Z" fill="#fffaf8" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <rect x="72" y="74" width="88" height="18" rx="9" fill="#f6f2f0" stroke={trim} strokeWidth="5" />
+      </>
+    );
+  }
+
+  if (outfit.hat === "catears") {
+    return (
+      <>
+        <path d="M72 80 90 34l28 33" fill="#ffd8e8" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <path d="m168 80-18-46-28 33" fill="#ffd8e8" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <path d="M86 67 95 47l13 16" fill="#fff4f8" stroke={trim} strokeWidth="3.5" strokeLinejoin="round" />
+        <path d="m154 67-9-20-13 16" fill="#fff4f8" stroke={trim} strokeWidth="3.5" strokeLinejoin="round" />
+      </>
+    );
+  }
+
+  if (outfit.hat === "beret") {
+    return (
+      <>
+        <path d="M44 66c15-28 107-38 143-6-5 28-33 37-75 37-39 0-57-9-68-31Z" fill="#ff7f9e" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <path d="M124 22v15" stroke={trim} strokeWidth="4.5" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.hat === "sunhat") {
+    return (
+      <>
+        <ellipse cx="120" cy="53" rx="66" ry="14" fill="#ffe198" stroke={trim} strokeWidth="5" />
+        <path d="M76 53c0-34 88-34 88 0v13H76Z" fill="#ffd068" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <path d="M91 47h58" stroke="#ff8fb3" strokeWidth="5" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.hat === "strawhat") {
+    return (
+      <>
+        <ellipse cx="120" cy="57" rx="76" ry="17" fill="#eec871" stroke={trim} strokeWidth="5" />
+        <path d="M68 58c2-36 100-36 104 0v17H68Z" fill="#f5d88f" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <path d="M86 51h68" stroke="#5a7bff" strokeWidth="5" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.hat === "cap") {
+    return (
+      <>
+        <path d="M62 68c8-40 108-40 116 0v16H62Z" fill="#7da1ff" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <path d="M96 76c16-4 41 0 58 13-24 5-52 5-76 0 5-7 8-11 18-13Z" fill="#dbe7ff" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+      </>
+    );
+  }
+
+  return null;
+}
+
+function renderBuddyClothing(outfit: BuddyOutfit, trim: string) {
+  if (outfit.clothing === "jk") {
+    return (
+      <>
+        <path d="M68 176c16-6 34-9 52-9s36 3 52 9l16 14c-19 7-42 10-68 10s-49-3-68-10Z" fill="#3857c9" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <path d="M80 178c9 9 23 14 40 14s31-5 40-14" fill="none" stroke="#f7f8ff" strokeWidth="5" strokeLinecap="round" />
+        <path d="M92 171h56" stroke="#f7f8ff" strokeWidth="4.5" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.clothing === "pleated") {
+    return (
+      <>
+        <path d="M66 176c16-7 34-10 54-10s38 3 54 10l15 16c-19 8-42 12-69 12s-50-4-69-12Z" fill="#ffb7cf" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <path d="M89 172v26" stroke="#ffe5ef" strokeWidth="4.2" strokeLinecap="round" />
+        <path d="M106 169v31" stroke="#ffe5ef" strokeWidth="4.2" strokeLinecap="round" />
+        <path d="M134 169v31" stroke="#ffe5ef" strokeWidth="4.2" strokeLinecap="round" />
+        <path d="M151 172v26" stroke="#ffe5ef" strokeWidth="4.2" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.clothing === "petal") {
+    return (
+      <>
+        <path d="M68 177c16-7 34-10 52-10s36 3 52 10c-4 15-22 26-52 26s-48-11-52-26Z" fill="#ff94b6" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <path d="M82 178c6 11 19 18 38 18s32-7 38-18" fill="none" stroke="#ffd6e3" strokeWidth="5" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.clothing === "shorts") {
+    return (
+      <>
+        <path d="M64 176c16-6 35-9 56-9s40 3 56 9l14 18c-19 7-43 10-70 10s-51-3-70-10Z" fill="#8ed8ff" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <path d="M120 169v35" stroke={trim} strokeWidth="5" strokeLinecap="round" opacity="0.55" />
+        <path d="M80 184c11 3 24 5 40 5s29-2 40-5" fill="none" stroke="#dff5ff" strokeWidth="5" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.clothing === "jeans") {
+    return (
+      <>
+        <path d="M66 172c16-6 34-9 54-9s38 3 54 9l16 32c-19 8-43 12-70 12s-51-4-70-12Z" fill="#6f87ff" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <path d="M120 166v44" stroke="#c8d2ff" strokeWidth="5" strokeLinecap="round" />
+        <path d="M74 180h92" stroke="#c8d2ff" strokeWidth="5" strokeLinecap="round" />
+        <path d="M78 203c9 4 20 6 33 6" fill="none" stroke="#dfe6ff" strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M162 203c-9 4-20 6-33 6" fill="none" stroke="#dfe6ff" strokeWidth="4.5" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.clothing === "bloomers") {
+    return (
+      <>
+        <path d="M64 174c16-7 35-10 56-10s40 3 56 10l16 22c-19 9-43 13-72 13s-53-4-72-13Z" fill="#ff9db0" stroke={trim} strokeWidth="5" strokeLinejoin="round" />
+        <path d="M74 187c11 7 26 10 46 10s35-3 46-10" fill="none" stroke="#ffd7e4" strokeWidth="5" strokeLinecap="round" />
+        <circle cx="97" cy="181" r="4.5" fill="#fff7ee" />
+        <circle cx="143" cy="181" r="4.5" fill="#fff7ee" />
+      </>
+    );
+  }
+
+  return null;
+}
+
+function renderBuddyHeldItem(outfit: BuddyOutfit, trim: string, accent: string) {
+  if (outfit.heldItem === "notebook") {
+    return (
+      <>
+        <rect x="150" y="147" width="22" height="28" rx="4" fill="#fff7ee" stroke={trim} strokeWidth="4.5" />
+        <path d="M157 149v24" stroke="#ff9db0" strokeWidth="3.8" strokeLinecap="round" />
+        <path d="M160 156h8" stroke={accent} strokeWidth="3.8" strokeLinecap="round" />
+        <path d="M160 163h8" stroke={accent} strokeWidth="3.8" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.heldItem === "paintbrush") {
+    return (
+      <>
+        <path d="M151 154 168 175" stroke="#c48a54" strokeWidth="5" strokeLinecap="round" />
+        <path d="M148 150c4-6 10-8 15-5-1 6-4 10-10 12Z" fill="#7cc5ff" stroke={trim} strokeWidth="4" strokeLinejoin="round" />
+        <path d="M145 153c2-4 5-7 10-7" stroke="#ff8fb3" strokeWidth="4" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.heldItem === "moonwand") {
+    return (
+      <>
+        <path d="M152 154 167 176" stroke="#7c67f4" strokeWidth="5" strokeLinecap="round" />
+        <path d="M167 145c0-7 5-12 12-12-5 2-8 6-8 11 0 5 3 9 8 11-7 0-12-5-12-10Z" fill="#ffe27a" stroke={trim} strokeWidth="4" strokeLinejoin="round" />
+      </>
+    );
+  }
+
+  if (outfit.heldItem === "flower") {
+    return (
+      <>
+        <path d="M153 154 165 178" stroke="#4aa867" strokeWidth="5" strokeLinecap="round" />
+        <circle cx="160" cy="156" r="8.5" fill="#ff9db0" stroke={trim} strokeWidth="4" />
+        <circle cx="168" cy="162" r="7.5" fill="#ffd35d" stroke={trim} strokeWidth="4" />
+        <circle cx="151" cy="165" r="7.5" fill="#8ed8ff" stroke={trim} strokeWidth="4" />
+      </>
+    );
+  }
+
+  if (outfit.heldItem === "tea") {
+    return (
+      <>
+        <path d="M148 146h24l-3 28h-18Z" fill="#fff8f1" stroke={trim} strokeWidth="4.5" strokeLinejoin="round" />
+        <path d="M155 137v10" stroke="#ff9b95" strokeWidth="4" strokeLinecap="round" />
+        <path d="M166 137v10" stroke="#ff9b95" strokeWidth="4" strokeLinecap="round" />
+        <path d="M148 156h24" stroke={accent} strokeWidth="4.5" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.heldItem === "starwand") {
+    return (
+      <>
+        <path d="M152 154 167 176" stroke="#8b6cf7" strokeWidth="5" strokeLinecap="round" />
+        <path d="m158 143 4 9 10 1-7 6 2 9-8-5-8 5 2-9-7-6 10-1Z" fill="#ffd35d" stroke={trim} strokeWidth="4" strokeLinejoin="round" />
+      </>
+    );
+  }
+
+  return null;
+}
+
+export function BuddyCompanion({
+  stage,
+  focus,
+  mood = "happy",
+  face = "happy",
+  variant = "classic",
+  outfit,
+  float = true,
+  className,
+}: {
+  stage: BuddyStage;
+  focus: BuddyFocus;
+  mood?: BuddyMood;
+  face?: BuddyFace;
+  variant?: BuddyVariant;
+  outfit?: BuddyOutfit;
+  float?: boolean;
+  className?: string;
+}) {
+  const palette = paletteByFocus[focus];
+  const resolvedOutfit = outfit ?? { hat: "none", clothing: "none", glasses: "none", heldItem: "none" };
+  const showDefaultFocusAccessory = !hasCustomHeldItem(resolvedOutfit);
 
   return (
     <div className={cn("relative aspect-square w-full max-w-[22rem]", float && "buddy-float", className)}>
@@ -220,6 +582,7 @@ export function BuddyCompanion({
           opacity="0.52"
         />
 
+        {renderBuddyHat(resolvedOutfit, palette.trim)}
         {renderStageAccessory(stage, palette.accent, palette.trim)}
 
         <ellipse cx="120" cy="166" rx="46" ry="28" fill="#fff7f2" opacity="0.94" />
@@ -227,21 +590,18 @@ export function BuddyCompanion({
         <path d="M170 126c12 5 18 13 18 24 0 9-7 16-18 19" fill={palette.shell} stroke={palette.trim} strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M94 198c-6 8-8 13-7 18 2 5 8 7 16 4" stroke={palette.trim} strokeWidth="6" strokeLinecap="round" />
         <path d="M146 198c6 8 8 13 7 18-2 5-8 7-16 4" stroke={palette.trim} strokeWidth="6" strokeLinecap="round" />
+        {renderBuddyClothing(resolvedOutfit, palette.trim)}
 
-        <ellipse cx="96" cy="118" rx="18" ry="20" fill={palette.trim} />
-        <ellipse cx="144" cy="118" rx="18" ry="20" fill={palette.trim} />
-        <ellipse cx="101" cy="112" rx="6" ry="7" fill="#ffffff" />
-        <ellipse cx="149" cy="112" rx="6" ry="7" fill="#ffffff" />
-        <ellipse cx="109" cy="122" rx="3.5" ry="4" fill="#ffffff" />
-        <ellipse cx="157" cy="122" rx="3.5" ry="4" fill="#ffffff" />
+        {renderBuddyEyes(face, palette.trim)}
+        {renderBuddyGlasses(resolvedOutfit, palette.trim)}
 
         <ellipse cx="120" cy="135" rx="9" ry="7" fill="#ff8d8d" />
         {renderVariantFace(variant, palette.accent, palette.trim)}
-        <path d={mouthPath} fill="none" stroke={palette.trim} strokeWidth="5" strokeLinecap="round" />
-        <ellipse cx="83" cy="143" rx="10" ry="7" fill={palette.blush} opacity="0.65" />
-        <ellipse cx="157" cy="143" rx="10" ry="7" fill={palette.blush} opacity="0.65" />
+        {renderBuddyMouth(face, mood, palette.trim)}
+        {renderBuddyBlush(face, palette.blush)}
 
-        {renderFocusAccessory(focus, palette.accent, palette.trim)}
+        {showDefaultFocusAccessory ? renderFocusAccessory(focus, palette.accent, palette.trim) : null}
+        {renderBuddyHeldItem(resolvedOutfit, palette.trim, palette.accent)}
       </svg>
     </div>
   );

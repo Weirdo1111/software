@@ -37,7 +37,11 @@ import {
   type BuddyStage,
   type BuddyVariant,
 } from "@/components/home/buddy-companion";
+import { type BuddyOutfit } from "@/lib/buddy-wardrobe";
+import { startBuddyWalkLoop, stopBuddyWalkLoop, unlockBuddySound } from "@/lib/buddy-sound";
 import { type Locale } from "@/lib/i18n/dictionaries";
+import { type ScheduleGoal } from "@/lib/schedule";
+import { startNavigationLoading } from "@/lib/navigation-loading";
 import { cn } from "@/lib/utils";
 
 type LobbyVector = {
@@ -46,6 +50,7 @@ type LobbyVector = {
 };
 
 type Direction = "up" | "down" | "left" | "right";
+type FacingDirection = "left" | "right";
 
 type LobbyZone = {
   id: string;
@@ -89,12 +94,18 @@ export function BuddyCampusLobby({
   nextQuestHref,
   buddyStage,
   buddyFocus,
+  buddyOutfit,
+  selectedGoal,
+  onSelectGoal,
 }: {
   locale: Locale;
   levelPrefix: string;
   nextQuestHref: string;
   buddyStage: BuddyStage;
   buddyFocus: BuddyFocus;
+  buddyOutfit: BuddyOutfit;
+  selectedGoal: ScheduleGoal;
+  onSelectGoal?: (goal: ScheduleGoal) => void;
 }) {
   const router = useRouter();
   const arenaRef = useRef<HTMLDivElement>(null);
@@ -113,6 +124,7 @@ export function BuddyCampusLobby({
   const [arenaSize, setArenaSize] = useState({ width: 0, height: 0 });
   const [keyboardEnabled, setKeyboardEnabled] = useState(false);
   const [isMoving, setIsMoving] = useState(false);
+  const [facing, setFacing] = useState<FacingDirection>("right");
 
   const clearDirections = useEffectEvent(() => {
     keysRef.current.up = false;
@@ -234,6 +246,7 @@ export function BuddyCampusLobby({
       id: string;
       title: string;
       note: string;
+      goal: ScheduleGoal;
       stage: BuddyStage;
       focus: BuddyFocus;
       variant: BuddyVariant;
@@ -242,6 +255,7 @@ export function BuddyCampusLobby({
     () => [
       {
         id: "cloud-bun",
+        goal: "research",
         title: locale === "zh" ? "云朵兔" : "Cloud Bun",
         note: locale === "zh" ? "偏研究型陪练" : "Research buddy",
         stage: "fresh",
@@ -250,6 +264,7 @@ export function BuddyCampusLobby({
       },
       {
         id: "spark-cat",
+        goal: "seminar",
         title: locale === "zh" ? "星闪猫" : "Spark Cat",
         note: locale === "zh" ? "偏表达与对话" : "Speaking buddy",
         stage: "growing",
@@ -258,6 +273,7 @@ export function BuddyCampusLobby({
       },
       {
         id: "compass-bear",
+        goal: "coursework",
         title: locale === "zh" ? "指南熊" : "Compass Bear",
         note: locale === "zh" ? "偏任务与节奏" : "Quest buddy",
         stage: "explorer",
@@ -355,6 +371,11 @@ export function BuddyCampusLobby({
       }
 
       if (next.x !== current.x || next.y !== current.y) {
+        if (next.x < current.x - 0.0005) {
+          setFacing("left");
+        } else if (next.x > current.x + 0.0005) {
+          setFacing("right");
+        }
         positionRef.current = next;
         setPosition(next);
       }
@@ -368,8 +389,20 @@ export function BuddyCampusLobby({
     };
 
     animationFrame = window.requestAnimationFrame(loop);
-    return () => window.cancelAnimationFrame(animationFrame);
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      stopBuddyWalkLoop();
+    };
   }, []);
+
+  useEffect(() => {
+    if (isMoving) {
+      void startBuddyWalkLoop();
+      return;
+    }
+
+    stopBuddyWalkLoop();
+  }, [isMoving]);
 
   useEffect(() => {
     window.addEventListener("pointerup", clearDirections);
@@ -413,6 +446,7 @@ export function BuddyCampusLobby({
         destinationRef.current = null;
         keysRef.current.down = true;
       } else if (event.key === "Enter" && activeZone) {
+        startNavigationLoading(activeZone.href);
         router.push(activeZone.href);
       } else if (event.key === "Escape") {
         clearDirections();
@@ -448,6 +482,7 @@ export function BuddyCampusLobby({
 
   const moveTo = (target: LobbyVector) => {
     setKeyboardEnabled(true);
+    void unlockBuddySound();
     destinationRef.current = clampPosition(target);
   };
 
@@ -464,6 +499,7 @@ export function BuddyCampusLobby({
   const beginDirection = (direction: Direction) => (event: PointerEvent<HTMLButtonElement>) => {
     event.preventDefault();
     setKeyboardEnabled(true);
+    void unlockBuddySound();
     destinationRef.current = null;
     keysRef.current[direction] = true;
   };
@@ -592,17 +628,21 @@ export function BuddyCampusLobby({
                 top: `${position.y * 100}%`,
               }}
               data-moving={isMoving ? "true" : "false"}
+              data-facing={facing}
             >
               <span className="campus-lobby-pet-shadow" />
               <span className="campus-lobby-pet-ring" />
-              <BuddyCompanion
-                stage={buddyStage}
-                focus={buddyFocus}
-                mood={activeZone ? "proud" : "happy"}
-                variant={primaryBuddyVariant}
-                float={false}
-                className="relative z-10 w-[4.8rem] max-w-[4.8rem] drop-shadow-[0_18px_22px_rgba(63,85,129,0.16)]"
-              />
+              <div className="campus-lobby-pet-body">
+                <BuddyCompanion
+                  stage={buddyStage}
+                  focus={buddyFocus}
+                  mood={activeZone ? "proud" : "happy"}
+                  variant={primaryBuddyVariant}
+                  outfit={buddyOutfit}
+                  float={false}
+                  className="relative z-10 w-[4.8rem] max-w-[4.8rem] drop-shadow-[0_18px_22px_rgba(63,85,129,0.16)]"
+                />
+              </div>
             </div>
 
             {activeZone ? (
@@ -741,12 +781,22 @@ export function BuddyCampusLobby({
 
         <div className="campus-lobby-crew mt-4 grid-cols-1 md:grid-cols-3">
           {buddyCrew.map((buddy) => (
-            <div key={buddy.id} className="campus-lobby-crew-card">
+            <button
+              key={buddy.id}
+              type="button"
+              onClick={() => onSelectGoal?.(buddy.goal)}
+              className={cn(
+                "campus-lobby-crew-card text-left transition hover:-translate-y-0.5",
+                selectedGoal === buddy.goal && "campus-lobby-crew-card-active",
+              )}
+              aria-pressed={selectedGoal === buddy.goal}
+            >
               <BuddyCompanion
                 stage={buddy.stage}
                 focus={buddy.focus}
                 variant={buddy.variant}
                 mood="happy"
+                outfit={buddyOutfit}
                 float={false}
                 className="w-[3.9rem] max-w-[3.9rem]"
               />
@@ -754,7 +804,7 @@ export function BuddyCampusLobby({
                 <p className="text-sm font-semibold text-[var(--ink)]">{buddy.title}</p>
                 <p className="mt-1 text-xs leading-5 text-[var(--ink-soft)]">{buddy.note}</p>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </div>

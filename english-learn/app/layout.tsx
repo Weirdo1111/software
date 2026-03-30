@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 
 import { AnalyticsProvider } from "@/components/analytics-provider";
-import { BuddyXpToastHost } from "@/components/buddy-xp-toast-host";
+import { GlobalBuddyCompanion } from "@/components/global-buddy-companion";
+import { NavigationLoadingOverlay } from "@/components/navigation-loading-overlay";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,8 +19,9 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         <AnalyticsProvider />
+        <GlobalBuddyCompanion />
+        <NavigationLoadingOverlay />
         {children}
-        <BuddyXpToastHost />
       </body>
     </html>
   );

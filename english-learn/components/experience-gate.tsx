@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { startNavigationLoading } from "@/lib/navigation-loading";
 
 type ExperienceGateProps = {
   locale: "zh" | "en";
@@ -24,7 +25,9 @@ export function ExperienceGate({ locale }: ExperienceGateProps) {
 
     if (!isLoggedIn) {
       if (!isPathPublic(pathname)) {
-        router.replace(`/login?lang=${locale}`);
+        const href = `/login?lang=${locale}`;
+        startNavigationLoading(href);
+        router.replace(href);
       }
       return;
     }
