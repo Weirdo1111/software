@@ -1,10 +1,12 @@
 export type BuddyHat = "none" | "sunhat" | "strawhat" | "cap";
 export type BuddyClothing = "none" | "shorts" | "jeans" | "bloomers";
+export type BuddyGlasses = "none" | "star" | "heart" | "square" | "sunglasses";
 export type BuddyHeldItem = "none" | "flower" | "tea" | "starwand";
 
 export type BuddyOutfit = {
   hat: BuddyHat;
   clothing: BuddyClothing;
+  glasses: BuddyGlasses;
   heldItem: BuddyHeldItem;
 };
 
@@ -13,6 +15,7 @@ const STORAGE_KEY = "english-learn:buddy-outfit";
 export const DEFAULT_BUDDY_OUTFIT: BuddyOutfit = {
   hat: "none",
   clothing: "none",
+  glasses: "none",
   heldItem: "none",
 };
 
@@ -22,6 +25,10 @@ function isHat(value: unknown): value is BuddyHat {
 
 function isClothing(value: unknown): value is BuddyClothing {
   return value === "none" || value === "shorts" || value === "jeans" || value === "bloomers";
+}
+
+function isGlasses(value: unknown): value is BuddyGlasses {
+  return value === "none" || value === "star" || value === "heart" || value === "square" || value === "sunglasses";
 }
 
 function isHeldItem(value: unknown): value is BuddyHeldItem {
@@ -39,6 +46,7 @@ export function loadBuddyOutfitFromStorage(): BuddyOutfit {
     return {
       hat: isHat(parsed.hat) ? parsed.hat : DEFAULT_BUDDY_OUTFIT.hat,
       clothing: isClothing(parsed.clothing) ? parsed.clothing : DEFAULT_BUDDY_OUTFIT.clothing,
+      glasses: isGlasses(parsed.glasses) ? parsed.glasses : DEFAULT_BUDDY_OUTFIT.glasses,
       heldItem: isHeldItem(parsed.heldItem) ? parsed.heldItem : DEFAULT_BUDDY_OUTFIT.heldItem,
     };
   } catch {

@@ -259,6 +259,60 @@ function hasCustomHeldItem(outfit: BuddyOutfit) {
   return outfit.heldItem !== "none";
 }
 
+function renderBuddyGlasses(outfit: BuddyOutfit, trim: string) {
+  if (outfit.glasses === "square") {
+    return (
+      <>
+        <rect x="72" y="96" width="43" height="36" rx="11" fill="rgba(255,255,255,0.26)" stroke={trim} strokeWidth="5" />
+        <rect x="125" y="96" width="43" height="36" rx="11" fill="rgba(255,255,255,0.26)" stroke={trim} strokeWidth="5" />
+        <path d="M115 114c2-1 8-1 10 0" fill="none" stroke={trim} strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M72 114H61" stroke={trim} strokeWidth="5" strokeLinecap="round" />
+        <path d="M179 114h-11" stroke={trim} strokeWidth="5" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.glasses === "sunglasses") {
+    return (
+      <>
+        <rect x="70" y="97" width="44" height="31" rx="11" fill="#2d2948" stroke={trim} strokeWidth="5" />
+        <rect x="126" y="97" width="44" height="31" rx="11" fill="#2d2948" stroke={trim} strokeWidth="5" />
+        <path d="M114 111c3-1 9-1 12 0" fill="none" stroke={trim} strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M70 112H59" stroke={trim} strokeWidth="5" strokeLinecap="round" />
+        <path d="M181 112h-11" stroke={trim} strokeWidth="5" strokeLinecap="round" />
+        <path d="M79 104c8-3 17-4 26-2" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" opacity="0.45" />
+        <path d="M135 104c8-3 17-4 26-2" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" opacity="0.45" />
+      </>
+    );
+  }
+
+  if (outfit.glasses === "star") {
+    return (
+      <>
+        <path d="m95 92 7 14 15 2-11 10 3 15-14-8-14 8 3-15-11-10 15-2Z" fill="#ffe27a" stroke={trim} strokeWidth="4.5" strokeLinejoin="round" />
+        <path d="m145 92 7 14 15 2-11 10 3 15-14-8-14 8 3-15-11-10 15-2Z" fill="#ffe27a" stroke={trim} strokeWidth="4.5" strokeLinejoin="round" />
+        <path d="M113 112c2-1 12-1 14 0" fill="none" stroke={trim} strokeWidth="4.2" strokeLinecap="round" />
+        <path d="M80 110H67" stroke={trim} strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M173 110h-13" stroke={trim} strokeWidth="4.5" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  if (outfit.glasses === "heart") {
+    return (
+      <>
+        <path d="M75 103c0-8 6-13 13-13 5 0 9 3 12 8 3-5 7-8 12-8 7 0 13 5 13 13 0 8-7 15-25 29-18-14-25-21-25-29Z" fill="#ff8fb3" stroke={trim} strokeWidth="4.5" strokeLinejoin="round" />
+        <path d="M127 103c0-8 6-13 13-13 5 0 9 3 12 8 3-5 7-8 12-8 7 0 13 5 13 13 0 8-7 15-25 29-18-14-25-21-25-29Z" fill="#ff8fb3" stroke={trim} strokeWidth="4.5" strokeLinejoin="round" />
+        <path d="M116 111c1-1 7-1 8 0" fill="none" stroke={trim} strokeWidth="4" strokeLinecap="round" />
+        <path d="M75 112H64" stroke={trim} strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M176 112h-11" stroke={trim} strokeWidth="4.5" strokeLinecap="round" />
+      </>
+    );
+  }
+
+  return null;
+}
+
 function renderBuddyHat(outfit: BuddyOutfit, trim: string) {
   if (outfit.hat === "sunhat") {
     return (
@@ -384,7 +438,7 @@ export function BuddyCompanion({
   className?: string;
 }) {
   const palette = paletteByFocus[focus];
-  const resolvedOutfit = outfit ?? { hat: "none", clothing: "none", heldItem: "none" };
+  const resolvedOutfit = outfit ?? { hat: "none", clothing: "none", glasses: "none", heldItem: "none" };
   const showDefaultFocusAccessory = !hasCustomHeldItem(resolvedOutfit);
 
   return (
@@ -417,6 +471,7 @@ export function BuddyCompanion({
         {renderBuddyClothing(resolvedOutfit, palette.trim)}
 
         {renderBuddyEyes(face, palette.trim)}
+        {renderBuddyGlasses(resolvedOutfit, palette.trim)}
 
         <ellipse cx="120" cy="135" rx="9" ry="7" fill="#ff8d8d" />
         {renderVariantFace(variant, palette.accent, palette.trim)}

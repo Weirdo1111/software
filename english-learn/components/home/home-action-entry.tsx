@@ -40,6 +40,7 @@ import {
   saveBuddyOutfitToStorage,
   subscribeBuddyOutfit,
   type BuddyClothing,
+  type BuddyGlasses,
   type BuddyHat,
   type BuddyHeldItem,
   type BuddyOutfit,
@@ -211,6 +212,13 @@ const buddyWardrobeCopy = {
     jeans: { zh: "\u725b\u4ed4\u88e4", en: "Jeans" },
     bloomers: { zh: "\u706f\u7b3c\u88e4", en: "Bloomers" },
   } satisfies Record<BuddyClothing, { zh: string; en: string }>,
+  glasses: {
+    none: { zh: "\u4e0d\u6234", en: "None" },
+    star: { zh: "\u661f\u661f\u6846", en: "Star Frames" },
+    heart: { zh: "\u7231\u5fc3\u6846", en: "Heart Frames" },
+    square: { zh: "\u65b9\u5f62\u6846", en: "Square Frames" },
+    sunglasses: { zh: "\u58a8\u955c", en: "Sunglasses" },
+  } satisfies Record<BuddyGlasses, { zh: string; en: string }>,
   heldItems: {
     none: { zh: "\u7a7a\u624b", en: "Empty Hands" },
     flower: { zh: "\u5c0f\u82b1\u675f", en: "Flower" },
@@ -227,7 +235,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   const [preferences, setPreferences] = useState(() => loadSchedulePreferencesFromStorage(locale));
   const [buddyOutfit, setBuddyOutfit] = useState<BuddyOutfit>(() => loadBuddyOutfitFromStorage());
   const [wardrobeOpen, setWardrobeOpen] = useState(false);
-  const [wardrobeTab, setWardrobeTab] = useState<"hat" | "clothing" | "heldItem">("hat");
+  const [wardrobeTab, setWardrobeTab] = useState<"hat" | "clothing" | "glasses" | "heldItem">("hat");
   const [wardrobeFlipTick, setWardrobeFlipTick] = useState(0);
 
   useEffect(() => {
@@ -320,7 +328,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     setBuddyOutfit(updated);
   };
 
-  const handleWardrobeTabChange = (tab: "hat" | "clothing" | "heldItem") => {
+  const handleWardrobeTabChange = (tab: "hat" | "clothing" | "glasses" | "heldItem") => {
     if (tab === wardrobeTab) return;
     setWardrobeTab(tab);
     setWardrobeFlipTick((value) => value + 1);
@@ -698,6 +706,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                       [
                         ["hat", locale === "zh" ? "帽子" : "Hats"],
                         ["clothing", locale === "zh" ? "服装" : "Bottoms"],
+                        ["glasses", locale === "zh" ? "眼镜" : "Glasses"],
                         ["heldItem", locale === "zh" ? "手持物" : "Handhelds"],
                       ] as const
                     ).map(([tab, label]) => (
@@ -751,6 +760,18 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                             </button>
                           ))
                         : null}
+                      {wardrobeTab === "glasses"
+                        ? (Object.entries(buddyWardrobeCopy.glasses) as Array<[BuddyGlasses, { zh: string; en: string }]>).map(([key, copy]) => (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => updateBuddyOutfit({ glasses: key })}
+                              className={`buddy-wardrobe-option${buddyOutfit.glasses === key ? " buddy-wardrobe-option-active" : ""}`}
+                            >
+                              {copy[locale]}
+                            </button>
+                          ))
+                        : null}
                       {wardrobeTab === "heldItem"
                         ? (Object.entries(buddyWardrobeCopy.heldItems) as Array<[BuddyHeldItem, { zh: string; en: string }]>).map(([key, copy]) => (
                             <button
@@ -783,8 +804,8 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                     <div className="buddy-bubble mt-4 p-4">
                       <p className="text-sm font-semibold text-[var(--ink)]">
                         {locale === "zh"
-                          ? `当前搭配：${buddyWardrobeCopy.hats[buddyOutfit.hat].zh} / ${buddyWardrobeCopy.clothing[buddyOutfit.clothing].zh} / ${buddyWardrobeCopy.heldItems[buddyOutfit.heldItem].zh}`
-                          : `Current look: ${buddyWardrobeCopy.hats[buddyOutfit.hat].en} / ${buddyWardrobeCopy.clothing[buddyOutfit.clothing].en} / ${buddyWardrobeCopy.heldItems[buddyOutfit.heldItem].en}`}
+                          ? `当前搭配：${buddyWardrobeCopy.hats[buddyOutfit.hat].zh} / ${buddyWardrobeCopy.clothing[buddyOutfit.clothing].zh} / ${buddyWardrobeCopy.glasses[buddyOutfit.glasses].zh} / ${buddyWardrobeCopy.heldItems[buddyOutfit.heldItem].zh}`
+                          : `Current look: ${buddyWardrobeCopy.hats[buddyOutfit.hat].en} / ${buddyWardrobeCopy.clothing[buddyOutfit.clothing].en} / ${buddyWardrobeCopy.glasses[buddyOutfit.glasses].en} / ${buddyWardrobeCopy.heldItems[buddyOutfit.heldItem].en}`}
                       </p>
                     </div>
                     <div className="mt-4 flex flex-wrap gap-3">
