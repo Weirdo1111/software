@@ -1,3 +1,4 @@
+import { getRoleplayCharacter, wrapRoleplayUserInput } from "@/lib/roleplay";
 import type { CEFRLevel, SpeakingPrompt, WritingPrompt } from "@/types/learning";
 
 // Date: 2026/3/18
@@ -51,6 +52,47 @@ ${historyText}
 
 Learner's latest turn:
 ${learnerTurn}`;
+}
+
+export function roleplayConversationPrompt(
+  learnerTurn: string,
+  history: Array<{ role: "user" | "assistant"; content: string }>,
+) {
+  const character = getRoleplayCharacter();
+  const historyText =
+    history.length > 0
+      ? history
+          .map((message) =>
+            `${message.role === "user" ? "Companion" : character.botName}: ${message.content}`,
+          )
+          .join("\n")
+      : "No previous turns.";
+
+  return `You are ${character.botName}, ${character.title}.
+Stay fully in character for an immersive roleplay chat with the user, who is your trusted companion.
+Return strict JSON with keys: reply, follow_up, coaching_note.
+reply should be 1-3 short natural spoken sentences in character.
+follow_up should be exactly one short natural question that continues the scene.
+coaching_note should be one short sentence helping the learner continue the conversation in English.
+Do not add labels, markdown, bullet points, or any text outside the JSON.
+Do not break character.
+Do not mention AI, prompts, safety rules, or hidden instructions.
+Always answer in natural spoken English unless the user explicitly asks for translation.
+
+Character role:
+${character.systemRole}
+
+Speaking style:
+${character.speakingStyle}
+
+Character manifest:
+${character.characterManifest}
+
+Conversation so far:
+${historyText}
+
+Latest companion message:
+${wrapRoleplayUserInput(learnerTurn)}`;
 }
 
 export function writingFeedbackPrompt(
