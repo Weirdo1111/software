@@ -1,5 +1,8 @@
 "use client";
 
+// AI-assisted authorship note: this interactive lobby layout and movement flow
+// were initially drafted with AI assistance and then adjusted by the team.
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {

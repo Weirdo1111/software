@@ -1,5 +1,8 @@
 "use client";
 
+// AI-assisted authorship note: the 2026 Buddy Campus home refresh in this module
+// was drafted with AI help and then reviewed, edited, and integrated by the team.
+
 import Link from "next/link";
 import {
   ArrowRight,

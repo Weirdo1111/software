@@ -4,6 +4,8 @@ An AI-assisted English learning platform for non-native speakers, built to feel 
 
 This repository combines structured learning flows, AI-powered practice, review systems, progress tracking, community features, and lightweight game-like quests such as **Midnight Library Escape**.
 
+Authorship note: parts of the 2026 Buddy Campus home refresh were drafted with AI assistance and then reviewed, edited, and integrated by the project team.
+
 ## Overview
 
 `English Learn` is designed for learners in roughly the **CEFR A1-B2** range and aims to balance:
