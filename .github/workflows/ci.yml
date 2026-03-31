@@ -1,0 +1,165 @@
+name: CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pr-hygiene:
+    name: PR hygiene
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require issue link in PR body
+        shell: bash
+        run: |
+          BODY="$(jq -r '.pull_request.body // ""' "$GITHUB_EVENT_PATH")"
+          if echo "$BODY" | grep -Eiq '#[0-9]+'; then
+            echo "Issue link found in PR body."
+          else
+            echo "PR body must reference an issue, e.g. 'Closes #123'."
+            exit 1
+          fi
+
+  detect-changes:
+    name: Detect changed paths
+    runs-on: ubuntu-latest
+    outputs:
+      english_learn: ${{ steps.filter.outputs.english_learn }}
+      nested_english_learn: ${{ steps.filter.outputs.nested_english_learn }}
+    steps:
+      - name: Checkout for diff
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Path filter
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            english_learn:
+              - 'english-learn/**'
+            nested_english_learn:
+              - 'software/english-learn/**'
+
+  quality-english-learn:
+    name: quality (english-learn)
+    needs: [detect-changes]
+    if: ${{ needs.detect-changes.outputs.english_learn == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: english-learn/package-lock.json
+
+      - name: Install dependencies
+        working-directory: english-learn
+        run: npm ci
+
+      - name: Lint changed JS/TS files
+        shell: bash
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            BASE_SHA="$(jq -r '.pull_request.base.sha // ""' "$GITHUB_EVENT_PATH")"
+          else
+            BASE_SHA="${{ github.event.before }}"
+          fi
+          HEAD_SHA="${{ github.sha }}"
+
+          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            BASE_SHA="$(git rev-list --max-parents=0 HEAD)"
+          fi
+
+          mapfile -t FILES < <(git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- english-learn | grep -E '\.(js|jsx|ts|tsx)$' || true)
+          if [ "${#FILES[@]}" -eq 0 ]; then
+            echo "No JS/TS file changes in english-learn."
+            exit 0
+          fi
+
+          REL_FILES=()
+          for f in "${FILES[@]}"; do
+            REL_FILES+=("${f#english-learn/}")
+          done
+
+          pushd english-learn >/dev/null
+          npm run lint --if-present -- "${REL_FILES[@]}"
+          popd >/dev/null
+
+      - name: Test
+        working-directory: english-learn
+        run: npm run test --if-present
+
+  quality-nested-english-learn:
+    name: quality (software/english-learn)
+    needs: [detect-changes]
+    if: ${{ needs.detect-changes.outputs.nested_english_learn == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: software/english-learn/package-lock.json
+
+      - name: Install dependencies
+        working-directory: software/english-learn
+        run: npm ci
+
+      - name: Lint changed JS/TS files
+        shell: bash
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            BASE_SHA="$(jq -r '.pull_request.base.sha // ""' "$GITHUB_EVENT_PATH")"
+          else
+            BASE_SHA="${{ github.event.before }}"
+          fi
+          HEAD_SHA="${{ github.sha }}"
+
+          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            BASE_SHA="$(git rev-list --max-parents=0 HEAD)"
+          fi
+
+          mapfile -t FILES < <(git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- software/english-learn | grep -E '\.(js|jsx|ts|tsx)$' || true)
+          if [ "${#FILES[@]}" -eq 0 ]; then
+            echo "No JS/TS file changes in software/english-learn."
+            exit 0
+          fi
+
+          REL_FILES=()
+          for f in "${FILES[@]}"; do
+            REL_FILES+=("${f#software/english-learn/}")
+          done
+
+          pushd software/english-learn >/dev/null
+          npm run lint --if-present -- "${REL_FILES[@]}"
+          popd >/dev/null
+
+      - name: Test
+        working-directory: software/english-learn
+        run: npm run test --if-present
