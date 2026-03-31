@@ -100,8 +100,20 @@ jobs:
             REL_FILES+=("${f#english-learn/}")
           done
 
+          EXISTING_FILES=()
+          for f in "${REL_FILES[@]}"; do
+            if [ -f "english-learn/$f" ]; then
+              EXISTING_FILES+=("$f")
+            fi
+          done
+
+          if [ "${#EXISTING_FILES[@]}" -eq 0 ]; then
+            echo "No existing JS/TS files to lint in english-learn."
+            exit 0
+          fi
+
           pushd english-learn >/dev/null
-          npm run lint --if-present -- "${REL_FILES[@]}"
+          npm run lint --if-present -- "${EXISTING_FILES[@]}"
           popd >/dev/null
 
       - name: Test
@@ -156,8 +168,20 @@ jobs:
             REL_FILES+=("${f#software/english-learn/}")
           done
 
+          EXISTING_FILES=()
+          for f in "${REL_FILES[@]}"; do
+            if [ -f "software/english-learn/$f" ]; then
+              EXISTING_FILES+=("$f")
+            fi
+          done
+
+          if [ "${#EXISTING_FILES[@]}" -eq 0 ]; then
+            echo "No existing JS/TS files to lint in software/english-learn."
+            exit 0
+          fi
+
           pushd software/english-learn >/dev/null
-          npm run lint --if-present -- "${REL_FILES[@]}"
+          npm run lint --if-present -- "${EXISTING_FILES[@]}"
           popd >/dev/null
 
       - name: Test
