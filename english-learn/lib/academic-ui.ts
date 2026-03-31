@@ -97,7 +97,7 @@ export const learningModules = [
     deliverable: "Structured notes + comprehension check + technical vocabulary deck + TED extension",
     minutes: "20-24 min",
     progress: 78,
-    href: "/listening/ted",
+    href: "/listening",
     surfaceClass: "from-[#d7e8f7] via-white to-[#edf6fc]",
     badgeClass: "bg-[#14324b] text-white",
     progressClass: "bg-[#5f8fb7]",

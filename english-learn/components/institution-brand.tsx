@@ -21,15 +21,20 @@ export function InstitutionBrand({
 
   if (embedded) {
     return (
-      <div className={cn("institution-brand", className)}>
-        <Image
-          src="/dii-brand/ddlogo.png"
-          alt={alt}
-          width={compact ? 300 : 380}
-          height={compact ? 41 : 52}
-          priority
-          className={cn("institution-brand-image", compact && "institution-brand-image-compact")}
-        />
+      <div className={cn("institution-brand institution-brand-embedded", className)}>
+        <div className="institution-brand-plate institution-brand-plate-embedded">
+          <Image
+            src="/dii-brand/ddlogo.png"
+            alt={alt}
+            width={compact ? 300 : 380}
+            height={compact ? 41 : 52}
+            priority
+            className={cn(
+              "institution-brand-image institution-brand-image-embedded",
+              compact && "institution-brand-image-compact",
+            )}
+          />
+        </div>
       </div>
     );
   }

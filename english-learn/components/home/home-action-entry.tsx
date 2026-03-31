@@ -551,8 +551,8 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
               </h2>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--ink-soft)] sm:text-base">
                 {locale === "zh"
-                  ? "把 TED 听力、学术口语、论坛互动和每周挑战放进一个更友好、更有吸引力的卡通校园里。你的 Buddy 会随着学习逐步成长。"
-                  : "TED listening, academic speaking, community tasks, and weekly quests all live inside one playful campus. Your buddy grows as you keep learning."}
+                  ? "把工科学术听力、学术口语、论坛互动和每周挑战放进一个更友好、更有吸引力的卡通校园里。你的 Buddy 会随着学习逐步成长。"
+                  : "Academic listening, academic speaking, community tasks, and weekly quests all live inside one playful campus. Your buddy grows as you keep learning."}
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
@@ -614,11 +614,11 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
         <div className="grid gap-4 lg:grid-cols-3">
           {[
             {
-              title: locale === "zh" ? "真实听力" : "Real Listening",
+              title: locale === "zh" ? "学术听力库" : "Academic Listening",
               note:
                 locale === "zh"
-                  ? "TED、公开讲座和播客资源卡片式浏览，更像内容平台。"
-                  : "Browse TED talks, lectures, and podcasts in a content-library style.",
+                  ? "按专业、来源机构、口音和难度浏览材料；支持站内播放，也支持看文本后答题。"
+                  : "Browse by major, provider, accent, and difficulty, then watch in-app or read before answering.",
               Icon: Headphones,
             },
             {

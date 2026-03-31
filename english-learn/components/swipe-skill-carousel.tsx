@@ -9,7 +9,7 @@ const cards = [
     key: "listening",
     title: "Listening Burst",
     desc: "3-min clip + key-detail challenge",
-    href: "/listening/ted",
+    href: "/listening",
     icon: Ear,
     tone: "from-sky-200/80 to-cyan-100",
   },
