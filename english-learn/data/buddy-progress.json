@@ -66,7 +66,7 @@
       "username": "qqqq",
       "email": "11121@11.com",
       "counts": {
-        "listeningCompletions": 0,
+        "listeningCompletions": 1,
         "speakingCompletions": 0,
         "readingCompletions": 0,
         "writingCompletions": 0,
@@ -75,10 +75,10 @@
         "dormLockoutClears": 0,
         "lastTrainClears": 0
       },
-      "totalXp": 0,
-      "totalCompletedSources": 0,
+      "totalXp": 15,
+      "totalCompletedSources": 1,
       "createdAt": "2026-03-31T09:57:54.105Z",
-      "updatedAt": "2026-03-31T09:57:54.105Z"
+      "updatedAt": "2026-03-31T11:47:17.693Z"
     },
     {
       "authProvider": "local-file",

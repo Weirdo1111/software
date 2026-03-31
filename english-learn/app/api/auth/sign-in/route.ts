@@ -10,7 +10,12 @@ import {
   AUTH_USERNAME_COOKIE,
 } from "@/lib/current-user";
 import { getLocalBuddyProgress } from "@/lib/local-buddy-progress";
-import { findLocalUserByLogin, toPublicUser, verifyPassword } from "@/lib/local-auth";
+import {
+  findLocalUserByLogin,
+  isDatabaseAuthConfigured,
+  toPublicUser,
+  verifyPassword,
+} from "@/lib/local-auth";
 import { prisma } from "@/lib/prisma";
 
 const schema = z.object({
@@ -40,60 +45,80 @@ export async function POST(request: Request) {
       return jsonError("Invalid account or password", 400);
     }
 
-    const updatedUser = await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        lastLoginAt: new Date(),
-      },
-    });
+    const updatedUser =
+      isDatabaseAuthConfigured() && typeof user.id === "bigint"
+        ? await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              lastLoginAt: new Date(),
+            },
+          })
+        : user;
 
     await getLocalBuddyProgress({
-      authProvider: updatedUser.authProvider,
-      authUserId: updatedUser.authUserId,
+      authProvider: updatedUser.authProvider || "local-file",
+      authUserId:
+        updatedUser.authUserId ||
+        (typeof updatedUser.id === "bigint" ? updatedUser.id.toString() : updatedUser.id),
       username: updatedUser.username,
       email: updatedUser.email ?? undefined,
     });
 
-    const session = await createAuthSession({
-      userId: updatedUser.id,
-      userAgent: request.headers.get("user-agent"),
-      ipAddress:
-        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-        request.headers.get("x-real-ip"),
-    });
+    const session =
+      isDatabaseAuthConfigured() && typeof updatedUser.id === "bigint"
+        ? await createAuthSession({
+            userId: updatedUser.id,
+            userAgent: request.headers.get("user-agent"),
+            ipAddress:
+              request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+              request.headers.get("x-real-ip"),
+          })
+        : null;
+
+    const authProvider = updatedUser.authProvider || "local-file";
+    const authUserId =
+      updatedUser.authUserId ||
+      (typeof updatedUser.id === "bigint" ? updatedUser.id.toString() : updatedUser.id);
 
     const response = NextResponse.json({
       user: toPublicUser(updatedUser),
-      user_id: updatedUser.id.toString(),
-      session: true,
-      storage: "database",
+      user_id: typeof updatedUser.id === "bigint" ? updatedUser.id.toString() : updatedUser.id,
+      auth_provider: authProvider,
+      auth_user_id: authUserId,
+      session: Boolean(session),
+      storage: isDatabaseAuthConfigured() ? "database" : "local-file",
     });
 
-    response.cookies.set(
-      AUTH_SESSION_COOKIE,
-      session.rawToken,
-      createSessionCookieOptions(session.expiresAt),
-    );
-    response.cookies.set(AUTH_PROVIDER_COOKIE, updatedUser.authProvider, {
+    if (session) {
+      response.cookies.set(
+        AUTH_SESSION_COOKIE,
+        session.rawToken,
+        createSessionCookieOptions(session.expiresAt),
+      );
+    }
+
+    const cookieExpires = session?.expiresAt ?? new Date(Date.now() + 1000 * 60 * 60 * 24 * 14);
+
+    response.cookies.set(AUTH_PROVIDER_COOKIE, authProvider, {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
       path: "/",
-      expires: session.expiresAt,
+      expires: cookieExpires,
     });
-    response.cookies.set(AUTH_USER_ID_COOKIE, updatedUser.authUserId, {
+    response.cookies.set(AUTH_USER_ID_COOKIE, authUserId, {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
       path: "/",
-      expires: session.expiresAt,
+      expires: cookieExpires,
     });
     response.cookies.set(AUTH_USERNAME_COOKIE, updatedUser.username, {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
       path: "/",
-      expires: session.expiresAt,
+      expires: cookieExpires,
     });
     if (updatedUser.email) {
       response.cookies.set(AUTH_EMAIL_COOKIE, updatedUser.email, {
@@ -101,7 +126,7 @@ export async function POST(request: Request) {
         sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
         path: "/",
-        expires: session.expiresAt,
+        expires: cookieExpires,
       });
     }
 
