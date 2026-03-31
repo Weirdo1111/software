@@ -84,6 +84,8 @@ export default function LoginPage() {
 
       const data = (await response.json()) as {
         error?: string;
+        user_id?: string;
+        auth_provider?: string;
         user?: {
           email: string;
           username: string;
@@ -98,6 +100,10 @@ export default function LoginPage() {
 
       localStorage.setItem("demo_logged_in", "true");
       localStorage.setItem("demo_user", data.user?.username || data.user?.email || email.trim());
+      if (data.user_id) {
+        localStorage.setItem("demo_auth_user_id", data.user_id);
+      }
+      localStorage.setItem("demo_auth_provider", data.auth_provider || "local-file");
       window.dispatchEvent(new Event("demo-auth-changed"));
       window.location.href = "/dashboard";
       return;
