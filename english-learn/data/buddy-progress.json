@@ -26,7 +26,7 @@
       "username": "admin",
       "email": "admin@example.com",
       "counts": {
-        "listeningCompletions": 43,
+        "listeningCompletions": 60,
         "speakingCompletions": 0,
         "readingCompletions": 0,
         "writingCompletions": 0,
@@ -35,10 +35,10 @@
         "dormLockoutClears": 0,
         "lastTrainClears": 0
       },
-      "totalXp": 645,
-      "totalCompletedSources": 43,
+      "totalXp": 900,
+      "totalCompletedSources": 60,
       "createdAt": "2026-03-31T09:40:48.145Z",
-      "updatedAt": "2026-03-31T14:31:56.349Z"
+      "updatedAt": "2026-03-31T15:11:03.662Z"
     },
     {
       "authProvider": "local-file",

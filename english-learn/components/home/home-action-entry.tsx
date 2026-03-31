@@ -18,6 +18,7 @@ import {
   HatGlasses,
   Headphones,
   LibraryBig,
+  Lock,
   Mic,
   PawPrint,
   PenLine,
@@ -27,7 +28,7 @@ import {
   Trophy,
   WandSparkles,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { BuddyCampusLobby } from "@/components/home/buddy-campus-lobby";
 import { BuddyCompanion, type BuddyVariant } from "@/components/home/buddy-companion";
@@ -243,6 +244,79 @@ const majorStickers = [
 
 const weekdayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const LAST_SEEN_BUDDY_LEVEL_KEY = "english-learn:buddy:last-seen-level";
+type WardrobeCategory = "hat" | "clothing" | "glasses" | "heldItem";
+
+const BUDDY_WARDROBE_UNLOCK_ORDER: Array<
+  | { category: "hat"; value: BuddyHat }
+  | { category: "clothing"; value: BuddyClothing }
+  | { category: "glasses"; value: BuddyGlasses }
+  | { category: "heldItem"; value: BuddyHeldItem }
+> = [
+  { category: "hat", value: "sunhat" },
+  { category: "clothing", value: "shorts" },
+  { category: "glasses", value: "star" },
+  { category: "heldItem", value: "flower" },
+  { category: "hat", value: "strawhat" },
+  { category: "clothing", value: "jeans" },
+  { category: "glasses", value: "heart" },
+  { category: "heldItem", value: "tea" },
+  { category: "hat", value: "cap" },
+  { category: "clothing", value: "bloomers" },
+  { category: "glasses", value: "square" },
+  { category: "heldItem", value: "starwand" },
+  { category: "hat", value: "magichat" },
+  { category: "clothing", value: "jk" },
+  { category: "glasses", value: "sunglasses" },
+  { category: "heldItem", value: "notebook" },
+  { category: "hat", value: "chefhat" },
+  { category: "clothing", value: "pleated" },
+  { category: "glasses", value: "round" },
+  { category: "heldItem", value: "paintbrush" },
+  { category: "hat", value: "catears" },
+  { category: "clothing", value: "petal" },
+  { category: "glasses", value: "goggles" },
+  { category: "heldItem", value: "moonwand" },
+  { category: "hat", value: "beret" },
+];
+
+function getWardrobeUnlockKey(category: WardrobeCategory, value: string) {
+  return `${category}:${value}`;
+}
+
+function getWardrobeUnlockLevel(category: WardrobeCategory, value: string) {
+  if (value === "none") return 1;
+  const index = BUDDY_WARDROBE_UNLOCK_ORDER.findIndex(
+    (entry) => entry.category === category && entry.value === value,
+  );
+  return index >= 0 ? index + 1 : Number.POSITIVE_INFINITY;
+}
+
+function createUnlockedWardrobeSet(level: number) {
+  const unlocked = new Set<string>([
+    getWardrobeUnlockKey("hat", "none"),
+    getWardrobeUnlockKey("clothing", "none"),
+    getWardrobeUnlockKey("glasses", "none"),
+    getWardrobeUnlockKey("heldItem", "none"),
+  ]);
+
+  BUDDY_WARDROBE_UNLOCK_ORDER.slice(0, Math.max(0, level)).forEach((entry) => {
+    unlocked.add(getWardrobeUnlockKey(entry.category, entry.value));
+  });
+
+  return unlocked;
+}
+
+function sanitizeBuddyOutfitForLevel(
+  outfit: BuddyOutfit,
+  unlockedSet: Set<string>,
+): BuddyOutfit {
+  return {
+    hat: unlockedSet.has(getWardrobeUnlockKey("hat", outfit.hat)) ? outfit.hat : "none",
+    clothing: unlockedSet.has(getWardrobeUnlockKey("clothing", outfit.clothing)) ? outfit.clothing : "none",
+    glasses: unlockedSet.has(getWardrobeUnlockKey("glasses", outfit.glasses)) ? outfit.glasses : "none",
+    heldItem: unlockedSet.has(getWardrobeUnlockKey("heldItem", outfit.heldItem)) ? outfit.heldItem : "none",
+  };
+}
 
 const buddyWardrobeCopy = {
   hats: {
@@ -369,6 +443,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   const [wardrobeFlipTick, setWardrobeFlipTick] = useState(0);
   const [showLevelRules, setShowLevelRules] = useState(false);
   const [levelUpNotice, setLevelUpNotice] = useState<{ level: number; stageTitle: string } | null>(null);
+  const levelUpNoticeTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const refresh = () => {
@@ -453,6 +528,11 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   const currentLevelProgress = clampPercent((levelXpProgress / levelXpSpan) * 100);
   const totalCompletedForBuddy = xpSummary.totalCompletedSources;
   const buddyStage = getBuddyStage(xp, locale);
+  const unlockedWardrobeSet = useMemo(() => createUnlockedWardrobeSet(buddyLevel), [buddyLevel]);
+  const effectiveBuddyOutfit = useMemo(
+    () => sanitizeBuddyOutfitForLevel(buddyOutfit, unlockedWardrobeSet),
+    [buddyOutfit, unlockedWardrobeSet],
+  );
   const nextQuestHref =
     todayPlan.blocks.find((block) => block.skill !== "review")?.href ?? `/schedule?lang=${locale}`;
   const readingHref = `/reading?lang=${locale}`;
@@ -483,19 +563,46 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     }
 
     if (buddyLevel > previousLevel) {
-      setLevelUpNotice({ level: buddyLevel, stageTitle: buddyStage.title });
+      if (levelUpNoticeTimerRef.current) {
+        window.clearTimeout(levelUpNoticeTimerRef.current);
+      }
+      levelUpNoticeTimerRef.current = window.setTimeout(() => {
+        setLevelUpNotice({ level: buddyLevel, stageTitle: buddyStage.title });
+        levelUpNoticeTimerRef.current = null;
+      }, 0);
       return;
     }
 
     if (buddyLevel < previousLevel) {
       window.localStorage.setItem(LAST_SEEN_BUDDY_LEVEL_KEY, String(buddyLevel));
     }
+
+    return () => {
+      if (levelUpNoticeTimerRef.current) {
+        window.clearTimeout(levelUpNoticeTimerRef.current);
+        levelUpNoticeTimerRef.current = null;
+      }
+    };
   }, [buddyLevel, buddyStage.title, isLoggedIn]);
 
   const updateBuddyOutfit = (partial: Partial<BuddyOutfit>) => {
-    const updated = saveBuddyOutfitToStorage({ ...buddyOutfit, ...partial });
+    const nextOutfit = { ...effectiveBuddyOutfit, ...partial };
+    const sanitizedOutfit = sanitizeBuddyOutfitForLevel(nextOutfit, unlockedWardrobeSet);
+    const updated = saveBuddyOutfitToStorage(sanitizedOutfit);
     setBuddyOutfit(updated);
   };
+
+  useEffect(() => {
+    const differs =
+      buddyOutfit.hat !== effectiveBuddyOutfit.hat ||
+      buddyOutfit.clothing !== effectiveBuddyOutfit.clothing ||
+      buddyOutfit.glasses !== effectiveBuddyOutfit.glasses ||
+      buddyOutfit.heldItem !== effectiveBuddyOutfit.heldItem;
+
+    if (!differs) return;
+
+    saveBuddyOutfitToStorage(effectiveBuddyOutfit);
+  }, [buddyOutfit, effectiveBuddyOutfit]);
 
   const handleWardrobeTabChange = (tab: "hat" | "clothing" | "glasses" | "heldItem") => {
     if (tab === wardrobeTab) return;
@@ -851,7 +958,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                 ) : null}
                 <button
                   type="button"
-                  onClick={() => setWardrobeOpen(true)}
+                    onClick={() => setWardrobeOpen(true)}
                   className={`buddy-dressup-trigger mx-auto block rounded-[1.8rem] border-0 bg-transparent p-0${
                     levelUpNotice ? " animate-[globalBuddyBounceHit_1s_ease-in-out_5]" : ""
                   }`}
@@ -862,7 +969,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                     focus={getGoalFocus(preferences.goal)}
                     variant={getGoalVariant(preferences.goal)}
                     mood={buddyStage.mood}
-                    outfit={buddyOutfit}
+                    outfit={effectiveBuddyOutfit}
                     className="mx-auto"
                   />
                 </button>
@@ -1047,10 +1154,19 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                               key={key}
                               type="button"
                               onClick={() => updateBuddyOutfit({ hat: key })}
-                              className={`buddy-wardrobe-option${buddyOutfit.hat === key ? " buddy-wardrobe-option-active" : ""}`}
+                              disabled={!unlockedWardrobeSet.has(getWardrobeUnlockKey("hat", key))}
+                              className={`buddy-wardrobe-option${effectiveBuddyOutfit.hat === key ? " buddy-wardrobe-option-active" : ""}${!unlockedWardrobeSet.has(getWardrobeUnlockKey("hat", key)) ? " buddy-wardrobe-option-locked" : ""}`}
                             >
                               {renderWardrobePreviewIcon("hat", key)}
-                              <span>{copy[locale]}</span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block">{copy[locale]}</span>
+                                {!unlockedWardrobeSet.has(getWardrobeUnlockKey("hat", key)) ? (
+                                  <span className="mt-1 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+                                    <Lock className="size-3" />
+                                    {locale === "zh" ? `等级 ${getWardrobeUnlockLevel("hat", key)} 解锁` : `Unlocks at Lv ${getWardrobeUnlockLevel("hat", key)}`}
+                                  </span>
+                                ) : null}
+                              </span>
                             </button>
                           ))
                         : null}
@@ -1060,10 +1176,19 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                               key={key}
                               type="button"
                               onClick={() => updateBuddyOutfit({ clothing: key })}
-                              className={`buddy-wardrobe-option${buddyOutfit.clothing === key ? " buddy-wardrobe-option-active" : ""}`}
+                              disabled={!unlockedWardrobeSet.has(getWardrobeUnlockKey("clothing", key))}
+                              className={`buddy-wardrobe-option${effectiveBuddyOutfit.clothing === key ? " buddy-wardrobe-option-active" : ""}${!unlockedWardrobeSet.has(getWardrobeUnlockKey("clothing", key)) ? " buddy-wardrobe-option-locked" : ""}`}
                             >
                               {renderWardrobePreviewIcon("clothing", key)}
-                              <span>{copy[locale]}</span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block">{copy[locale]}</span>
+                                {!unlockedWardrobeSet.has(getWardrobeUnlockKey("clothing", key)) ? (
+                                  <span className="mt-1 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+                                    <Lock className="size-3" />
+                                    {locale === "zh" ? `等级 ${getWardrobeUnlockLevel("clothing", key)} 解锁` : `Unlocks at Lv ${getWardrobeUnlockLevel("clothing", key)}`}
+                                  </span>
+                                ) : null}
+                              </span>
                             </button>
                           ))
                         : null}
@@ -1073,10 +1198,19 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                               key={key}
                               type="button"
                               onClick={() => updateBuddyOutfit({ glasses: key })}
-                              className={`buddy-wardrobe-option${buddyOutfit.glasses === key ? " buddy-wardrobe-option-active" : ""}`}
+                              disabled={!unlockedWardrobeSet.has(getWardrobeUnlockKey("glasses", key))}
+                              className={`buddy-wardrobe-option${effectiveBuddyOutfit.glasses === key ? " buddy-wardrobe-option-active" : ""}${!unlockedWardrobeSet.has(getWardrobeUnlockKey("glasses", key)) ? " buddy-wardrobe-option-locked" : ""}`}
                             >
                               {renderWardrobePreviewIcon("glasses", key)}
-                              <span>{copy[locale]}</span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block">{copy[locale]}</span>
+                                {!unlockedWardrobeSet.has(getWardrobeUnlockKey("glasses", key)) ? (
+                                  <span className="mt-1 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+                                    <Lock className="size-3" />
+                                    {locale === "zh" ? `等级 ${getWardrobeUnlockLevel("glasses", key)} 解锁` : `Unlocks at Lv ${getWardrobeUnlockLevel("glasses", key)}`}
+                                  </span>
+                                ) : null}
+                              </span>
                             </button>
                           ))
                         : null}
@@ -1086,10 +1220,19 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                               key={key}
                               type="button"
                               onClick={() => updateBuddyOutfit({ heldItem: key })}
-                              className={`buddy-wardrobe-option${buddyOutfit.heldItem === key ? " buddy-wardrobe-option-active" : ""}`}
+                              disabled={!unlockedWardrobeSet.has(getWardrobeUnlockKey("heldItem", key))}
+                              className={`buddy-wardrobe-option${effectiveBuddyOutfit.heldItem === key ? " buddy-wardrobe-option-active" : ""}${!unlockedWardrobeSet.has(getWardrobeUnlockKey("heldItem", key)) ? " buddy-wardrobe-option-locked" : ""}`}
                             >
                               {renderWardrobePreviewIcon("heldItem", key)}
-                              <span>{copy[locale]}</span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block">{copy[locale]}</span>
+                                {!unlockedWardrobeSet.has(getWardrobeUnlockKey("heldItem", key)) ? (
+                                  <span className="mt-1 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+                                    <Lock className="size-3" />
+                                    {locale === "zh" ? `等级 ${getWardrobeUnlockLevel("heldItem", key)} 解锁` : `Unlocks at Lv ${getWardrobeUnlockLevel("heldItem", key)}`}
+                                  </span>
+                                ) : null}
+                              </span>
                             </button>
                           ))
                         : null}
@@ -1107,15 +1250,15 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                         focus={getGoalFocus(preferences.goal)}
                         variant={getGoalVariant(preferences.goal)}
                         mood="happy"
-                        outfit={buddyOutfit}
+                        outfit={effectiveBuddyOutfit}
                         className="mx-auto"
                       />
                     </div>
                     <div className="buddy-bubble mt-4 p-4">
                       <p className="text-sm font-semibold text-[var(--ink)]">
                         {locale === "zh"
-                          ? `当前搭配：${buddyWardrobeCopy.hats[buddyOutfit.hat].zh} / ${buddyWardrobeCopy.clothing[buddyOutfit.clothing].zh} / ${buddyWardrobeCopy.glasses[buddyOutfit.glasses].zh} / ${buddyWardrobeCopy.heldItems[buddyOutfit.heldItem].zh}`
-                          : `Current look: ${buddyWardrobeCopy.hats[buddyOutfit.hat].en} / ${buddyWardrobeCopy.clothing[buddyOutfit.clothing].en} / ${buddyWardrobeCopy.glasses[buddyOutfit.glasses].en} / ${buddyWardrobeCopy.heldItems[buddyOutfit.heldItem].en}`}
+                          ? `当前搭配：${buddyWardrobeCopy.hats[effectiveBuddyOutfit.hat].zh} / ${buddyWardrobeCopy.clothing[effectiveBuddyOutfit.clothing].zh} / ${buddyWardrobeCopy.glasses[effectiveBuddyOutfit.glasses].zh} / ${buddyWardrobeCopy.heldItems[effectiveBuddyOutfit.heldItem].zh}`
+                          : `Current look: ${buddyWardrobeCopy.hats[effectiveBuddyOutfit.hat].en} / ${buddyWardrobeCopy.clothing[effectiveBuddyOutfit.clothing].en} / ${buddyWardrobeCopy.glasses[effectiveBuddyOutfit.glasses].en} / ${buddyWardrobeCopy.heldItems[effectiveBuddyOutfit.heldItem].en}`}
                       </p>
                     </div>
                     <div className="mt-4 flex flex-wrap gap-3">
