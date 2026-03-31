@@ -1541,6 +1541,31 @@ body::after {
   animation: globalBuddyGreeting 1.8s ease both;
 }
 
+.global-buddy-xp-text {
+  display: inline-block;
+  position: absolute;
+  left: 50%;
+  right: auto;
+  top: -0.55rem;
+  bottom: auto;
+  transform: translate(-50%, -100%);
+  z-index: 8;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  max-width: 11rem;
+  color: #4c67d8;
+  white-space: nowrap;
+  text-align: center;
+  text-shadow:
+    0 2px 10px rgba(255, 255, 255, 0.92),
+    0 0 18px rgba(255, 255, 255, 0.72);
+  box-shadow: none;
+  font-size: 0.95rem;
+  font-weight: 900;
+  animation: globalBuddyGreeting 1.5s ease both;
+}
+
 .global-buddy-greeting:lang(zh-CN) {
   font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", var(--font-body), sans-serif;
   letter-spacing: 0;
@@ -1558,6 +1583,39 @@ body::after {
   border-right: 2px solid rgba(255, 255, 255, 0.95);
   border-bottom: 2px solid rgba(255, 255, 255, 0.95);
   background: rgba(244, 249, 255, 0.96);
+}
+
+.global-buddy-xp-text::after {
+  display: none;
+}
+
+.global-buddy-star {
+  position: absolute;
+  z-index: 4;
+  color: #ffd35d;
+  text-shadow:
+    0 0 10px rgba(255, 255, 255, 0.96),
+    0 0 18px rgba(255, 214, 113, 0.88);
+  font-size: 0.95rem;
+  pointer-events: none;
+  animation: globalBuddyStarTwinkle 0.9s ease-in-out infinite alternate;
+}
+
+.global-buddy-star-one {
+  left: 0.6rem;
+  top: 0.6rem;
+}
+
+.global-buddy-star-two {
+  right: 0.35rem;
+  top: 1.1rem;
+  animation-delay: 0.18s;
+}
+
+.global-buddy-star-three {
+  right: 1.2rem;
+  top: 3.15rem;
+  animation-delay: 0.34s;
 }
 
 .global-buddy-card-blink .global-buddy-figure {
@@ -2937,6 +2995,17 @@ body::after {
   100% {
     opacity: 0;
     transform: translateY(-6px) scale(0.94);
+  }
+}
+
+@keyframes globalBuddyStarTwinkle {
+  0% {
+    opacity: 0.45;
+    transform: translateY(3px) scale(0.82) rotate(-8deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1.12) rotate(8deg);
   }
 }
 

@@ -9,6 +9,7 @@ import {
   AUTH_USER_ID_COOKIE,
   AUTH_USERNAME_COOKIE,
 } from "@/lib/current-user";
+import { getLocalBuddyProgress } from "@/lib/local-buddy-progress";
 import { findLocalUserByLogin, toPublicUser, verifyPassword } from "@/lib/local-auth";
 
 const schema = z.object({
@@ -41,6 +42,13 @@ export async function POST(request: Request) {
       if (!validPassword) {
         return jsonError("Invalid account or password", 400);
       }
+
+      await getLocalBuddyProgress({
+        authProvider: "local-file",
+        authUserId: user.id,
+        username: user.username,
+        email: user.email,
+      });
 
       const response = NextResponse.json({
         user: toPublicUser(user),

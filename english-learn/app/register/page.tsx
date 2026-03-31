@@ -93,6 +93,7 @@ export default function RegisterPage() {
 
       const data = (await response.json()) as {
         error?: string;
+        user_id?: string;
         user?: {
           username: string;
           email: string;
@@ -107,6 +108,10 @@ export default function RegisterPage() {
 
       localStorage.setItem("demo_logged_in", "true");
       localStorage.setItem("demo_user", data.user?.username || data.user?.email || username.trim());
+      if (data.user_id) {
+        localStorage.setItem("demo_auth_user_id", data.user_id);
+      }
+      localStorage.setItem("demo_auth_provider", "local-file");
       window.dispatchEvent(new Event("demo-auth-changed"));
       window.location.href = "/dashboard";
     } catch {
