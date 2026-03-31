@@ -6,10 +6,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ArrowDown,
-  ArrowLeft,
   ArrowRight,
-  ArrowUp,
   Compass,
   Gamepad2,
   Headphones,
@@ -23,7 +20,6 @@ import {
 import {
   type CSSProperties,
   type MouseEvent,
-  type PointerEvent,
   useEffect,
   useEffectEvent,
   useMemo,
@@ -72,7 +68,7 @@ const LOBBY_BOUNDS = {
   minX: 0.08,
   maxX: 0.92,
   minY: 0.14,
-  maxY: 0.9,
+  maxY: 0.84,
 };
 
 function clampPosition(next: LobbyVector): LobbyVector {
@@ -144,11 +140,11 @@ export function BuddyCampusLobby({
             : "Pick up today's main quest before you branch into study routes.",
         hint: locale === "zh" ? "今日任务" : "Today's quest",
         href: nextQuestHref,
-        x: 0.09,
-        y: 0.12,
-        width: 0.22,
-        height: 0.24,
-        entry: { x: 0.2, y: 0.4 },
+        x: 0.05,
+        y: 0.21,
+        width: 0.23,
+        height: 0.22,
+        entry: { x: 0.17, y: 0.47 },
         gradient: ["#ffb88a", "#ff8ea0"],
         Icon: Target,
       },
@@ -161,11 +157,11 @@ export function BuddyCampusLobby({
             : "Jump into TED talks, public lectures, interviews, and podcasts here.",
         hint: locale === "zh" ? "TED + Real Talk" : "TED + Real Talk",
         href: `/listening?lang=${locale}`,
-        x: 0.37,
-        y: 0.07,
-        width: 0.25,
+        x: 0.33,
+        y: 0.14,
+        width: 0.28,
         height: 0.23,
-        entry: { x: 0.49, y: 0.34 },
+        entry: { x: 0.47, y: 0.39 },
         gradient: ["#69c8ff", "#78e5d0"],
         Icon: Headphones,
       },
@@ -178,11 +174,11 @@ export function BuddyCampusLobby({
             : "Practice seminar turns, presentations, and class responses.",
         hint: locale === "zh" ? "AI 口语场景" : "AI speaking scenes",
         href: `/lesson/${levelPrefix}-speaking-starter?lang=${locale}`,
-        x: 0.67,
-        y: 0.13,
-        width: 0.23,
-        height: 0.24,
-        entry: { x: 0.78, y: 0.41 },
+        x: 0.72,
+        y: 0.21,
+        width: 0.2,
+        height: 0.21,
+        entry: { x: 0.82, y: 0.47 },
         gradient: ["#ffc77d", "#ff9db0"],
         Icon: Mic,
       },
@@ -195,11 +191,11 @@ export function BuddyCampusLobby({
             : "Use the forum to swap resources, ask questions, and prepare for collaboration.",
         hint: locale === "zh" ? "论坛互动" : "Forum and socials",
         href: `/discussion?lang=${locale}`,
-        x: 0.11,
-        y: 0.58,
-        width: 0.27,
-        height: 0.23,
-        entry: { x: 0.25, y: 0.76 },
+        x: 0.05,
+        y: 0.61,
+        width: 0.25,
+        height: 0.16,
+        entry: { x: 0.18, y: 0.74 },
         gradient: ["#9fd76f", "#69d4c1"],
         Icon: MessageSquareMore,
       },
@@ -208,15 +204,15 @@ export function BuddyCampusLobby({
         title: locale === "zh" ? "游戏中心" : "Game Center",
         note:
           locale === "zh"
-            ? "直接进入公开的密室逃脱与关卡街机页，不用先登录也能查看。"
-            : "Jump straight into the public arcade and escape-room stages without relying on the nav bar.",
-        hint: locale === "zh" ? "密室逃脱入口" : "Escape room arcade",
+            ? "可进入密室逃脱与 Word Game 两个游戏入口，不用先登录也能先浏览。"
+            : "Access both Escape Room and Word Game from one hub, even before signing in.",
+        hint: locale === "zh" ? "密室逃脱 + Word Game" : "Escape Room + Word Game",
         href: `/games?lang=${locale}`,
         x: 0.4,
-        y: 0.56,
-        width: 0.2,
-        height: 0.23,
-        entry: { x: 0.5, y: 0.77 },
+        y: 0.68,
+        width: 0.21,
+        height: 0.15,
+        entry: { x: 0.5, y: 0.78 },
         gradient: ["#ffd36f", "#ff9c8f"],
         Icon: Gamepad2,
       },
@@ -229,11 +225,11 @@ export function BuddyCampusLobby({
             : "See your XP, growth curve, and newly unlocked rewards.",
         hint: locale === "zh" ? "成长与奖励" : "Growth and rewards",
         href: `/progress?lang=${locale}`,
-        x: 0.62,
-        y: 0.58,
-        width: 0.26,
-        height: 0.23,
-        entry: { x: 0.75, y: 0.76 },
+        x: 0.7,
+        y: 0.61,
+        width: 0.22,
+        height: 0.16,
+        entry: { x: 0.81, y: 0.74 },
         gradient: ["#ffd75d", "#ffb18d"],
         Icon: Trophy,
       },
@@ -282,6 +278,14 @@ export function BuddyCampusLobby({
       },
     ],
     [locale],
+  );
+  const leftWingZones = useMemo(
+    () => zones.filter((zone) => ["quest-desk", "listening-hall", "buddy-square"].includes(zone.id)),
+    [zones],
+  );
+  const rightWingZones = useMemo(
+    () => zones.filter((zone) => ["speaking-lab", "game-center", "reward-port"].includes(zone.id)),
+    [zones],
   );
 
   const activeZone = useMemo(() => {
@@ -496,18 +500,6 @@ export function BuddyCampusLobby({
     });
   };
 
-  const beginDirection = (direction: Direction) => (event: PointerEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    setKeyboardEnabled(true);
-    void unlockBuddySound();
-    destinationRef.current = null;
-    keysRef.current[direction] = true;
-  };
-
-  const endDirection = (direction: Direction) => () => {
-    keysRef.current[direction] = false;
-  };
-
   const lobbyStatus = activeZone
     ? locale === "zh"
       ? `已靠近 ${activeZone.title}`
@@ -519,10 +511,11 @@ export function BuddyCampusLobby({
       : locale === "zh"
         ? "点击大厅后可用 WASD / 方向键移动。"
         : "Click the lobby, then use WASD or arrow keys to move.";
+  const suggestedZone = zones[1] ?? zones[0] ?? null;
 
   return (
     <article className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.99),rgba(245,249,255,0.95),rgba(255,244,250,0.92))] p-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div>
         <div>
           <p className="section-label">
             <Compass className="size-3.5" />
@@ -531,281 +524,284 @@ export function BuddyCampusLobby({
           <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
             {locale === "zh" ? "像进入校园大厅一样进入每个学习板块。" : "Enter each study area the way you would enter a campus hall."}
           </h3>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <span className="buddy-chip">
-            <Sparkles className="size-4 text-[var(--coral)]" />
-            {locale === "zh" ? "WASD / 方向键" : "WASD / arrows"}
-          </span>
-          <span className="buddy-chip">
-            <Compass className="size-4 text-[var(--teal)]" />
-            {locale === "zh" ? "点击地面自动走" : "Tap floor to walk"}
-          </span>
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-[var(--ink-soft)]">
+            {locale === "zh"
+              ? "现在首页不只是入口列表，而是一个可以控制 Buddy 移动的大厅。走到听力、口语、论坛、游戏中心和奖励区附近，就能直接进入对应模块。"
+              : "Home is no longer just a list of links. Move your buddy across the lobby and step near listening, speaking, forum, game-center, and reward spaces to open them."}
+          </p>
         </div>
       </div>
 
-      <div className="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1fr)_19rem]">
-        <div>
-          <div
-            ref={arenaRef}
-            tabIndex={0}
-            onFocus={() => setKeyboardEnabled(true)}
-            onPointerDown={() => setKeyboardEnabled(true)}
-            onClick={handleArenaClick}
-            className={cn("campus-lobby", keyboardEnabled && "campus-lobby-focused")}
-            role="region"
-            aria-label={locale === "zh" ? "DIICSU 学习大厅" : "DIICSU learning lobby"}
-          >
-            <span className="campus-lobby-dawn" />
-            <span className="campus-lobby-tower">
-              <span className="campus-lobby-tower-clock" />
+      <div className="mt-6">
+        <div className="campus-lobby-topbar">
+          <div className="campus-lobby-topbar-chips">
+            <span className="buddy-chip">
+              <Sparkles className="size-4 text-[var(--coral)]" />
+              {locale === "zh" ? "WASD / 方向键" : "WASD / arrows"}
             </span>
-            <span className="campus-lobby-paper-plane" />
-            <span className="campus-lobby-sheet campus-lobby-sheet-one" />
-            <span className="campus-lobby-sheet campus-lobby-sheet-two" />
-            <span className="campus-lobby-sheet campus-lobby-sheet-three" />
-            <span className="campus-lobby-book-stack">
-              <span className="campus-lobby-book campus-lobby-book-blue" />
-              <span className="campus-lobby-book campus-lobby-book-pink" />
-              <span className="campus-lobby-book campus-lobby-book-cyan" />
-              <span className="campus-lobby-book campus-lobby-book-peach" />
+            <span className="buddy-chip">
+              <Compass className="size-4 text-[var(--teal)]" />
+              {locale === "zh" ? "点击地面自动走" : "Tap floor to walk"}
             </span>
-            <span className="campus-lobby-compass" />
-            <span className="campus-lobby-letters" aria-hidden="true">
-              <span>A</span>
-              <span>B</span>
-              <span>C</span>
-            </span>
-            <span className="campus-lobby-globe">
-              <span className="campus-lobby-globe-ring" />
-              <span className="campus-lobby-globe-stand" />
-            </span>
-            <span className="campus-lobby-spark campus-lobby-spark-right" />
-            <span className="campus-lobby-spark campus-lobby-spark-left" />
-            <span className="campus-lobby-cloud campus-lobby-cloud-left" />
-            <span className="campus-lobby-cloud campus-lobby-cloud-mid" />
-            <span className="campus-lobby-cloud campus-lobby-cloud-right" />
-            <div className="campus-lobby-fountain">
-              <div className="campus-lobby-fountain-core" />
-            </div>
+          </div>
 
-            {zones.map((zone) => {
-              const isActive = activeZone?.id === zone.id;
-              const style = {
-                left: `${zone.x * 100}%`,
-                top: `${zone.y * 100}%`,
-                width: `${zone.width * 100}%`,
-                height: `${zone.height * 100}%`,
-                "--zone-start": zone.gradient[0],
-                "--zone-end": zone.gradient[1],
-              } as CSSProperties;
-
-              return (
+          <div className="campus-lobby-crew-board">
+            <p className="campus-lobby-crew-label">
+              {locale === "zh" ? "桌宠小队" : "Buddy crew"}
+            </p>
+            <div className="campus-lobby-crew-inline">
+              {buddyCrew.map((buddy) => (
                 <button
-                  key={zone.id}
+                  key={buddy.id}
                   type="button"
-                  style={style}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    moveTo(zone.entry);
-                  }}
-                  className={cn("campus-lobby-zone", isActive && "campus-lobby-zone-active")}
+                  onClick={() => onSelectGoal?.(buddy.goal)}
+                  className={cn(
+                    "campus-lobby-crew-pill text-left transition hover:-translate-y-0.5",
+                    selectedGoal === buddy.goal && "campus-lobby-crew-card-active",
+                  )}
+                  aria-pressed={selectedGoal === buddy.goal}
                 >
-                  <span className="campus-lobby-zone-icon">
-                    <zone.Icon className="size-5" />
-                  </span>
-                  <span className="text-sm font-semibold text-[var(--ink)]">{zone.title}</span>
-                  <span className="mt-1 text-xs leading-5 text-[var(--ink-soft)]">{zone.hint}</span>
+                  <BuddyCompanion
+                    stage={buddy.stage}
+                    focus={buddy.focus}
+                    variant={buddy.variant}
+                    mood="happy"
+                    outfit={buddyOutfit}
+                    float={false}
+                    className="w-[2.5rem] max-w-[2.5rem]"
+                  />
+                  <div>
+                    <p className="text-xs font-semibold text-[var(--ink)]">{buddy.title}</p>
+                    <p className="text-[11px] leading-4 text-[var(--ink-soft)]">{buddy.note}</p>
+                  </div>
                 </button>
-              );
-            })}
-
-            <div
-              className="campus-lobby-pet"
-              style={{
-                left: `${position.x * 100}%`,
-                top: `${position.y * 100}%`,
-              }}
-              data-moving={isMoving ? "true" : "false"}
-              data-facing={facing}
-            >
-              <span className="campus-lobby-pet-shadow" />
-              <span className="campus-lobby-pet-ring" />
-              <div className="campus-lobby-pet-body">
-                <BuddyCompanion
-                  stage={buddyStage}
-                  focus={buddyFocus}
-                  mood={activeZone ? "proud" : "happy"}
-                  variant={primaryBuddyVariant}
-                  outfit={buddyOutfit}
-                  float={false}
-                  className="relative z-10 w-[4.8rem] max-w-[4.8rem] drop-shadow-[0_18px_22px_rgba(63,85,129,0.16)]"
-                />
-              </div>
+              ))}
             </div>
+          </div>
+        </div>
 
-            {activeZone ? (
-              <div
-                className="campus-lobby-enter"
-                style={{
-                  left: `${activeZone.entry.x * 100}%`,
-                  top: `${Math.max(12, (activeZone.entry.y - 0.13) * 100)}%`,
+        <div
+          ref={arenaRef}
+          tabIndex={0}
+          onFocus={() => setKeyboardEnabled(true)}
+          onPointerDown={() => setKeyboardEnabled(true)}
+          onClick={handleArenaClick}
+          className={cn("campus-lobby campus-lobby-expanded", keyboardEnabled && "campus-lobby-focused")}
+          role="region"
+          aria-label={locale === "zh" ? "DIICSU 学习大厅" : "DIICSU learning lobby"}
+        >
+          <span className="campus-lobby-dawn" />
+          <span className="campus-lobby-tower">
+            <span className="campus-lobby-tower-clock" />
+          </span>
+          <span className="campus-lobby-paper-plane" />
+          <span className="campus-lobby-sheet campus-lobby-sheet-one" />
+          <span className="campus-lobby-sheet campus-lobby-sheet-two" />
+          <span className="campus-lobby-sheet campus-lobby-sheet-three" />
+          <span className="campus-lobby-book-stack">
+            <span className="campus-lobby-book campus-lobby-book-blue" />
+            <span className="campus-lobby-book campus-lobby-book-pink" />
+            <span className="campus-lobby-book campus-lobby-book-cyan" />
+            <span className="campus-lobby-book campus-lobby-book-peach" />
+          </span>
+          <span className="campus-lobby-compass" />
+          <span className="campus-lobby-letters" aria-hidden="true">
+            <span>A</span>
+            <span>B</span>
+            <span>C</span>
+          </span>
+          <span className="campus-lobby-globe">
+            <span className="campus-lobby-globe-ring" />
+            <span className="campus-lobby-globe-stand" />
+          </span>
+          <span className="campus-lobby-spark campus-lobby-spark-right" />
+          <span className="campus-lobby-spark campus-lobby-spark-left" />
+          <span className="campus-lobby-cloud campus-lobby-cloud-left" />
+          <span className="campus-lobby-cloud campus-lobby-cloud-mid" />
+          <span className="campus-lobby-cloud campus-lobby-cloud-right" />
+          <div className="campus-lobby-fountain">
+            <div className="campus-lobby-fountain-core" />
+          </div>
+
+          {zones.map((zone) => {
+            const isActive = activeZone?.id === zone.id;
+            const style = {
+              left: `${zone.x * 100}%`,
+              top: `${zone.y * 100}%`,
+              width: `${zone.width * 100}%`,
+              height: `${zone.height * 100}%`,
+              "--zone-start": zone.gradient[0],
+              "--zone-end": zone.gradient[1],
+            } as CSSProperties;
+
+            return (
+              <button
+                key={zone.id}
+                type="button"
+                style={style}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  moveTo(zone.entry);
                 }}
+                className={cn("campus-lobby-zone", isActive && "campus-lobby-zone-active")}
               >
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
-                  {locale === "zh" ? "可进入区域" : "Ready to enter"}
-                </p>
-                <p className="mt-1 text-sm font-semibold text-[var(--ink)]">{activeZone.title}</p>
-                <Link href={activeZone.href} className="campus-lobby-enter-button">
-                  {locale === "zh" ? "进入" : "Enter"}
-                  <ArrowRight className="size-4" />
-                </Link>
-              </div>
-            ) : null}
+                <span className="campus-lobby-zone-icon">
+                  <zone.Icon className="size-5" />
+                </span>
+                <span className="text-sm font-semibold text-[var(--ink)]">{zone.title}</span>
+                <span className="mt-1 text-xs leading-5 text-[var(--ink-soft)]">{zone.hint}</span>
+              </button>
+            );
+          })}
 
+          <div
+            className="campus-lobby-pet"
+            style={{
+              left: `${position.x * 100}%`,
+              top: `${position.y * 100}%`,
+            }}
+            data-moving={isMoving ? "true" : "false"}
+            data-facing={facing}
+          >
+            <span className="campus-lobby-pet-shadow" />
+            <span className="campus-lobby-pet-ring" />
+            <div className="campus-lobby-pet-body">
+              <BuddyCompanion
+                stage={buddyStage}
+                focus={buddyFocus}
+                mood={activeZone ? "proud" : "happy"}
+                variant={primaryBuddyVariant}
+                outfit={buddyOutfit}
+                float={false}
+                className="relative z-10 w-[4.8rem] max-w-[4.8rem] drop-shadow-[0_18px_22px_rgba(63,85,129,0.16)]"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="campus-lobby-support">
+          <div className="campus-lobby-wing">
+            <p className="campus-lobby-wing-label">
+              {locale === "zh" ? "左侧学习区" : "Left learning wing"}
+            </p>
+            <p className="campus-lobby-wing-note">
+              {locale === "zh"
+                ? "任务、听力和论坛入口都收进学习广场外侧控制区。"
+                : "Quest, listening, and forum routes now sit beside the plaza instead of on top of it."}
+            </p>
+            <div className="campus-lobby-wing-grid">
+              {leftWingZones.map((zone) => {
+                const isActive = activeZone?.id === zone.id;
+
+                return (
+                  <button
+                    key={zone.id}
+                    type="button"
+                    onClick={() => moveTo(zone.entry)}
+                    className={cn("campus-lobby-wing-button", isActive && "campus-lobby-wing-button-active")}
+                  >
+                    <span className="campus-lobby-wing-icon">
+                      <zone.Icon className="size-4" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold">{zone.title}</span>
+                      <span className="campus-lobby-wing-button-hint">{zone.hint}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="campus-lobby-control-deck">
             <div className="campus-lobby-status">
               <span className="campus-lobby-status-dot" />
               <span>{lobbyStatus}</span>
             </div>
-          </div>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            {zones.map((zone) => (
-              <button key={zone.id} type="button" onClick={() => moveTo(zone.entry)} className="pet-sticker transition hover:-translate-y-0.5">
-                {zone.title}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <aside className="campus-lobby-panel">
-          <div className="campus-lobby-panel-card">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
-              {locale === "zh" ? "当前区域" : "Current zone"}
-            </p>
-            <h4 className="mt-3 text-xl font-semibold text-[var(--ink)]">
-              {activeZone?.title ?? (locale === "zh" ? "中央大厅" : "Central Hall")}
-            </h4>
-            <p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">
-              {activeZone?.note ??
-                (locale === "zh"
-                  ? "先点击大厅或使用下面的方向键移动 Buddy。靠近建筑后会自动高亮，并可直接进入。"
-                  : "Click the lobby or use the pad below to move your buddy. Buildings highlight when you get close enough to enter.")}
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="campus-lobby-active-card">
+              <p className="campus-lobby-active-label">
+                {activeZone
+                  ? locale === "zh"
+                    ? "可进入区域"
+                    : "Ready to enter"
+                  : locale === "zh"
+                    ? "移动提示"
+                    : "Movement tip"}
+              </p>
+              <p className="mt-2 text-xl font-semibold text-[var(--ink)]">
+                {activeZone?.title ?? (locale === "zh" ? "先走近一个学习建筑" : "Walk closer to a study building")}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
+                {activeZone?.note ??
+                  (locale === "zh"
+                    ? "点击学习广场后，用 WASD / 方向键移动，或者直接点建筑让桌宠自动走过去。"
+                    : "Click the plaza first, then use WASD or arrow keys, or tap a building to auto-walk your buddy there.")}
+              </p>
               {activeZone ? (
-                <Link href={activeZone.href} className="party-button">
-                  {locale === "zh" ? "进入这个板块" : "Open this area"}
+                <Link href={activeZone.href} className="campus-lobby-enter-button">
+                  {locale === "zh" ? "进入" : "Enter"}
                   <ArrowRight className="size-4" />
                 </Link>
-              ) : (
-                <button type="button" onClick={() => moveTo(zones[1]?.entry ?? START_POSITION)} className="party-button">
-                  {locale === "zh" ? "前往听力馆" : "Walk to listening"}
+              ) : suggestedZone ? (
+                <button type="button" onClick={() => moveTo(suggestedZone.entry)} className="campus-lobby-enter-button">
+                  {locale === "zh" ? "前往学习区" : "Walk to a zone"}
                   <ArrowRight className="size-4" />
                 </button>
-              )}
+              ) : null}
+            </div>
+
+            <div className="campus-lobby-paths">
+              {zones.map((zone) => {
+                const isActive = activeZone?.id === zone.id;
+
+                return (
+                  <button
+                    key={zone.id}
+                    type="button"
+                    onClick={() => moveTo(zone.entry)}
+                    className={cn("campus-lobby-path-pill", isActive && "campus-lobby-path-pill-active")}
+                  >
+                    <zone.Icon className="size-4" />
+                    {zone.title}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          <div className="campus-lobby-panel-card">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
-              {locale === "zh" ? "方向控制" : "Directional pad"}
+          <div className="campus-lobby-wing">
+            <p className="campus-lobby-wing-label">
+              {locale === "zh" ? "右侧学习区" : "Right learning wing"}
             </p>
-            <div className="campus-lobby-pad mt-4">
-              <span />
-              <button
-                type="button"
-                onPointerDown={beginDirection("up")}
-                onPointerUp={endDirection("up")}
-                onPointerLeave={endDirection("up")}
-                className="campus-lobby-pad-button"
-                aria-label={locale === "zh" ? "向上移动" : "Move up"}
-              >
-                <ArrowUp className="size-4" />
-              </button>
-              <span />
-              <button
-                type="button"
-                onPointerDown={beginDirection("left")}
-                onPointerUp={endDirection("left")}
-                onPointerLeave={endDirection("left")}
-                className="campus-lobby-pad-button"
-                aria-label={locale === "zh" ? "向左移动" : "Move left"}
-              >
-                <ArrowLeft className="size-4" />
-              </button>
-              <button
-                type="button"
-                onPointerDown={beginDirection("down")}
-                onPointerUp={endDirection("down")}
-                onPointerLeave={endDirection("down")}
-                className="campus-lobby-pad-button"
-                aria-label={locale === "zh" ? "向下移动" : "Move down"}
-              >
-                <ArrowDown className="size-4" />
-              </button>
-              <button
-                type="button"
-                onPointerDown={beginDirection("right")}
-                onPointerUp={endDirection("right")}
-                onPointerLeave={endDirection("right")}
-                className="campus-lobby-pad-button"
-                aria-label={locale === "zh" ? "向右移动" : "Move right"}
-              >
-                <ArrowRight className="size-4" />
-              </button>
+            <p className="campus-lobby-wing-note">
+              {locale === "zh"
+                ? "口语、游戏和成长奖励也放到了广场外侧。"
+                : "Speaking, games, and rewards also live outside the plaza now."}
+            </p>
+            <div className="campus-lobby-wing-grid">
+              {rightWingZones.map((zone) => {
+                const isActive = activeZone?.id === zone.id;
+
+                return (
+                  <button
+                    key={zone.id}
+                    type="button"
+                    onClick={() => moveTo(zone.entry)}
+                    className={cn("campus-lobby-wing-button", isActive && "campus-lobby-wing-button-active")}
+                  >
+                    <span className="campus-lobby-wing-icon">
+                      <zone.Icon className="size-4" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold">{zone.title}</span>
+                      <span className="campus-lobby-wing-button-hint">{zone.hint}</span>
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-            <p className="mt-4 text-xs leading-6 text-[var(--ink-soft)]">
-              {locale === "zh"
-                ? "桌面端可点击大厅后使用 WASD / 方向键，手机端可直接按这个方向面板。"
-                : "On desktop, click the lobby then use WASD or the arrow keys. On mobile, use this on-screen pad."}
-            </p>
           </div>
-        </aside>
-      </div>
-
-      <div className="campus-lobby-panel-card mt-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
-              {locale === "zh" ? "桌宠小队" : "Buddy crew"}
-            </p>
-            <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
-              {locale === "zh"
-                ? "不同风格的学习搭子都在这里，方便你按任务切换陪练重心。"
-                : "Switch between different buddy styles depending on the kind of study support you want."}
-            </p>
-          </div>
-        </div>
-
-        <div className="campus-lobby-crew mt-4 grid-cols-1 md:grid-cols-3">
-          {buddyCrew.map((buddy) => (
-            <button
-              key={buddy.id}
-              type="button"
-              onClick={() => onSelectGoal?.(buddy.goal)}
-              className={cn(
-                "campus-lobby-crew-card text-left transition hover:-translate-y-0.5",
-                selectedGoal === buddy.goal && "campus-lobby-crew-card-active",
-              )}
-              aria-pressed={selectedGoal === buddy.goal}
-            >
-              <BuddyCompanion
-                stage={buddy.stage}
-                focus={buddy.focus}
-                variant={buddy.variant}
-                mood="happy"
-                outfit={buddyOutfit}
-                float={false}
-                className="w-[3.9rem] max-w-[3.9rem]"
-              />
-              <div>
-                <p className="text-sm font-semibold text-[var(--ink)]">{buddy.title}</p>
-                <p className="mt-1 text-xs leading-5 text-[var(--ink-soft)]">{buddy.note}</p>
-              </div>
-            </button>
-          ))}
         </div>
       </div>
     </article>

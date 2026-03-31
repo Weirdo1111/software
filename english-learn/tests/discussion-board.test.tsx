@@ -72,7 +72,7 @@ describe("DiscussionBoard", () => {
     expect(screen.getAllByText("Assessment").length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: /view comments: how should i prepare/i })).toHaveAttribute(
       "href",
-      "/posts/post-1",
+      "/posts/post-1?lang=en",
     );
   });
 });

@@ -150,7 +150,7 @@ Primary routes:
 - `/lesson/[id]`
 - `/listening`
 - `/listening/practice`
-- `/listening/ted`
+- `/listening/[groupId]`
 - `/reading`
 - `/reading/[id]`
 - `/review`

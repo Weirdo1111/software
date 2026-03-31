@@ -27,23 +27,7 @@ export type PublicAuthUser = {
   createdAt: string;
 };
 
-export type LocalAuthUserRecord = {
-  id: string | bigint;
-  username: string;
-  email: string | null;
-  passwordHash: string | null;
-  createdAt: string | Date;
-  authProvider: string;
-  authUserId: string;
-  displayName?: string;
-  lastLoginAt?: Date | null;
-};
-
 let legacyUsersImportPromise: Promise<void> | null = null;
-
-export function isDatabaseAuthConfigured() {
-  return Boolean(process.env.DATABASE_URL?.trim());
-}
 
 async function readLegacyAuthDb(): Promise<AuthDatabase> {
   try {
@@ -58,20 +42,11 @@ async function readLegacyAuthDb(): Promise<AuthDatabase> {
   }
 }
 
-async function writeLegacyAuthDb(db: AuthDatabase) {
-  await fs.mkdir(join(process.cwd(), "data"), { recursive: true });
-  await fs.writeFile(authDbPath, JSON.stringify(db, null, 2), "utf8");
-}
-
 function toNormalizedEmail(value: string) {
   return value.trim().toLowerCase();
 }
 
 async function ensureLegacyUsersImported() {
-  if (!isDatabaseAuthConfigured()) {
-    return;
-  }
-
   if (!legacyUsersImportPromise) {
     legacyUsersImportPromise = (async () => {
       const db = await readLegacyAuthDb();
@@ -156,38 +131,9 @@ export async function verifyPassword(password: string, passwordHash: string) {
 }
 
 export async function findLocalUserByLogin(identifier: string) {
-  const normalized = identifier.trim().toLowerCase();
-
-  if (!isDatabaseAuthConfigured()) {
-    const db = await readLegacyAuthDb();
-    const matched = db.users.find((user) => {
-      return (
-        user.id === identifier.trim() ||
-        user.username.trim() === identifier.trim() ||
-        user.username.trim().toLowerCase() === normalized ||
-        toNormalizedEmail(user.email) === normalized
-      );
-    });
-
-    if (!matched) {
-      return null;
-    }
-
-    return {
-      id: matched.id,
-      username: matched.username,
-      email: matched.email,
-      passwordHash: matched.passwordHash,
-      createdAt: matched.createdAt,
-      authProvider: "local-file",
-      authUserId: matched.id,
-      displayName: matched.username,
-      lastLoginAt: null,
-    } satisfies LocalAuthUserRecord;
-  }
-
   await ensureLegacyUsersImported();
 
+  const normalized = identifier.trim().toLowerCase();
   return prisma.user.findFirst({
     where: {
       OR: [
@@ -199,84 +145,15 @@ export async function findLocalUserByLogin(identifier: string) {
   });
 }
 
-export async function findLocalUserByAuthIdentity(authProvider: string, authUserId: string) {
-  if (!authProvider || !authUserId) {
-    return null;
-  }
-
-  if (!isDatabaseAuthConfigured()) {
-    if (authProvider !== "local-file" && authProvider !== "database") {
-      return null;
-    }
-
-    const db = await readLegacyAuthDb();
-    const matched = db.users.find((user) => user.id === authUserId);
-
-    if (!matched) {
-      return null;
-    }
-
-    return {
-      id: matched.id,
-      username: matched.username,
-      email: matched.email,
-      passwordHash: matched.passwordHash,
-      createdAt: matched.createdAt,
-      authProvider: "local-file",
-      authUserId: matched.id,
-      displayName: matched.username,
-      lastLoginAt: null,
-    } satisfies LocalAuthUserRecord;
-  }
-
-  await ensureLegacyUsersImported();
-  return prisma.user.findUnique({
-    where: {
-      authProvider_authUserId: {
-        authProvider,
-        authUserId,
-      },
-    },
-  });
-}
-
 export async function createLocalUser(input: {
   username: string;
   email: string;
   password: string;
 }) {
+  await ensureLegacyUsersImported();
+
   const username = input.username.trim();
   const email = toNormalizedEmail(input.email);
-
-  if (!isDatabaseAuthConfigured()) {
-    const db = await readLegacyAuthDb();
-    const duplicate = db.users.find((user) => {
-      return user.username.trim().toLowerCase() === username.toLowerCase() || toNormalizedEmail(user.email) === email;
-    });
-
-    if (duplicate) {
-      throw new Error("Account or email already exists");
-    }
-
-    const created: LegacyStoredUser = {
-      id: randomUUID(),
-      username,
-      email,
-      passwordHash: await hashPassword(input.password),
-      createdAt: new Date().toISOString(),
-    };
-
-    db.users.push(created);
-    await writeLegacyAuthDb(db);
-    return toPublicUser({
-      id: created.id,
-      username: created.username,
-      email: created.email,
-      createdAt: created.createdAt,
-    });
-  }
-
-  await ensureLegacyUsersImported();
 
   const duplicate = await prisma.user.findFirst({
     where: {
@@ -303,15 +180,15 @@ export async function createLocalUser(input: {
 }
 
 export function toPublicUser(user: {
-  id: bigint | string;
+  id: bigint;
   username: string;
   email: string | null;
-  createdAt: Date | string;
+  createdAt: Date;
 }) {
   return {
-    id: typeof user.id === "bigint" ? user.id.toString() : user.id,
+    id: user.id.toString(),
     username: user.username,
     email: user.email,
-    createdAt: user.createdAt instanceof Date ? user.createdAt.toISOString() : user.createdAt,
+    createdAt: user.createdAt.toISOString(),
   } satisfies PublicAuthUser;
 }

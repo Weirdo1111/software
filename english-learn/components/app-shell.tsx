@@ -153,13 +153,6 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
 
     localStorage.removeItem("demo_logged_in");
     localStorage.removeItem("demo_user");
-    localStorage.removeItem("demo_auth_user_id");
-    localStorage.removeItem("demo_auth_provider");
-    Object.keys(localStorage).forEach((key) => {
-      if (key.startsWith("english-learn:buddy-progress-cache:")) {
-        localStorage.removeItem(key);
-      }
-    });
     window.dispatchEvent(new Event("demo-auth-changed"));
     window.location.href = "/";
   };

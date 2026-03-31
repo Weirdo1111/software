@@ -9,8 +9,7 @@ import {
   AUTH_USER_ID_COOKIE,
   AUTH_USERNAME_COOKIE,
 } from "@/lib/current-user";
-import { getLocalBuddyProgress } from "@/lib/local-buddy-progress";
-import { createLocalUser, findLocalUserByLogin, isDatabaseAuthConfigured } from "@/lib/local-auth";
+import { createLocalUser, findLocalUserByLogin } from "@/lib/local-auth";
 
 const schema = z.object({
   username: z.string().min(3).optional(),
@@ -29,72 +28,51 @@ export async function POST(request: Request) {
         username: payload.username?.trim() || fallbackUsername,
       });
       const createdUser = await findLocalUserByLogin(user.email ?? payload.email);
+
       if (!createdUser) {
         return jsonError("Failed to create account session", 500);
       }
 
-      await getLocalBuddyProgress({
-        authProvider: createdUser.authProvider,
-        authUserId: createdUser.authUserId,
-        username: createdUser.username,
-        email: createdUser.email ?? undefined,
+      const session = await createAuthSession({
+        userId: createdUser.id,
+        userAgent: request.headers.get("user-agent"),
+        ipAddress:
+          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+          request.headers.get("x-real-ip"),
       });
-
-      const session =
-        isDatabaseAuthConfigured() && typeof createdUser.id === "bigint"
-          ? await createAuthSession({
-              userId: createdUser.id,
-              userAgent: request.headers.get("user-agent"),
-              ipAddress:
-                request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-                request.headers.get("x-real-ip"),
-            })
-          : null;
-
-      const authProvider = createdUser.authProvider || "local-file";
-      const authUserId =
-        createdUser.authUserId ||
-        (typeof createdUser.id === "bigint" ? createdUser.id.toString() : createdUser.id);
 
       const response = NextResponse.json({
         user,
         user_id: user.id,
-        auth_provider: authProvider,
-        auth_user_id: authUserId,
-        session: Boolean(session),
-        storage: isDatabaseAuthConfigured() ? "database" : "local-file",
+        session: true,
+        storage: "database",
       });
 
-      if (session) {
-        response.cookies.set(
-          AUTH_SESSION_COOKIE,
-          session.rawToken,
-          createSessionCookieOptions(session.expiresAt),
-        );
-      }
-
-      const cookieExpires = session?.expiresAt ?? new Date(Date.now() + 1000 * 60 * 60 * 24 * 14);
-
-      response.cookies.set(AUTH_PROVIDER_COOKIE, authProvider, {
+      response.cookies.set(
+        AUTH_SESSION_COOKIE,
+        session.rawToken,
+        createSessionCookieOptions(session.expiresAt),
+      );
+      response.cookies.set(AUTH_PROVIDER_COOKIE, createdUser.authProvider, {
         httpOnly: true,
         sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
         path: "/",
-        expires: cookieExpires,
+        expires: session.expiresAt,
       });
-      response.cookies.set(AUTH_USER_ID_COOKIE, authUserId, {
+      response.cookies.set(AUTH_USER_ID_COOKIE, createdUser.authUserId, {
         httpOnly: true,
         sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
         path: "/",
-        expires: cookieExpires,
+        expires: session.expiresAt,
       });
       response.cookies.set(AUTH_USERNAME_COOKIE, createdUser.username, {
         httpOnly: true,
         sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
         path: "/",
-        expires: cookieExpires,
+        expires: session.expiresAt,
       });
       if (createdUser.email) {
         response.cookies.set(AUTH_EMAIL_COOKIE, createdUser.email, {
@@ -102,7 +80,7 @@ export async function POST(request: Request) {
           sameSite: "lax",
           secure: process.env.NODE_ENV === "production",
           path: "/",
-          expires: cookieExpires,
+          expires: session.expiresAt,
         });
       }
 

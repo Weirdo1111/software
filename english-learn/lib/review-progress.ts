@@ -1,3 +1,5 @@
+import { emitBuddyXpEvent } from "@/lib/buddy-xp-events";
+
 export interface ReviewProgressSnapshot {
   completedSessions: number;
   lastCompletedAt: string | null;
@@ -56,16 +58,8 @@ export function recordReviewSessionCompletionInStorage(completedAt = new Date().
 
   saveReviewProgressToStorage(nextSnapshot);
   emitReviewProgressChange();
-  void import("@/lib/buddy-xp")
-    .then(({ awardBuddyXpInStorage }) => awardBuddyXpInStorage("reviewSession"))
-    .catch(() => {});
+  emitBuddyXpEvent("reviewSession");
   return nextSnapshot;
-}
-
-export function clearReviewProgressInStorage() {
-  saveReviewProgressToStorage(EMPTY_REVIEW_PROGRESS_SNAPSHOT);
-  emitReviewProgressChange();
-  return EMPTY_REVIEW_PROGRESS_SNAPSHOT;
 }
 
 export function subscribeReviewProgress(callback: () => void) {

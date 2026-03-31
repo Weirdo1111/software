@@ -6,15 +6,24 @@ import { useDeferredValue, useMemo, useState, useSyncExternalStore } from "react
 
 import { LanguageSwitcher } from "@/components/language-switcher";
 import {
+  buildListeningCoverDataUrl,
+  buildMediaProxyUrl,
+  getListeningPlaybackMode,
+  getListeningSourceProvider,
+  hasTranscriptStudySupport,
   hasStableInlinePreview,
   listeningAccents,
+  shouldPreferGeneratedCover,
   listeningMajors,
   listeningMaterials,
+  listeningPlaybackModes,
+  listeningSourceProviders,
   speakerRegions,
   type DIICSUMajorId,
   type ListeningAccent,
   type ListeningMaterial,
   type ListeningResourceType,
+  type ListeningSourceProviderId,
   type SpeakerRegion,
 } from "@/lib/listening-materials";
 import {
@@ -31,6 +40,7 @@ type DifficultyFilter = "all" | DifficultyLabel;
 type RegionFilter = "all" | SpeakerRegion;
 type AccentFilter = "all" | ListeningAccent;
 type ResourceFilter = "all" | ListeningResourceType;
+type SourceFilter = "all" | ListeningSourceProviderId;
 type InterdisciplinaryFilter = "all" | "cross";
 
 const resourceTypeMeta: Record<ListeningResourceType, { label: string; shortLabel: string }> = {
@@ -56,8 +66,76 @@ function normalizeSearchValue(value: string) {
   return value.trim().toLowerCase();
 }
 
+function getSourceProviderMeta(sourceProviderId: ListeningSourceProviderId) {
+  return (
+    listeningSourceProviders.find((provider) => provider.id === sourceProviderId) ??
+    listeningSourceProviders[0]
+  );
+}
+
+function getPlaybackModeMeta(playbackModeId: ReturnType<typeof getListeningPlaybackMode>) {
+  if (!playbackModeId) return null;
+
+  return (
+    listeningPlaybackModes.find((mode) => mode.id === playbackModeId) ?? listeningPlaybackModes[0]
+  );
+}
+
+function normalizeThumbnailUrl(url?: string | null) {
+  if (typeof url !== "string") return null;
+
+  const trimmed = url.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function getYouTubeThumbnailFromUrl(url?: string) {
+  if (!url) return null;
+
+  try {
+    const parsed = new URL(url);
+    const hostname = parsed.hostname.toLowerCase();
+
+    if (hostname.includes("youtube.com")) {
+      const segments = parsed.pathname.split("/").filter(Boolean);
+      const embedIndex = segments.findIndex((segment) => segment === "embed");
+      const videoId =
+        embedIndex >= 0
+          ? segments[embedIndex + 1]
+          : parsed.searchParams.get("v");
+
+      return videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : null;
+    }
+
+    if (hostname.includes("youtu.be")) {
+      const videoId = parsed.pathname.split("/").filter(Boolean)[0];
+      return videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : null;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
 function getMaterialThumbnail(material: ListeningMaterial) {
-  return material.thumbnailUrl ?? fallbackThumbnailMap.get(material.materialGroupId) ?? null;
+  const generatedCover = buildListeningCoverDataUrl(material);
+
+  if (shouldPreferGeneratedCover(material)) {
+    return generatedCover;
+  }
+
+  const resolvedThumbnail =
+    normalizeThumbnailUrl(material.thumbnailUrl) ??
+    normalizeThumbnailUrl(fallbackThumbnailMap.get(material.materialGroupId)) ??
+    getYouTubeThumbnailFromUrl(material.embedUrl) ??
+    getYouTubeThumbnailFromUrl(material.officialUrl) ??
+    generatedCover;
+
+  return buildMediaProxyUrl(resolvedThumbnail) ?? generatedCover;
+}
+
+function isDataImageUrl(url?: string | null) {
+  return typeof url === "string" && url.startsWith("data:image/");
 }
 
 function ListeningThumbnail({
@@ -69,6 +147,16 @@ function ListeningThumbnail({
 }) {
   const src = getMaterialThumbnail(material);
   const [failed, setFailed] = useState(false);
+
+  if (isDataImageUrl(src)) {
+    return (
+      <div
+        aria-hidden="true"
+        className={cn("absolute inset-0 bg-cover bg-center bg-no-repeat", className)}
+        style={{ backgroundImage: `url("${src}")` }}
+      />
+    );
+  }
 
   if (!src || failed) {
     return (
@@ -112,14 +200,43 @@ export function TedLibrary({
 }) {
   const catalog = useMemo(() => {
     const source = materials && materials.length > 0 ? materials : listeningMaterials;
-    return [
-      ...source.filter((material) => material.contentMode !== "practice"),
-    ].sort(
+    const seenGroupIds = new Set<string>();
+    const seenPlaybackKeys = new Set<string>();
+
+    return source
+      .filter((material) => material.contentMode !== "practice")
+      .filter((material) => {
+        const groupKey = material.materialGroupId.trim().toLowerCase();
+
+        if (seenGroupIds.has(groupKey)) {
+          return false;
+        }
+
+        seenGroupIds.add(groupKey);
+
+        const playbackKey = (
+          material.videoSrc ??
+          material.embedUrl ??
+          material.audioSrc ??
+          material.officialUrl ??
+          material.materialGroupId
+        )
+          .trim()
+          .toLowerCase();
+
+        if (seenPlaybackKeys.has(playbackKey)) {
+          return false;
+        }
+
+        seenPlaybackKeys.add(playbackKey);
+        return true;
+      })
+      .sort(
       (left, right) =>
         left.majorLabel.localeCompare(right.majorLabel) ||
         left.resourceType.localeCompare(right.resourceType) ||
         left.title.localeCompare(right.title),
-    );
+      );
   }, [materials]);
 
   const [searchValue, setSearchValue] = useState("");
@@ -129,6 +246,7 @@ export function TedLibrary({
   const [selectedRegionFilter, setSelectedRegionFilter] = useState<RegionFilter>("all");
   const [selectedAccentFilter, setSelectedAccentFilter] = useState<AccentFilter>("all");
   const [selectedResourceFilter, setSelectedResourceFilter] = useState<ResourceFilter>("all");
+  const [selectedSourceFilter, setSelectedSourceFilter] = useState<SourceFilter>("all");
   const [selectedInterdisciplinaryFilter, setSelectedInterdisciplinaryFilter] =
     useState<InterdisciplinaryFilter>("all");
 
@@ -165,6 +283,18 @@ export function TedLibrary({
     );
   }, [catalog]);
 
+  const availableSourceProviders = useMemo(() => {
+    const providerSet = new Set(catalog.map((material) => getListeningSourceProvider(material)));
+    return listeningSourceProviders
+      .filter((provider) => providerSet.has(provider.id))
+      .sort((left, right) => left.priority - right.priority || left.label.localeCompare(right.label));
+  }, [catalog]);
+
+  const availableAccents = useMemo(() => {
+    const accentSet = new Set(catalog.map((material) => material.accent));
+    return listeningAccents.filter((accent) => accentSet.has(accent.id));
+  }, [catalog]);
+
   const filteredMaterials = useMemo(() => {
     const normalizedSearch = normalizeSearchValue(deferredSearchValue);
 
@@ -180,6 +310,9 @@ export function TedLibrary({
         selectedAccentFilter === "all" || material.accent === selectedAccentFilter;
       const matchesResource =
         selectedResourceFilter === "all" || material.resourceType === selectedResourceFilter;
+      const matchesSource =
+        selectedSourceFilter === "all" ||
+        getListeningSourceProvider(material) === selectedSourceFilter;
       const matchesInterdisciplinary =
         selectedInterdisciplinaryFilter === "all" || material.isCrossDisciplinary === true;
       const matchesSearch =
@@ -203,6 +336,7 @@ export function TedLibrary({
         matchesRegion &&
         matchesAccent &&
         matchesResource &&
+        matchesSource &&
         matchesInterdisciplinary &&
         matchesSearch
       );
@@ -215,13 +349,20 @@ export function TedLibrary({
     selectedMajorFilter,
     selectedRegionFilter,
     selectedResourceFilter,
+    selectedSourceFilter,
     selectedInterdisciplinaryFilter,
   ]);
 
   const crossDisciplinaryCount = catalog.filter(
     (material) => material.isCrossDisciplinary === true,
   ).length;
-
+  const readableCount = catalog.filter((material) => hasTranscriptStudySupport(material)).length;
+  const playableCount = catalog.filter(
+    (material) =>
+      hasStableInlinePreview(material) ||
+      (typeof material.audioSrc === "string" && material.audioSrc.trim().length > 0),
+  ).length;
+  const sourceProviderCount = availableSourceProviders.length;
   const completedCount = catalog.filter((material) => completionMap.has(material.materialGroupId)).length;
 
   return (
@@ -230,32 +371,51 @@ export function TedLibrary({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="font-display text-2xl tracking-tight text-[var(--ink)]">
-              {locale === "zh" ? "听力资源库" : "Listening Library"}
+              {locale === "zh" ? "工科学术听力库" : "Academic Listening Library"}
             </h2>
             <p className="mt-1 text-sm text-[var(--ink-soft)]">
               {locale === "zh"
-                ? "浏览 TED、公开讲座、学术访谈和播客；部分资源可站内预览，部分资源跳转到原始来源。"
-                : "Browse TED talks, lectures, interviews, and podcasts. Some items preview in-app, while others open on the source site."}
+                ? "按专业、来源机构、口音和难度筛选材料；支持站内播放，也支持先看文本再做题核对。"
+                : "Filter by major, source provider, accent, and difficulty. Students can watch in-app or review the study text before checking answers."}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-[var(--ink-soft)]">
             <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
-              {catalog.length} items
+              {catalog.length} {locale === "zh" ? "条材料" : "items"}
             </span>
             <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
-              {crossDisciplinaryCount} cross-disciplinary
+              {playableCount} {locale === "zh" ? "条站内可播" : "in-app playable"}
             </span>
             <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
-              {listeningMajors.length} majors
+              {readableCount} {locale === "zh" ? "条支持文本学习" : "with study text"}
             </span>
             <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
-              {completedCount} done
+              {sourceProviderCount} {locale === "zh" ? "个官方来源" : "source providers"}
+            </span>
+            <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
+              {crossDisciplinaryCount} {locale === "zh" ? "条跨学科" : "cross-disciplinary"}
+            </span>
+            <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
+              {completedCount} {locale === "zh" ? "条已完成" : "done"}
             </span>
             <LanguageSwitcher locale={locale} />
           </div>
         </div>
 
-        <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_12rem_12rem]">
+        <div className="mt-4 grid gap-3 rounded-[1.4rem] border border-[rgba(20,50,75,0.12)] bg-[linear-gradient(135deg,rgba(235,244,255,0.82),rgba(247,250,252,0.9))] p-4 text-sm leading-6 text-[var(--ink-soft)]">
+          <p>
+            {locale === "zh"
+              ? "训练逻辑：先按专业与难度选材料，再决定是直接听 / 看，还是结合文本做精听，最后完成 4 个核心问题并立即对答案。"
+              : "Training flow: pick a major-specific item, decide whether to watch or read first, then complete the four core questions and check the answers right away."}
+          </p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]/80">
+            {locale === "zh"
+              ? "优先材料线：官方教育频道 / MIT OCW / TED / NPTEL / 其他官方学术来源"
+              : "Priority lanes: official education channels / MIT OCW / TED / NPTEL / other official academic sources"}
+          </p>
+        </div>
+
+        <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_12rem_12rem_14rem]">
           <label className="block">
             <span className="sr-only">Search listening materials</span>
             <span className="relative block">
@@ -264,7 +424,7 @@ export function TedLibrary({
                 type="text"
                 value={searchValue}
                 onChange={(event) => setSearchValue(event.target.value)}
-                placeholder={locale === "zh" ? "搜索标题、来源、主题" : "Search title, source, topic"}
+                placeholder={locale === "zh" ? "搜索标题、来源、主题、术语" : "Search title, source, topic, term"}
                 className="w-full rounded-[1rem] border border-[rgba(20,50,75,0.14)] bg-[rgba(247,250,252,0.9)] py-3 pl-11 pr-4 text-sm outline-none"
               />
             </span>
@@ -279,7 +439,11 @@ export function TedLibrary({
             >
               {difficultyOptions.map((difficulty) => (
                 <option key={difficulty} value={difficulty}>
-                  {difficulty === "all" ? "All difficulties" : difficulty}
+                  {difficulty === "all"
+                    ? locale === "zh"
+                      ? "全部难度"
+                      : "All difficulties"
+                    : difficulty}
                 </option>
               ))}
             </select>
@@ -294,10 +458,26 @@ export function TedLibrary({
               }
               className="rounded-[1rem] border border-[rgba(20,50,75,0.14)] bg-[rgba(247,250,252,0.9)] px-4 py-3 text-sm outline-none"
             >
-              <option value="all">All sources</option>
+              <option value="all">{locale === "zh" ? "全部材料形态" : "All formats"}</option>
               {availableResources.map((type) => (
                 <option key={type} value={type}>
                   {resourceTypeMeta[type].label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
+            <span className="sr-only">Source provider</span>
+            <select
+              value={selectedSourceFilter}
+              onChange={(event) => setSelectedSourceFilter(event.target.value as SourceFilter)}
+              className="rounded-[1rem] border border-[rgba(20,50,75,0.14)] bg-[rgba(247,250,252,0.9)] px-4 py-3 text-sm outline-none"
+            >
+              <option value="all">{locale === "zh" ? "全部来源机构" : "All providers"}</option>
+              {availableSourceProviders.map((provider) => (
+                <option key={provider.id} value={provider.id}>
+                  {provider.label}
                 </option>
               ))}
             </select>
@@ -315,7 +495,7 @@ export function TedLibrary({
                 : "border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] text-[var(--ink)]",
             )}
           >
-            All majors
+            {locale === "zh" ? "全部专业" : "All majors"}
           </button>
           {listeningMajors.map((major) => (
             <button
@@ -345,7 +525,7 @@ export function TedLibrary({
                 : "border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] text-[var(--ink)]",
             )}
           >
-            All themes
+            {locale === "zh" ? "全部主题" : "All themes"}
           </button>
           <button
             type="button"
@@ -357,7 +537,7 @@ export function TedLibrary({
                 : "border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] text-[var(--ink)]",
             )}
           >
-            Cross-disciplinary
+            {locale === "zh" ? "跨学科" : "Cross-disciplinary"}
           </button>
         </div>
 
@@ -372,9 +552,9 @@ export function TedLibrary({
                 : "border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] text-[var(--ink)]",
             )}
           >
-            All accents
+            {locale === "zh" ? "全部口音" : "All accents"}
           </button>
-          {listeningAccents.map((accent) => (
+          {availableAccents.map((accent) => (
             <button
               key={accent.id}
               type="button"
@@ -399,14 +579,14 @@ export function TedLibrary({
               className={cn(
                 "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
                 selectedRegionFilter === "all"
-                  ? "bg-[#315f4f] text-white"
-                  : "border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] text-[var(--ink)]",
-              )}
-            >
-              All regions
-            </button>
-            {availableRegions.map((region) => (
-              <button
+                    ? "bg-[#315f4f] text-white"
+                    : "border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] text-[var(--ink)]",
+                )}
+              >
+                {locale === "zh" ? "全部地区" : "All regions"}
+              </button>
+              {availableRegions.map((region) => (
+                <button
                 key={region.id}
                 type="button"
                 onClick={() => setSelectedRegionFilter(region.id)}
@@ -428,16 +608,19 @@ export function TedLibrary({
         <div className="grid gap-x-5 gap-y-6 sm:grid-cols-2 xl:grid-cols-3">
           {filteredMaterials.map((material) => {
             const completion = completionMap.get(material.materialGroupId);
-            const hasInlinePreview = hasStableInlinePreview(material);
+            const hasInlineVideo = hasStableInlinePreview(material);
             const hasInAppAudio =
-              !hasInlinePreview &&
+              !hasInlineVideo &&
               typeof material.audioSrc === "string" &&
               material.audioSrc.length > 0;
+            const sourceProvider = getSourceProviderMeta(getListeningSourceProvider(material));
+            const playbackMode = getPlaybackModeMeta(getListeningPlaybackMode(material));
+            const hasReadingMode = hasTranscriptStudySupport(material);
 
             return (
               <Link
                 key={material.materialGroupId}
-                href={`/listening/ted/${material.materialGroupId}?lang=${locale}`}
+                href={`/listening/${material.materialGroupId}?lang=${locale}`}
                 className="group text-left"
               >
                 <article
@@ -454,7 +637,7 @@ export function TedLibrary({
                     <div className="absolute inset-0 bg-gradient-to-t from-[rgba(8,17,28,0.78)] via-[rgba(8,17,28,0.14)] to-transparent" />
                     <div className="absolute left-3 right-3 top-3 flex items-start justify-between gap-2">
                       <span className="rounded-full bg-black/35 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/92 backdrop-blur-sm">
-                        {material.sourceName}
+                        {sourceProvider.shortLabel}
                       </span>
                       <span className="rounded-full border border-white/18 bg-white/12 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/90 backdrop-blur-sm">
                         {resourceTypeMeta[material.resourceType].shortLabel}
@@ -483,9 +666,14 @@ export function TedLibrary({
                       <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-2.5 py-1">
                         {getDifficultyLabel(material.recommendedLevel)}
                       </span>
+                      {playbackMode ? (
+                        <span className="rounded-full border border-[rgba(35,95,79,0.16)] bg-[rgba(237,246,241,0.9)] px-2.5 py-1 text-[#315f4f]">
+                          {playbackMode.shortLabel}
+                        </span>
+                      ) : null}
                       {material.isCrossDisciplinary ? (
                         <span className="rounded-full border border-[rgba(107,79,44,0.18)] bg-[rgba(247,239,227,0.92)] px-2.5 py-1 text-[#6b4f2c]">
-                          Cross-disciplinary
+                          {locale === "zh" ? "跨学科" : "Cross-disciplinary"}
                         </span>
                       ) : null}
                     </div>
@@ -497,20 +685,20 @@ export function TedLibrary({
                     <div className="mt-4 flex items-center justify-between gap-3">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="text-sm font-semibold text-[var(--ink)]">
-                          {resourceTypeMeta[material.resourceType].label}
+                          {material.sourceName}
                         </p>
                         <span
                           className={cn(
                             "rounded-full px-2.5 py-1 text-[11px] font-semibold",
-                            hasInlinePreview || hasInAppAudio
+                            hasInlineVideo || hasInAppAudio
                               ? "bg-[rgba(35,95,79,0.1)] text-[#315f4f]"
                               : "bg-[rgba(20,50,75,0.08)] text-[var(--ink-soft)]",
                           )}
                         >
-                          {hasInlinePreview
+                          {hasInlineVideo
                             ? locale === "zh"
-                              ? "站内预览"
-                              : "In-app preview"
+                              ? "站内视频"
+                              : "In-app video"
                             : hasInAppAudio
                               ? locale === "zh"
                                 ? "站内音频"
@@ -519,11 +707,16 @@ export function TedLibrary({
                               ? "来源打开"
                               : "Open source"}
                         </span>
+                        {hasReadingMode ? (
+                          <span className="rounded-full bg-[rgba(28,78,149,0.08)] px-2.5 py-1 text-[11px] font-semibold text-[var(--navy)]">
+                            {locale === "zh" ? "可看文本后答题" : "Read + answer"}
+                          </span>
+                        ) : null}
                       </div>
                       {completion ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-[#edf6f1] px-3 py-1 text-xs font-semibold text-[#315f4f]">
                           <CheckCircle2 className="size-3.5" />
-                          Done
+                          {locale === "zh" ? "已完成" : "Done"}
                         </span>
                       ) : null}
                     </div>
@@ -541,8 +734,8 @@ export function TedLibrary({
             </p>
             <p className="mt-2 text-sm text-[var(--ink-soft)]">
               {locale === "zh"
-                ? "可以清空搜索词，或切换专业、来源、口音筛选。"
-                : "Try clearing the search or adjusting the major, source, accent, or region filters."}
+                ? "可以清空搜索词，或切换专业、来源机构、口音和难度筛选。"
+                : "Try clearing the search or adjusting the major, provider, accent, or difficulty filters."}
             </p>
           </div>
         ) : null}

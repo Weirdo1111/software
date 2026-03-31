@@ -19,14 +19,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <AnalyticsProvider />
-        <Suspense fallback={null}>
-          <GlobalBuddyCompanion />
-        </Suspense>
-        <Suspense fallback={null}>
-          <NavigationLoadingOverlay />
-        </Suspense>
-        {children}
+        <div className="relative z-[1] min-h-screen">
+          <AnalyticsProvider />
+          <Suspense fallback={null}>
+            <GlobalBuddyCompanion />
+          </Suspense>
+          <Suspense fallback={null}>
+            <NavigationLoadingOverlay />
+          </Suspense>
+          {children}
+        </div>
       </body>
     </html>
   );

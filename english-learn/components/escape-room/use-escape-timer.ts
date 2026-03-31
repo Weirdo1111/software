@@ -3,12 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 
 import { ESCAPE_ROOM_BEST_TIME_KEY } from "@/components/escape-room/time-utils";
-import { awardBuddyXpInStorage } from "@/lib/buddy-xp";
 import {
   DORM_LOCKOUT_CLEAR_KEY,
   ESCAPE_ROOM_CLEAR_KEY,
   LAST_TRAIN_CLEAR_KEY,
 } from "@/lib/buddy-xp-config";
+import { emitBuddyXpEvent } from "@/lib/buddy-xp-events";
 
 export function useEscapeTimer({
   started,
@@ -82,15 +82,9 @@ export function useEscapeTimer({
         const isFirstClear = window.localStorage.getItem(bestTimeKey) === null;
         window.localStorage.setItem(bestTimeKey, String(finalSeconds));
         if (isFirstClear) {
-          if (bestTimeKey === ESCAPE_ROOM_CLEAR_KEY) {
-            void awardBuddyXpInStorage("escapeRoomClear").catch(() => {});
-          }
-          if (bestTimeKey === DORM_LOCKOUT_CLEAR_KEY) {
-            void awardBuddyXpInStorage("dormLockoutClear").catch(() => {});
-          }
-          if (bestTimeKey === LAST_TRAIN_CLEAR_KEY) {
-            void awardBuddyXpInStorage("lastTrainClear").catch(() => {});
-          }
+          if (bestTimeKey === ESCAPE_ROOM_CLEAR_KEY) emitBuddyXpEvent("escapeRoomClear");
+          if (bestTimeKey === DORM_LOCKOUT_CLEAR_KEY) emitBuddyXpEvent("dormLockoutClear");
+          if (bestTimeKey === LAST_TRAIN_CLEAR_KEY) emitBuddyXpEvent("lastTrainClear");
         }
       }
     }
