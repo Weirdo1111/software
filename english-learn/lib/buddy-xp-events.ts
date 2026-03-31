@@ -23,6 +23,11 @@ export function emitBuddyXpEvent(source: BuddyXpAwardSource) {
   window.dispatchEvent(new CustomEvent<BuddyXpEventDetail>(BUDDY_XP_EVENT, { detail }));
 }
 
+export function dispatchBuddyXpEvent(detail: BuddyXpEventDetail) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent<BuddyXpEventDetail>(BUDDY_XP_EVENT, { detail }));
+}
+
 export function subscribeBuddyXpEvents(callback: (detail: BuddyXpEventDetail) => void) {
   if (typeof window === "undefined") return () => {};
 

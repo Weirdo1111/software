@@ -11,7 +11,19 @@ import {
   type BuddyStage,
   type BuddyVariant,
 } from "@/components/home/buddy-companion";
-import { loadBuddyOutfitFromStorage, subscribeBuddyOutfit, type BuddyOutfit } from "@/lib/buddy-wardrobe";
+import {
+  createEmptyBuddyXpSummary,
+  fetchBuddyXpSummary,
+  getBuddyXpSummaryFromStorage,
+  subscribeBuddyXpSources,
+} from "@/lib/buddy-xp";
+import { subscribeBuddyXpEvents } from "@/lib/buddy-xp-events";
+import {
+  DEFAULT_BUDDY_OUTFIT,
+  loadBuddyOutfitFromStorage,
+  subscribeBuddyOutfit,
+  type BuddyOutfit,
+} from "@/lib/buddy-wardrobe";
 import {
   createEmptyLearningTrackerSnapshot,
   loadLearningTrackerSnapshotFromStorage,
@@ -22,6 +34,11 @@ import { loadSchedulePreferencesFromStorage, subscribeSchedulePreferences } from
 
 type UiLocale = "zh" | "en";
 type BuddyReaction = "idle" | "blink" | "puff" | "bounce" | "wave" | "wobble" | "easter";
+type BuddyReactionBubble = {
+  text: string;
+  plain?: boolean;
+} | null;
+
 function getBuddyStage(xp: number): BuddyStage {
   if (xp >= 780) return "scholar";
   if (xp >= 440) return "explorer";
@@ -118,20 +135,22 @@ export function GlobalBuddyCompanion() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [snapshot, setSnapshot] = useState(() => createEmptyLearningTrackerSnapshot());
+  const [xpSummary, setXpSummary] = useState(() => createEmptyBuddyXpSummary());
   const [focus, setFocus] = useState<BuddyFocus>("coursework");
   const [face, setFace] = useState<BuddyFace>("happy");
-  const [reactionBubble, setReactionBubble] = useState<string | null>(null);
+  const [reactionBubble, setReactionBubble] = useState<BuddyReactionBubble>(null);
   const [moodIndex, setMoodIndex] = useState(0);
   const [greeting, setGreeting] = useState<string | null>(null);
   const [storedLocale, setStoredLocale] = useState<UiLocale>("en");
   const [reaction, setReaction] = useState<BuddyReaction>("idle");
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [outfit, setOutfit] = useState<BuddyOutfit>(() => loadBuddyOutfitFromStorage());
+  const [outfit, setOutfit] = useState<BuddyOutfit>(DEFAULT_BUDDY_OUTFIT);
   const greetingTimerRef = useRef<number | null>(null);
   const reactionTimerRef = useRef<number | null>(null);
   const faceTimerRef = useRef<number | null>(null);
   const bubbleTimerRef = useRef<number | null>(null);
   const clickResetTimerRef = useRef<number | null>(null);
+  const xpReactionTimerRef = useRef<number | null>(null);
   const reactionRef = useRef<BuddyReaction>("idle");
   const semanticTimerRef = useRef<number | null>(null);
   const pageWelcomeRef = useRef(pathname);
@@ -146,6 +165,7 @@ export function GlobalBuddyCompanion() {
   useEffect(() => {
     const refresh = () => {
       setSnapshot(loadLearningTrackerSnapshotFromStorage());
+      setXpSummary(getBuddyXpSummaryFromStorage());
       setFocus(getBuddyFocus());
       setOutfit(loadBuddyOutfitFromStorage());
       setStoredLocale(resolveLocale(null, window.localStorage.getItem("english-learn:locale")));
@@ -153,7 +173,11 @@ export function GlobalBuddyCompanion() {
     };
 
     refresh();
+    void fetchBuddyXpSummary()
+      .then((summary) => setXpSummary(summary))
+      .catch(() => undefined);
     const unsubTracker = subscribeLearningTracker(refresh);
+    const unsubBuddyXp = subscribeBuddyXpSources(refresh);
     const unsubPrefs = subscribeSchedulePreferences(refresh);
     const unsubOutfit = subscribeBuddyOutfit(refresh);
     const onStorage = () => {
@@ -164,6 +188,7 @@ export function GlobalBuddyCompanion() {
 
     return () => {
       unsubTracker();
+      unsubBuddyXp();
       unsubPrefs();
       unsubOutfit();
       window.removeEventListener("storage", onStorage);
@@ -236,6 +261,10 @@ export function GlobalBuddyCompanion() {
         window.clearTimeout(clickResetTimerRef.current);
         clickResetTimerRef.current = null;
       }
+      if (xpReactionTimerRef.current) {
+        window.clearTimeout(xpReactionTimerRef.current);
+        xpReactionTimerRef.current = null;
+      }
       if (semanticTimerRef.current) {
         window.clearTimeout(semanticTimerRef.current);
         semanticTimerRef.current = null;
@@ -243,42 +272,30 @@ export function GlobalBuddyCompanion() {
     };
   }, []);
 
-  const xp = useMemo(() => {
-    const skills = [
-      snapshot.skills.listening,
-      snapshot.skills.speaking,
-      snapshot.skills.reading,
-      snapshot.skills.writing,
-    ];
-    const totalCompleted = skills.reduce((sum, skill) => sum + skill.completed, 0);
-    const totalAttempts = skills.reduce((sum, skill) => sum + skill.attempts, 0);
-    const totalMinutes = skills.reduce((sum, skill) => sum + skill.minutes, 0);
-    return totalCompleted * 65 + Math.round(totalMinutes * 7) + totalAttempts * 14;
-  }, [snapshot]);
-
-  const totalCompleted = useMemo(() => {
-    return (
-      snapshot.skills.listening.completed +
-      snapshot.skills.speaking.completed +
-      snapshot.skills.reading.completed +
-      snapshot.skills.writing.completed
-    );
-  }, [snapshot]);
+  const xp = xpSummary.totalXp;
+  const totalCompleted = xpSummary.totalCompletedSources;
 
   const stage = getBuddyStage(xp);
   const mood = MOODS[moodIndex];
   const variant = getBuddyVariant(focus);
-  const activeBubble = reactionBubble ?? greeting;
+  const activeBubbleText = reactionBubble?.text ?? greeting;
+  const isPlainBubble = Boolean(reactionBubble?.plain);
 
   const playSoundIfEnabled = (kind: Parameters<typeof playBuddySound>[0]) => {
     if (!soundEnabled) return;
     void playBuddySound(kind);
   };
 
-  const triggerReaction = (nextReaction: BuddyReaction, emoji: string, nextFace: BuddyFace, duration = 650) => {
+  const triggerReaction = (
+    nextReaction: BuddyReaction,
+    bubbleText: string | null,
+    nextFace: BuddyFace,
+    duration = 650,
+    plainBubble = false,
+  ) => {
     setReaction(nextReaction);
     reactionRef.current = nextReaction;
-    setReactionBubble(emoji);
+    setReactionBubble(bubbleText ? { text: bubbleText, plain: plainBubble } : null);
     setFace(nextFace);
 
     if (reactionTimerRef.current) window.clearTimeout(reactionTimerRef.current);
@@ -294,11 +311,13 @@ export function GlobalBuddyCompanion() {
       faceTimerRef.current = null;
     }, 900);
 
-    if (bubbleTimerRef.current) window.clearTimeout(bubbleTimerRef.current);
-    bubbleTimerRef.current = window.setTimeout(() => {
-      setReactionBubble(null);
-      bubbleTimerRef.current = null;
-    }, 1500);
+    if (bubbleText) {
+      if (bubbleTimerRef.current) window.clearTimeout(bubbleTimerRef.current);
+      bubbleTimerRef.current = window.setTimeout(() => {
+        setReactionBubble(null);
+        bubbleTimerRef.current = null;
+      }, plainBubble ? 2000 : 1500);
+    }
   };
 
   useEffect(() => {
@@ -351,15 +370,39 @@ export function GlobalBuddyCompanion() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale, totalCompleted, soundEnabled]);
 
+  useEffect(() => {
+    const unsubscribe = subscribeBuddyXpEvents((detail) => {
+      if (xpReactionTimerRef.current) {
+        window.clearTimeout(xpReactionTimerRef.current);
+      }
+      xpReactionTimerRef.current = window.setTimeout(() => {
+        triggerReaction("bounce", `+${detail.xp} XP`, "open", 760, true);
+        playSoundIfEnabled("bounce");
+        xpReactionTimerRef.current = null;
+      }, 90);
+    });
+
+    return () => {
+      unsubscribe();
+      if (xpReactionTimerRef.current) {
+        window.clearTimeout(xpReactionTimerRef.current);
+        xpReactionTimerRef.current = null;
+      }
+    };
+  }, [soundEnabled]);
+
   if (pathname === "/" || pathname.startsWith("/games/word-game")) return null;
 
   return (
     <div className="global-buddy-shell" aria-hidden="true">
       <div className={`global-buddy-card${reaction !== "idle" ? ` global-buddy-card-${reaction}` : ""}`}>
         <span className="global-buddy-shadow" />
-        {activeBubble ? (
-          <span className="global-buddy-greeting" lang={locale === "zh" ? "zh-CN" : "en"}>
-            {activeBubble}
+        {activeBubbleText ? (
+          <span
+            className={isPlainBubble ? "global-buddy-xp-text" : "global-buddy-greeting"}
+            lang={locale === "zh" ? "zh-CN" : "en"}
+          >
+            {activeBubbleText}
           </span>
         ) : null}
         <button

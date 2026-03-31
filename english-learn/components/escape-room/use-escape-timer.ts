@@ -8,7 +8,7 @@ import {
   ESCAPE_ROOM_CLEAR_KEY,
   LAST_TRAIN_CLEAR_KEY,
 } from "@/lib/buddy-xp-config";
-import { emitBuddyXpEvent } from "@/lib/buddy-xp-events";
+import { awardBuddyXpInStorage } from "@/lib/buddy-xp";
 
 export function useEscapeTimer({
   started,
@@ -82,9 +82,9 @@ export function useEscapeTimer({
         const isFirstClear = window.localStorage.getItem(bestTimeKey) === null;
         window.localStorage.setItem(bestTimeKey, String(finalSeconds));
         if (isFirstClear) {
-          if (bestTimeKey === ESCAPE_ROOM_CLEAR_KEY) emitBuddyXpEvent("escapeRoomClear");
-          if (bestTimeKey === DORM_LOCKOUT_CLEAR_KEY) emitBuddyXpEvent("dormLockoutClear");
-          if (bestTimeKey === LAST_TRAIN_CLEAR_KEY) emitBuddyXpEvent("lastTrainClear");
+          if (bestTimeKey === ESCAPE_ROOM_CLEAR_KEY) void awardBuddyXpInStorage("escapeRoomClear").catch(() => undefined);
+          if (bestTimeKey === DORM_LOCKOUT_CLEAR_KEY) void awardBuddyXpInStorage("dormLockoutClear").catch(() => undefined);
+          if (bestTimeKey === LAST_TRAIN_CLEAR_KEY) void awardBuddyXpInStorage("lastTrainClear").catch(() => undefined);
         }
       }
     }

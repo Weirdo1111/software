@@ -1,4 +1,4 @@
-import { emitBuddyXpEvent } from "@/lib/buddy-xp-events";
+import { awardBuddyXpInStorage } from "@/lib/buddy-xp";
 
 export type TrackedSkill = "listening" | "speaking" | "reading" | "writing";
 
@@ -123,10 +123,10 @@ export function recordSkillAttemptInStorage(skill: TrackedSkill, input: SkillAtt
   saveLearningTrackerSnapshotToStorage(nextSnapshot);
   emitLearningTrackerChange();
   if (input.markCompleted) {
-    if (skill === "listening") emitBuddyXpEvent("listeningCompletion");
-    if (skill === "speaking") emitBuddyXpEvent("speakingCompletion");
-    if (skill === "reading") emitBuddyXpEvent("readingCompletion");
-    if (skill === "writing") emitBuddyXpEvent("writingCompletion");
+    if (skill === "listening") void awardBuddyXpInStorage("listeningCompletion").catch(() => undefined);
+    if (skill === "speaking") void awardBuddyXpInStorage("speakingCompletion").catch(() => undefined);
+    if (skill === "reading") void awardBuddyXpInStorage("readingCompletion").catch(() => undefined);
+    if (skill === "writing") void awardBuddyXpInStorage("writingCompletion").catch(() => undefined);
   }
   return nextSnapshot;
 }

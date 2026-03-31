@@ -67,7 +67,11 @@ export function AuthForm({ mode, locale }: { mode: AuthMode; locale: Locale }) {
       const payload =
         mode === "sign-in"
           ? { identifier: account, password }
-          : { email: account, password };
+          : {
+              username: account.includes("@") ? account.split("@")[0] : account,
+              email: account,
+              password,
+            };
 
       const response = await fetch(`/api/auth/${mode}`, {
         method: "POST",
@@ -82,9 +86,15 @@ export function AuthForm({ mode, locale }: { mode: AuthMode; locale: Locale }) {
       }
 
       const user = data.user as { username?: string; email?: string } | undefined;
+      const authUserId = typeof data.user_id === "string" ? data.user_id : undefined;
+      const authProvider = typeof data.auth_provider === "string" ? data.auth_provider : "local-file";
       const displayName = user?.username || user?.email || account.trim();
       localStorage.setItem("demo_logged_in", "true");
       localStorage.setItem("demo_user", displayName);
+      if (authUserId) {
+        localStorage.setItem("demo_auth_user_id", authUserId);
+      }
+      localStorage.setItem("demo_auth_provider", authProvider);
       window.dispatchEvent(new Event("demo-auth-changed"));
       setStatus(data.message || copy.statusReady);
       window.location.href = mode === "sign-up" ? "/dashboard" : "/dashboard";
