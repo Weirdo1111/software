@@ -24,6 +24,7 @@ import type {
   SeminarRoomDetail,
   SeminarRoomMessage,
 } from "@/components/discussion/seminar-types";
+import { SeminarCallPanel } from "@/components/discussion/seminars/seminar-call-panel";
 import type { Locale } from "@/components/discussion/types";
 
 async function readJson<T>(response: Response): Promise<T | null> {
@@ -264,6 +265,7 @@ export function SeminarRoomClient({ locale, roomId }: { locale: Locale; roomId: 
   }[locale];
 
   const canCompose = room?.canSend && room.status === "ACTIVE";
+  const canUseCall = room?.hasAccess ?? false;
   const latestMessageId = room?.messages.at(-1)?.id ?? null;
 
   const applyRoomDetail = (detail: SeminarRoomDetail) => {
@@ -635,14 +637,29 @@ export function SeminarRoomClient({ locale, roomId }: { locale: Locale; roomId: 
         </section>
       ) : (
         <>
+          <div className="mt-6">
+            <SeminarCallPanel locale={locale} roomId={roomId} enabled={canUseCall && room.status === "ACTIVE"} />
+          </div>
+
           {room.status !== "ACTIVE" ? (
             <div className="mt-6 rounded-[1.6rem] border border-[rgba(255,190,73,0.35)] bg-[rgba(255,248,225,0.88)] px-5 py-4 text-sm text-[#7b5d1a]">
               {text.roomClosed}
             </div>
           ) : null}
 
-          <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-            <div className="surface-panel rounded-[2rem] p-4 sm:p-5">
+          <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(20rem,0.8fr)]">
+            <div className="rounded-[2rem] border border-[rgba(31,58,98,0.08)] bg-white/90 p-4 shadow-[0_24px_60px_rgba(31,58,98,0.06)] sm:p-5">
+              <div className="mb-4 flex items-center justify-between gap-3 border-b border-[rgba(31,58,98,0.08)] pb-4">
+                <div>
+                  <p className="section-label">Seminar thread</p>
+                  <p className="mt-2 text-sm text-[var(--ink-soft)]">
+                    {groupedMessages.length === 0 ? text.noMessages : `${groupedMessages.length} messages`}
+                  </p>
+                </div>
+                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+                  {formatAbsoluteTime(room.lastActiveAt, locale)}
+                </div>
+              </div>
               <div className="max-h-[62vh] space-y-4 overflow-y-auto px-1 py-1">
                 {groupedMessages.length === 0 ? (
                   <div className="rounded-[1.5rem] border border-dashed border-white/70 bg-white/70 px-5 py-10 text-center text-sm text-[var(--ink-soft)]">
@@ -682,8 +699,25 @@ export function SeminarRoomClient({ locale, roomId }: { locale: Locale; roomId: 
               </div>
             </div>
 
-            <aside className="surface-panel rounded-[2rem] p-4 sm:p-5">
-              <div className="space-y-4">
+            <aside className="space-y-6">
+              <div className="rounded-[2rem] border border-[rgba(31,58,98,0.08)] bg-white/88 p-4 shadow-[0_18px_44px_rgba(31,58,98,0.05)] sm:p-5">
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                  <div className="rounded-[1.3rem] border border-[rgba(31,58,98,0.08)] bg-[rgba(248,251,255,0.84)] px-4 py-3">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">{text.host}</div>
+                    <div className="mt-2 text-sm font-semibold text-[var(--ink)]">{room.ownerName}</div>
+                  </div>
+                  <div className="rounded-[1.3rem] border border-[rgba(31,58,98,0.08)] bg-[rgba(248,251,255,0.84)] px-4 py-3">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">{text.participants}</div>
+                    <div className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-[var(--ink)]">
+                      <Users className="size-4 text-[var(--navy)]" />
+                      {room.participantCount}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-[2rem] border border-[rgba(31,58,98,0.08)] bg-white/88 p-4 shadow-[0_18px_44px_rgba(31,58,98,0.05)] sm:p-5">
+                <div className="space-y-4">
                 <div>
                   <p className="section-label">{text.composerLabel}</p>
                   <textarea
@@ -759,6 +793,7 @@ export function SeminarRoomClient({ locale, roomId }: { locale: Locale; roomId: 
                   <Send className="size-4" />
                   {sending ? text.sending : text.send}
                 </button>
+                </div>
               </div>
             </aside>
           </section>

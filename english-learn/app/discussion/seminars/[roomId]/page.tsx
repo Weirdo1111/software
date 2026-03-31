@@ -13,7 +13,11 @@ export default async function SeminarRoomDetailPage({
   const locale = await getLocale(searchParams);
 
   return (
-    <PageFrame locale={locale} title={locale === "zh" ? "在线研讨室" : "Seminar Room"}>
+    <PageFrame
+      locale={locale}
+      title={locale === "zh" ? "在线研讨室" : "Seminar Room"}
+      showHeader={false}
+    >
       <SeminarRoomClient locale={locale} roomId={roomId} />
     </PageFrame>
   );

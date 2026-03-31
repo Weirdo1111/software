@@ -6,6 +6,7 @@ export type SeminarRoomVisibility = "PUBLIC" | "PROTECTED";
 export type SeminarRoomStatus = "ACTIVE" | "ARCHIVED" | "CLOSED";
 export type SeminarRoomMemberRole = "OWNER" | "MODERATOR" | "MEMBER";
 export type SeminarAttachmentKind = "image" | "video" | "audio" | "file";
+export type SeminarCallSignalKind = "offer" | "answer" | "ice-candidate";
 
 export type SeminarRoomSummary = {
   id: string;
@@ -58,4 +59,28 @@ export type SeminarRoomDetail = {
   canManage: boolean;
   membershipRole?: SeminarRoomMemberRole;
   messages: SeminarRoomMessage[];
+};
+
+export type SeminarRoomCallParticipant = {
+  sessionId: string;
+  displayName: string;
+  audioEnabled: boolean;
+  videoEnabled: boolean;
+  joinedAt: string;
+  isSelf: boolean;
+};
+
+export type SeminarRoomCallSignal = {
+  id: string;
+  kind: SeminarCallSignalKind;
+  fromSessionId: string;
+  payload: unknown;
+  createdAt: string;
+};
+
+export type SeminarRoomCallState = {
+  sessionId: string;
+  participants: SeminarRoomCallParticipant[];
+  signals: SeminarRoomCallSignal[];
+  refreshedAt: string;
 };
