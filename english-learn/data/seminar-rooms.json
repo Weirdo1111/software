@@ -1,0 +1,55 @@
+{
+  "users": [
+    {
+      "id": "local-file:00000000-0000-0000-0000-000000000001",
+      "authProvider": "local-file",
+      "authUserId": "00000000-0000-0000-0000-000000000001",
+      "username": "admin",
+      "email": "admin@example.com",
+      "displayName": "admin"
+    },
+    {
+      "id": "local-file:a4716bb9-3d34-4f6a-9cc2-875a9a532002",
+      "authProvider": "local-file",
+      "authUserId": "a4716bb9-3d34-4f6a-9cc2-875a9a532002",
+      "username": "tianbo",
+      "email": "123@qq.com",
+      "displayName": "tianbo"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "8cb6bcde-758f-4cf8-9dd5-df2ebad253a9",
+      "title": "123",
+      "description": "123",
+      "visibility": "PUBLIC",
+      "status": "ACTIVE",
+      "ownerId": "local-file:00000000-0000-0000-0000-000000000001",
+      "createdAt": "2026-03-31T07:27:36.578Z",
+      "updatedAt": "2026-03-31T07:27:36.578Z",
+      "lastActiveAt": "2026-03-31T07:27:36.578Z"
+    }
+  ],
+  "members": [
+    {
+      "id": "86a17249-f4ca-4430-b89b-0c7f81dfa9d5",
+      "roomId": "8cb6bcde-758f-4cf8-9dd5-df2ebad253a9",
+      "userId": "local-file:00000000-0000-0000-0000-000000000001",
+      "role": "OWNER",
+      "joinedAt": "2026-03-31T07:27:36.578Z",
+      "lastSeenAt": "2026-03-31T09:02:52.011Z"
+    },
+    {
+      "id": "09b42a0e-4eb8-4551-a8bf-02499d9f2f85",
+      "roomId": "8cb6bcde-758f-4cf8-9dd5-df2ebad253a9",
+      "userId": "local-file:a4716bb9-3d34-4f6a-9cc2-875a9a532002",
+      "role": "MEMBER",
+      "joinedAt": "2026-03-31T07:28:51.381Z",
+      "lastSeenAt": "2026-03-31T09:02:29.306Z"
+    }
+  ],
+  "messages": [],
+  "attachments": [],
+  "callParticipants": [],
+  "callSignals": []
+}
