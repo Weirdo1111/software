@@ -126,6 +126,10 @@ body::after {
   height: auto;
 }
 
+.institution-brand-image-compact {
+  width: 10.8rem;
+}
+
 .surface-panel {
   border: 2px solid rgba(255, 255, 255, 0.88);
   background: linear-gradient(160deg, rgba(255, 252, 247, 0.98), rgba(246, 249, 255, 0.86));
@@ -3113,6 +3117,10 @@ body::after {
 @media (max-width: 768px) {
   .institution-brand-image {
     width: 11.3rem;
+  }
+
+  .institution-brand-image-compact {
+    width: 9.8rem;
   }
 
   .buddy-wardrobe-options {
