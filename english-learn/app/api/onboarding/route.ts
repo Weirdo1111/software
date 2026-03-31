@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 
-import { getRequestUserId, jsonError } from "@/lib/api";
-import { createSupabaseServiceClient } from "@/lib/supabase/server";
+import { jsonError, resolveRequestUserId } from "@/lib/api";
+import { prisma } from "@/lib/prisma";
 
 const onboardingSchema = z.object({
   goal: z.enum(["coursework", "research", "seminar"]),
@@ -30,43 +31,58 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const payload = onboardingSchema.parse(body);
-    const userId = getRequestUserId(request);
+    const userId = await resolveRequestUserId(request);
 
-    const supabase = createSupabaseServiceClient();
+    await prisma.userProfile.upsert({
+      where: { userId },
+      update: {
+        nativeLanguage: payload.native_language,
+        uiLanguage: payload.ui_language,
+      },
+      create: {
+        userId,
+        nativeLanguage: payload.native_language,
+        uiLanguage: payload.ui_language,
+      },
+    });
 
-    if (supabase) {
-      await supabase.from("profiles").upsert(
-        {
-          user_id: userId,
-          native_language: payload.native_language,
-          ui_language: payload.ui_language,
-        },
-        { onConflict: "user_id" },
-      );
+    await prisma.learningGoal.upsert({
+      where: { userId },
+      update: {
+        goal: payload.goal,
+        dailyMinutes: payload.daily_minutes,
+      },
+      create: {
+        userId,
+        goal: payload.goal,
+        dailyMinutes: payload.daily_minutes,
+      },
+    });
 
-      await supabase.from("learning_goals").upsert(
-        {
-          user_id: userId,
-          goal: payload.goal,
-          daily_minutes: payload.daily_minutes,
-        },
-        { onConflict: "user_id" },
-      );
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-      const today = new Date().toISOString().slice(0, 10);
-      await supabase.from("daily_plans").upsert(
-        {
-          user_id: userId,
+    await prisma.dailyPlan.upsert({
+      where: {
+        userId_date: {
+          userId,
           date: today,
-          tasks: taskMap[payload.goal],
-          estimated_minutes: payload.daily_minutes,
         },
-        { onConflict: "user_id,date" },
-      );
-    }
+      },
+      update: {
+        tasks: taskMap[payload.goal] as Prisma.InputJsonValue,
+        estimatedMinutes: payload.daily_minutes,
+      },
+      create: {
+        userId,
+        date: today,
+        tasks: taskMap[payload.goal] as Prisma.InputJsonValue,
+        estimatedMinutes: payload.daily_minutes,
+      },
+    });
 
     return NextResponse.json({
-      profile_id: userId,
+      profile_id: userId.toString(),
       plan_seeded: true,
       recommended_focus: payload.goal,
     });

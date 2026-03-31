@@ -81,10 +81,10 @@ export function SeminarRoomsClient({ locale }: { locale: Locale }) {
 
   const text = {
     zh: {
-      badge: "Forum Extension",
+      badge: "Seminar Studio",
       title: "在线研讨室",
       subtitle:
-        "把 discussion 扩展成更像 seminar workspace 的空间。公开房间可直接进入，受保护房间在通过密码后获得成员权限。",
+        "把 forum 延伸成更聚焦的 seminar workspace。房间内支持实时聊天、资料共享，以及轻量语音 / 视频讨论。",
       create: "创建研讨室",
       forumFeed: "返回论坛帖子",
       searchPlaceholder: "搜索房间标题、简介或主持人",
@@ -124,10 +124,10 @@ export function SeminarRoomsClient({ locale }: { locale: Locale }) {
       noPreview: "进入房间后查看最近消息。",
     },
     en: {
-      badge: "Forum Extension",
+      badge: "Seminar Studio",
       title: "Seminar Rooms",
       subtitle:
-        "Extend the forum into a seminar-style workspace. Public rooms open directly, while protected rooms grant membership after password verification.",
+        "A calmer seminar workspace layered onto the forum, with focused chat, shared materials, and lightweight voice/video discussion.",
       create: "Create room",
       forumFeed: "Back to forum posts",
       searchPlaceholder: "Search by room title, summary, or host",

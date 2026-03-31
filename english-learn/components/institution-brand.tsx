@@ -7,10 +7,12 @@ export function InstitutionBrand({
   locale,
   className,
   embedded = false,
+  compact = false,
 }: {
   locale: Locale;
   className?: string;
   embedded?: boolean;
+  compact?: boolean;
 }) {
   const alt =
     locale === "zh"
@@ -23,10 +25,10 @@ export function InstitutionBrand({
         <Image
           src="/dii-brand/ddlogo.png"
           alt={alt}
-          width={380}
-          height={52}
+          width={compact ? 300 : 380}
+          height={compact ? 41 : 52}
           priority
-          className="institution-brand-image"
+          className={cn("institution-brand-image", compact && "institution-brand-image-compact")}
         />
       </div>
     );

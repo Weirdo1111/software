@@ -6,14 +6,28 @@ import { jsonError } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { seminarJoinSchema } from "@/lib/seminar-room";
 import { verifyPassword } from "@/lib/local-auth";
+import {
+  SeminarLocalStoreError,
+  getCurrentSeminarLocalActor,
+  joinLocalProtectedSeminarRoom,
+  shouldUseSeminarLocalStore,
+} from "@/lib/seminar-room-local-store";
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ roomId: string }> },
 ) {
   try {
-    const currentUser = await requireCurrentDiscussionUser();
     const { roomId } = await params;
+
+    if (shouldUseSeminarLocalStore()) {
+      const currentUser = await getCurrentSeminarLocalActor(true);
+      const payload = seminarJoinSchema.parse(await request.json());
+      await joinLocalProtectedSeminarRoom(roomId, currentUser, payload.password);
+      return NextResponse.json({ ok: true });
+    }
+
+    const currentUser = await requireCurrentDiscussionUser();
     const roomIdValue = BigInt(roomId);
 
     const room = await prisma.seminarRoom.findUnique({
@@ -83,6 +97,10 @@ export async function POST(
 
     return NextResponse.json({ ok: true });
   } catch (error) {
+    if (error instanceof SeminarLocalStoreError) {
+      return jsonError(error.message, error.status);
+    }
+
     if (error instanceof Error && error.message === "UNAUTHORIZED_DISCUSSION_USER") {
       return jsonError("Please sign in first", 401);
     }

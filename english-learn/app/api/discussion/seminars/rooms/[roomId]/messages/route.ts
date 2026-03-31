@@ -11,6 +11,13 @@ import {
 } from "@/lib/seminar-room";
 import { deleteSeminarAttachment, saveSeminarAttachment } from "@/lib/seminar-room-storage";
 import { toSeminarRoomMessage } from "@/lib/seminar-room-mappers";
+import {
+  SeminarLocalStoreError,
+  createLocalSeminarMessage,
+  getCurrentSeminarLocalActor,
+  listLocalSeminarMessages,
+  shouldUseSeminarLocalStore,
+} from "@/lib/seminar-room-local-store";
 
 async function loadRoom(roomId: bigint, currentUserId?: bigint | null) {
   return prisma.seminarRoom.findUnique({
@@ -37,6 +44,14 @@ export async function GET(
 ) {
   try {
     const { roomId } = await params;
+
+    if (shouldUseSeminarLocalStore()) {
+      const currentUser = await getCurrentSeminarLocalActor(false);
+      const afterRaw = request.nextUrl.searchParams.get("after");
+      const messages = await listLocalSeminarMessages(roomId, currentUser?.id, afterRaw);
+      return NextResponse.json({ messages });
+    }
+
     const roomIdValue = BigInt(roomId);
     const currentUser = await getCurrentDiscussionUser();
     const room = await loadRoom(roomIdValue, currentUser?.id);
@@ -106,8 +121,64 @@ export async function POST(
   }> = [];
 
   try {
-    const currentUser = await requireCurrentDiscussionUser();
     const { roomId } = await params;
+
+    if (shouldUseSeminarLocalStore()) {
+      const currentUser = await getCurrentSeminarLocalActor(true);
+      const formData = await request.formData();
+      const content = normalizeSeminarTextContent(formData.get("content"));
+      const files = formData
+        .getAll("files")
+        .filter((value): value is File => typeof File !== "undefined" && value instanceof File);
+
+      if (!content && files.length === 0) {
+        return jsonError("Add text or at least one attachment", 422);
+      }
+
+      if (files.length > MAX_SEMINAR_ATTACHMENTS_PER_MESSAGE) {
+        return jsonError(`You can send up to ${MAX_SEMINAR_ATTACHMENTS_PER_MESSAGE} attachments`, 422);
+      }
+
+      for (const file of files) {
+        const rule = getSeminarAttachmentRule(file.type);
+
+        if (!rule) {
+          return jsonError(`Unsupported attachment type: ${file.type || file.name}`, 422);
+        }
+
+        if (file.size <= 0) {
+          return jsonError(`Attachment ${file.name} is empty`, 422);
+        }
+
+        if (file.size > rule.maxBytes) {
+          return jsonError(`${file.name} exceeds the allowed size limit`, 422);
+        }
+
+        const fileName = sanitizeSeminarFileName(file.name);
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        const stored = await saveSeminarAttachment({
+          roomId,
+          fileName,
+          mimeType: file.type,
+          bytes,
+        });
+
+        storedAttachments.push({
+          fileName,
+          fileKind: rule.kind,
+          mimeType: file.type,
+          fileSize: file.size,
+          storageDriver: stored.storageDriver,
+          storagePath: stored.storagePath,
+        });
+      }
+
+      return NextResponse.json(
+        await createLocalSeminarMessage(roomId, currentUser, content, storedAttachments),
+      );
+    }
+
+    const currentUser = await requireCurrentDiscussionUser();
     const roomIdValue = BigInt(roomId);
     const room = await loadRoom(roomIdValue, currentUser.id);
 
@@ -244,6 +315,10 @@ export async function POST(
 
     return NextResponse.json(toSeminarRoomMessage(roomIdValue, created, currentUser.id));
   } catch (error) {
+    if (error instanceof SeminarLocalStoreError) {
+      return jsonError(error.message, error.status);
+    }
+
     if (error instanceof Error && error.message === "UNAUTHORIZED_DISCUSSION_USER") {
       return jsonError("Please sign in first", 401);
     }

@@ -8,6 +8,14 @@ import { toSeminarRoomDetail, toSeminarRoomSummary } from "@/lib/seminar-room-ma
 import { isSeminarManagerRole, seminarRoomUpdateSchema } from "@/lib/seminar-room";
 import { hashPassword } from "@/lib/local-auth";
 import { deleteSeminarAttachment } from "@/lib/seminar-room-storage";
+import {
+  SeminarLocalStoreError,
+  deleteLocalSeminarRoom,
+  getCurrentSeminarLocalActor,
+  getLocalSeminarRoomDetail,
+  shouldUseSeminarLocalStore,
+  updateLocalSeminarRoom,
+} from "@/lib/seminar-room-local-store";
 
 async function loadRoom(roomId: bigint, currentUserId?: bigint | null) {
   return prisma.seminarRoom.findUnique({
@@ -59,6 +67,13 @@ export async function GET(
 ) {
   try {
     const { roomId } = await params;
+
+    if (shouldUseSeminarLocalStore()) {
+      const currentUser = await getCurrentSeminarLocalActor(false);
+      const detail = await getLocalSeminarRoomDetail(roomId, currentUser?.id);
+      return NextResponse.json(detail, { status: detail.hasAccess ? 200 : 403 });
+    }
+
     const roomIdValue = BigInt(roomId);
     const currentUser = await getCurrentDiscussionUser();
 
@@ -125,8 +140,29 @@ export async function PATCH(
   { params }: { params: Promise<{ roomId: string }> },
 ) {
   try {
-    const currentUser = await requireCurrentDiscussionUser();
     const { roomId } = await params;
+
+    if (shouldUseSeminarLocalStore()) {
+      const currentUser = await getCurrentSeminarLocalActor(true);
+      const rawBody = await request.json();
+      const payload = seminarRoomUpdateSchema.parse(rawBody);
+      return NextResponse.json(
+        await updateLocalSeminarRoom(roomId, currentUser, {
+          title: payload.title,
+          description: Object.prototype.hasOwnProperty.call(rawBody, "description")
+            ? (payload.description ?? null)
+            : undefined,
+          topicTag: Object.prototype.hasOwnProperty.call(rawBody, "topicTag")
+            ? (payload.topicTag ?? null)
+            : undefined,
+          visibility: payload.visibility,
+          password: payload.password,
+          status: payload.status,
+        }),
+      );
+    }
+
+    const currentUser = await requireCurrentDiscussionUser();
     const roomIdValue = BigInt(roomId);
     const room = await loadRoom(roomIdValue, currentUser.id);
 
@@ -232,6 +268,10 @@ export async function PATCH(
 
     return NextResponse.json(toSeminarRoomSummary(updated, currentUser.id));
   } catch (error) {
+    if (error instanceof SeminarLocalStoreError) {
+      return jsonError(error.message, error.status);
+    }
+
     if (error instanceof Error && error.message === "UNAUTHORIZED_DISCUSSION_USER") {
       return jsonError("Please sign in first", 401);
     }
@@ -250,8 +290,24 @@ export async function DELETE(
   { params }: { params: Promise<{ roomId: string }> },
 ) {
   try {
-    const currentUser = await requireCurrentDiscussionUser();
     const { roomId } = await params;
+
+    if (shouldUseSeminarLocalStore()) {
+      const currentUser = await getCurrentSeminarLocalActor(true);
+      const attachments = await deleteLocalSeminarRoom(roomId, currentUser);
+
+      for (const attachment of attachments) {
+        try {
+          await deleteSeminarAttachment(attachment);
+        } catch (error) {
+          console.warn("failed to delete seminar attachment", error);
+        }
+      }
+
+      return NextResponse.json({ ok: true });
+    }
+
+    const currentUser = await requireCurrentDiscussionUser();
     const roomIdValue = BigInt(roomId);
     const room = await loadRoom(roomIdValue, currentUser.id);
 
@@ -291,6 +347,10 @@ export async function DELETE(
 
     return NextResponse.json({ ok: true });
   } catch (error) {
+    if (error instanceof SeminarLocalStoreError) {
+      return jsonError(error.message, error.status);
+    }
+
     if (error instanceof Error && error.message === "UNAUTHORIZED_DISCUSSION_USER") {
       return jsonError("Please sign in first", 401);
     }

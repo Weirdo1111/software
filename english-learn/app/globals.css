@@ -1,4 +1,4 @@
-@import "../node_modules/tailwindcss/index.css";
+@import "tailwindcss";
 
 :root {
   --paper: #f9f7ff;
@@ -124,6 +124,10 @@ body::after {
   display: block;
   width: 13.6rem;
   height: auto;
+}
+
+.institution-brand-image-compact {
+  width: 10.8rem;
 }
 
 .surface-panel {
@@ -3182,6 +3186,10 @@ body::after {
 @media (max-width: 768px) {
   .institution-brand-image {
     width: 11.3rem;
+  }
+
+  .institution-brand-image-compact {
+    width: 9.8rem;
   }
 
   .buddy-wardrobe-options {

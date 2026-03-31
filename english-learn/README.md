@@ -33,7 +33,7 @@ For a cleaner structure, detailed documentation now lives in `docs/`:
 
 - [docs/architecture.md](./docs/architecture.md): system structure, feature organization, data layers, and engineering notes
 - [docs/demo-guide.md](./docs/demo-guide.md): recommended demo flows, stage highlights, audience-specific storytelling, and presentation tips
-- [docs/seminar-rooms.md](./docs/seminar-rooms.md): seminar-room schema, routes, storage behavior, and extension notes
+- [docs/seminar-rooms.md](./docs/seminar-rooms.md): seminar-room chat + live-call schema, routes, storage behavior, and extension notes
 
 ## Quick Start
 

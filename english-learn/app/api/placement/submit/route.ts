@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 
 import { jsonError } from "@/lib/api";
 import { evaluatePlacement, placementQuestions } from "@/lib/placement";
-import { createSupabaseServiceClient } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
 
 const submitSchema = z.object({
   test_session_id: z.string().min(1),
@@ -21,32 +22,31 @@ export async function POST(request: Request) {
     }
 
     const result = evaluatePlacement(payload.answers);
-    const supabase = createSupabaseServiceClient();
 
-    if (supabase) {
-      const answerRows = payload.question_ids.map((questionId, index) => {
-        const question = placementQuestions.find((item) => item.id === questionId);
-        return {
-          placement_session_id: payload.test_session_id,
-          question_id: questionId,
-          answer: payload.answers[index] ?? -1,
-          is_correct: question ? question.answer === payload.answers[index] : false,
-        };
+    const answerRows = payload.question_ids.map((questionId, index) => {
+      const question = placementQuestions.find((item) => item.id === questionId);
+      return {
+        placementSessionId: payload.test_session_id,
+        questionId,
+        answer: payload.answers[index] ?? -1,
+        isCorrect: question ? question.answer === payload.answers[index] : false,
+      };
+    });
+
+    if (answerRows.length > 0) {
+      await prisma.placementAnswer.createMany({
+        data: answerRows,
       });
-
-      if (answerRows.length > 0) {
-        await supabase.from("placement_answers").insert(answerRows);
-      }
-
-      await supabase
-        .from("placement_sessions")
-        .update({
-          cefr_level: result.cefr_level,
-          score: result.score,
-          skill_breakdown: result.skill_breakdown,
-        })
-        .eq("id", payload.test_session_id);
     }
+
+    await prisma.placementSession.update({
+      where: { id: payload.test_session_id },
+      data: {
+        cefrLevel: result.cefr_level,
+        score: result.score,
+        skillBreakdown: result.skill_breakdown as unknown as Prisma.InputJsonValue,
+      },
+    });
 
     return NextResponse.json(result);
   } catch (error) {

@@ -57,11 +57,15 @@ export function DiscussionRoleplayPanel({ locale }: { locale: Locale }) {
       eventTitle: "\u5b9e\u65f6\u4e8b\u4ef6",
       noEvents: "\u8fde\u63a5\u540e\uff0c\u8fd9\u91cc\u4f1a\u663e\u793a\u4f1a\u8bdd\u72b6\u6001\u548c\u6253\u65ad\u4e8b\u4ef6\u3002",
       bridgeUrl: "\u8fde\u63a5\u5730\u5740",
+      variantLabel: "\u6a21\u578b\u7248\u672c",
+      resourceLabel: "\u8d44\u6e90 ID",
       speakerLabel: "\u97f3\u8272",
       sampleRate: "\u91c7\u6837\u7387",
       logId: "Log ID",
       statusLabel: "\u8fde\u63a5\u72b6\u6001",
       codebreakerOption: "\u5bc6\u7801\u5b66\u5bb6\uff08\u56fe\u7075\u98ce\u683c\uff09",
+      popStarOption: "\u6d41\u884c\u661f\u5149\u5bfc\u5e08 Nova",
+      pronunciationTeacherOption: "\u4e13\u4e1a\u82f1\u8bed\u8001\u5e08 Dr. Claire",
     },
     en: {
       badge: "Roleplay Chat",
@@ -94,11 +98,15 @@ export function DiscussionRoleplayPanel({ locale }: { locale: Locale }) {
       eventTitle: "Realtime events",
       noEvents: "Session and interruption events will appear here after the bridge connects.",
       bridgeUrl: "Bridge URL",
+      variantLabel: "Variant",
+      resourceLabel: "Resource ID",
       speakerLabel: "Speaker",
       sampleRate: "Sample rates",
       logId: "Log ID",
       statusLabel: "Connection",
       codebreakerOption: "Codebreaker (Turing-inspired)",
+      popStarOption: "Nova (Pop Star Mentor)",
+      pronunciationTeacherOption: "Dr. Claire (English Teacher)",
     },
   }[locale];
 
@@ -183,7 +191,11 @@ export function DiscussionRoleplayPanel({ locale }: { locale: Locale }) {
                     <option key={profile.id} value={profile.id}>
                       {profile.id === "british_codebreaker"
                         ? text.codebreakerOption
-                        : profile.shortLabel}
+                        : profile.id === "pop_star_mentor"
+                          ? text.popStarOption
+                          : profile.id === "pronunciation_teacher"
+                            ? text.pronunciationTeacherOption
+                            : profile.shortLabel}
                     </option>
                   ))}
                 </select>
@@ -303,6 +315,14 @@ export function DiscussionRoleplayPanel({ locale }: { locale: Locale }) {
                         <dd className="text-right">{realtime.speaker || character.speaker}</dd>
                       </div>
                       <div className="flex items-start justify-between gap-3">
+                        <dt className="font-semibold text-slate-900">{text.variantLabel}</dt>
+                        <dd className="text-right">{realtime.dialogVariant || "-"}</dd>
+                      </div>
+                      <div className="flex items-start justify-between gap-3">
+                        <dt className="font-semibold text-slate-900">{text.resourceLabel}</dt>
+                        <dd className="break-all text-right text-xs">{realtime.resourceId || "-"}</dd>
+                      </div>
+                      <div className="flex items-start justify-between gap-3">
                         <dt className="font-semibold text-slate-900">{text.logId}</dt>
                         <dd className="break-all text-right text-xs">{realtime.logId || "-"}</dd>
                       </div>
@@ -340,6 +360,14 @@ export function DiscussionRoleplayPanel({ locale }: { locale: Locale }) {
                   <div className="flex items-start justify-between gap-4">
                     <dt className="font-semibold text-slate-900">{text.bridgeUrl}</dt>
                     <dd className="break-all text-right">{bridgeUrl}</dd>
+                  </div>
+                  <div className="flex items-start justify-between gap-4">
+                    <dt className="font-semibold text-slate-900">{text.variantLabel}</dt>
+                    <dd className="text-right">{realtime.dialogVariant || "-"}</dd>
+                  </div>
+                  <div className="flex items-start justify-between gap-4">
+                    <dt className="font-semibold text-slate-900">{text.resourceLabel}</dt>
+                    <dd className="break-all text-right text-xs">{realtime.resourceId || "-"}</dd>
                   </div>
                   <div className="flex items-start justify-between gap-4">
                     <dt className="font-semibold text-slate-900">{text.speakerLabel}</dt>

@@ -1,0 +1,32 @@
+Traceback (most recent call last):
+  File "C:\Users\ken\Documents\GitHub\software\english-learn\scripts\roleplay_realtime_bridge.py", line 319, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\ken\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Users\ken\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\ken\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "C:\Users\ken\Documents\GitHub\software\english-learn\scripts\roleplay_realtime_bridge.py", line 306, in main
+    async with websockets.serve(
+               ~~~~~~~~~~~~~~~~^
+        handle_browser_client,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        ping_interval=None,
+        ^^^^^^^^^^^^^^^^^^^
+    ):
+    ^
+  File "C:\Users\ken\AppData\Local\Programs\Python\Python313\Lib\site-packages\websockets\legacy\server.py", line 1109, in __aenter__
+    return await self
+           ^^^^^^^^^^
+  File "C:\Users\ken\AppData\Local\Programs\Python\Python313\Lib\site-packages\websockets\legacy\server.py", line 1127, in __await_impl__
+    server = await self._create_server()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ken\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1630, in create_server
+    raise OSError(err.errno, msg) from None
+OSError: [Errno 10048] error while attempting to bind on address ('127.0.0.1', 8876): [winerror 10048] 通常每个套接字地址(协议/网络地址/端口)只允许使用一次。

@@ -81,7 +81,13 @@ export function AuthForm({ mode, locale }: { mode: AuthMode; locale: Locale }) {
         throw new Error(data.error || "Authentication failed.");
       }
 
+      const user = data.user as { username?: string; email?: string } | undefined;
+      const displayName = user?.username || user?.email || account.trim();
+      localStorage.setItem("demo_logged_in", "true");
+      localStorage.setItem("demo_user", displayName);
+      window.dispatchEvent(new Event("demo-auth-changed"));
       setStatus(data.message || copy.statusReady);
+      window.location.href = mode === "sign-up" ? "/dashboard" : "/dashboard";
     } catch (nextError) {
       const message = nextError instanceof Error ? nextError.message : "Authentication failed.";
       setError(message);
