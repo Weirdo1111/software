@@ -1018,6 +1018,16 @@ body::after {
   transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
 }
 
+.buddy-wardrobe-option-locked {
+  opacity: 0.62;
+  cursor: not-allowed;
+  filter: saturate(0.82);
+}
+
+.buddy-wardrobe-option-locked:hover {
+  transform: none;
+}
+
 .buddy-wardrobe-tab {
   position: relative;
   border-radius: 999px;
