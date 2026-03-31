@@ -204,9 +204,9 @@ export function BuddyCampusLobby({
         title: locale === "zh" ? "游戏中心" : "Game Center",
         note:
           locale === "zh"
-            ? "直接进入公开的密室逃脱与关卡街机页，不用先登录也能查看。"
-            : "Jump straight into the public arcade and escape-room stages without relying on the nav bar.",
-        hint: locale === "zh" ? "密室逃脱入口" : "Escape room arcade",
+            ? "可进入密室逃脱与 Word Game 两个游戏入口，不用先登录也能先浏览。"
+            : "Access both Escape Room and Word Game from one hub, even before signing in.",
+        hint: locale === "zh" ? "密室逃脱 + Word Game" : "Escape Room + Word Game",
         href: `/games?lang=${locale}`,
         x: 0.4,
         y: 0.68,
