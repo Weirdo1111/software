@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import { AnalyticsProvider } from "@/components/analytics-provider";
 import { GlobalBuddyCompanion } from "@/components/global-buddy-companion";
@@ -19,8 +20,12 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         <AnalyticsProvider />
-        <GlobalBuddyCompanion />
-        <NavigationLoadingOverlay />
+        <Suspense fallback={null}>
+          <GlobalBuddyCompanion />
+        </Suspense>
+        <Suspense fallback={null}>
+          <NavigationLoadingOverlay />
+        </Suspense>
         {children}
       </body>
     </html>
