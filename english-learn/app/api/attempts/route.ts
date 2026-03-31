@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 
-import { getRequestUserId, jsonError } from "@/lib/api";
-import { createSupabaseServiceClient } from "@/lib/supabase/server";
+import { jsonError, resolveRequestUserId } from "@/lib/api";
+import { prisma } from "@/lib/prisma";
 
 const attemptsSchema = z.object({
   exercise_id: z.string().min(1),
@@ -15,7 +16,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const payload = attemptsSchema.parse(body);
 
-    const userId = getRequestUserId(request);
+    const userId = await resolveRequestUserId(request);
     const answer = payload.answer_payload.answer;
     const expected = payload.answer_payload.correct_answer;
     const correctness = typeof answer !== "undefined" && typeof expected !== "undefined" ? answer === expected : true;
@@ -26,16 +27,15 @@ export async function POST(request: Request) {
       next_action: correctness ? "continue" : "review",
     } as const;
 
-    const supabase = createSupabaseServiceClient();
-    if (supabase) {
-      await supabase.from("user_attempts").insert({
-        user_id: userId,
-        exercise_id: payload.exercise_id,
-        answer_payload: payload.answer_payload,
-        duration_sec: payload.duration_sec,
+    await prisma.userAttempt.create({
+      data: {
+        userId,
+        exerciseId: payload.exercise_id,
+        answerPayload: payload.answer_payload as Prisma.InputJsonValue,
+        durationSec: payload.duration_sec,
         correctness,
-      });
-    }
+      },
+    });
 
     return NextResponse.json(result);
   } catch (error) {

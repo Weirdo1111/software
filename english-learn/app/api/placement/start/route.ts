@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { getRequestUserId, jsonError } from "@/lib/api";
+import { jsonError, resolveRequestUserId } from "@/lib/api";
 import { getPlacementQuestionSet } from "@/lib/placement";
-import { createSupabaseServiceClient } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
   try {
@@ -17,13 +17,12 @@ export async function POST(request: Request) {
       options: question.options,
     }));
 
-    const supabase = createSupabaseServiceClient();
-    if (supabase) {
-      await supabase.from("placement_sessions").insert({
+    await prisma.placementSession.create({
+      data: {
         id: sessionId,
-        user_id: getRequestUserId(request),
-      });
-    }
+        userId: await resolveRequestUserId(request),
+      },
+    });
 
     return NextResponse.json({
       test_session_id: sessionId,

@@ -3,11 +3,12 @@ import { randomUUID, scrypt as scryptCallback, timingSafeEqual } from "node:cryp
 import { join } from "node:path";
 import { promisify } from "node:util";
 
-const scrypt = promisify(scryptCallback);
+import { prisma } from "@/lib/prisma";
 
+const scrypt = promisify(scryptCallback);
 const authDbPath = join(process.cwd(), "data", "auth-users.json");
 
-type StoredUser = {
+type LegacyStoredUser = {
   id: string;
   username: string;
   email: string;
@@ -16,32 +17,94 @@ type StoredUser = {
 };
 
 type AuthDatabase = {
-  users: StoredUser[];
+  users: LegacyStoredUser[];
 };
 
-export type PublicAuthUser = Omit<StoredUser, "passwordHash">;
+export type PublicAuthUser = {
+  id: string;
+  username: string;
+  email: string | null;
+  createdAt: string;
+};
 
-async function ensureAuthDb() {
+let legacyUsersImportPromise: Promise<void> | null = null;
+
+async function readLegacyAuthDb(): Promise<AuthDatabase> {
   try {
-    await fs.access(authDbPath);
+    const content = await fs.readFile(authDbPath, "utf8");
+    const parsed = JSON.parse(content) as Partial<AuthDatabase>;
+
+    return {
+      users: Array.isArray(parsed.users) ? parsed.users : [],
+    };
   } catch {
-    await fs.mkdir(join(process.cwd(), "data"), { recursive: true });
-    await fs.writeFile(authDbPath, JSON.stringify({ users: [] }, null, 2), "utf8");
+    return { users: [] };
   }
 }
 
-async function readAuthDb(): Promise<AuthDatabase> {
-  await ensureAuthDb();
-  const content = await fs.readFile(authDbPath, "utf8");
-  const parsed = JSON.parse(content) as Partial<AuthDatabase>;
-
-  return {
-    users: Array.isArray(parsed.users) ? parsed.users : [],
-  };
+function toNormalizedEmail(value: string) {
+  return value.trim().toLowerCase();
 }
 
-async function writeAuthDb(db: AuthDatabase) {
-  await fs.writeFile(authDbPath, JSON.stringify(db, null, 2), "utf8");
+async function ensureLegacyUsersImported() {
+  if (!legacyUsersImportPromise) {
+    legacyUsersImportPromise = (async () => {
+      const db = await readLegacyAuthDb();
+
+      for (const legacyUser of db.users) {
+        const username = legacyUser.username.trim();
+        const email = toNormalizedEmail(legacyUser.email);
+
+        const existing =
+          (await prisma.user.findUnique({
+            where: {
+              authProvider_authUserId: {
+                authProvider: "local-file",
+                authUserId: legacyUser.id,
+              },
+            },
+          })) ??
+          (await prisma.user.findFirst({
+            where: {
+              OR: [{ username }, { email }],
+            },
+          }));
+
+        if (existing) {
+          await prisma.user.update({
+            where: { id: existing.id },
+            data: {
+              username,
+              email,
+              displayName: existing.displayName || username,
+              authProvider: existing.authProvider === "database" ? existing.authProvider : "local-file",
+              authUserId: existing.authProvider === "database" ? existing.authUserId : legacyUser.id,
+              passwordHash: existing.passwordHash ?? legacyUser.passwordHash,
+              createdAt: existing.createdAt,
+            },
+          });
+          continue;
+        }
+
+        await prisma.user.create({
+          data: {
+            username,
+            email,
+            displayName: username,
+            authProvider: "local-file",
+            authUserId: legacyUser.id,
+            passwordHash: legacyUser.passwordHash,
+            createdAt: new Date(legacyUser.createdAt),
+          },
+        });
+      }
+    })().catch((error) => {
+      legacyUsersImportPromise = null;
+      throw error;
+    });
+  }
+
+  await legacyUsersImportPromise;
 }
 
 export async function hashPassword(password: string) {
@@ -68,17 +131,18 @@ export async function verifyPassword(password: string, passwordHash: string) {
 }
 
 export async function findLocalUserByLogin(identifier: string) {
-  const normalized = identifier.trim().toLowerCase();
-  const db = await readAuthDb();
+  await ensureLegacyUsersImported();
 
-  return (
-    db.users.find((user) => {
-      return (
-        user.email.trim().toLowerCase() === normalized ||
-        user.username.trim().toLowerCase() === normalized
-      );
-    }) ?? null
-  );
+  const normalized = identifier.trim().toLowerCase();
+  return prisma.user.findFirst({
+    where: {
+      OR: [
+        { email: normalized },
+        { username: identifier.trim() },
+        { username: normalized },
+      ],
+    },
+  });
 }
 
 export async function createLocalUser(input: {
@@ -86,40 +150,45 @@ export async function createLocalUser(input: {
   email: string;
   password: string;
 }) {
-  const username = input.username.trim();
-  const email = input.email.trim().toLowerCase();
-  const db = await readAuthDb();
+  await ensureLegacyUsersImported();
 
-  const duplicate = db.users.find((user) => {
-    return (
-      user.email.trim().toLowerCase() === email ||
-      user.username.trim().toLowerCase() === username.toLowerCase()
-    );
+  const username = input.username.trim();
+  const email = toNormalizedEmail(input.email);
+
+  const duplicate = await prisma.user.findFirst({
+    where: {
+      OR: [{ email }, { username }],
+    },
   });
 
   if (duplicate) {
     throw new Error("Account or email already exists");
   }
 
-  const user: StoredUser = {
-    id: randomUUID(),
-    username,
-    email,
-    passwordHash: await hashPassword(input.password),
-    createdAt: new Date().toISOString(),
-  };
+  const created = await prisma.user.create({
+    data: {
+      username,
+      email,
+      displayName: username,
+      authProvider: "database",
+      authUserId: randomUUID(),
+      passwordHash: await hashPassword(input.password),
+    },
+  });
 
-  db.users.push(user);
-  await writeAuthDb(db);
-
-  return toPublicUser(user);
+  return toPublicUser(created);
 }
 
-export function toPublicUser(user: StoredUser): PublicAuthUser {
+export function toPublicUser(user: {
+  id: bigint;
+  username: string;
+  email: string | null;
+  createdAt: Date;
+}) {
   return {
-    id: user.id,
+    id: user.id.toString(),
     username: user.username,
     email: user.email,
-    createdAt: user.createdAt,
-  };
+    createdAt: user.createdAt.toISOString(),
+  } satisfies PublicAuthUser;
 }
