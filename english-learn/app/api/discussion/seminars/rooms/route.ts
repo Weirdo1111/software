@@ -7,9 +7,21 @@ import { prisma } from "@/lib/prisma";
 import { toSeminarRoomSummary } from "@/lib/seminar-room-mappers";
 import { seminarRoomCreateSchema } from "@/lib/seminar-room";
 import { hashPassword } from "@/lib/local-auth";
+import {
+  SeminarLocalStoreError,
+  createLocalSeminarRoom,
+  getCurrentSeminarLocalActor,
+  listLocalSeminarRooms,
+  shouldUseSeminarLocalStore,
+} from "@/lib/seminar-room-local-store";
 
 export async function GET() {
   try {
+    if (shouldUseSeminarLocalStore()) {
+      const currentUser = await getCurrentSeminarLocalActor(false);
+      return NextResponse.json(await listLocalSeminarRooms(currentUser?.id));
+    }
+
     const currentUser = await getCurrentDiscussionUser();
 
     const rooms = await prisma.seminarRoom.findMany({
@@ -73,6 +85,21 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    if (shouldUseSeminarLocalStore()) {
+      const currentUser = await getCurrentSeminarLocalActor(true);
+      const body = await request.json();
+      const payload = seminarRoomCreateSchema.parse(body);
+      return NextResponse.json(
+        await createLocalSeminarRoom(currentUser, {
+          title: payload.title,
+          description: payload.description,
+          topicTag: payload.topicTag,
+          visibility: payload.visibility,
+          password: payload.password,
+        }),
+      );
+    }
+
     const currentUser = await requireCurrentDiscussionUser();
     const body = await request.json();
     const payload = seminarRoomCreateSchema.parse(body);
@@ -138,6 +165,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json(toSeminarRoomSummary(created, currentUser.id));
   } catch (error) {
+    if (error instanceof SeminarLocalStoreError) {
+      return jsonError(error.message, error.status);
+    }
+
     if (error instanceof Error && error.message === "UNAUTHORIZED_DISCUSSION_USER") {
       return jsonError("Please sign in first", 401);
     }
