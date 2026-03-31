@@ -107,7 +107,50 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
     };
   }, []);
 
-  const handleLogout = () => {
+  useEffect(() => {
+    if (isLoggedIn) return;
+
+    let cancelled = false;
+
+    const syncSession = async () => {
+      try {
+        const response = await fetch("/api/auth/session", { cache: "no-store" });
+        if (!response.ok) return;
+
+        const payload = (await response.json()) as {
+          authenticated?: boolean;
+          user?: { username?: string; email?: string } | null;
+        };
+
+        if (!payload.authenticated || cancelled) return;
+
+        localStorage.setItem("demo_logged_in", "true");
+        localStorage.setItem(
+          "demo_user",
+          payload.user?.username || payload.user?.email || "Learner",
+        );
+        window.dispatchEvent(new Event("demo-auth-changed"));
+      } catch {
+        // Ignore silent session sync failures on the nav shell.
+      }
+    };
+
+    void syncSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn]);
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/sign-out", {
+        method: "POST",
+      });
+    } catch {
+      // Ignore sign-out network errors and still clear local client state.
+    }
+
     localStorage.removeItem("demo_logged_in");
     localStorage.removeItem("demo_user");
     window.dispatchEvent(new Event("demo-auth-changed"));
