@@ -12,6 +12,8 @@ type BridgeMessage =
       speaker: string;
       audioFormat: string;
       sampleRate: number;
+      dialogVariant?: string;
+      resourceId?: string;
       logId?: string;
     }
   | { type: "hello_finished" }
@@ -206,6 +208,8 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
   const [logs, setLogs] = useState<RoleplayRealtimeLog[]>([]);
   const [status, setStatus] = useState("");
   const [speaker, setSpeaker] = useState("");
+  const [dialogVariant, setDialogVariant] = useState("");
+  const [resourceId, setResourceId] = useState("");
   const [logId, setLogId] = useState("");
   const [botName, setBotName] = useState("");
 
@@ -213,25 +217,34 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
   const playbackRef = useRef<PlaybackController | null>(null);
   const captureRef = useRef<CaptureController | null>(null);
   const botNameRef = useRef("");
+  const connectionNonceRef = useRef(0);
+
+  function isActiveConnection(socket: WebSocket, connectionNonce: number) {
+    return websocketRef.current === socket && connectionNonceRef.current === connectionNonce;
+  }
 
   function pushLog(message: string, tone: RoleplayRealtimeLog["tone"] = "neutral") {
     setLogs((current) => [...current.slice(-11), { id: nextId("log"), message, tone }]);
   }
 
   async function stopMicrophone() {
-    if (captureRef.current) {
-      await captureRef.current.stop();
-      captureRef.current = null;
+    const capture = captureRef.current;
+    captureRef.current = null;
+
+    if (capture) {
+      await capture.stop();
     }
     setIsMicActive(false);
   }
 
   async function disconnectSession() {
+    connectionNonceRef.current += 1;
     await stopMicrophone();
 
-    if (playbackRef.current) {
-      await playbackRef.current.close();
-      playbackRef.current = null;
+    const playback = playbackRef.current;
+    playbackRef.current = null;
+    if (playback) {
+      await playback.close();
     }
 
     const socket = websocketRef.current;
@@ -249,6 +262,8 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
     setStatus("");
     setAudioLevel(0);
     setSpeaker("");
+    setDialogVariant("");
+    setResourceId("");
     setLogId("");
     setBotName("");
     botNameRef.current = "";
@@ -259,17 +274,30 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
       return;
     }
 
+    const connectionNonce = connectionNonceRef.current + 1;
+    connectionNonceRef.current = connectionNonce;
     setConnectionState("connecting");
     setStatus("Connecting to the realtime bridge...");
     pushLog("Connecting to the local realtime roleplay bridge.");
 
-    playbackRef.current = await createFloat32PlaybackController();
+    const playback = await createFloat32PlaybackController();
+    if (connectionNonceRef.current !== connectionNonce) {
+      await playback.close();
+      return;
+    }
+
+    playbackRef.current = playback;
 
     const socket = new WebSocket(bridgeUrl);
     socket.binaryType = "arraybuffer";
     websocketRef.current = socket;
 
     socket.onopen = () => {
+      if (!isActiveConnection(socket, connectionNonce)) {
+        socket.close();
+        return;
+      }
+
       socket.send(
         JSON.stringify({
           type: "start",
@@ -281,10 +309,14 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
     };
 
     socket.onmessage = async (event) => {
+      if (!isActiveConnection(socket, connectionNonce)) {
+        return;
+      }
+
       if (typeof event.data !== "string") {
         const buffer =
           event.data instanceof ArrayBuffer ? event.data : await event.data.arrayBuffer();
-        playbackRef.current?.enqueue(buffer);
+        playback.enqueue(buffer);
         setIsAssistantSpeaking(true);
         return;
       }
@@ -297,8 +329,13 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
         setBotName(payload.botName);
         botNameRef.current = payload.botName;
         setSpeaker(payload.speaker);
+        setDialogVariant(payload.dialogVariant ?? "");
+        setResourceId(payload.resourceId ?? "");
         setLogId(payload.logId ?? "");
-        pushLog(`Connected to ${payload.botName}. Voice speaker: ${payload.speaker}.`, "success");
+        pushLog(
+          `Connected to ${payload.botName}. Voice speaker: ${payload.speaker}.${payload.dialogVariant ? ` Variant: ${payload.dialogVariant}.` : ""}${payload.resourceId ? ` Resource: ${payload.resourceId}.` : ""}`,
+          "success",
+        );
         return;
       }
 
@@ -353,13 +390,25 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
     };
 
     socket.onerror = () => {
+      if (!isActiveConnection(socket, connectionNonce)) {
+        return;
+      }
+
       setConnectionState("error");
       setStatus("Could not connect to the local realtime bridge.");
       pushLog("Could not connect to the local realtime bridge.", "error");
     };
 
     socket.onclose = () => {
+      if (!isActiveConnection(socket, connectionNonce)) {
+        return;
+      }
+
       websocketRef.current = null;
+      if (playbackRef.current === playback) {
+        playbackRef.current = null;
+        void playback.close();
+      }
       setIsAssistantSpeaking(false);
       setIsMicActive(false);
       setAudioLevel(0);
@@ -408,6 +457,8 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
     logs,
     status,
     speaker,
+    dialogVariant,
+    resourceId,
     logId,
     botName,
     connectSession,

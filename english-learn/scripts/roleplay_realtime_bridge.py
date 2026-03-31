@@ -39,13 +39,18 @@ class RealtimeRoleplayBridgeSession:
         self.session_id = str(uuid.uuid4())
         self.ws = None
         self.log_id = ""
+        self.dialog_variant = "default"
+        self.resource_id = ""
         self.receive_task = None
         self.hello_finished = False
         self.upstream_finished = False
+        self.reset_session_each_turn = config.should_reset_session_each_turn(self.character_id)
 
     async def connect(self):
-        ws_config = config.build_ws_config()
+        ws_config = config.build_ws_config(self.character_id)
         config.validate_ws_config(ws_config)
+        self.dialog_variant = ws_config.get("variant", "default")
+        self.resource_id = ws_config.get("resource_id", "")
 
         self.ws = await websockets.connect(
             ws_config["base_url"],
@@ -67,6 +72,8 @@ class RealtimeRoleplayBridgeSession:
                     "speaker": self.character["speaker"],
                     "audioFormat": self.output_audio_format,
                     "sampleRate": 24000,
+                    "dialogVariant": self.dialog_variant,
+                    "resourceId": self.resource_id,
                     "logId": self.log_id,
                 }
             )
@@ -173,6 +180,8 @@ class RealtimeRoleplayBridgeSession:
                         await self.client_ws.send(json_message({"type": "hello_finished"}))
                     else:
                         await self.client_ws.send(json_message({"type": "assistant_turn_finished"}))
+                        if self.reset_session_each_turn:
+                            await self._prepare_next_turn_session()
                 elif event == 450:
                     await self.client_ws.send(json_message({"type": "barge_in"}))
                 elif event == 459:
@@ -230,6 +239,14 @@ class RealtimeRoleplayBridgeSession:
         request.extend(len(payload_bytes).to_bytes(4, "big"))
         request.extend(payload_bytes)
         await self.ws.send(request)
+
+    async def _prepare_next_turn_session(self):
+        if not self.ws or self.upstream_finished:
+            return
+
+        await self._finish_session()
+        self.session_id = str(uuid.uuid4())
+        await self._send_start_session()
 
     async def _finish_connection(self):
         request = bytearray(protocol.generate_header())
