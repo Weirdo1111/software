@@ -10,18 +10,17 @@ export interface BuddyXpEventDetail {
   createdAt: string;
 }
 
-export function dispatchBuddyXpEvent(detail: BuddyXpEventDetail) {
-  if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent<BuddyXpEventDetail>(BUDDY_XP_EVENT, { detail }));
-}
-
 export function emitBuddyXpEvent(source: BuddyXpAwardSource) {
-  dispatchBuddyXpEvent({
+  if (typeof window === "undefined") return;
+
+  const detail: BuddyXpEventDetail = {
     id: `${source}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     source,
     xp: getBuddyXpForSource(source),
     createdAt: new Date().toISOString(),
-  });
+  };
+
+  window.dispatchEvent(new CustomEvent<BuddyXpEventDetail>(BUDDY_XP_EVENT, { detail }));
 }
 
 export function subscribeBuddyXpEvents(callback: (detail: BuddyXpEventDetail) => void) {

@@ -5,10 +5,6 @@ import { prisma } from "@/lib/prisma";
 export const AUTH_SESSION_COOKIE = "english_learn_session";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 14;
 
-function isDatabaseSessionConfigured() {
-  return Boolean(process.env.DATABASE_URL?.trim());
-}
-
 function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
@@ -35,13 +31,6 @@ export async function createAuthSession(input: {
   const rawToken = buildRawSessionToken();
   const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
 
-  if (!isDatabaseSessionConfigured()) {
-    return {
-      rawToken,
-      expiresAt,
-    };
-  }
-
   await prisma.authSession.create({
     data: {
       userId: input.userId,
@@ -59,7 +48,7 @@ export async function createAuthSession(input: {
 }
 
 export async function getUserFromSessionToken(rawToken: string | null | undefined) {
-  if (!rawToken || !isDatabaseSessionConfigured()) return null;
+  if (!rawToken) return null;
 
   const session = await prisma.authSession.findUnique({
     where: {
@@ -90,7 +79,7 @@ export async function getUserFromSessionToken(rawToken: string | null | undefine
 }
 
 export async function deleteAuthSession(rawToken: string | null | undefined) {
-  if (!rawToken || !isDatabaseSessionConfigured()) return;
+  if (!rawToken) return;
 
   await prisma.authSession.deleteMany({
     where: {
