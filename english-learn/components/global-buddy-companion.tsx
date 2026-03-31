@@ -351,7 +351,7 @@ export function GlobalBuddyCompanion() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale, totalCompleted, soundEnabled]);
 
-  if (pathname === "/") return null;
+  if (pathname === "/" || pathname.startsWith("/games/word-game")) return null;
 
   return (
     <div className="global-buddy-shell" aria-hidden="true">
