@@ -50,6 +50,7 @@ import {
   type BuddyOutfit,
 } from "@/lib/buddy-wardrobe";
 import {
+  createDefaultSchedulePreferences,
   generateWeeklySchedule,
   getActiveWeekPlanOverrides,
   hydrateSchedulePreferencesFromServer,
@@ -325,8 +326,9 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   const [displayName, setDisplayName] = useState("Learner");
   const [levelPrefix, setLevelPrefix] = useState("A2");
   const [snapshot, setSnapshot] = useState(() => createEmptyLearningTrackerSnapshot());
-  const [preferences, setPreferences] = useState(() => loadSchedulePreferencesFromStorage(locale));
-  const [buddyOutfit, setBuddyOutfit] = useState<BuddyOutfit>(() => loadBuddyOutfitFromStorage());
+  // Keep the first server/client render deterministic, then hydrate from storage in useEffect.
+  const [preferences, setPreferences] = useState(() => createDefaultSchedulePreferences(new Date(), locale));
+  const [buddyOutfit, setBuddyOutfit] = useState<BuddyOutfit>(() => DEFAULT_BUDDY_OUTFIT);
   const [wardrobeOpen, setWardrobeOpen] = useState(false);
   const [wardrobeTab, setWardrobeTab] = useState<"hat" | "clothing" | "glasses" | "heldItem">("hat");
   const [wardrobeFlipTick, setWardrobeFlipTick] = useState(0);
