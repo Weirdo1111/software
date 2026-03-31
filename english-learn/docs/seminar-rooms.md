@@ -2,18 +2,20 @@
 
 ## Purpose
 
-Seminar Rooms extend the existing discussion/forum area with room-based chat, protected access, and attachment sharing.
+Seminar Rooms extend the existing discussion/forum area with room-based chat, protected access, attachment sharing, and lightweight browser-based voice/video sessions.
 
 The feature is implemented under the existing `discussion` domain so it follows the repository's current architecture instead of introducing a parallel mini-app.
 
 ## Schema Additions
 
-Prisma now includes four seminar-specific tables:
+Prisma now includes six seminar-specific tables:
 
 - `seminar_rooms`
 - `seminar_room_members`
 - `seminar_room_messages`
 - `seminar_room_attachments`
+- `seminar_room_call_participants`
+- `seminar_room_call_signals`
 
 Key design decisions:
 
@@ -21,10 +23,12 @@ Key design decisions:
 - room passwords are stored as hashes, reusing the existing `scrypt`-based auth helper pattern
 - attachments are stored outside the database and referenced by `storageDriver` + `storagePath`
 - archived/closed rooms remain readable but stop accepting new messages
+- live-call presence and WebRTC signaling are stored separately so chat history and call state can evolve independently
 
 Migration:
 
 - `prisma/migrations/20260331_add_seminar_rooms/migration.sql`
+- `prisma/migrations/20260331_add_seminar_room_calls/migration.sql`
 
 ## Routes
 
@@ -48,12 +52,17 @@ Migration:
 - `GET /api/discussion/seminars/rooms/[roomId]/messages`
 - `POST /api/discussion/seminars/rooms/[roomId]/messages`
 - `GET /api/discussion/seminars/rooms/[roomId]/attachments/[attachmentId]`
+- `POST /api/discussion/seminars/rooms/[roomId]/call/join`
+- `POST /api/discussion/seminars/rooms/[roomId]/call/presence`
+- `POST /api/discussion/seminars/rooms/[roomId]/call/signal`
+- `POST /api/discussion/seminars/rooms/[roomId]/call/leave`
 
 ## Auth and Access
 
-- room creation, protected-room join, messaging, and room management all require `requireCurrentDiscussionUser()`
+- room creation, protected-room join, messaging, room management, and live call actions all require `requireCurrentDiscussionUser()`
 - public rooms are readable without auth
 - protected rooms require a member record or owner match before messages/attachments are returned
+- live call actions require the same room access checks as chat and are blocked once a room is archived/closed
 - owner permissions are implemented today; no global moderator/admin role existed in the current schema, so no new cross-product role system was introduced
 
 ## Storage
@@ -72,9 +81,12 @@ This keeps protected-room attachments access-controlled even in local fallback m
 
 The repository did not already contain reusable realtime infrastructure for forum chat.
 
-For v1, room detail uses incremental polling against:
+For v1, room detail and live calls both use incremental polling:
 
 - `GET /api/discussion/seminars/rooms/[roomId]/messages?after=<messageId>`
+- `POST /api/discussion/seminars/rooms/[roomId]/call/presence`
+
+Voice/video transport uses native WebRTC peer connections in the browser. The repository keeps the signaling layer inside the existing Next.js API surface instead of adding a separate socket server.
 
 This keeps the feature near real time without adding a separate websocket backend.
 
@@ -87,6 +99,8 @@ SUPABASE_STORAGE_BUCKET_SEMINARS=
 ```
 
 If omitted, the feature still works with local file storage.
+
+No extra conference-specific environment variables are required. Browser clients currently use the public Google STUN endpoints bundled in the seminar call panel.
 
 ## Attachment Rules
 
@@ -101,7 +115,8 @@ The route enforces MIME and size checks before storage.
 
 ## Tradeoffs / Follow-up
 
-- polling is simpler than websockets/Supabase Realtime, but easier to maintain in the current repo
+- polling-based signaling is simpler than websockets/Supabase Realtime and keeps the implementation inside existing repo patterns, but it is still best suited to small seminar groups rather than large meetings
 - protected rooms do not yet support a separate kick/ban model
 - owner-only management is intentional because the repo had no established moderator/admin authorization layer for forum data
 - local fallback storage is practical for development/demo use, but production should prefer a configured private Supabase Storage bucket
+- the current WebRTC setup is mesh-based, so performance will degrade as participant counts grow; if rooms later need larger meetings, move the media layer behind an SFU

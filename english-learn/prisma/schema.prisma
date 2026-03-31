@@ -26,6 +26,7 @@ model User {
   seminarMemberships SeminarRoomMember[]
   seminarMessages SeminarRoomMessage[] @relation("SeminarRoomMessageSender")
   seminarUploadedAttachments SeminarRoomAttachment[] @relation("SeminarRoomAttachmentUploader")
+  seminarCallParticipants SeminarRoomCallParticipant[]
 
   @@unique([authProvider, authUserId])
   @@map("users")
@@ -129,6 +130,8 @@ model SeminarRoom {
   members  SeminarRoomMember[]
   messages SeminarRoomMessage[]
   attachments SeminarRoomAttachment[]
+  callParticipants SeminarRoomCallParticipant[]
+  callSignals SeminarRoomCallSignal[]
 
   @@index([ownerId])
   @@index([status, lastActiveAt])
@@ -191,4 +194,44 @@ model SeminarRoomAttachment {
   @@index([roomId])
   @@index([uploadedById])
   @@map("seminar_room_attachments")
+}
+
+model SeminarRoomCallParticipant {
+  id           BigInt   @id @default(autoincrement())
+  roomId       BigInt
+  userId       BigInt
+  sessionId    String   @db.VarChar(80)
+  displayName  String   @db.VarChar(100)
+  audioEnabled Boolean  @default(true)
+  videoEnabled Boolean  @default(true)
+  joinedAt     DateTime @default(now())
+  lastSeenAt   DateTime @default(now())
+
+  room         SeminarRoom             @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user         User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sentSignals  SeminarRoomCallSignal[] @relation("SeminarRoomCallSignalSender")
+  receivedSignals SeminarRoomCallSignal[] @relation("SeminarRoomCallSignalReceiver")
+
+  @@unique([roomId, sessionId])
+  @@index([roomId, lastSeenAt])
+  @@index([userId])
+  @@map("seminar_room_call_participants")
+}
+
+model SeminarRoomCallSignal {
+  id                BigInt   @id @default(autoincrement())
+  roomId            BigInt
+  fromParticipantId BigInt
+  toParticipantId   BigInt
+  kind              String   @db.VarChar(30)
+  payload           Json
+  createdAt         DateTime @default(now())
+
+  room            SeminarRoom             @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  fromParticipant SeminarRoomCallParticipant @relation("SeminarRoomCallSignalSender", fields: [fromParticipantId], references: [id], onDelete: Cascade)
+  toParticipant   SeminarRoomCallParticipant @relation("SeminarRoomCallSignalReceiver", fields: [toParticipantId], references: [id], onDelete: Cascade)
+
+  @@index([roomId, toParticipantId, id])
+  @@index([roomId, createdAt])
+  @@map("seminar_room_call_signals")
 }
