@@ -145,10 +145,10 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
           : "w-full",
       )}
     >
-      <div className="grid gap-2 xl:grid-cols-[auto_1fr_auto] xl:items-center">
-        <div className="flex items-center justify-between gap-3 rounded-[1.55rem] border-2 border-white/85 bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(240,247,255,0.9))] px-3 py-2.5 shadow-[0_10px_0_rgba(255,201,225,0.24),0_18px_28px_rgba(90,123,255,0.1)]">
-          <InstitutionBrand locale={locale} embedded />
-          <span className="hidden items-center gap-1 rounded-full border-2 border-white/90 bg-[linear-gradient(135deg,rgba(255,242,165,0.95),rgba(255,212,231,0.9))] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--navy)] shadow-[0_8px_0_rgba(255,201,225,0.25),0_14px_22px_rgba(90,123,255,0.12)] lg:inline-flex">
+      <div className="grid gap-2 xl:grid-cols-[minmax(12rem,13.5rem)_1fr_auto] xl:items-center">
+        <div className="flex flex-col items-start gap-2 rounded-[1.55rem] border-2 border-white/85 bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(240,247,255,0.9))] px-3 py-2.5 shadow-[0_10px_0_rgba(255,201,225,0.24),0_18px_28px_rgba(90,123,255,0.1)]">
+          <InstitutionBrand locale={locale} embedded compact className="w-full justify-center" />
+          <span className="inline-flex items-center gap-1 self-center rounded-full border-2 border-white/90 bg-[linear-gradient(135deg,rgba(255,242,165,0.95),rgba(255,212,231,0.9))] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--navy)] shadow-[0_8px_0_rgba(255,201,225,0.25),0_14px_22px_rgba(90,123,255,0.12)]">
             <Sparkles className="size-3.5" />
             {buddyLabel}
           </span>
