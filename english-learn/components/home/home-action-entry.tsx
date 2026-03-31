@@ -27,7 +27,7 @@ import {
   Trophy,
   WandSparkles,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { BuddyCampusLobby } from "@/components/home/buddy-campus-lobby";
 import { BuddyCompanion, type BuddyVariant } from "@/components/home/buddy-companion";
@@ -369,6 +369,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   const [wardrobeFlipTick, setWardrobeFlipTick] = useState(0);
   const [showLevelRules, setShowLevelRules] = useState(false);
   const [levelUpNotice, setLevelUpNotice] = useState<{ level: number; stageTitle: string } | null>(null);
+  const levelUpNoticeTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const refresh = () => {
@@ -483,13 +484,26 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     }
 
     if (buddyLevel > previousLevel) {
-      setLevelUpNotice({ level: buddyLevel, stageTitle: buddyStage.title });
+      if (levelUpNoticeTimerRef.current) {
+        window.clearTimeout(levelUpNoticeTimerRef.current);
+      }
+      levelUpNoticeTimerRef.current = window.setTimeout(() => {
+        setLevelUpNotice({ level: buddyLevel, stageTitle: buddyStage.title });
+        levelUpNoticeTimerRef.current = null;
+      }, 0);
       return;
     }
 
     if (buddyLevel < previousLevel) {
       window.localStorage.setItem(LAST_SEEN_BUDDY_LEVEL_KEY, String(buddyLevel));
     }
+
+    return () => {
+      if (levelUpNoticeTimerRef.current) {
+        window.clearTimeout(levelUpNoticeTimerRef.current);
+        levelUpNoticeTimerRef.current = null;
+      }
+    };
   }, [buddyLevel, buddyStage.title, isLoggedIn]);
 
   const updateBuddyOutfit = (partial: Partial<BuddyOutfit>) => {
