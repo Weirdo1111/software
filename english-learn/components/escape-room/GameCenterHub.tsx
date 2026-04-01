@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowRight, Gamepad2, Lock, ScanSearch, Trophy } from "lucide-react";
+import { ArrowRight, Gamepad2, Lock, Trophy } from "lucide-react";
 
 import { officialGameLevels } from "@/components/escape-room/game-center-data";
 import { formatGameTime, ESCAPE_ROOM_BEST_TIME_KEY } from "@/components/escape-room/time-utils";
@@ -21,8 +21,7 @@ export function GameCenterHub({ locale }: { locale: Locale }) {
   const copy = {
     backHome: "Back Home",
     eyebrow: "Game Center",
-    title: "Quest Arcade",
-    strip: ["Official Levels", "Full Screen Ready", "Timer + Rewards"],
+    title: "Escape Room",
     live: "Live",
     locked: "Locked",
     mission: "Mission",
@@ -48,7 +47,7 @@ export function GameCenterHub({ locale }: { locale: Locale }) {
 
           <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-blue-800">
             <Gamepad2 className="size-4 text-blue-700" />
-            Quest Arcade
+            Escape Room
           </div>
         </div>
 
@@ -56,14 +55,6 @@ export function GameCenterHub({ locale }: { locale: Locale }) {
           <div className="rounded-[2.2rem] border border-[#d7e6fb] bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(238,246,255,0.95))] p-6 shadow-[0_28px_70px_rgba(37,99,235,0.12)] sm:p-8">
             <p className="text-sm font-semibold uppercase tracking-[0.34em] text-blue-700/80">{copy.eyebrow}</p>
             <h1 className="font-display mt-4 text-5xl leading-[0.96] tracking-tight text-slate-900 sm:text-6xl">{copy.title}</h1>
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              {copy.strip.map((item) => (
-                <span key={item} className="rounded-full border border-[#d7e6fb] bg-white/90 px-4 py-2 text-sm text-slate-700">
-                  {item}
-                </span>
-              ))}
-            </div>
           </div>
 
           <div className="rounded-[2.2rem] border border-[#d7e6fb] bg-[linear-gradient(145deg,rgba(248,252,255,0.98),rgba(233,243,255,0.95))] p-6 shadow-[0_24px_60px_rgba(37,99,235,0.1)]">
@@ -74,18 +65,6 @@ export function GameCenterHub({ locale }: { locale: Locale }) {
               <div>
                 <p className="text-sm uppercase tracking-[0.24em] text-blue-700/72">{copy.best}</p>
                 <p className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">{bestSeconds === null ? "--:--" : formatGameTime(bestSeconds)}</p>
-              </div>
-            </div>
-
-            <div className="mt-6 rounded-[1.7rem] border border-[#d7e6fb] bg-white/90 p-5">
-              <div className="flex items-center gap-2 text-blue-800">
-                <ScanSearch className="size-4" />
-                <p className="text-sm font-semibold uppercase tracking-[0.24em]">Demo Day Loadout</p>
-              </div>
-              <div className="mt-4 grid gap-3 text-sm text-slate-700">
-                <p>1. Hotspot-based 2D rooms with modal puzzles</p>
-                <p>2. Sequenced clue chains with collected items and locked leads</p>
-                <p>3. Listening, note-taking, and keypad deduction inside campus scenes</p>
               </div>
             </div>
           </div>

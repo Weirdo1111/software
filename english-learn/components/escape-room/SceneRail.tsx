@@ -14,21 +14,25 @@ export function SceneRail({
   unlockedGate,
   fullscreen = false,
   onSceneChange,
+  items,
 }: {
   activeScene: SceneId;
   unlockedGate: boolean;
   fullscreen?: boolean;
   onSceneChange: (scene: SceneId) => void;
+  items?: Array<{ id: SceneId; label: string; ready?: boolean }>;
 }) {
-  const items: Array<{ id: SceneId; label: string; ready: boolean }> = [
-    { id: "briefing", label: "Briefing", ready: true },
-    { id: "library", label: "Library Floor", ready: true },
-    { id: "exit", label: "Exit Door", ready: unlockedGate },
-  ];
+  const railItems: Array<{ id: SceneId; label: string; ready: boolean }> = items
+    ? items.map((item) => ({ ...item, ready: item.ready ?? true }))
+    : [
+        { id: "briefing", label: "Entry", ready: true },
+        { id: "library", label: "Scene", ready: true },
+        { id: "exit", label: "Gate", ready: unlockedGate },
+      ];
 
   return (
-    <div className="flex flex-wrap gap-3">
-      {items.map((item) => {
+    <div className="flex flex-wrap gap-1.5 sm:gap-2">
+      {railItems.map((item) => {
         const Icon = sceneIcons[item.id];
         const active = item.id === activeScene;
 
@@ -39,13 +43,18 @@ export function SceneRail({
             onClick={() => onSceneChange(item.id)}
             className={cn(
               "inline-flex items-center gap-2 rounded-full border font-semibold transition",
-              fullscreen ? "px-5 py-3 text-base" : "px-4 py-2.5 text-sm",
-              active ? "border-blue-200 bg-blue-50 text-slate-900 shadow-[0_8px_24px_rgba(37,99,235,0.12)]" : "border-[#d7e6fb] bg-white/88 text-slate-700 hover:bg-white",
+              fullscreen ? "px-3 py-1.5 text-xs" : "px-2.5 py-1 text-[11px]",
+              active
+                ? "border-blue-200 bg-blue-50 text-slate-900 shadow-[0_8px_24px_rgba(37,99,235,0.12)]"
+                : "border-[#d7e6fb] bg-white/88 text-slate-700 hover:bg-white",
+              !item.ready && !active ? "opacity-70" : "",
             )}
           >
-            <Icon className={cn(fullscreen ? "size-5" : "size-4")} />
+            <Icon className={cn(fullscreen ? "size-3.5" : "size-3")} />
             {item.label}
-            {item.ready ? <CheckCircle2 className={cn("text-emerald-600", fullscreen ? "size-5" : "size-4")} /> : null}
+            {item.ready ? (
+              <CheckCircle2 className={cn("text-emerald-600", fullscreen ? "size-3.5" : "size-3")} />
+            ) : null}
           </button>
         );
       })}

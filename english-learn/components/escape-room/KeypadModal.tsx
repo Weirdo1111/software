@@ -19,6 +19,10 @@ export function KeypadModal({
   notes,
   missingSteps,
   feedback,
+  title = "Exit Keypad",
+  subtitle = "Merge the collected clues into one continuous code.",
+  readyDescription,
+  blockedDescription,
   onSubmit,
   onClose,
 }: {
@@ -32,6 +36,10 @@ export function KeypadModal({
   notes: string[];
   missingSteps: string[];
   feedback: string | null;
+  title?: string;
+  subtitle?: string;
+  readyDescription?: string;
+  blockedDescription?: string;
   onSubmit: (code: string) => void;
   onClose: () => void;
 }) {
@@ -60,7 +68,7 @@ export function KeypadModal({
   };
 
   return (
-    <ModalShell title="Exit Keypad" subtitle="Merge the stack code and closing time using the confirmed procedure." onClose={onClose}>
+    <ModalShell title={title} subtitle={subtitle} onClose={onClose}>
       <div className="space-y-4">
         <div className="rounded-[1.5rem] border border-[#e8dcc7] bg-white/88 p-5">
           <div className="flex items-center gap-2 text-teal-700">
@@ -69,7 +77,9 @@ export function KeypadModal({
           </div>
 
           <p className="mt-3 text-sm leading-6 text-slate-700">
-            {ready ? "The console is armed. Enter the full 6-digit code as one continuous sequence." : "You still need more evidence before this exit console can be trusted."}
+            {ready
+              ? (readyDescription ?? `The console is armed. Enter the full ${codeLength}-digit code as one continuous sequence.`)
+              : (blockedDescription ?? "You still need more evidence before this exit console can be trusted.")}
           </p>
 
           <div className="mt-4 flex flex-wrap gap-2">
