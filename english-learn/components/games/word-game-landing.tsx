@@ -814,3 +814,4 @@ export function WordGameLanding({ locale }: { locale: Locale }) {
     </div>
   );
 }
+
