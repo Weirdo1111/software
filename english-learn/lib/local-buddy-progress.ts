@@ -5,6 +5,7 @@ import { type BuddyXpAwardSource, getBuddyXpForSource } from "@/lib/buddy-xp-con
 
 const dataDirPath = join(process.cwd(), "data");
 const buddyProgressDbPath = join(dataDirPath, "buddy-progress.json");
+const authDbPath = join(dataDirPath, "auth-users.json");
 
 export interface BuddyProgressCounts {
   listeningCompletions: number;
@@ -31,6 +32,14 @@ export interface BuddyProgressRecord {
 
 type BuddyProgressDatabase = {
   records: BuddyProgressRecord[];
+};
+
+type AuthUserDatabase = {
+  users?: Array<{
+    id: string;
+    username: string;
+    email: string;
+  }>;
 };
 
 function createEmptyCounts(): BuddyProgressCounts {
@@ -156,6 +165,16 @@ async function readBuddyProgressDb(): Promise<BuddyProgressDatabase> {
   };
 }
 
+async function readLocalAuthUsers() {
+  try {
+    const content = await fs.readFile(authDbPath, "utf8");
+    const parsed = JSON.parse(content) as AuthUserDatabase;
+    return Array.isArray(parsed.users) ? parsed.users : [];
+  } catch {
+    return [];
+  }
+}
+
 async function writeBuddyProgressDb(db: BuddyProgressDatabase) {
   await fs.writeFile(buddyProgressDbPath, JSON.stringify(db, null, 2), "utf8");
 }
@@ -185,12 +204,58 @@ function buildRecordWithCounts(record: BuddyProgressRecord, counts: BuddyProgres
   };
 }
 
+export async function reconcileLocalBuddyProgressWithAuthUsers() {
+  const [db, authUsers] = await Promise.all([readBuddyProgressDb(), readLocalAuthUsers()]);
+
+  const existingByKey = new Map(
+    db.records.map((record) => [`${record.authProvider}:${record.authUserId}`, record] as const)
+  );
+
+  const nextRecords = authUsers.map((user) => {
+    const existing = existingByKey.get(`local-file:${user.id}`);
+
+    if (!existing) {
+      return createEmptyRecord({
+        authProvider: "local-file",
+        authUserId: user.id,
+        username: user.username,
+        email: user.email,
+      });
+    }
+
+    if (existing.username === user.username && existing.email === user.email) {
+      return existing;
+    }
+
+    return {
+      ...existing,
+      username: user.username,
+      email: user.email,
+      updatedAt: new Date().toISOString(),
+    };
+  });
+
+  const changed =
+    nextRecords.length !== db.records.length ||
+    nextRecords.some((record, index) => {
+      const existing = db.records[index];
+      return JSON.stringify(existing) !== JSON.stringify(record);
+    });
+
+  if (changed) {
+    await writeBuddyProgressDb({ records: nextRecords });
+  }
+
+  return { records: nextRecords, changed };
+}
+
 export async function getLocalBuddyProgress(input: {
   authProvider: string;
   authUserId: string;
   username: string;
   email?: string;
 }) {
+  await reconcileLocalBuddyProgressWithAuthUsers();
   const db = await readBuddyProgressDb();
   const existing = db.records.find((record) => {
     return record.authProvider === input.authProvider && record.authUserId === input.authUserId;
@@ -235,6 +300,7 @@ export async function awardLocalBuddyXp(
   },
   source: BuddyXpAwardSource
 ) {
+  await reconcileLocalBuddyProgressWithAuthUsers();
   const db = await readBuddyProgressDb();
   const existingIndex = db.records.findIndex((record) => {
     return record.authProvider === input.authProvider && record.authUserId === input.authUserId;
@@ -271,6 +337,7 @@ export async function hydrateLocalBuddyProgress(
   },
   counts: Partial<BuddyProgressCounts>
 ) {
+  await reconcileLocalBuddyProgressWithAuthUsers();
   const db = await readBuddyProgressDb();
   const existingIndex = db.records.findIndex((record) => {
     return record.authProvider === input.authProvider && record.authUserId === input.authUserId;
@@ -314,6 +381,7 @@ export async function resetLocalBuddyProgress(input: {
   username: string;
   email?: string;
 }) {
+  await reconcileLocalBuddyProgressWithAuthUsers();
   const db = await readBuddyProgressDb();
   const existingIndex = db.records.findIndex((record) => {
     return record.authProvider === input.authProvider && record.authUserId === input.authUserId;

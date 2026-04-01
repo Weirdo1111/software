@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { getRequestUserId, jsonError } from "@/lib/api";
-import { createSupabaseServiceClient } from "@/lib/supabase/server";
+import { jsonError, resolveRequestUserId } from "@/lib/api";
+import { prisma } from "@/lib/prisma";
 
 const contextSchema = z.object({
   module: z.enum(["listening", "speaking", "reading", "writing"]),
@@ -39,17 +39,17 @@ const promoteCommentSchema = z.object({
 
 function mapThreadResponse(input: {
   context: z.infer<typeof contextSchema>;
-  updatedAt: string;
+  updatedAt: Date;
   comments: Array<{
     id: string;
     author: string;
     content: string;
-    created_at: string;
+    createdAt: Date;
     topic: string | null;
-    likes_count: number;
-    anchor_label: string | null;
-    anchor_text: string | null;
-    promoted_at: string | null;
+    likesCount: number;
+    anchorLabel: string | null;
+    anchorText: string | null;
+    promotedAt: Date | null;
     liked: boolean;
   }>;
 }) {
@@ -59,83 +59,81 @@ function mapThreadResponse(input: {
     targetId: input.context.targetId,
     title: input.context.title,
     subtitle: input.context.subtitle,
-    updatedAt: input.updatedAt,
+    updatedAt: input.updatedAt.toISOString(),
     comments: input.comments.map((comment) => ({
       id: comment.id,
       author: comment.author,
       content: comment.content,
-      createdAt: comment.created_at,
+      createdAt: comment.createdAt.toISOString(),
       topic: comment.topic ?? undefined,
-      likes: comment.likes_count,
+      likes: comment.likesCount,
       liked: comment.liked,
-      anchorLabel: comment.anchor_label ?? undefined,
-      anchorText: comment.anchor_text ?? undefined,
-      promotedAt: comment.promoted_at ?? undefined,
+      anchorLabel: comment.anchorLabel ?? undefined,
+      anchorText: comment.anchorText ?? undefined,
+      promotedAt: comment.promotedAt?.toISOString() ?? undefined,
     })),
   };
 }
 
 async function loadThread(
-  userId: string,
+  userId: bigint,
   module: string,
   targetId: string,
   fallbackContext?: z.infer<typeof contextSchema>,
 ) {
-  const supabase = createSupabaseServiceClient();
-  if (!supabase) return null;
-
-  const { data: thread } = await supabase
-    .from("context_comment_threads")
-    .select("id, title, subtitle, plaza_tag, updated_at, module, target_id")
-    .eq("module", module)
-    .eq("target_id", targetId)
-    .maybeSingle();
+  const thread = await prisma.contextCommentThread.findUnique({
+    where: {
+      module_targetId: {
+        module,
+        targetId,
+      },
+    },
+    include: {
+      comments: {
+        orderBy: {
+          createdAt: "asc",
+        },
+        include: {
+          likes: {
+            where: { userId },
+            select: { id: true },
+          },
+        },
+      },
+    },
+  });
 
   if (!thread) return null;
 
-  const { data: comments } = await supabase
-    .from("context_comments")
-    .select("id, author, content, created_at, topic, likes_count, anchor_label, anchor_text, promoted_at")
-    .eq("thread_id", thread.id)
-    .order("created_at", { ascending: true });
-
-  const commentIds = (comments ?? []).map((item) => item.id);
-  const { data: likes } =
-    commentIds.length > 0
-      ? await supabase
-          .from("context_comment_likes")
-          .select("comment_id")
-          .eq("user_id", userId)
-          .in("comment_id", commentIds)
-      : { data: [] as Array<{ comment_id: string }> };
-
-  const likedIds = new Set((likes ?? []).map((item) => item.comment_id));
   const context =
     fallbackContext ??
     ({
-      module: thread.module,
-      targetId: thread.target_id,
+      module: thread.module as z.infer<typeof contextSchema>["module"],
+      targetId: thread.targetId,
       title: thread.title,
       subtitle: thread.subtitle ?? undefined,
-      plazaTag: thread.plaza_tag,
+      plazaTag: thread.plazaTag,
     } satisfies z.infer<typeof contextSchema>);
 
   return mapThreadResponse({
     context,
-    updatedAt: thread.updated_at,
-    comments: (comments ?? []).map((item) => ({
-      ...item,
-      liked: likedIds.has(item.id),
+    updatedAt: thread.updatedAt,
+    comments: thread.comments.map((item) => ({
+      id: item.id,
+      author: item.author,
+      content: item.content,
+      createdAt: item.createdAt,
+      topic: item.topic,
+      likesCount: item.likesCount,
+      anchorLabel: item.anchorLabel,
+      anchorText: item.anchorText,
+      promotedAt: item.promotedAt,
+      liked: item.likes.length > 0,
     })),
   });
 }
 
 export async function GET(request: Request) {
-  const supabase = createSupabaseServiceClient();
-  if (!supabase) {
-    return NextResponse.json({ thread: null });
-  }
-
   const url = new URL(request.url);
   const query = contextSchema.safeParse({
     module: url.searchParams.get("module"),
@@ -149,7 +147,7 @@ export async function GET(request: Request) {
     return jsonError(query.error.issues[0]?.message ?? "Invalid query", 422);
   }
 
-  const userId = getRequestUserId(request);
+  const userId = await resolveRequestUserId(request);
   const thread = await loadThread(userId, query.data.module, query.data.targetId, query.data);
   return NextResponse.json({ thread });
 }
@@ -158,52 +156,58 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const payload = addCommentSchema.parse(body);
-    const userId = getRequestUserId(request);
-    const supabase = createSupabaseServiceClient();
+    const userId = await resolveRequestUserId(request);
 
-    if (!supabase) {
-      return NextResponse.json({ saved: false, fallback: true });
-    }
-
-    const { data: thread, error: threadError } = await supabase
-      .from("context_comment_threads")
-      .upsert(
-        {
+    const thread = await prisma.contextCommentThread.upsert({
+      where: {
+        module_targetId: {
           module: payload.context.module,
-          target_id: payload.context.targetId,
-          title: payload.context.title,
-          subtitle: payload.context.subtitle,
-          plaza_tag: payload.context.plazaTag,
-          updated_at: payload.comment.createdAt,
+          targetId: payload.context.targetId,
         },
-        { onConflict: "module,target_id" },
-      )
-      .select("id")
-      .single();
+      },
+      update: {
+        title: payload.context.title,
+        subtitle: payload.context.subtitle,
+        plazaTag: payload.context.plazaTag,
+        updatedAt: new Date(payload.comment.createdAt),
+      },
+      create: {
+        module: payload.context.module,
+        targetId: payload.context.targetId,
+        title: payload.context.title,
+        subtitle: payload.context.subtitle,
+        plazaTag: payload.context.plazaTag,
+        updatedAt: new Date(payload.comment.createdAt),
+      },
+      select: {
+        id: true,
+      },
+    });
 
-    if (threadError || !thread) {
-      return jsonError("Failed to save discussion thread", 500);
-    }
-
-    const { error: commentError } = await supabase.from("context_comments").upsert(
-      {
-        id: payload.comment.id,
-        thread_id: thread.id,
-        user_id: userId,
+    await prisma.contextComment.upsert({
+      where: { id: payload.comment.id },
+      update: {
         author: payload.comment.author,
         content: payload.comment.content,
         topic: payload.comment.topic ?? null,
-        anchor_label: payload.comment.anchorLabel ?? null,
-        anchor_text: payload.comment.anchorText ?? null,
-        promoted_at: payload.comment.promotedAt ?? null,
-        created_at: payload.comment.createdAt,
+        anchorLabel: payload.comment.anchorLabel ?? null,
+        anchorText: payload.comment.anchorText ?? null,
+        promotedAt: payload.comment.promotedAt ? new Date(payload.comment.promotedAt) : null,
+        createdAt: new Date(payload.comment.createdAt),
       },
-      { onConflict: "id" },
-    );
-
-    if (commentError) {
-      return jsonError("Failed to save comment", 500);
-    }
+      create: {
+        id: payload.comment.id,
+        threadId: thread.id,
+        userId,
+        author: payload.comment.author,
+        content: payload.comment.content,
+        topic: payload.comment.topic ?? null,
+        anchorLabel: payload.comment.anchorLabel ?? null,
+        anchorText: payload.comment.anchorText ?? null,
+        promotedAt: payload.comment.promotedAt ? new Date(payload.comment.promotedAt) : null,
+        createdAt: new Date(payload.comment.createdAt),
+      },
+    });
 
     return NextResponse.json({ saved: true });
   } catch (error) {
@@ -219,46 +223,51 @@ export async function PUT(request: Request) {
   try {
     const body = await request.json();
     const payload = toggleLikeSchema.parse(body);
-    const userId = getRequestUserId(request);
-    const supabase = createSupabaseServiceClient();
+    const userId = await resolveRequestUserId(request);
 
-    if (!supabase) {
-      return NextResponse.json({ saved: false, fallback: true });
-    }
-
-    const { data: comment } = await supabase
-      .from("context_comments")
-      .select("id, likes_count")
-      .eq("id", payload.commentId)
-      .maybeSingle();
+    const comment = await prisma.contextComment.findUnique({
+      where: { id: payload.commentId },
+      select: {
+        id: true,
+        likesCount: true,
+      },
+    });
 
     if (!comment) {
       return jsonError("Comment not found", 404);
     }
 
-    const { data: existingLike } = await supabase
-      .from("context_comment_likes")
-      .select("id")
-      .eq("comment_id", payload.commentId)
-      .eq("user_id", userId)
-      .maybeSingle();
+    const existingLike = await prisma.contextCommentLike.findUnique({
+      where: {
+        commentId_userId: {
+          commentId: payload.commentId,
+          userId,
+        },
+      },
+    });
 
     const liked = !existingLike;
-    const nextLikes = liked ? comment.likes_count + 1 : Math.max(0, comment.likes_count - 1);
+    const nextLikes = liked ? comment.likesCount + 1 : Math.max(0, comment.likesCount - 1);
 
     if (existingLike) {
-      await supabase.from("context_comment_likes").delete().eq("id", existingLike.id);
+      await prisma.contextCommentLike.delete({
+        where: { id: existingLike.id },
+      });
     } else {
-      await supabase.from("context_comment_likes").insert({
-        comment_id: payload.commentId,
-        user_id: userId,
+      await prisma.contextCommentLike.create({
+        data: {
+          commentId: payload.commentId,
+          userId,
+        },
       });
     }
 
-    await supabase
-      .from("context_comments")
-      .update({ likes_count: nextLikes })
-      .eq("id", payload.commentId);
+    await prisma.contextComment.update({
+      where: { id: payload.commentId },
+      data: {
+        likesCount: nextLikes,
+      },
+    });
 
     return NextResponse.json({ saved: true, liked, likes: nextLikes });
   } catch (error) {
@@ -274,20 +283,13 @@ export async function PATCH(request: Request) {
   try {
     const body = await request.json();
     const payload = promoteCommentSchema.parse(body);
-    const supabase = createSupabaseServiceClient();
 
-    if (!supabase) {
-      return NextResponse.json({ saved: false, fallback: true });
-    }
-
-    const { error } = await supabase
-      .from("context_comments")
-      .update({ promoted_at: payload.promotedAt })
-      .eq("id", payload.commentId);
-
-    if (error) {
-      return jsonError("Failed to update discussion share status", 500);
-    }
+    await prisma.contextComment.update({
+      where: { id: payload.commentId },
+      data: {
+        promotedAt: new Date(payload.promotedAt),
+      },
+    });
 
     return NextResponse.json({ saved: true });
   } catch (error) {
