@@ -1,8 +1,32 @@
-"use client";
+﻿"use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import type { Locale } from "@/lib/i18n/dictionaries";
+
+type EnemyType = "spell" | "meaning";
+
+type WordEntry = {
+  word: string;
+  meaningEn: string;
+  meaningZh: string;
+  examples: Array<{ en: string; zh: string }>;
+  uk: string;
+  us: string;
+};
+
+type BattleQuestion = {
+  type: EnemyType;
+  entry: WordEntry;
+  maskedWord: string;
+  options: WordEntry[];
+  correctOptionIndex: number;
+};
+
+const TOTAL_WAVES = 6;
+const MAX_HP = 5;
+const RECOVER_HP = 3;
 
 const BANK_LABELS: Record<string, string> = {
   general: "General Academic",
@@ -13,894 +37,326 @@ const BANK_LABELS: Record<string, string> = {
   transport: "Transportation Engineering",
 };
 
-export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string }) {
-  const [answer, setAnswer] = useState("");
+const WORD_POOL: WordEntry[] = [
+  { word: "algorithm", meaningEn: "A step-by-step method.", meaningZh: "步骤化求解方法。", examples: [{ en: "This algorithm is fast.", zh: "这个算法很快。" }], uk: "UK /ˈælɡərɪðəm/", us: "US /ˈælɡərɪðəm/" },
+  { word: "dataset", meaningEn: "A structured data collection.", meaningZh: "结构化数据集合。", examples: [{ en: "The dataset is clean.", zh: "这个数据集很干净。" }], uk: "UK /ˈdeɪtəset/", us: "US /ˈdeɪtəset/" },
+  { word: "protocol", meaningEn: "A formal communication rule.", meaningZh: "正式通信规则。", examples: [{ en: "HTTPS is a protocol.", zh: "HTTPS 是一种协议。" }], uk: "UK /ˈprəʊtəkɒl/", us: "US /ˈproʊtəkɔːl/" },
+  { word: "optimize", meaningEn: "Make as effective as possible.", meaningZh: "使其尽可能高效。", examples: [{ en: "Optimize this query.", zh: "优化这个查询。" }], uk: "UK /ˈɒptɪmaɪz/", us: "US /ˈɑːptəmaɪz/" },
+  { word: "resilient", meaningEn: "Able to recover quickly.", meaningZh: "能快速恢复。", examples: [{ en: "A resilient design helps.", zh: "有韧性的设计很有帮助。" }], uk: "UK /rɪˈzɪliənt/", us: "US /rɪˈzɪliənt/" },
+  { word: "simulate", meaningEn: "Imitate system behavior.", meaningZh: "模拟系统行为。", examples: [{ en: "Simulate user traffic.", zh: "模拟用户流量。" }], uk: "UK /ˈsɪmjʊleɪt/", us: "US /ˈsɪmjəleɪt/" },
+  { word: "robust", meaningEn: "Strong and reliable.", meaningZh: "强健且可靠。", examples: [{ en: "Need a robust service.", zh: "需要稳健的服务。" }], uk: "UK /rəʊˈbʌst/", us: "US /roʊˈbʌst/" },
+  { word: "inference", meaningEn: "A conclusion from evidence.", meaningZh: "依据证据得出的推断。", examples: [{ en: "The inference is correct.", zh: "这个推断是正确的。" }], uk: "UK /ˈɪnfərəns/", us: "US /ˈɪnfərəns/" },
+];
 
-  const copy = useMemo(
+const shuffle = <T,>(list: T[]) => {
+  const copy = [...list];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+};
+
+const maskWord = (word: string) => {
+  const idx = Math.min(2, Math.max(1, word.length - 2));
+  return word
+    .split("")
+    .map((ch, i) => (i === idx ? "_" : ch))
+    .join("")
+    .toUpperCase();
+};
+
+const buildQuestions = (): BattleQuestion[] =>
+  shuffle(WORD_POOL)
+    .slice(0, TOTAL_WAVES)
+    .map((entry, index) => {
+      const options = shuffle([entry, ...shuffle(WORD_POOL.filter((w) => w.word !== entry.word)).slice(0, 3)]);
+      return {
+        type: index % 2 === 0 ? "spell" : "meaning",
+        entry,
+        maskedWord: maskWord(entry.word),
+        options,
+        correctOptionIndex: options.findIndex((o) => o.word === entry.word),
+      };
+    });
+
+export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string }) {
+  const router = useRouter();
+  const questions = useMemo(() => buildQuestions(), []);
+  const initialIdle = locale === "zh" ? "按 Enter 提交答案。" : "Press Enter to submit.";
+  const [answer, setAnswer] = useState("");
+  const [hp, setHp] = useState(MAX_HP);
+  const [score, setScore] = useState(0);
+  const [completedWaves, setCompletedWaves] = useState(0);
+  const [enemyProgress, setEnemyProgress] = useState(0);
+  const [feedback, setFeedback] = useState(initialIdle);
+  const [feedbackTone, setFeedbackTone] = useState<"ok" | "bad" | "warn">("warn");
+  const [showPause, setShowPause] = useState(false);
+  const [showCritical, setShowCritical] = useState(false);
+  const [showRecovery, setShowRecovery] = useState(false);
+  const [isVictory, setIsVictory] = useState(false);
+  const [isResolving, setIsResolving] = useState(false);
+  const [wrongWords, setWrongWords] = useState<WordEntry[]>([]);
+  const [reviewWords, setReviewWords] = useState<WordEntry[]>([]);
+  const [reviewIndex, setReviewIndex] = useState(0);
+  const [reviewDone, setReviewDone] = useState(false);
+
+  const question = questions[Math.min(completedWaves, TOTAL_WAVES - 1)];
+  const reviewWord = reviewWords[reviewIndex] ?? questions[0]?.entry;
+
+  const t = useMemo(
     () =>
       locale === "zh"
         ? {
-            discipline: "学科",
-            hp: "生命值",
-            score: "分数",
-            threat: "威胁等级",
-            mode: "拼写模式",
-            hint: "输入完整单词来击败最前方怪物。",
-            answerTitle: "作答区",
-            enterHint: "按 Enter 提交",
-            placeholder: "在这里输入完整单词...",
-            attack: "攻击",
-            unified: "拼写题与释义题共用一个输入框。",
-            shield: "回答错误 = 护盾受损",
+            discipline: "学科", hp: "生命值", score: "分数", wave: "波次", pause: "暂停", settings: "设置", exit: "退出",
+            core: "Knowledge Core", adv: "敌人推进中", answerArea: "作答区", enter: "按 Enter 提交", attack: "攻击",
+            placeholderSpell: "输入完整单词...", placeholderMeaning: "输入选项编号（例如 2）...",
+            spellMode: "拼写模式", meaningMode: "释义模式", spellHint: "输入完整单词来击败怪物。", meaningHint: "输入正确选项编号（1-4）。",
+            idle: "按 Enter 提交答案。", empty: "先输入答案再攻击。", ok: "命中！怪物被击退。", bad: "回答错误，护盾受损。", timeout: "怪物突破防线，护盾受损。",
+            pauseTitle: "战斗已暂停", pauseDesc: "战场已冻结，准备好后继续，或返回主页。", resume: "继续", home: "返回主页",
+            criticalTitle: "SYSTEM CRITICAL", criticalDesc: "核心受损，需要紧急词汇恢复后再继续战斗。", recovery: "开始恢复",
+            reviewTitle: "WORD REVIEW", meaning: "词义", examples: "例句", next: "下一词", back: "返回防守", reviewHint: "复习该词后继续。", reviewDone: "复习完成，核心护盾已恢复。",
+            victoryWord: "VICTORY", victoryHint: "全部波次已完成，防守成功！", settingsSoon: "设置面板将在后续版本开放。",
           }
         : {
-            discipline: "Discipline",
-            hp: "HP",
-            score: "Score",
-            threat: "Threat",
-            mode: "Spelling Mode",
-            hint: "Retype the complete word to defeat the front monster.",
-            answerTitle: "Answer Area",
-            enterHint: "Press Enter To Submit",
-            placeholder: "Type the full word here...",
-            attack: "Attack",
-            unified: "One unified input box for spelling and meaning questions.",
-            shield: "Wrong answer = Shield damage",
+            discipline: "Discipline", hp: "HP", score: "Score", wave: "Wave", pause: "Pause", settings: "Settings", exit: "Exit",
+            core: "Knowledge Core", adv: "Enemy Advancing", answerArea: "Answer Area", enter: "Press Enter To Submit", attack: "Attack",
+            placeholderSpell: "Type the full word here...", placeholderMeaning: "Type option number (e.g. 2)...",
+            spellMode: "Spelling Mode", meaningMode: "Meaning Mode", spellHint: "Retype the complete word to defeat the monster.", meaningHint: "Type the correct option number (1-4).",
+            idle: "Press Enter to submit.", empty: "Type an answer before attacking.", ok: "Direct hit! Enemy eliminated.", bad: "Wrong answer. Shield damaged.", timeout: "Enemy breached the core. Shield damaged.",
+            pauseTitle: "Battle Paused", pauseDesc: "The battlefield is frozen. Resume when ready, or return home.", resume: "Resume", home: "Return Home",
+            criticalTitle: "SYSTEM CRITICAL", criticalDesc: "Core breached. Emergency review is required.", recovery: "Start Recovery",
+            reviewTitle: "WORD REVIEW", meaning: "Meaning", examples: "Examples", next: "Next Word", back: "Return to Defense", reviewHint: "Review this word and continue.", reviewDone: "Review complete. Core shield restored.",
+            victoryWord: "VICTORY", victoryHint: "All waves cleared. Defense successful!", settingsSoon: "Settings panel will be available later.",
           },
     [locale],
   );
+  const rememberWrong = useCallback((entry: WordEntry) => {
+    setWrongWords((prev) => (prev.some((item) => item.word === entry.word) ? prev : [...prev, entry].slice(-8)));
+  }, []);
 
-  const disciplineName = BANK_LABELS[bank] ?? BANK_LABELS.general;
+  const advanceWave = useCallback(() => {
+    setCompletedWaves((prev) => {
+      const next = prev + 1;
+      if (next >= TOTAL_WAVES) {
+        setIsVictory(true);
+        setShowRecovery(true);
+        setReviewDone(true);
+      }
+      return Math.min(next, TOTAL_WAVES);
+    });
+    setEnemyProgress(0);
+    setAnswer("");
+  }, []);
+
+  const applyDamage = useCallback(
+    (msg: string, advanceAfter: boolean) => {
+      setHp((prev) => {
+        const nextHp = Math.max(0, prev - 1);
+        if (nextHp <= 0) setShowCritical(true);
+        if (nextHp > 0 && advanceAfter) advanceWave();
+        return nextHp;
+      });
+      setFeedbackTone("bad");
+      setFeedback(msg);
+      setEnemyProgress(0);
+      setAnswer("");
+    },
+    [advanceWave],
+  );
+
+  const battleActive = !showPause && !showCritical && !showRecovery && !isVictory && !isResolving && hp > 0 && completedWaves < TOTAL_WAVES;
+
+  useEffect(() => {
+    if (!battleActive) return;
+    const timer = window.setInterval(() => setEnemyProgress((prev) => Math.min(100, prev + 1.5)), 120);
+    return () => window.clearInterval(timer);
+  }, [battleActive]);
+
+  useEffect(() => {
+    if (!battleActive || enemyProgress < 100 || !question) return;
+    const timer = window.setTimeout(() => {
+      rememberWrong(question.entry);
+      applyDamage(t.timeout, true);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [applyDamage, battleActive, enemyProgress, question, rememberWrong, t.timeout]);
+
+  const submit = useCallback(() => {
+    if (!question || isVictory) return;
+    const normalized = answer.trim().toLowerCase();
+    if (!normalized) {
+      setFeedbackTone("warn");
+      setFeedback(t.empty);
+      return;
+    }
+
+    let correct = false;
+    if (question.type === "spell") {
+      correct = normalized === question.entry.word.toLowerCase();
+    } else {
+      const idx = question.correctOptionIndex + 1;
+      const en = question.options[question.correctOptionIndex].meaningEn.toLowerCase();
+      const zh = question.options[question.correctOptionIndex].meaningZh.toLowerCase();
+      correct = normalized === String(idx) || normalized === `${idx}.` || normalized === en || normalized === zh;
+    }
+
+    if (correct) {
+      setIsResolving(true);
+      setFeedbackTone("ok");
+      setFeedback(t.ok);
+      setScore((prev) => prev + 150 + Math.max(0, 5 - Math.floor(enemyProgress / 20)) * 20);
+      window.setTimeout(() => {
+        advanceWave();
+        setIsResolving(false);
+      }, 380);
+      return;
+    }
+
+    rememberWrong(question.entry);
+    applyDamage(t.bad, false);
+  }, [advanceWave, answer, applyDamage, enemyProgress, isVictory, question, rememberWrong, t.bad, t.empty, t.ok]);
+
+  const openRecovery = useCallback(() => {
+    const queue = [...wrongWords, ...questions.map((q) => q.entry)]
+      .filter((entry, index, arr) => arr.findIndex((item) => item.word === entry.word) === index)
+      .slice(0, 3);
+    setReviewWords(queue);
+    setReviewIndex(0);
+    setReviewDone(false);
+    setShowCritical(false);
+    setShowRecovery(true);
+    setFeedbackTone("warn");
+    setFeedback(t.reviewHint);
+  }, [questions, t.reviewHint, wrongWords]);
+
+  const nextReview = useCallback(() => {
+    setReviewIndex((prev) => {
+      const next = prev + 1;
+      if (next >= reviewWords.length) {
+        setReviewDone(true);
+        setFeedbackTone("ok");
+        setFeedback(t.reviewDone);
+        return prev;
+      }
+      return next;
+    });
+  }, [reviewWords.length, t.reviewDone]);
+
+  const returnFromRecovery = useCallback(() => {
+    if (isVictory) {
+      router.push(`/games/word-game?lang=${locale}`);
+      return;
+    }
+    setShowRecovery(false);
+    setShowCritical(false);
+    setReviewDone(false);
+    setReviewIndex(0);
+    setHp((prev) => Math.max(prev, RECOVER_HP));
+    setEnemyProgress(0);
+    setFeedbackTone("warn");
+    setFeedback(t.idle);
+  }, [isVictory, locale, router, t.idle]);
+
+  const speak = useCallback((text: string, lang: string) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  }, []);
+
+  const enemyLeft = Math.max(24, 74 - enemyProgress * 0.5);
 
   return (
     <div className="word-battle-root" data-page="battle">
       <main className="scene">
         <section className="top-hud">
-          <div className="hud-card">
-            <span>{copy.discipline}</span>
-            <strong>{disciplineName}</strong>
-          </div>
-          <div className="hud-card">
-            <span>{copy.hp}</span>
-            <strong>5 / 5</strong>
-          </div>
-          <div className="hud-card">
-            <span>{copy.score}</span>
-            <strong>1450</strong>
-          </div>
-          <div className="hud-card">
-            <span>{copy.threat}</span>
-            <strong>03</strong>
+          <div className="hud-card discipline-card"><span>{t.discipline}</span><strong id="sDis">{BANK_LABELS[bank] ?? BANK_LABELS.general}</strong></div>
+          <div className="hud-card"><span>{t.hp}</span><strong id="sHp" className={hp <= 2 ? "red" : ""}>{hp} / {MAX_HP}</strong></div>
+          <div className="hud-card"><span>{t.score}</span><strong id="sScore">{score}</strong></div>
+          <div className="hud-card"><span>{t.wave}</span><strong id="sWave">{Math.min(completedWaves + 1, TOTAL_WAVES)}/{TOTAL_WAVES}</strong></div>
+          <div className="system-controls" aria-label="System controls">
+            <button id="pauseBattle" className="system-btn" type="button" onClick={() => setShowPause(true)}><span className="system-icon">II</span><span className="system-label">{t.pause}</span></button>
+            <button id="openSettings" className="system-btn" type="button" onClick={() => { setFeedbackTone("warn"); setFeedback(t.settingsSoon); }}><span className="system-icon">⚙</span><span className="system-label">{t.settings}</span></button>
+            <button id="exitBattle" className="system-btn exit-btn" type="button" onClick={() => router.push(`/games/word-game?lang=${locale}`)}><span className="system-icon">×</span><span className="system-label">{t.exit}</span></button>
           </div>
         </section>
 
         <section className="battle-wrap">
-          <div className="sky-layer">
-            <div className="cloud c1" />
-            <div className="cloud c2" />
-            <div className="cloud c3" />
-          </div>
+          <div className="sky-layer" />
           <div className="mountains" />
           <div className="ground" />
-          <div className="bush b1" />
-          <div className="bush b2" />
-
           <div className="battle-lane">
-            <div className="tower-block">
-              <div className="tower-top" />
-              <div className="tower-core">
-                <div className="stone-shadow" />
-              </div>
-              <div className="gate-ring" />
-            </div>
-
-            <div className="ghost-group">
-              <div className="ghost g4">
-                <div className="ghost-body" />
-                <div className="ghost-face">
-                  <div className="ghost-eye left" />
-                  <div className="ghost-eye right" />
-                  <div className="ghost-mouth" />
+            <div className="tower-block"><div className="tower-top" /><div className="tower-core"><div className="stone-shadow" /></div><div className="gate-ring" /></div>
+            <aside className="shield-plaque"><h2>{t.core}</h2><div className="shield-bar"><div id="shieldFill" style={{ width: `${(hp / MAX_HP) * 100}%` }} /></div><div id="shieldText">Shield {hp} / {MAX_HP}</div></aside>
+            {question ? (
+              <div id="enemy" className={`enemy ${question.type}`} style={{ left: `${enemyLeft}%` }}>
+                <div className="enemy-body" /><div className="enemy-face"><div className="enemy-eye left" /><div className="enemy-eye right" /><div className="enemy-mouth" /></div>
+                <div className="question-banner">
+                  <div id="enemyType">{question.type === "spell" ? t.spellMode : t.meaningMode}</div>
+                  <div id="enemyWord">{question.type === "spell" ? question.maskedWord : question.entry.word.toUpperCase()}</div>
+                  <div id="enemyHint">{question.type === "spell" ? t.spellHint : t.meaningHint}</div>
+                  <div id="enemyOptions">{question.type === "meaning" ? question.options.map((option, i) => <span className="enemy-option" key={`${option.word}-${i}`}>{i + 1}. {locale === "zh" ? option.meaningZh : option.meaningEn}</span>) : null}</div>
                 </div>
               </div>
-              <div className="ghost g3">
-                <div className="ghost-body" />
-                <div className="ghost-face">
-                  <div className="ghost-eye left" />
-                  <div className="ghost-eye right" />
-                  <div className="ghost-mouth" />
-                </div>
-              </div>
-              <div className="ghost g2">
-                <div className="ghost-body" />
-                <div className="ghost-face">
-                  <div className="ghost-eye left" />
-                  <div className="ghost-eye right" />
-                  <div className="ghost-mouth" />
-                </div>
-              </div>
-              <div className="ghost g1">
-                <div className="ghost-body" />
-                <div className="ghost-face">
-                  <div className="ghost-eye left" />
-                  <div className="ghost-eye right" />
-                  <div className="ghost-mouth" />
-                </div>
-              </div>
-            </div>
-
-            <div className="question-banner">
-              <div className="banner-mode">{copy.mode}</div>
-              <div className="banner-word">A_GORITHM</div>
-              <div className="banner-hint">{copy.hint}</div>
-            </div>
+            ) : null}
+            <div className="lane-progress"><div className="label">{t.adv}</div><div className="progress-track"><div id="enemyProg" style={{ width: `${enemyProgress}%` }} /></div></div>
           </div>
         </section>
 
         <section className="console-wrap">
-          <form
-            className="answer-board"
-            onSubmit={(event) => {
-              event.preventDefault();
-            }}
-          >
+          <div className="answer-board">
             <div className="answer-content">
-              <div className="answer-head">
-                <strong>{copy.answerTitle}</strong>
-                <span>{copy.enterHint}</span>
-              </div>
-
-              <div className="answer-input-row">
-                <label className="answer-slot" htmlFor="battle-answer-input">
-                  <input
-                    id="battle-answer-input"
-                    className="answer-input"
-                    type="text"
-                    value={answer}
-                    onChange={(event) => setAnswer(event.target.value)}
-                    placeholder={copy.placeholder}
-                  />
-                </label>
-                <button className="submit-btn" type="submit">
-                  {copy.attack}
-                </button>
-              </div>
-
-              <div className="answer-note">
-                <span>{copy.unified}</span>
-                <span>{copy.shield}</span>
-              </div>
+              <div className="answer-head"><strong>{t.answerArea}</strong><span>{t.enter}</span></div>
+              <form className="answer-input-row" onSubmit={(e) => { e.preventDefault(); submit(); }}>
+                <input id="answer" type="text" autoComplete="off" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder={question?.type === "meaning" ? t.placeholderMeaning : t.placeholderSpell} disabled={!battleActive} />
+                <button id="submit" type="submit" disabled={!battleActive}>{t.attack}</button>
+              </form>
+              <div id="feedback" className={`feedback ${feedbackTone}`}>{feedback}</div>
             </div>
-          </form>
+          </div>
         </section>
       </main>
+      <div id="critical" style={{ display: showCritical ? "flex" : "none" }}>
+        <section className="overlay-card"><div className="eyebrow">Emergency Warning</div><h2>{t.criticalTitle}</h2><p>{t.criticalDesc}</p><button id="goRecovery" type="button" onClick={openRecovery}>{t.recovery}</button></section>
+      </div>
+
+      <div id="pauseOverlay" style={{ display: showPause ? "flex" : "none" }}>
+        <section className="overlay-card"><div className="eyebrow">Battle Paused</div><h2>{t.pauseTitle}</h2><p>{t.pauseDesc}</p><div className="pause-actions"><button id="resumeBattle" type="button" onClick={() => setShowPause(false)}>{t.resume}</button><button id="leaveBattle" type="button" onClick={() => router.push(`/games/word-game?lang=${locale}`)}>{t.home}</button></div></section>
+      </div>
+
+      <div id="recoveryOverlay" style={{ display: showRecovery ? "flex" : "none" }}>
+        <section className={`review-modal ${reviewDone ? "is-done" : ""}`}>
+          <div className="review-top"><div>{t.reviewTitle}</div><div id="mProg">{isVictory ? `${TOTAL_WAVES}/${TOTAL_WAVES}` : `${Math.min(reviewIndex + 1, Math.max(reviewWords.length, 1))}/${Math.max(reviewWords.length, 1)}`}</div></div>
+          <h2 id="mWord">{isVictory ? t.victoryWord : reviewWord?.word ?? "ability"}</h2>
+          <div id="mReviewBody">
+            <div className="m-pron-row"><div className="m-pron"><button id="mSpeakUk" className="m-speak" type="button" onClick={() => speak(reviewWord?.word ?? "ability", "en-GB")}>▶</button><span>{reviewWord?.uk ?? "UK /əˈbɪləti/"}</span></div><div className="m-pron"><button id="mSpeakUs" className="m-speak" type="button" onClick={() => speak(reviewWord?.word ?? "ability", "en-US")}>▶</button><span>{reviewWord?.us ?? "US /əˈbɪləti/"}</span></div></div>
+            <section className="m-section"><h3>{t.meaning}</h3><div id="mMeaning">{locale === "zh" ? reviewWord?.meaningZh : reviewWord?.meaningEn}</div></section>
+            <section className="m-section"><h3>{t.examples}</h3><div id="mExamples">{(reviewWord?.examples ?? []).map((ex) => <div key={ex.en} className="m-ex"><p className="m-ex-en">{ex.en}</p><p className="m-ex-zh">{ex.zh}</p></div>)}</div></section>
+            {!reviewDone ? <div className="m-actions"><button id="mNext" type="button" onClick={nextReview}>{t.next}</button></div> : null}
+          </div>
+          <div id="mFeedback">{isVictory ? t.victoryHint : reviewDone ? t.reviewDone : t.reviewHint}</div>
+          <div className="m-actions"><button id="mReturn" type="button" onClick={returnFromRecovery}>{isVictory ? t.home : t.back}</button></div>
+        </section>
+      </div>
 
       <style jsx global>{`
-        .word-battle-root {
-          --sky-top: #7fd7e9;
-          --sky-mid: #a6f0e4;
-          --sky-bottom: #d3ffd6;
-          --hill-far: #94d8c8;
-          --hill-mid: #6bbb8d;
-          --hill-near: #5a9d63;
-          --grass-light: #96d45a;
-          --grass-mid: #73b246;
-          --grass-dark: #406427;
-          --stone-top: #d1c1a1;
-          --stone-mid: #968a7a;
-          --stone-dark: #584d4b;
-          --wood-light: #d18d53;
-          --wood-mid: #9a5737;
-          --wood-dark: #64311f;
-          --ui-cream: #f6ecd0;
-          --ui-shadow: #4f3422;
-          --purple-main: #58408f;
-          --purple-dark: #33225b;
-          --purple-line: #251945;
-          --purple-glow: #e8b6ff;
-          --ink: #23192a;
-          --white: #fffef8;
-          --danger: #e94c54;
-          --ok: #74d55a;
-          position: relative;
-          min-height: 100vh;
-          font-family: "Trebuchet MS", "Segoe UI", sans-serif;
-          color: var(--white);
-          overflow: hidden;
-          background: radial-gradient(circle at 50% 22%, rgba(255, 255, 255, 0.58), transparent 20%),
-            linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 58%, var(--sky-bottom) 100%);
-        }
-
-        .word-battle-root * {
-          box-sizing: border-box;
-        }
-
-        .word-battle-root::before,
-        .word-battle-root::after {
-          content: "";
-          position: absolute;
-          inset: auto 0 0 0;
-          pointer-events: none;
-          z-index: 0;
-        }
-
-        .word-battle-root::before {
-          height: 48vh;
-          background: radial-gradient(ellipse at 15% 82%, rgba(41, 72, 37, 0.28), transparent 20%),
-            radial-gradient(ellipse at 83% 86%, rgba(41, 72, 37, 0.24), transparent 16%),
-            linear-gradient(180deg, rgba(140, 226, 190, 0), rgba(140, 226, 190, 0.16));
-        }
-
-        .word-battle-root::after {
-          height: 24vh;
-          background: linear-gradient(180deg, rgba(80, 135, 51, 0) 0%, rgba(80, 135, 51, 0.1) 100%);
-        }
-
-        .word-battle-root .scene {
-          position: relative;
-          z-index: 1;
-          width: min(1380px, calc(100vw - 40px));
-          height: min(920px, calc(100vh - 28px));
-          margin: 14px auto;
-          padding: 14px;
-          border-radius: 34px;
-          background: linear-gradient(180deg, rgba(110, 94, 176, 0.18), rgba(83, 67, 142, 0.08)), rgba(33, 24, 64, 0.18);
-          box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.16), 0 24px 50px rgba(33, 24, 64, 0.22);
-          display: grid;
-          grid-template-rows: 62px 1fr 184px;
-          gap: 14px;
-          overflow: hidden;
-        }
-
-        .word-battle-root .top-hud {
-          display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
-          gap: 12px;
-        }
-
-        .word-battle-root .hud-card {
-          border-radius: 22px;
-          padding: 12px 18px;
-          background: linear-gradient(180deg, rgba(61, 45, 112, 0.94), rgba(47, 33, 88, 0.98));
-          border: 3px solid var(--purple-line);
-          box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.14), inset 0 -4px 0 rgba(14, 9, 31, 0.22), 0 8px 0 rgba(42, 28, 77, 0.55);
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-        }
-
-        .word-battle-root .hud-card span {
-          font-size: 0.76rem;
-          letter-spacing: 0.16em;
-          text-transform: uppercase;
-          color: rgba(249, 241, 255, 0.74);
-        }
-
-        .word-battle-root .hud-card strong {
-          margin-top: 4px;
-          font-size: 1.55rem;
-          line-height: 1;
-        }
-
-        .word-battle-root .battle-wrap {
-          position: relative;
-          overflow: hidden;
-          border-radius: 30px;
-          background: linear-gradient(180deg, rgba(188, 252, 255, 0.28), rgba(90, 141, 202, 0.05) 40%, rgba(0, 0, 0, 0) 41%),
-            linear-gradient(180deg, rgba(98, 126, 220, 0.22), rgba(38, 42, 113, 0.06));
-          border: 4px solid rgba(47, 33, 88, 0.68);
-          box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.12), 0 12px 0 rgba(50, 33, 87, 0.4);
-        }
-
-        .word-battle-root .sky-layer {
-          position: absolute;
-          inset: 0 0 42% 0;
-          background: radial-gradient(circle at 52% 20%, rgba(255, 255, 255, 0.6), transparent 12%),
-            linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0));
-        }
-
-        .word-battle-root .cloud {
-          position: absolute;
-          background: rgba(247, 255, 255, 0.58);
-          border-radius: 999px;
-          box-shadow: 40px 6px 0 0 rgba(247, 255, 255, 0.48), 18px -12px 0 0 rgba(247, 255, 255, 0.56);
-        }
-
-        .word-battle-root .cloud.c1 {
-          width: 110px;
-          height: 28px;
-          top: 40px;
-          left: 90px;
-        }
-
-        .word-battle-root .cloud.c2 {
-          width: 140px;
-          height: 32px;
-          top: 62px;
-          right: 180px;
-        }
-
-        .word-battle-root .cloud.c3 {
-          width: 95px;
-          height: 24px;
-          top: 126px;
-          left: 44%;
-        }
-
-        .word-battle-root .mountains {
-          position: absolute;
-          left: 0;
-          right: 0;
-          bottom: 30%;
-          height: 220px;
-        }
-
-        .word-battle-root .mountains::before,
-        .word-battle-root .mountains::after {
-          content: "";
-          position: absolute;
-          inset: auto 0 0 0;
-          height: 100%;
-        }
-
-        .word-battle-root .mountains::before {
-          clip-path: polygon(0% 100%, 12% 48%, 24% 100%, 38% 38%, 52% 100%, 67% 42%, 82% 100%, 100% 52%, 100% 100%);
-          background-color: var(--hill-far);
-          opacity: 0.95;
-        }
-
-        .word-battle-root .mountains::after {
-          transform: translateY(46px);
-          clip-path: polygon(0% 100%, 10% 62%, 24% 100%, 41% 54%, 56% 100%, 74% 48%, 89% 100%, 100% 66%, 100% 100%);
-          background: var(--hill-mid);
-          opacity: 0.96;
-        }
-
-        .word-battle-root .ground {
-          position: absolute;
-          left: -2%;
-          right: -2%;
-          bottom: -8%;
-          height: 40%;
-          background: radial-gradient(circle at 18% 12%, rgba(194, 240, 103, 0.8), rgba(194, 240, 103, 0) 18%),
-            radial-gradient(circle at 80% 18%, rgba(194, 240, 103, 0.5), rgba(194, 240, 103, 0) 16%),
-            linear-gradient(180deg, var(--grass-light) 0%, var(--grass-mid) 50%, var(--grass-dark) 100%);
-          clip-path: polygon(0 42%, 12% 28%, 23% 26%, 38% 34%, 50% 31%, 60% 24%, 72% 28%, 82% 18%, 100% 26%, 100% 100%, 0 100%);
-          box-shadow: inset 0 10px 0 rgba(255, 255, 255, 0.15);
-        }
-
-        .word-battle-root .ground::before {
-          content: "";
-          position: absolute;
-          left: 0;
-          right: 0;
-          top: 8px;
-          height: 26px;
-          background: linear-gradient(180deg, rgba(240, 255, 184, 0.55), rgba(240, 255, 184, 0));
-          opacity: 0.45;
-        }
-
-        .word-battle-root .bush {
-          position: absolute;
-          bottom: 18px;
-          width: 160px;
-          height: 96px;
-          background: var(--grass-dark);
-          border-radius: 60px;
-          filter: drop-shadow(0 8px 0 rgba(25, 56, 20, 0.5));
-        }
-
-        .word-battle-root .bush::before,
-        .word-battle-root .bush::after {
-          content: "";
-          position: absolute;
-          bottom: 10px;
-          width: 72px;
-          height: 72px;
-          border-radius: 50%;
-          background: inherit;
-        }
-
-        .word-battle-root .bush::before {
-          left: 14px;
-        }
-
-        .word-battle-root .bush::after {
-          right: 8px;
-        }
-
-        .word-battle-root .bush.b1 {
-          left: -10px;
-          transform: scale(1.05);
-        }
-
-        .word-battle-root .bush.b2 {
-          right: -18px;
-          width: 190px;
-          height: 104px;
-        }
-
-        .word-battle-root .battle-lane {
-          position: absolute;
-          left: 7%;
-          right: 6%;
-          bottom: 8%;
-          top: 10%;
-        }
-
-        .word-battle-root .tower-block {
-          position: absolute;
-          left: 6%;
-          bottom: 17%;
-          width: 220px;
-          height: 290px;
-          filter: drop-shadow(0 18px 0 rgba(69, 53, 42, 0.32));
-        }
-
-        .word-battle-root .tower-core {
-          position: absolute;
-          inset: 52px 30px 0;
-          background: radial-gradient(circle at 32% 16%, rgba(255, 255, 255, 0.18), transparent 18%),
-            linear-gradient(180deg, var(--stone-top) 0%, var(--stone-mid) 44%, #786f68 100%);
-          border: 4px solid #4f4540;
-          border-radius: 28px 28px 22px 22px;
-          clip-path: polygon(12% 0, 88% 0, 100% 100%, 0 100%);
-        }
-
-        .word-battle-root .tower-core::before {
-          content: "";
-          position: absolute;
-          left: 50%;
-          bottom: 0;
-          transform: translateX(-50%);
-          width: 78px;
-          height: 106px;
-          background: linear-gradient(180deg, var(--wood-light), var(--wood-mid));
-          border: 4px solid var(--wood-dark);
-          border-bottom-width: 6px;
-          border-radius: 32px 32px 14px 14px;
-        }
-
-        .word-battle-root .tower-core::after {
-          content: "";
-          position: absolute;
-          left: 50%;
-          top: 40px;
-          transform: translateX(-50%);
-          width: 46px;
-          height: 66px;
-          background: linear-gradient(180deg, rgba(40, 25, 24, 0.8), rgba(71, 52, 48, 0.94));
-          border: 4px solid #5a5048;
-          border-radius: 26px 26px 12px 12px;
-          box-shadow: inset 0 0 0 3px rgba(212, 199, 177, 0.24);
-        }
-
-        .word-battle-root .tower-top {
-          position: absolute;
-          left: 18px;
-          right: 18px;
-          top: 14px;
-          height: 82px;
-          background: linear-gradient(180deg, #d7c8ab 0%, #9e8f7f 100%);
-          border: 4px solid #4f4540;
-          border-radius: 26px;
-          box-shadow: inset 0 -10px 0 rgba(63, 51, 47, 0.24);
-        }
-
-        .word-battle-root .tower-top::before {
-          content: "";
-          position: absolute;
-          left: 10px;
-          right: 10px;
-          top: -14px;
-          height: 28px;
-          background: linear-gradient(
-            90deg,
-            transparent 6%,
-            #c5b391 6%,
-            #c5b391 15%,
-            transparent 15%,
-            transparent 27%,
-            #c5b391 27%,
-            #c5b391 36%,
-            transparent 36%,
-            transparent 48%,
-            #c5b391 48%,
-            #c5b391 57%,
-            transparent 57%,
-            transparent 69%,
-            #c5b391 69%,
-            #c5b391 78%,
-            transparent 78%,
-            transparent 90%,
-            #c5b391 90%,
-            #c5b391 100%
-          );
-        }
-
-        .word-battle-root .stone-shadow {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(90deg, rgba(49, 40, 36, 0.32), transparent 22%, transparent 76%, rgba(255, 255, 255, 0.12) 100%);
-          mix-blend-mode: multiply;
-          opacity: 0.8;
-          border-radius: inherit;
-          pointer-events: none;
-        }
-
-        .word-battle-root .gate-ring {
-          position: absolute;
-          left: 50%;
-          bottom: 38px;
-          transform: translateX(30px);
-          width: 16px;
-          height: 16px;
-          border-radius: 50%;
-          border: 4px solid #51443b;
-          background: rgba(255, 255, 255, 0.22);
-          z-index: 2;
-        }
-
-        .word-battle-root .ghost-group {
-          position: absolute;
-          right: 6%;
-          top: 13%;
-          width: 52%;
-          height: 60%;
-        }
-
-        .word-battle-root .ghost {
-          position: absolute;
-          width: var(--size, 120px);
-          height: calc(var(--size, 120px) * 0.95);
-          filter: drop-shadow(0 18px 0 rgba(74, 44, 91, 0.2)) drop-shadow(0 24px 28px rgba(53, 28, 61, 0.18));
-        }
-
-        .word-battle-root .ghost-body {
-          position: absolute;
-          inset: 0;
-          background: radial-gradient(circle at 38% 22%, rgba(255, 255, 255, 0.14), transparent 18%),
-            linear-gradient(180deg, #7253b9 0%, #4c317f 58%, #2c1a51 100%);
-          border: 4px solid #2e1b46;
-          border-radius: 48% 48% 40% 40% / 42% 42% 55% 55%;
-        }
-
-        .word-battle-root .ghost-body::before,
-        .word-battle-root .ghost-body::after {
-          content: "";
-          position: absolute;
-          top: 18px;
-          width: 24px;
-          height: 34px;
-          background: inherit;
-          border: 4px solid #2e1b46;
-          border-radius: 50% 50% 0 0;
-        }
-
-        .word-battle-root .ghost-body::before {
-          right: 8px;
-          transform: rotate(18deg);
-          border-bottom: none;
-        }
-
-        .word-battle-root .ghost-body::after {
-          left: 10px;
-          transform: rotate(-14deg);
-          border-bottom: none;
-          opacity: 0.88;
-        }
-
-        .word-battle-root .ghost-face {
-          position: absolute;
-          inset: 0;
-        }
-
-        .word-battle-root .ghost-eye {
-          position: absolute;
-          top: 38px;
-          width: 22px;
-          height: 18px;
-          background: var(--purple-glow);
-          border-radius: 60% 60% 50% 50%;
-          box-shadow: 0 0 12px rgba(232, 182, 255, 0.65);
-        }
-
-        .word-battle-root .ghost-eye.left {
-          left: 34px;
-          transform: rotate(-18deg);
-        }
-
-        .word-battle-root .ghost-eye.right {
-          right: 30px;
-          transform: rotate(18deg);
-        }
-
-        .word-battle-root .ghost-mouth {
-          position: absolute;
-          left: 50%;
-          top: 70px;
-          transform: translateX(-50%);
-          width: 54px;
-          height: 24px;
-          background: #241233;
-          clip-path: polygon(0 22%, 12% 0, 26% 22%, 40% 0, 54% 22%, 68% 0, 82% 22%, 100% 0, 100% 100%, 0 100%);
-          border-radius: 0 0 14px 14px;
-          box-shadow: inset 0 -6px 0 rgba(255, 255, 255, 0.04);
-        }
-
-        .word-battle-root .ghost.g1 {
-          --size: 128px;
-          right: 12%;
-          top: 30%;
-          transform: rotate(6deg);
-        }
-
-        .word-battle-root .ghost.g2 {
-          --size: 104px;
-          right: 38%;
-          top: 14%;
-          transform: rotate(-10deg);
-        }
-
-        .word-battle-root .ghost.g3 {
-          --size: 92px;
-          right: 56%;
-          top: 2%;
-          transform: rotate(8deg);
-        }
-
-        .word-battle-root .ghost.g4 {
-          --size: 74px;
-          right: 22%;
-          top: 0;
-          transform: rotate(14deg);
-        }
-
-        .word-battle-root .question-banner {
-          position: absolute;
-          right: 11%;
-          bottom: 23%;
-          width: 320px;
-          padding: 14px 16px 12px;
-          background: linear-gradient(180deg, rgba(57, 38, 91, 0.96), rgba(36, 21, 63, 0.98));
-          border: 4px solid #27163f;
-          border-radius: 24px;
-          box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.1), 0 10px 0 rgba(43, 25, 66, 0.38);
-        }
-
-        .word-battle-root .question-banner::before {
-          content: "";
-          position: absolute;
-          inset: 10px;
-          border-radius: 16px;
-          border: 2px solid rgba(255, 214, 110, 0.24);
-          pointer-events: none;
-        }
-
-        .word-battle-root .banner-mode {
-          display: inline-block;
-          padding: 6px 12px;
-          border-radius: 999px;
-          background: linear-gradient(180deg, #ffd877, #f0ba45);
-          color: #5a370d;
-          font-size: 0.8rem;
-          font-weight: 900;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          box-shadow: 0 4px 0 rgba(135, 93, 23, 0.35);
-        }
-
-        .word-battle-root .banner-word {
-          margin-top: 12px;
-          font-size: 2.15rem;
-          font-weight: 900;
-          letter-spacing: 0.04em;
-          color: #fffdf6;
-          text-shadow: 0 3px 0 rgba(24, 10, 44, 0.4);
-        }
-
-        .word-battle-root .banner-hint {
-          margin-top: 8px;
-          color: rgba(244, 236, 255, 0.8);
-          font-size: 0.96rem;
-          line-height: 1.5;
-        }
-
-        .word-battle-root .console-wrap {
-          position: relative;
-        }
-
-        .word-battle-root .answer-board {
-          position: relative;
-          height: 100%;
-          border-radius: 28px;
-          padding: 16px 18px 18px;
-          background: linear-gradient(180deg, #ccb18a 0%, #a97f51 100%);
-          border: 4px solid #5b3421;
-          box-shadow: inset 0 4px 0 rgba(255, 255, 255, 0.28), inset 0 -8px 0 rgba(108, 64, 39, 0.35), 0 12px 0 rgba(79, 46, 27, 0.45),
-            0 24px 30px rgba(58, 34, 20, 0.2);
-        }
-
-        .word-battle-root .answer-board::before {
-          content: "";
-          position: absolute;
-          inset: 10px;
-          border-radius: 20px;
-          background: linear-gradient(180deg, #f7ebcf, #e8d4aa);
-          border: 3px solid rgba(97, 62, 36, 0.35);
-          box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.5);
-        }
-
-        .word-battle-root .answer-content {
-          position: relative;
-          z-index: 1;
-          height: 100%;
-          display: grid;
-          grid-template-rows: auto 1fr auto;
-          gap: 12px;
-        }
-
-        .word-battle-root .answer-head {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          color: #55341f;
-          font-weight: 900;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-        }
-
-        .word-battle-root .answer-head strong {
-          font-size: 1.02rem;
-        }
-
-        .word-battle-root .answer-head span {
-          font-size: 0.82rem;
-        }
-
-        .word-battle-root .answer-input-row {
-          display: grid;
-          grid-template-columns: 1fr 110px;
-          gap: 12px;
-          align-items: center;
-        }
-
-        .word-battle-root .answer-slot {
-          position: relative;
-          height: 52px;
-          border-radius: 14px;
-          background: linear-gradient(180deg, #fffef9, #f3efe6);
-          border: 3px solid #8e7762;
-          box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.65), inset 0 -4px 0 rgba(144, 128, 113, 0.22);
-          display: flex;
-          align-items: center;
-          padding: 0 18px;
-          color: rgba(74, 61, 53, 0.56);
-          font-size: 0.98rem;
-          font-weight: 700;
-        }
-
-        .word-battle-root .answer-input {
-          width: 100%;
-          height: 100%;
-          border: none;
-          outline: none;
-          background: transparent;
-          color: #4a3d35;
-          font-size: 0.98rem;
-          font-weight: 700;
-        }
-
-        .word-battle-root .answer-input::placeholder {
-          color: rgba(74, 61, 53, 0.56);
-        }
-
-        .word-battle-root .submit-btn {
-          height: 52px;
-          border-radius: 14px;
-          border: 3px solid #6f2d1e;
-          background: linear-gradient(180deg, #d97d54, #a84e30);
-          color: var(--white);
-          font-size: 1rem;
-          font-weight: 900;
-          letter-spacing: 0.06em;
-          box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.18), inset 0 -5px 0 rgba(109, 41, 25, 0.36), 0 6px 0 rgba(109, 41, 25, 0.38);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-        }
-
-        .word-battle-root .answer-note {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-          color: #61452d;
-          font-size: 0.88rem;
-          font-weight: 800;
-        }
-
-        .word-battle-root .answer-note span:last-child {
-          color: #7d3b2f;
-        }
-
-        @media (max-width: 1180px) {
-          .word-battle-root .scene {
-            width: calc(100vw - 24px);
-            height: auto;
-            min-height: calc(100vh - 24px);
-            grid-template-rows: auto minmax(420px, 1fr) 210px;
-          }
-
-          .word-battle-root .top-hud {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-          }
-
-          .word-battle-root .tower-block {
-            transform: scale(0.86);
-            transform-origin: bottom left;
-          }
-
-          .word-battle-root .question-banner {
-            width: 280px;
-            right: 6%;
-          }
-        }
-
-        @media (max-width: 860px) {
-          .word-battle-root {
-            overflow: auto;
-          }
-
-          .word-battle-root .scene {
-            width: calc(100vw - 16px);
-            margin: 8px auto;
-            padding: 10px;
-            grid-template-rows: auto 540px 210px;
-          }
-
-          .word-battle-root .top-hud {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 8px;
-          }
-
-          .word-battle-root .hud-card {
-            padding: 10px 12px;
-          }
-
-          .word-battle-root .battle-lane {
-            left: 3%;
-            right: 3%;
-            top: 8%;
-          }
-
-          .word-battle-root .tower-block {
-            left: -2%;
-            bottom: 20%;
-            transform: scale(0.72);
-            transform-origin: bottom left;
-          }
-
-          .word-battle-root .ghost-group {
-            right: -2%;
-            width: 64%;
-          }
-
-          .word-battle-root .question-banner {
-            width: 220px;
-            bottom: 20%;
-            right: 2%;
-          }
-
-          .word-battle-root .banner-word {
-            font-size: 1.7rem;
-          }
-
-          .word-battle-root .answer-input-row {
-            grid-template-columns: 1fr;
-          }
-        }
+        .word-battle-root{min-height:100vh;font-family:"Trebuchet MS","Segoe UI",sans-serif;color:#fffef8;background:radial-gradient(circle at 50% 22%,rgba(255,255,255,.58),transparent 20%),linear-gradient(180deg,#7fd7e9 0%,#a6f0e4 58%,#d3ffd6 100%)}
+        .word-battle-root *{box-sizing:border-box}.scene{width:min(1380px,calc(100vw - 40px));min-height:min(920px,calc(100vh - 28px));margin:14px auto;padding:14px;border-radius:34px;background:linear-gradient(180deg,rgba(110,94,176,.18),rgba(83,67,142,.08)),rgba(33,24,64,.18);display:grid;grid-template-rows:70px 1fr 186px;gap:24px}
+        .top-hud{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding-right:286px}.hud-card{border-radius:22px;padding:12px 18px;background:linear-gradient(180deg,rgba(61,45,112,.94),rgba(47,33,88,.98));border:3px solid #251945;display:flex;flex-direction:column;justify-content:center}.hud-card span{font-size:.76rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(249,241,255,.74)}.hud-card strong{margin-top:4px;font-size:1.45rem;line-height:1.1}.discipline-card strong{font-size:1.12rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#sHp.red{color:#ff626d}
+        .system-controls{position:absolute;top:0;right:0;display:flex;gap:10px}.system-btn{min-width:84px;height:70px;border:3px solid #251945;border-radius:22px;background:linear-gradient(180deg,rgba(61,45,112,.94),rgba(47,33,88,.98));color:#fff1d3;display:inline-flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;cursor:pointer;font:inherit;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.exit-btn{background:linear-gradient(180deg,#d97d54,#a84e30)!important;border-color:#6f2d1e!important}
+        .battle-wrap{position:relative;overflow:hidden;border-radius:30px;border:5px solid rgba(58,42,104,.76);background:linear-gradient(180deg,rgba(188,252,255,.28),rgba(90,141,202,.05) 40%,rgba(0,0,0,0) 41%),linear-gradient(180deg,rgba(98,126,220,.22),rgba(38,42,113,.06))}.sky-layer{position:absolute;inset:0 0 42% 0;background:radial-gradient(circle at 52% 20%,rgba(255,255,255,.6),transparent 12%),linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,0))}.mountains{position:absolute;left:0;right:0;bottom:30%;height:220px}.mountains:before,.mountains:after{content:"";position:absolute;inset:auto 0 0 0;height:100%}.mountains:before{clip-path:polygon(0% 100%,12% 48%,24% 100%,38% 38%,52% 100%,67% 42%,82% 100%,100% 52%,100% 100%);background:#94d8c8}.mountains:after{transform:translateY(46px);clip-path:polygon(0% 100%,10% 62%,24% 100%,41% 54%,56% 100%,74% 48%,89% 100%,100% 66%,100% 100%);background:#6bbb8d}.ground{position:absolute;left:-2%;right:-2%;bottom:-8%;height:40%;background:linear-gradient(180deg,#96d45a 0%,#73b246 50%,#406427 100%);clip-path:polygon(0 42%,12% 28%,23% 26%,38% 34%,50% 31%,60% 24%,72% 28%,82% 18%,100% 26%,100% 100%,0 100%)}
+        .battle-lane{position:absolute;left:7%;right:6%;bottom:8%;top:10%}.tower-block{position:absolute;left:6%;bottom:17%;width:220px;height:290px}.tower-core{position:absolute;left:26px;right:26px;bottom:0;height:234px;background:linear-gradient(180deg,#d1c1a1 0%,#968a7a 44%,#786f68 100%);border:4px solid #4f4540;border-radius:28px 28px 22px 22px;clip-path:polygon(12% 0,88% 0,100% 100%,0 100%)}.tower-top{position:absolute;left:18px;right:18px;top:14px;height:82px;background:linear-gradient(180deg,#d7c8ab 0%,#9e8f7f 100%);border:4px solid #4f4540;border-radius:26px}.gate-ring{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);width:74px;height:92px;border-radius:40px 40px 18px 18px;border:5px solid #594b45;background:linear-gradient(180deg,#8a5638,#70402a)}
+        .shield-plaque{position:absolute;left:4%;bottom:2%;width:240px;padding:14px 16px;border-radius:24px;background:linear-gradient(180deg,rgba(61,45,112,.94),rgba(47,33,88,.98));border:3px solid #251945}.shield-bar{height:16px;border-radius:999px;overflow:hidden;background:rgba(18,13,38,.55)}#shieldFill{height:100%;background:linear-gradient(90deg,#8cf06a,#59bb42);transition:width .2s ease}
+        .enemy{position:absolute;top:23%;width:128px;height:118px;z-index:3;transition:left .15s linear}.enemy-body{position:absolute;inset:0;border:4px solid #2e1b46;border-radius:48% 48% 42% 42%/44% 44% 52% 52%;background:linear-gradient(180deg,#5d3d91,#35205e 72%)}.enemy.meaning .enemy-body{background:linear-gradient(180deg,#6852ad,#3d2a73 72%)}.enemy-face{position:absolute;inset:0}.enemy-eye{position:absolute;top:38px;width:22px;height:18px;background:#e8b6ff;border-radius:60% 60% 50% 50%}.enemy-eye.left{left:28px;transform:rotate(-18deg)}.enemy-eye.right{right:28px;transform:rotate(18deg)}.enemy-mouth{position:absolute;left:50%;top:70px;transform:translateX(-50%);width:54px;height:24px;background:#241233;clip-path:polygon(0 0,100% 0,86% 38%,70% 18%,56% 60%,44% 18%,26% 52%,14% 14%)}
+        .question-banner{position:absolute;left:62px;top:96px;width:330px;min-height:138px;padding:16px 18px 18px;border-radius:24px;background:linear-gradient(180deg,rgba(44,30,80,.96),rgba(28,18,55,.98));border:3px solid #3f2b69;color:#fff7ea}#enemyType{display:inline-flex;align-items:center;height:32px;padding:0 14px;border-radius:999px;background:rgba(240,203,105,.16);color:#f5cd69;font-size:.85rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}#enemyWord{margin-top:12px;font-size:2.15rem;font-weight:900;line-height:1.05}#enemyHint{margin-top:8px;font-size:.96rem;line-height:1.45;color:rgba(244,236,255,.84)}#enemyOptions{margin-top:10px;display:flex;flex-wrap:wrap;gap:8px}.enemy-option{display:inline-flex;align-items:center;min-height:34px;padding:6px 12px;border-radius:999px;background:rgba(255,248,234,.09);border:1px solid rgba(255,248,234,.14);color:#fff6e2;font-size:.86rem;font-weight:800}
+        .lane-progress{position:absolute;left:28%;right:16%;bottom:3%;z-index:2}.progress-track{height:18px;border-radius:999px;overflow:hidden;background:rgba(27,22,53,.44)}#enemyProg{height:100%;background:linear-gradient(90deg,#ffd573,#ff8b56,#e94c54);transition:width .1s linear}
+        .answer-board{height:100%;border-radius:28px;padding:16px 18px 18px;background:linear-gradient(180deg,#f0d9ad 0%,#d7b98d 58%,#b07d53 100%);border:4px solid #6e472f}.answer-content{height:100%;display:grid;grid-template-rows:auto 1fr auto;gap:12px}.answer-head{display:flex;justify-content:space-between;align-items:center;color:#55341f;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.answer-input-row{display:grid;grid-template-columns:1fr 126px;gap:12px;align-items:center}#answer{height:56px;border-radius:14px;border:3px solid rgba(97,61,35,.46);background:linear-gradient(180deg,#fffef9,#f3efe6);color:#2c2017;font-size:1.08rem;font-weight:700;padding:0 18px;outline:none}#submit{height:56px;border-radius:14px;border:3px solid #6f2d1e;background:linear-gradient(180deg,#d97d54,#a84e30);color:#fffef8;font-size:1rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}#submit:disabled,#answer:disabled{opacity:.6;cursor:not-allowed}.feedback{min-height:24px;font-size:.95rem;font-weight:800;display:flex;align-items:center;color:#61452d}.feedback.ok{color:#2d7a28}.feedback.bad{color:#9a2923}.feedback.warn{color:#8f5c14}
+        #critical,#pauseOverlay,#recoveryOverlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(8px);z-index:20}#critical{background:rgba(34,12,19,.72)}#pauseOverlay{background:rgba(20,18,36,.58);z-index:19}#recoveryOverlay{background:rgba(18,24,34,.58);z-index:21}.overlay-card{width:min(520px,calc(100vw - 32px));padding:28px 26px 24px;border-radius:28px;background:linear-gradient(180deg,#f3dec0 0%,#d2ae84 100%);border:4px solid #6c4128;color:#33231a;text-align:center}.pause-actions,.m-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:10px}#goRecovery,#resumeBattle,#mNext,#mReturn,#leaveBattle{height:52px;min-width:190px;border-radius:14px;font:inherit;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}#goRecovery,#resumeBattle,#mNext,#mReturn{border:3px solid #6f2d1e;background:linear-gradient(180deg,#d97d54,#a84e30);color:#fffef8}#leaveBattle{border:3px solid #251945;background:linear-gradient(180deg,rgba(61,45,112,.94),rgba(47,33,88,.98));color:#fff1d3}
+        .review-modal{width:min(920px,calc(100vw - 30px));max-height:calc(100vh - 40px);overflow:auto;border-radius:26px;padding:22px;background:#f9f4e8;border:2px solid #e2d7c1;color:#3b2f26}.review-modal.is-done .review-top,.review-modal.is-done #mReviewBody{display:none}.review-top{display:flex;align-items:center;justify-content:space-between;color:#8f9276;font-size:1.02rem}#mWord{margin:8px 0 12px;text-align:center;font-size:clamp(3rem,8vw,5rem);font-weight:900;color:#9aaf2e}#mReviewBody{display:grid;gap:14px}.m-pron-row{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}.m-pron{display:inline-flex;align-items:center;gap:8px;font-size:.88rem;color:#6f695f;background:rgba(255,255,255,.5);border-radius:14px;padding:4px 10px 4px 6px}.m-speak{width:24px;height:24px;border:none;border-radius:50%;background:#9aaf2e;color:#fffef8;cursor:pointer}.m-section h3{margin:0 0 8px;color:#4a4037;font-size:1.2rem;font-weight:900}#mMeaning,#mExamples{border-radius:14px;background:#fff;border:1px solid rgba(140,131,119,.2);padding:14px 16px}#mExamples{display:grid;gap:12px}.m-ex{padding-bottom:10px;border-bottom:1px dashed rgba(150,140,126,.4)}.m-ex:last-child{border-bottom:none;padding-bottom:0}.m-ex-en{margin:0;color:#2f2721}.m-ex-zh{margin:4px 0 0;color:#7a736b}#mFeedback{min-height:22px;text-align:center;color:#7d7468;font-size:.92rem;font-weight:700}
+        @media (max-width:1180px){.scene{width:calc(100vw - 24px);min-height:calc(100vh - 24px);grid-template-rows:auto minmax(420px,1fr) 210px}.top-hud{grid-template-columns:repeat(2,minmax(0,1fr));padding-right:0}.system-controls{position:static;grid-column:1 / -1;justify-content:flex-end}}
+        @media (max-width:860px){.scene{width:calc(100vw - 16px);margin:8px auto;padding:10px;grid-template-rows:auto 560px 224px}.top-hud{grid-template-columns:1fr;gap:8px}.system-controls{position:static;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.battle-lane{left:3%;right:3%;top:8%}.tower-block{left:-2%;bottom:20%;transform:scale(.72);transform-origin:bottom left}.question-banner{left:34px;width:240px}.answer-input-row{grid-template-columns:1fr}}
       `}</style>
     </div>
   );
