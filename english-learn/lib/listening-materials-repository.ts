@@ -97,8 +97,12 @@ function mapRowToListeningMaterial(row: ListeningMaterialRow): ListeningMaterial
   };
 }
 
+const tedOnlyLocalMaterials = listeningMaterials.filter(
+  (material) => material.contentMode === "ted",
+);
+
 const localMaterialFallbackMap = new Map(
-  listeningMaterials.map((material) => [material.materialGroupId, material]),
+  tedOnlyLocalMaterials.map((material) => [material.materialGroupId, material]),
 );
 
 function mergeWithLocalFallback(material: ListeningMaterial): ListeningMaterial {
@@ -124,7 +128,7 @@ export async function getListeningMaterialsCatalog() {
   const supabase = createSupabaseServiceClient();
 
   if (!supabase) {
-    return listeningMaterials;
+    return tedOnlyLocalMaterials;
   }
 
   const { data, error } = await supabase
@@ -132,20 +136,23 @@ export async function getListeningMaterialsCatalog() {
     .select(
       "code, content_mode, material_group_id, material_group_label, major_id, major_label, accent, accent_label, accent_hint, title, source, source_name, speaker_role, speaker_name, scenario, transcript, transcript_url, official_url, embed_url, recommended_level, duration_label, support_focus, note_prompts, vocabulary, questions, follow_up_task, audio_src, audio_voice, voice_locales",
     )
-    .neq("content_mode", "practice")
+    .eq("content_mode", "ted")
     .order("content_mode", { ascending: true })
     .order("major_label", { ascending: true })
     .order("material_group_label", { ascending: true })
     .order("accent", { ascending: true });
 
   if (error || !data || data.length === 0) {
-    return listeningMaterials;
+    return tedOnlyLocalMaterials;
   }
 
   const mapped = (data as ListeningMaterialRow[])
     .map(mapRowToListeningMaterial)
     .filter((item): item is ListeningMaterial => item !== null)
+    .filter((item) => item.contentMode === "ted")
     .map(mergeWithLocalFallback);
 
-  return mapped.length >= listeningMaterials.length ? mapped : listeningMaterials;
+  return mapped.length >= tedOnlyLocalMaterials.length
+    ? mapped
+    : tedOnlyLocalMaterials;
 }

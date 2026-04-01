@@ -15,7 +15,7 @@ export function ListeningHub({ locale }: { locale: Locale }) {
           practiceBody: "选择你的专业话题，边听边看原文、调整语速、做笔记，轻松提升听力。",
           practiceCta: "开始听力训练",
           tedTitle: "学术听力库",
-          tedBody: "浏览 TED、公开讲座、MIT OCW、NPTEL 等材料，按专业和口音做题训练。",
+          tedBody: "浏览 TED 听力材料，按专业和口音做题训练，保证站内可用体验。",
           tedCta: "进入听力资源库",
         }
       : {
@@ -24,8 +24,8 @@ export function ListeningHub({ locale }: { locale: Locale }) {
           practiceTitle: "Listening Practice",
           practiceBody: "Pick a topic from your major, listen at your own pace with transcript and speed control, and take notes.",
           practiceCta: "Start practice",
-          tedTitle: "Academic Listening Library",
-          tedBody: "Browse TED, public lectures, MIT OCW, NPTEL, and other official materials by major and accent.",
+          tedTitle: "TED Listening Library",
+          tedBody: "Browse TED listening materials by major and accent with a stable in-app experience.",
           tedCta: "Open listening library",
         };
 

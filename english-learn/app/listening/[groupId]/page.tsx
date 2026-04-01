@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 
 import { PageFrame } from "@/components/page-frame";
 import { TedDetail } from "@/components/ted/ted-detail";
@@ -17,11 +17,16 @@ export default async function ListeningMaterialPage({
   const resolvedSearchParams = await searchParams;
   const locale = await getLocale(resolvedSearchParams);
   const catalog = await getListeningMaterialsCatalog();
+  const requestedGroupId = decodeURIComponent(resolvedParams.groupId).trim();
 
-  const material = catalog.find((item) => item.materialGroupId === resolvedParams.groupId);
+  const material =
+    catalog.find((item) => item.materialGroupId === requestedGroupId) ??
+    catalog.find(
+      (item) => item.materialGroupId.toLowerCase() === requestedGroupId.toLowerCase(),
+    );
 
   if (!material) {
-    notFound();
+    redirect(`/listening?lang=${locale}`);
   }
 
   const level = (resolvedSearchParams.level ?? material.recommendedLevel ?? "B1") as CEFRLevel;
