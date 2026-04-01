@@ -78,6 +78,11 @@ function playAudioCue(element: HTMLAudioElement | null) {
 }
 
 export function DormLockoutGame({ locale }: { locale: Locale }) {
+  const sceneAssets = {
+    briefing: "/quests/escape-room/scenes/dorm-briefing.png",
+    main: "/quests/escape-room/scenes/dorm-main.png",
+    exit: "/quests/escape-room/scenes/dorm-exit.png",
+  } as const;
   const [progress, dispatch] = useReducer(dormLockoutReducer, undefined, createInitialDormProgress);
   const [activeModal, setActiveModal] = useState<ModalType | null>(null);
   const [activeClueObjectId, setActiveClueObjectId] = useState<"notice-board" | "bookshelf" | "floor-map" | "return-cart" | null>(null);
@@ -103,8 +108,8 @@ export function DormLockoutGame({ locale }: { locale: Locale }) {
   });
 
   const copy = {
-    back: "Back to Game Center",
-    stage: "Dorm Lounge Lockout",
+    back: "Back",
+    stage: "Dorm Lounge",
     fullscreen: "Full screen",
     exitFullscreen: "Exit full screen",
     timer: "Time left",
@@ -331,6 +336,10 @@ export function DormLockoutGame({ locale }: { locale: Locale }) {
           notes={progress.inventory.notes}
           missingSteps={missingSteps}
           feedback={doorFeedback}
+          title="Hallway Keypad"
+          subtitle="Merge the dorm clues into one continuous hallway code."
+          readyDescription="The hallway console is armed. Enter the full 7-digit code as one continuous sequence."
+          blockedDescription="You still need more dorm evidence before this hallway console can be used."
           onSubmit={(code) => {
             const result = tryUnlockDormDoor(progress, code, DORM_LOCKOUT_CODE);
             dispatch({ type: "SET_PROGRESS", progress: result.nextProgress });
@@ -387,38 +396,38 @@ export function DormLockoutGame({ locale }: { locale: Locale }) {
 
       <div
         className={cn(
-          "relative mx-auto flex min-h-screen w-full flex-col",
-          isFullscreen ? "max-w-none px-0 py-0" : "max-w-[1680px] px-3 py-3 sm:px-4 sm:py-4 lg:px-5",
+          "relative flex min-h-screen w-full flex-col",
+          isFullscreen ? "max-w-none px-0 py-0" : "max-w-none px-0 py-0",
         )}
       >
         {!isFullscreen ? (
-          <header className="rounded-[1.6rem] border border-[#d7e6fb] bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(238,246,255,0.95))] p-4 shadow-[0_24px_70px_rgba(37,99,235,0.12)]">
+          <header className="border-b border-[#d7e6fb] bg-[rgba(247,251,255,0.84)] px-3 py-3 backdrop-blur-xl sm:px-4 sm:py-3.5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-wrap items-center gap-3">
                 <Link
-                  href={`/games?lang=${locale}`}
-                  className="inline-flex items-center gap-2 rounded-full border border-[#d7e6fb] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-white"
+                  href={`/games/escape-room?lang=${locale}`}
+                  className="inline-flex items-center gap-2 rounded-full border border-[#d7e6fb] bg-white/92 px-3 py-1.5 text-xs font-semibold text-slate-800 transition hover:bg-white"
                 >
-                  <ArrowLeft className="size-4" />
+                  <ArrowLeft className="size-3.5" />
                   {copy.back}
                 </Link>
 
-                <div className="rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-blue-800">
+                <div className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-blue-800">
                   {copy.stage}
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3">
-                <div className={`inline-flex items-center gap-2 rounded-full border border-[#d7e6fb] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800 ${chipTone}`}>
-                  {remainingSeconds === 0 ? <TimerOff className="size-4 text-rose-500" /> : <Timer className="size-4 text-blue-700" />}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className={`inline-flex items-center gap-1.5 rounded-full border border-[#d7e6fb] bg-white/92 px-3 py-1.5 text-xs font-semibold text-slate-800 ${chipTone}`}>
+                  {remainingSeconds === 0 ? <TimerOff className="size-3.5 text-rose-500" /> : <Timer className="size-3.5 text-blue-700" />}
                   {copy.timer}: {countdownLabel}
                 </div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-[#d7e6fb] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800">
-                  <Timer className="size-4 text-blue-700" />
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-[#d7e6fb] bg-white/92 px-3 py-1.5 text-xs font-semibold text-slate-800">
+                  <Timer className="size-3.5 text-blue-700" />
                   {copy.runtime}: {elapsedLabel}
                 </div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-[#d7e6fb] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800">
-                  <Trophy className="size-4 text-blue-700" />
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-[#d7e6fb] bg-white/92 px-3 py-1.5 text-xs font-semibold text-slate-800">
+                  <Trophy className="size-3.5 text-blue-700" />
                   {copy.best}: {bestLabel}
                 </div>
               </div>
@@ -426,125 +435,109 @@ export function DormLockoutGame({ locale }: { locale: Locale }) {
           </header>
         ) : null}
 
-        <div className={cn("grid flex-1 gap-4", isFullscreen ? "mt-0" : "mt-4 xl:grid-cols-[minmax(0,1.6fr)_360px]")}>
+        <div className="flex flex-1">
           <section
             ref={gameViewportRef}
             className={cn(
-              "relative isolate rounded-[2rem] border border-[#d7e6fb] bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(238,246,255,0.95))] p-4 shadow-[0_30px_90px_rgba(37,99,235,0.12)] sm:p-5",
-              isFullscreen ? "h-screen w-screen overflow-hidden rounded-none border-0 p-0 shadow-none" : "",
+              "relative isolate flex min-h-0 flex-1 flex-col overflow-hidden bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(238,246,255,0.95))]",
+              isFullscreen ? "h-screen w-screen rounded-none border-0 p-0 shadow-none" : "w-full rounded-none border-0 p-0 shadow-none",
             )}
           >
             {isFullscreen ? (
               <div className="pointer-events-none absolute inset-0 z-30">
-                <div className="corner-hud pointer-events-auto absolute left-4 top-4 w-[min(430px,calc(100vw-2rem))] rounded-[1.7rem] border border-[#d7e6fb] bg-[rgba(247,251,255,0.82)] p-4 shadow-[0_22px_60px_rgba(37,99,235,0.14)] backdrop-blur-xl">
-                  <div className="flex items-start justify-between gap-4">
+                <div className="corner-hud pointer-events-auto absolute left-3 top-3 w-[min(360px,calc(100vw-1.5rem))] rounded-[1.45rem] border border-[#d7e6fb] bg-[rgba(247,251,255,0.78)] p-3 shadow-[0_22px_60px_rgba(37,99,235,0.14)] backdrop-blur-xl">
+                  <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-blue-700/70">{copy.stage}</p>
-                      <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#d7e6fb] bg-white/90 px-4 py-2 text-sm font-semibold text-slate-800">
-                        <ScanFace className="size-4 text-blue-700" />
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-blue-700/70">{copy.stage}</p>
+                      <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[#d7e6fb] bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-800">
+                        <ScanFace className="size-3.5 text-blue-700" />
                         {statusLabel}
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <Link
-                        href={`/games?lang=${locale}`}
-                        className="inline-flex size-11 items-center justify-center rounded-2xl border border-[#d7e6fb] bg-white/90 text-slate-700 transition hover:bg-white"
+                        href={`/games/escape-room?lang=${locale}`}
+                        className="inline-flex size-9 items-center justify-center rounded-xl border border-[#d7e6fb] bg-white/90 text-slate-700 transition hover:bg-white"
                         aria-label={copy.back}
                       >
-                        <ArrowLeft className="size-4" />
+                        <ArrowLeft className="size-3.5" />
                       </Link>
                       <button
                         type="button"
                         onClick={toggleFullscreen}
-                        className="inline-flex size-11 items-center justify-center rounded-2xl border border-[#d7e6fb] bg-white/90 text-slate-700 transition hover:bg-white"
+                        className="inline-flex size-9 items-center justify-center rounded-xl border border-[#d7e6fb] bg-white/90 text-slate-700 transition hover:bg-white"
                         aria-label={isFullscreen ? copy.exitFullscreen : copy.fullscreen}
                       >
-                        {isFullscreen ? <Minimize2 className="size-4" /> : <Expand className="size-4" />}
+                        {isFullscreen ? <Minimize2 className="size-3.5" /> : <Expand className="size-3.5" />}
                       </button>
                     </div>
                   </div>
 
-                  <div className="mt-4">
+                  <div className="mt-3">
                     <SceneRail activeScene={scene} unlockedGate={readyToUnlock} fullscreen={isFullscreen} onSceneChange={setScene} />
                   </div>
                 </div>
 
-                <div className="corner-hud pointer-events-auto absolute right-4 top-4 flex w-[min(220px,calc(100vw-2rem))] flex-col gap-3">
-                  <div className={cn("rounded-[1.5rem] border border-[#d7e6fb] bg-[rgba(247,251,255,0.84)] p-4 shadow-[0_18px_48px_rgba(37,99,235,0.12)] backdrop-blur-xl", chipTone)}>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">{copy.timer}</p>
-                    <div className="mt-2 flex items-center gap-2 text-lg font-semibold text-slate-900">
-                      {remainingSeconds === 0 ? <TimerOff className="size-5 text-rose-500" /> : <Timer className="size-5 text-blue-700" />}
+                <div className="corner-hud pointer-events-auto absolute right-3 top-3 flex w-[min(170px,calc(100vw-1.5rem))] flex-col gap-2">
+                  <div className={cn("rounded-[1.2rem] border border-[#d7e6fb] bg-[rgba(247,251,255,0.84)] p-3 shadow-[0_18px_48px_rgba(37,99,235,0.12)] backdrop-blur-xl", chipTone)}>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">{copy.timer}</p>
+                    <div className="mt-1.5 flex items-center gap-2 text-base font-semibold text-slate-900">
+                      {remainingSeconds === 0 ? <TimerOff className="size-4 text-rose-500" /> : <Timer className="size-4 text-blue-700" />}
                       {countdownLabel}
                     </div>
                   </div>
-                  <div className="rounded-[1.5rem] border border-[#d7e6fb] bg-[rgba(247,251,255,0.84)] p-4 shadow-[0_18px_48px_rgba(37,99,235,0.12)] backdrop-blur-xl">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">{copy.runtime}</p>
-                    <div className="mt-2 flex items-center gap-2 text-lg font-semibold text-slate-900">
-                      <Timer className="size-5 text-blue-700" />
+                  <div className="rounded-[1.2rem] border border-[#d7e6fb] bg-[rgba(247,251,255,0.84)] p-3 shadow-[0_18px_48px_rgba(37,99,235,0.12)] backdrop-blur-xl">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">{copy.runtime}</p>
+                    <div className="mt-1.5 flex items-center gap-2 text-base font-semibold text-slate-900">
+                      <Timer className="size-4 text-blue-700" />
                       {elapsedLabel}
                     </div>
                   </div>
-                  <div className="rounded-[1.5rem] border border-[#d7e6fb] bg-[rgba(247,251,255,0.84)] p-4 shadow-[0_18px_48px_rgba(37,99,235,0.12)] backdrop-blur-xl">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">{copy.best}</p>
-                    <div className="mt-2 flex items-center gap-2 text-lg font-semibold text-slate-900">
-                      <Trophy className="size-5 text-blue-700" />
+                  <div className="rounded-[1.2rem] border border-[#d7e6fb] bg-[rgba(247,251,255,0.84)] p-3 shadow-[0_18px_48px_rgba(37,99,235,0.12)] backdrop-blur-xl">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">{copy.best}</p>
+                    <div className="mt-1.5 flex items-center gap-2 text-base font-semibold text-slate-900">
+                      <Trophy className="size-4 text-blue-700" />
                       {bestLabel}
                     </div>
                   </div>
                 </div>
 
-                <div className="corner-hud pointer-events-auto absolute bottom-4 left-4 w-[min(380px,calc(100vw-2rem))] rounded-[1.6rem] border border-[#d7e6fb] bg-[rgba(247,251,255,0.86)] p-4 shadow-[0_18px_48px_rgba(37,99,235,0.12)] backdrop-blur-xl">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-700/70">Objective</p>
-                  <p className="mt-2 text-sm font-medium leading-6 text-slate-800">{progress.currentObjective}</p>
-                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#d7e6fb]">
+                <div className="corner-hud pointer-events-auto absolute bottom-3 left-3 w-[min(320px,calc(100vw-1.5rem))] rounded-[1.4rem] border border-[#d7e6fb] bg-[rgba(247,251,255,0.86)] p-3 shadow-[0_18px_48px_rgba(37,99,235,0.12)] backdrop-blur-xl">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-blue-700/70">Objective</p>
+                  <p className="mt-1.5 text-sm font-medium leading-6 text-slate-800">{progress.currentObjective}</p>
+                  <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-[#d7e6fb]">
                     <div
                       className="progress-stripe h-full rounded-full bg-[linear-gradient(90deg,#9ed8ff,#4b7dff,#7cbcff)]"
                       style={{ width: `${completionPercent}%` }}
                     />
                   </div>
-                  <p className="mt-3 text-xs leading-5 text-slate-600">{"Sequence: board -> cubbies -> backpack -> RA desk -> intercom -> handbook -> exit."}</p>
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col gap-4">
+              <div className="border-b border-[#d7e6fb] bg-[rgba(247,251,255,0.72)] px-3 py-3 backdrop-blur-xl sm:px-4">
                 <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-[#d7e6fb] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800">
-                      <ScanFace className="size-4 text-blue-700" />
-                      {statusLabel}
-                    </div>
-                    <div className={cn("inline-flex items-center gap-2 rounded-full border border-[#d7e6fb] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800", chipTone)}>
-                      {remainingSeconds === 0 ? <TimerOff className="size-4 text-rose-500" /> : <Timer className="size-4 text-blue-700" />}
-                      {countdownLabel}
-                    </div>
-                    <div className="inline-flex items-center gap-2 rounded-full border border-[#d7e6fb] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800">
-                      <Timer className="size-4 text-blue-700" />
-                      {elapsedLabel}
-                    </div>
-                    <div className="inline-flex items-center gap-2 rounded-full border border-[#d7e6fb] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800">
-                      <Trophy className="size-4 text-blue-700" />
-                      {bestLabel}
-                    </div>
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-[#d7e6fb] bg-white/92 px-3 py-1.5 text-xs font-semibold text-slate-800">
+                    <ScanFace className="size-3.5 text-blue-700" />
+                    {statusLabel}
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={toggleFullscreen}
-                    className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-[#d7e6fb] bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-white"
-                  >
-                    {isFullscreen ? <Minimize2 className="size-4" /> : <Expand className="size-4" />}
-                    {isFullscreen ? copy.exitFullscreen : copy.fullscreen}
-                  </button>
-                </div>
-
-                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-                  <SceneRail activeScene={scene} unlockedGate={readyToUnlock} fullscreen={isFullscreen} onSceneChange={setScene} />
+                  <div className="flex items-center gap-2">
+                    <SceneRail activeScene={scene} unlockedGate={readyToUnlock} fullscreen={isFullscreen} onSceneChange={setScene} />
+                    <button
+                      type="button"
+                      onClick={toggleFullscreen}
+                      className="inline-flex size-9 items-center justify-center rounded-full border border-[#d7e6fb] bg-white/92 text-slate-800 transition hover:bg-white"
+                      aria-label={isFullscreen ? copy.exitFullscreen : copy.fullscreen}
+                    >
+                      {isFullscreen ? <Minimize2 className="size-3.5" /> : <Expand className="size-3.5" />}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
 
-            <div className={cn("relative", isFullscreen ? "h-screen" : "mt-5")}>
+            <div className={cn("relative flex min-h-0 flex-1 flex-col", isFullscreen ? "h-screen" : "")}>
               {scene === "briefing" ? (
                 <BriefingScene
                   started={progress.started}
@@ -552,19 +545,15 @@ export function DormLockoutGame({ locale }: { locale: Locale }) {
                   countdownLabel={countdownLabel}
                   fullscreen={isFullscreen}
                   onStart={handleStartRun}
-                  stageLabel="Official Stage 02"
+                  stageLabel="Scene 01"
                   title="Dorm Lounge Lockout"
-                  description="The residence hall has locked down for the night. Read the board, trace the right unit, recover the returned passcard, and clear the hallway door before quiet hours fully settle in."
+                  description="Trace the resident clues across the lounge, recover the missing passcard, and clear the hallway before quiet hours take over."
                   difficulty="Residence Puzzle"
                   reward={`+${DORM_REWARD.xpEarned} XP`}
-                  featureChips={["Notice Logic", "Unit Match", "Bag Search", "Desk Pass", "Intercom Listening", "7-Digit Exit"]}
-                  rules={[
-                    "Hotspots only. No character movement.",
-                    "The next lead only opens after the previous dorm clue is logged.",
-                    "Collect slips and access cards before you ever touch the hallway keypad.",
-                  ]}
-                  previewImage="/quests/escape-room/dorm.png"
-                  startLabel="Start dorm run"
+                  featureChips={["Notice", "Unit", "Passcard", "Keypad"]}
+                  rules={["Follow the highlighted leads in order.", "Enter one continuous code at the gate."]}
+                  previewImage={sceneAssets.briefing}
+                  startLabel="Start run"
                   resumeLabel="Resume run"
                 />
               ) : null}
@@ -577,11 +566,11 @@ export function DormLockoutGame({ locale }: { locale: Locale }) {
                   fullscreen={isFullscreen}
                   onHotspotSelect={handleHotspotSelect}
                   sceneLabel="Scene 02"
-                  title="Dorm Common Lounge"
-                  description="Read the board, check the cubbies, match the backpack, unlock the RA desk, confirm the intercom, then verify the handbook."
-                  backgroundImage="/quests/escape-room/dorm.png"
-                  standbyLabel="Lounge standby"
-                  unlockedLabel="Hall clear"
+                  title="Dorm Lounge"
+                  description="Tap highlighted leads to investigate the room."
+                  backgroundImage={sceneAssets.main}
+                  standbyLabel="Scene standby"
+                  unlockedLabel="Gate ready"
                 />
               ) : null}
 
@@ -595,11 +584,11 @@ export function DormLockoutGame({ locale }: { locale: Locale }) {
                   notes={progress.inventory.notes}
                   missingSteps={missingSteps}
                   fullscreen={isFullscreen}
-                  backgroundImage="/quests/escape-room/dorm.png"
+                  backgroundImage={sceneAssets.exit}
                   sceneLabel="Scene 03"
                   title="Hallway Exit Console"
                   blockedDescription="The hallway console is still missing part of the resident access chain."
-                  readyDescription="Board, cubby, backpack, desk, intercom, and handbook checks are complete. The keypad is armed."
+                  readyDescription="The dorm sequence is complete. The keypad is armed."
                   escapedDescription="Hallway exit unlocked."
                   onOpenKeypad={() => {
                     setDoorFeedback(null);
@@ -608,6 +597,21 @@ export function DormLockoutGame({ locale }: { locale: Locale }) {
                 />
               ) : null}
             </div>
+
+            {!isFullscreen ? (
+              <div>
+                <GameSidebar
+                  progress={progress}
+                  onStart={handleStartRun}
+                  onReset={handleResetRun}
+                  onOpenGate={() => {
+                    setScene("exit");
+                    setDoorFeedback(null);
+                    setActiveModal("keypad");
+                  }}
+                />
+              </div>
+            ) : null}
 
             {overlayLayer}
 
@@ -627,26 +631,6 @@ export function DormLockoutGame({ locale }: { locale: Locale }) {
               <source src="/quests/escape-room/audio/ui-open.wav" type="audio/wav" />
             </audio>
           </section>
-
-          {!isFullscreen ? (
-            <GameSidebar
-              progress={progress}
-              tasks={dormProgressTasks}
-              completionPercent={completionPercent}
-              bestLabel={bestLabel}
-              onStart={handleStartRun}
-              onReset={handleResetRun}
-              onOpenGate={() => {
-                setScene("exit");
-                setDoorFeedback(null);
-                setActiveModal("keypad");
-              }}
-              itemsPlaceholder="Resident slips, passcards, and desk cards will appear here."
-              intelPlaceholder="Bag matches and keypad format clues will appear here."
-              notesPlaceholder="Board notes, cubby leads, desk rules, and intercom confirmations will appear here."
-              footerNote="The hallway code only works when the unit number, intercom order, and 7-digit handbook format all line up."
-            />
-          ) : null}
         </div>
       </div>
     </main>
