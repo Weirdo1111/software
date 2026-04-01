@@ -13,8 +13,8 @@
     "typecheck": "tsc --noEmit",
     "prisma:generate": "prisma generate",
     "prisma:seed": "tsx prisma/seed.ts",
-    "roleplay:bridge": "python scripts/roleplay_realtime_bridge.py --port 8876",
-    "roleplay:bridge:bg": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Start-Process -WindowStyle Hidden -FilePath python -ArgumentList 'scripts/roleplay_realtime_bridge.py','--port','8876' -WorkingDirectory '.'\"",
+    "roleplay:bridge": "py -3.13 scripts/roleplay_realtime_bridge.py --port 8876",
+    "roleplay:bridge:bg": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Start-Process -WindowStyle Hidden -FilePath py -ArgumentList '-3.13','scripts/roleplay_realtime_bridge.py','--port','8876' -WorkingDirectory '.'\"",
     "audio:listening": "tsx scripts/generate-listening-audio.mjs",
     "seed:listening": "tsx scripts/seed-listening-materials.mjs"
   },

@@ -1,7 +1,18 @@
 "use client";
 
-import { type KeyboardEvent, useState } from "react";
-import { Bot, Mic, RotateCcw, SendHorizontal, Sparkles, Waves } from "lucide-react";
+import { type KeyboardEvent, useEffect, useRef, useState } from "react";
+import type { LucideIcon } from "lucide-react";
+import {
+  Bot,
+  GraduationCap,
+  Mic,
+  RotateCcw,
+  SendHorizontal,
+  Sparkles,
+  Star,
+  WandSparkles,
+  Waves,
+} from "lucide-react";
 
 import type { Locale } from "@/components/discussion/types";
 import { useRealtimeRoleplay } from "@/components/discussion/use-realtime-roleplay";
@@ -11,10 +22,77 @@ import {
   type RoleplayCharacterId,
 } from "@/lib/roleplay";
 
+type CharacterVisual = {
+  icon: LucideIcon;
+  iconWrapClassName: string;
+  activeClassName: string;
+  bubbleClassName: string;
+};
+
+const CHARACTER_VISUALS: Record<RoleplayCharacterId, CharacterVisual> = {
+  wizard_boy: {
+    icon: WandSparkles,
+    iconWrapClassName:
+      "bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(255,214,235,0.92))] text-[#7c2956]",
+    activeClassName:
+      "bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(255,238,246,0.92))] text-[#7c2956]",
+    bubbleClassName: "bg-[#ff99cc] text-[#641745]",
+  },
+  british_codebreaker: {
+    icon: Bot,
+    iconWrapClassName:
+      "bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(218,238,255,0.94))] text-[#27537e]",
+    activeClassName:
+      "bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(232,244,255,0.94))] text-[#27537e]",
+    bubbleClassName: "bg-[#d9efff] text-[#214d74]",
+  },
+  pop_star_mentor: {
+    icon: Star,
+    iconWrapClassName:
+      "bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(255,231,190,0.94))] text-[#855114]",
+    activeClassName:
+      "bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(255,244,221,0.94))] text-[#855114]",
+    bubbleClassName: "bg-[#ffd58c] text-[#694100]",
+  },
+  pronunciation_teacher: {
+    icon: GraduationCap,
+    iconWrapClassName:
+      "bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(214,247,236,0.94))] text-[#2a6855]",
+    activeClassName:
+      "bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(231,250,243,0.94))] text-[#2a6855]",
+    bubbleClassName: "bg-[#c9f0df] text-[#214f41]",
+  },
+};
+
+function getConnectionLabel(
+  locale: Locale,
+  connectionState: "idle" | "connecting" | "connected" | "error",
+) {
+  if (locale === "zh") {
+    if (connectionState === "connected") return "已连接";
+    if (connectionState === "connecting") return "连接中";
+    if (connectionState === "error") return "连接异常";
+    return "待连接";
+  }
+
+  if (connectionState === "connected") return "Connected";
+  if (connectionState === "connecting") return "Connecting";
+  if (connectionState === "error") return "Error";
+  return "Idle";
+}
+
+function getLogToneClass(tone: "neutral" | "success" | "warn" | "error") {
+  if (tone === "success") return "bg-white text-[#285f4d]";
+  if (tone === "warn") return "bg-[#fff7e8] text-[#8f6122]";
+  if (tone === "error") return "bg-[#fff2f0] text-[#b04d45]";
+  return "bg-white text-[#516361]";
+}
+
 export function DiscussionRoleplayPanel({ locale }: { locale: Locale }) {
   const [selectedCharacterId, setSelectedCharacterId] =
     useState<RoleplayCharacterId>("wizard_boy");
   const [textTurn, setTextTurn] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const character = getRoleplayCharacter(selectedCharacterId);
   const characters = listRoleplayCharacters();
   const bridgeUrl =
@@ -23,92 +101,51 @@ export function DiscussionRoleplayPanel({ locale }: { locale: Locale }) {
       ? `ws://${window.location.hostname || "127.0.0.1"}:8876`
       : "ws://127.0.0.1:8876");
   const realtime = useRealtimeRoleplay(bridgeUrl);
+  const visual = CHARACTER_VISUALS[selectedCharacterId];
+  const CharacterIcon = visual.icon;
+  const connectionLabel = getConnectionLabel(locale, realtime.connectionState);
+  const latestLogs = [...realtime.logs].slice(-8);
 
   const text = {
     zh: {
-      badge: "\u4eba\u673a\u626e\u6f14\u5bf9\u8bdd",
-      title: "\u8fdb\u5165\u5b9e\u65f6\u82f1\u8bed\u89d2\u8272\u5bf9\u8bdd",
-      subtitle:
-        "\u8fd9\u4e2a\u9762\u677f\u8d70\u7684\u662f\u539f\u59cb\u5b9e\u65f6\u8bed\u97f3\u94fe\u8def\uff1a16k PCM \u9ea6\u514b\u98ce\u4e0a\u884c\uff0c24k PCM \u89d2\u8272 TTS \u4e0b\u884c\u3002",
-      characterCard: "\u89d2\u8272\u8bbe\u5b9a",
-      characterSelect: "\u9009\u62e9\u89d2\u8272",
-      characterSwitchHint:
-        "\u5207\u6362\u89d2\u8272\u4f1a\u65ad\u5f00\u5f53\u524d\u4f1a\u8bdd\uff0c\u518d\u6309\u65b0\u89d2\u8272\u91cd\u65b0\u8fde\u63a5\u3002",
-      sceneCard: "\u5b9e\u65f6\u94fe\u8def",
-      languageRule:
-        "\u4fdd\u7559\u89d2\u8272 speaker \u548c\u5b9e\u65f6\u53c2\u6570\uff0c\u7ee7\u7eed\u8d70\u4f60\u7ed9\u7684\u5b9e\u65f6\u670d\u52a1\u94fe\u8def\u3002",
-      reset: "\u65ad\u5f00\u5e76\u6e05\u7a7a",
-      connection: "\u8fde\u63a5\u5b9e\u65f6\u4f1a\u8bdd",
-      disconnect: "\u7ed3\u675f\u5b9e\u65f6\u4f1a\u8bdd",
-      startMic: "\u5f00\u59cb\u9ea6\u514b\u98ce\u4e0a\u884c",
-      stopMic: "\u505c\u6b62\u9ea6\u514b\u98ce",
-      bridgeCard: "\u672c\u5730 Bridge",
-      bridgeOffline:
-        "\u5982\u679c\u8fde\u4e0d\u4e0a\uff0c\u5148\u5728\u9879\u76ee\u6839\u76ee\u5f55\u542f\u52a8 `npm run roleplay:bridge:bg`\u3002",
-      micLive: "\u9ea6\u514b\u98ce\u6b63\u5728\u5b9e\u65f6\u4e0a\u884c",
-      micIdle: "\u9ea6\u514b\u98ce\u5f85\u673a",
-      assistantLive: "\u6b63\u5728\u5b9e\u65f6\u8bf4\u8bdd",
-      assistantIdle: "\u7b49\u5f85\u4f60\u5f00\u53e3",
-      textLabel: "\u53ef\u9009\u6587\u672c\u63d2\u8bdd",
-      textPlaceholder:
-        "\u67d0\u4e00\u8f6e\u4e0d\u60f3\u5f00\u53e3\u65f6\uff0c\u4e5f\u53ef\u4ee5\u5728\u8fd9\u91cc\u53d1\u4e00\u53e5\u6587\u672c\u3002",
-      send: "\u53d1\u9001\u6587\u672c",
-      protocolTitle: "\u4fdd\u7559\u7684\u539f\u59cb\u53c2\u6570",
-      eventTitle: "\u5b9e\u65f6\u4e8b\u4ef6",
-      noEvents: "\u8fde\u63a5\u540e\uff0c\u8fd9\u91cc\u4f1a\u663e\u793a\u4f1a\u8bdd\u72b6\u6001\u548c\u6253\u65ad\u4e8b\u4ef6\u3002",
-      bridgeUrl: "\u8fde\u63a5\u5730\u5740",
-      variantLabel: "\u6a21\u578b\u7248\u672c",
-      resourceLabel: "\u8d44\u6e90 ID",
-      speakerLabel: "\u97f3\u8272",
-      sampleRate: "\u91c7\u6837\u7387",
-      logId: "Log ID",
-      statusLabel: "\u8fde\u63a5\u72b6\u6001",
-      codebreakerOption: "\u5bc6\u7801\u5b66\u5bb6\uff08\u56fe\u7075\u98ce\u683c\uff09",
-      popStarOption: "\u6d41\u884c\u661f\u5149\u5bfc\u5e08 Nova",
-      pronunciationTeacherOption: "\u4e13\u4e1a\u82f1\u8bed\u8001\u5e08 Dr. Claire",
+      brand: "Dreamscape AI",
+      sideTitle: "Characters",
+      sideNote: "Choose your companion",
+      newChat: "新会话",
+      connect: "连接会话",
+      disconnect: "结束会话",
+      startMic: "开始说话",
+      stopMic: "停止麦克风",
+      textPlaceholder: "不想开口时，也可以直接发一句文本。",
+      send: "发送",
+      waiting: "先连接角色，角色会先说开场白。",
+      ready: "实时链路已接通，可以自然开始对话。",
+      bridgeHint: "若连接失败，请先启动本地 bridge。",
+      statusIdle: "等待你开始",
+      statusLive: "正在实时对话",
     },
     en: {
-      badge: "Roleplay Chat",
-      title: "Step into a true realtime English roleplay",
-      subtitle:
-        "This panel follows the original realtime voice path: 16 kHz PCM microphone upstream and 24 kHz PCM character TTS downstream.",
-      characterCard: "Character",
-      characterSelect: "Choose character",
-      characterSwitchHint:
-        "Changing character disconnects the current session so the next connection uses the new prompt set.",
-      sceneCard: "Realtime link",
-      languageRule:
-        "The original speaker and role parameters are preserved, and the panel stays on the realtime service path.",
-      reset: "Disconnect and clear",
-      connection: "Connect realtime session",
-      disconnect: "End realtime session",
-      startMic: "Start microphone",
-      stopMic: "Stop microphone",
-      bridgeCard: "Local bridge",
-      bridgeOffline:
-        "If the panel cannot connect, start `npm run roleplay:bridge:bg` from the project root first.",
-      micLive: "Microphone is streaming live",
-      micIdle: "Microphone is idle",
-      assistantLive: "is speaking in realtime",
-      assistantIdle: "is waiting for you",
-      textLabel: "Optional text turn",
+      brand: "Dreamscape AI",
+      sideTitle: "Characters",
+      sideNote: "Choose your companion",
+      newChat: "New Chat",
+      connect: "Connect",
+      disconnect: "Disconnect",
+      startMic: "Start Mic",
+      stopMic: "Stop Mic",
       textPlaceholder: "If you do not want to speak for one turn, send a text line here.",
-      send: "Send text",
-      protocolTitle: "Preserved original parameters",
-      eventTitle: "Realtime events",
-      noEvents: "Session and interruption events will appear here after the bridge connects.",
-      bridgeUrl: "Bridge URL",
-      variantLabel: "Variant",
-      resourceLabel: "Resource ID",
-      speakerLabel: "Speaker",
-      sampleRate: "Sample rates",
-      logId: "Log ID",
-      statusLabel: "Connection",
-      codebreakerOption: "Codebreaker (Turing-inspired)",
-      popStarOption: "Nova (Pop Star Mentor)",
-      pronunciationTeacherOption: "Dr. Claire (English Teacher)",
+      send: "Send",
+      waiting: "Connect first. The character will deliver the opening line.",
+      ready: "The realtime link is live. You can start talking naturally.",
+      bridgeHint: "If connection fails, start the local bridge first.",
+      statusIdle: "Waiting to begin",
+      statusLive: "Live conversation",
     },
   }[locale];
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [selectedCharacterId, realtime.logs, realtime.status, realtime.connectionState]);
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === "Enter" && !event.shiftKey) {
@@ -131,10 +168,7 @@ export function DiscussionRoleplayPanel({ locale }: { locale: Locale }) {
   }
 
   async function handleCharacterChange(nextCharacterId: RoleplayCharacterId) {
-    if (nextCharacterId === selectedCharacterId) {
-      return;
-    }
-
+    if (nextCharacterId === selectedCharacterId) return;
     await realtime.disconnectSession();
     realtime.clearLogs();
     setTextTurn("");
@@ -142,202 +176,166 @@ export function DiscussionRoleplayPanel({ locale }: { locale: Locale }) {
   }
 
   return (
-    <div className="min-h-screen bg-transparent text-slate-900">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-        <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
-          <aside className="space-y-4">
-            <section className="rounded-[2rem] border border-[#dbe5f4] bg-white/90 p-6 shadow-sm">
-              <div className="inline-flex items-center gap-2 rounded-full bg-[#edf4ff] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#2452a8]">
-                <Sparkles className="size-3.5" />
-                {text.badge}
-              </div>
-              <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-900">
-                {text.title}
-              </h1>
-              <p className="mt-3 text-sm leading-6 text-slate-600">{text.subtitle}</p>
-              <button
-                type="button"
-                onClick={() => void handleReset()}
-                className="mt-5 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
-              >
-                <RotateCcw className="size-4" />
-                {text.reset}
-              </button>
-            </section>
+    <div className="h-[calc(100vh-8.5rem)] min-h-[38rem] overflow-hidden rounded-[2.4rem] bg-[#e8faf9] shadow-[0_18px_48px_rgba(34,49,49,0.08)] max-md:h-[calc(100vh-7rem)] max-md:min-h-[34rem]">
+      <div className="flex h-full min-h-0 flex-col md:flex-row">
+        <aside className="w-full overflow-y-auto bg-[#f2fcfb] p-6 md:w-72 md:shrink-0">
+          <div>
+            <h1 className="text-2xl font-black tracking-tight text-[#913e6c]">{text.brand}</h1>
+            <p className="mt-1 text-sm text-[#5f7271]">{text.sideNote}</p>
+          </div>
 
-            <section className="rounded-[2rem] border border-[#dbe5f4] bg-white/90 p-6 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                {text.characterCard}
-              </p>
-              <div className="mt-4 flex items-start gap-3">
-                <div className="flex size-11 items-center justify-center rounded-2xl bg-slate-900 text-white">
-                  <Bot className="size-5" />
-                </div>
-                <div>
-                  <p className="text-lg font-bold text-slate-900">{character.botName}</p>
-                  <p className="text-sm text-slate-500">{character.title}</p>
-                </div>
-              </div>
-              <label className="mt-4 grid gap-2 text-sm font-medium text-slate-800">
-                {text.characterSelect}
-                <select
-                  value={selectedCharacterId}
-                  onChange={(event) =>
-                    void handleCharacterChange(event.target.value as RoleplayCharacterId)
-                  }
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
+          <button
+            type="button"
+            onClick={() => void handleReset()}
+            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-[1.25rem] bg-[linear-gradient(135deg,#913e6c,#ff99cc)] px-4 py-4 text-sm font-bold text-white transition-transform duration-300 hover:scale-[1.03]"
+          >
+            <RotateCcw className="size-4" />
+            {text.newChat}
+          </button>
+
+          <div className="mt-6">
+            <p className="text-sm font-bold text-[#223131]">{text.sideTitle}</p>
+          </div>
+
+          <nav className="mt-4 space-y-3">
+            {characters.map((profile) => {
+              const profileVisual = CHARACTER_VISUALS[profile.id];
+              const ProfileIcon = profileVisual.icon;
+              const isActive = profile.id === selectedCharacterId;
+
+              return (
+                <button
+                  key={profile.id}
+                  type="button"
+                  onClick={() => void handleCharacterChange(profile.id)}
+                  className={`flex w-full items-center gap-3 rounded-[1.4rem] p-3 text-left transition-all ${
+                    isActive
+                      ? `${profileVisual.activeClassName} shadow-[0_10px_24px_rgba(34,49,49,0.08)]`
+                      : "bg-transparent text-[#5f7271] hover:bg-white/70"
+                  }`}
                 >
-                  {characters.map((profile) => (
-                    <option key={profile.id} value={profile.id}>
-                      {profile.id === "british_codebreaker"
-                        ? text.codebreakerOption
-                        : profile.id === "pop_star_mentor"
-                          ? text.popStarOption
-                          : profile.id === "pronunciation_teacher"
-                            ? text.pronunciationTeacherOption
-                            : profile.shortLabel}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <p className="mt-3 text-xs leading-5 text-slate-500">{text.characterSwitchHint}</p>
-              <p className="mt-4 rounded-2xl bg-[#f6f8fc] px-4 py-3 text-sm leading-6 text-slate-600">
-                {text.languageRule}
-              </p>
-              <dl className="mt-4 grid gap-3 text-sm text-slate-600">
-                <div className="flex items-start justify-between gap-4">
-                  <dt className="font-semibold text-slate-900">{text.speakerLabel}</dt>
-                  <dd className="text-right">{character.speaker}</dd>
-                </div>
-                <div className="flex items-start justify-between gap-4">
-                  <dt className="font-semibold text-slate-900">{text.sampleRate}</dt>
-                  <dd className="text-right">
-                    {character.inputSampleRate / 1000}k in / {character.outputSampleRate / 1000}k out
-                  </dd>
-                </div>
-              </dl>
-            </section>
+                  <div
+                    className={`flex size-12 shrink-0 items-center justify-center rounded-[1rem] ${profileVisual.iconWrapClassName}`}
+                  >
+                    <ProfileIcon className="size-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`text-sm ${isActive ? "font-bold" : "font-medium"}`}>
+                      {profile.botName}
+                    </p>
+                    <p className="mt-0.5 text-xs leading-5 opacity-80">{profile.title}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </nav>
+        </aside>
 
-            <section className="rounded-[2rem] border border-[#dbe5f4] bg-white/90 p-6 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                {text.sceneCard}
-              </p>
-              <p className="mt-4 text-sm leading-6 text-slate-600">{character.scene}</p>
-              <div className="mt-4 rounded-2xl bg-[#f6f8fc] px-4 py-3 text-sm leading-6 text-slate-600">
-                <p className="font-semibold text-slate-900">{text.bridgeCard}</p>
-                <p className="mt-2 break-all">{bridgeUrl}</p>
-                <p className="mt-3">{text.bridgeOffline}</p>
-              </div>
-            </section>
-          </aside>
+        <section className="relative flex min-h-0 flex-1 flex-col bg-[#d7edec]">
+          <div className="pointer-events-none absolute right-8 top-8 text-[#913e6c]/15">
+            <Sparkles className="size-14" />
+          </div>
+          <div className="pointer-events-none absolute bottom-28 left-8 text-[#6eb5ff]/20">
+            <Waves className="size-16" />
+          </div>
 
-          <main className="rounded-[2rem] border border-[#dbe5f4] bg-white/90 p-5 shadow-sm sm:p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  {text.statusLabel}
-                </p>
-                <p className="mt-2 text-lg font-semibold text-slate-900">
-                  {realtime.status || (realtime.connectionState === "connected" ? "Ready" : "Idle")}
-                </p>
+          <div className="flex-1 overflow-y-auto px-6 py-10">
+            <div className="mx-auto flex min-h-full max-w-3xl flex-col justify-end">
+              <div className="flex flex-col items-center text-center">
+              <div
+                className={`flex size-28 items-center justify-center rounded-full shadow-[0_18px_40px_rgba(34,49,49,0.12)] ${visual.iconWrapClassName}`}
+              >
+                <CharacterIcon className="size-12" />
               </div>
-              <div className="flex flex-wrap gap-2">
+              <h2 className="mt-5 text-4xl font-black tracking-tight text-[#223131]">
+                {character.botName}
+              </h2>
+              <p className="mt-3 max-w-2xl text-lg italic text-[#607371]">{character.scene}</p>
+              </div>
+
+              <div className="mt-10 flex flex-col gap-4">
+                <div className={`max-w-2xl rounded-[1.5rem] rounded-bl-[0.5rem] px-6 py-5 shadow-[0_16px_36px_rgba(34,49,49,0.08)] ${visual.bubbleClassName}`}>
+                  <p className="text-base leading-7">{character.hello}</p>
+                </div>
+
+                <div className="ml-auto rounded-full bg-white/76 px-4 py-2 text-sm font-bold text-[#4f6261] shadow-[0_10px_22px_rgba(34,49,49,0.05)]">
+                  {realtime.connectionState === "connected" ? text.statusLive : text.statusIdle}
+                  {" · "}
+                  {connectionLabel}
+                </div>
+
+                {realtime.status ? (
+                  <div className="max-w-2xl rounded-[1.3rem] bg-white px-5 py-4 text-sm leading-6 text-[#516361] shadow-[0_12px_26px_rgba(34,49,49,0.05)]">
+                    {realtime.status}
+                  </div>
+                ) : (
+                  <div className="max-w-2xl rounded-[1.3rem] bg-white px-5 py-4 text-sm leading-6 text-[#516361] shadow-[0_12px_26px_rgba(34,49,49,0.05)]">
+                    {realtime.connectionState === "connected" ? text.ready : text.waiting}
+                  </div>
+                )}
+
+                {latestLogs.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className={`max-w-2xl rounded-[1.3rem] px-5 py-4 text-sm leading-6 shadow-[0_12px_26px_rgba(34,49,49,0.05)] ${getLogToneClass(entry.tone)}`}
+                  >
+                    {entry.message}
+                  </div>
+                ))}
+
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
+          </div>
+
+          <div className="shrink-0 bg-[linear-gradient(180deg,rgba(215,237,236,0),rgba(200,226,225,0.95))] px-6 pb-6 pt-4">
+            <div className="mx-auto max-w-3xl rounded-[1.8rem] bg-[#e1f5f4] p-4 shadow-[inset_0_2px_10px_rgba(34,49,49,0.05)]">
+              <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="button"
                   onClick={() => void realtime.connectSession(selectedCharacterId)}
                   disabled={
                     realtime.connectionState === "connecting" || realtime.connectionState === "connected"
                   }
-                  className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-45"
+                  className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,#913e6c,#ff99cc)] px-5 py-3 text-sm font-bold text-white transition-transform duration-300 hover:scale-[1.04] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Waves className="size-4" />
-                  {text.connection}
+                  {text.connect}
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    void (realtime.isMicActive
+                      ? realtime.stopMicrophone()
+                      : realtime.startMicrophone())
+                  }
+                  disabled={realtime.connectionState !== "connected"}
+                  className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-[#314645] transition-transform duration-300 hover:scale-[1.04] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Mic className={`size-4 ${realtime.isMicActive ? "animate-pulse" : ""}`} />
+                  {realtime.isMicActive ? text.stopMic : text.startMic}
+                </button>
+
                 <button
                   type="button"
                   onClick={() => void realtime.disconnectSession()}
                   disabled={realtime.connectionState !== "connected"}
-                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-45"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#c8e2e1] px-5 py-3 text-sm font-bold text-[#314645] transition-transform duration-300 hover:scale-[1.04] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <RotateCcw className="size-4" />
                   {text.disconnect}
                 </button>
               </div>
-            </div>
 
-            <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-              <section className="rounded-[1.6rem] border border-slate-100 bg-[#f7f9fc] p-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <article className="rounded-[1.2rem] border border-slate-100 bg-white px-4 py-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                      Microphone
-                    </p>
-                    <p className="mt-2 text-sm font-semibold text-slate-900">
-                      {realtime.isMicActive ? text.micLive : text.micIdle}
-                    </p>
-                    <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-slate-100">
-                      <div
-                        className="h-full rounded-full bg-[#2f7cf6] transition-[width] duration-100"
-                        style={{ width: `${Math.max(4, Math.round(realtime.audioLevel * 100))}%` }}
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        void (realtime.isMicActive
-                          ? realtime.stopMicrophone()
-                          : realtime.startMicrophone())
-                      }
-                      disabled={realtime.connectionState !== "connected"}
-                      className={`mt-4 inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45 ${
-                        realtime.isMicActive
-                          ? "border border-[#d95f50] bg-[#c74435] text-white"
-                          : "border border-slate-200 bg-white text-slate-700"
-                      }`}
-                    >
-                      <Mic className={`size-4 ${realtime.isMicActive ? "animate-pulse" : ""}`} />
-                      {realtime.isMicActive ? text.stopMic : text.startMic}
-                    </button>
-                  </article>
-
-                  <article className="rounded-[1.2rem] border border-slate-100 bg-white px-4 py-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                      {realtime.botName || character.botName}
-                    </p>
-                    <p className="mt-2 text-sm font-semibold text-slate-900">
-                      {realtime.isAssistantSpeaking
-                        ? `${realtime.botName || character.botName} ${text.assistantLive}`
-                        : `${realtime.botName || character.botName} ${text.assistantIdle}`}
-                    </p>
-                    <dl className="mt-4 grid gap-2 text-sm text-slate-600">
-                      <div className="flex items-start justify-between gap-3">
-                        <dt className="font-semibold text-slate-900">{text.speakerLabel}</dt>
-                        <dd className="text-right">{realtime.speaker || character.speaker}</dd>
-                      </div>
-                      <div className="flex items-start justify-between gap-3">
-                        <dt className="font-semibold text-slate-900">{text.variantLabel}</dt>
-                        <dd className="text-right">{realtime.dialogVariant || "-"}</dd>
-                      </div>
-                      <div className="flex items-start justify-between gap-3">
-                        <dt className="font-semibold text-slate-900">{text.resourceLabel}</dt>
-                        <dd className="break-all text-right text-xs">{realtime.resourceId || "-"}</dd>
-                      </div>
-                      <div className="flex items-start justify-between gap-3">
-                        <dt className="font-semibold text-slate-900">{text.logId}</dt>
-                        <dd className="break-all text-right text-xs">{realtime.logId || "-"}</dd>
-                      </div>
-                    </dl>
-                  </article>
-                </div>
-
-                <label className="mt-4 grid gap-2 text-sm font-medium text-slate-800">
-                  {text.textLabel}
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+                <label className="min-w-0 flex-1">
                   <textarea
                     value={textTurn}
                     onChange={(event) => setTextTurn(event.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={text.textPlaceholder}
-                    className="min-h-24 rounded-[1.2rem] border border-slate-200 bg-white px-4 py-3 text-sm leading-7 outline-none"
+                    className="min-h-24 w-full rounded-[1.4rem] bg-white px-4 py-4 text-sm leading-7 text-[#223131] outline-none placeholder:text-[#7b918f]"
                   />
                 </label>
 
@@ -345,81 +343,19 @@ export function DiscussionRoleplayPanel({ locale }: { locale: Locale }) {
                   type="button"
                   onClick={() => void handleTextSubmit()}
                   disabled={realtime.connectionState !== "connected" || textTurn.trim().length === 0}
-                  className="mt-4 inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-45"
+                  className="inline-flex h-14 items-center justify-center gap-2 rounded-full bg-[#fad538] px-6 text-sm font-black text-[#5a4a00] transition-transform duration-300 hover:scale-[1.04] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <SendHorizontal className="size-4" />
                   {text.send}
                 </button>
-              </section>
-
-              <aside className="rounded-[1.6rem] border border-slate-100 bg-[#f7f9fc] p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  {text.protocolTitle}
-                </p>
-                <dl className="mt-4 grid gap-3 text-sm text-slate-600">
-                  <div className="flex items-start justify-between gap-4">
-                    <dt className="font-semibold text-slate-900">{text.bridgeUrl}</dt>
-                    <dd className="break-all text-right">{bridgeUrl}</dd>
-                  </div>
-                  <div className="flex items-start justify-between gap-4">
-                    <dt className="font-semibold text-slate-900">{text.variantLabel}</dt>
-                    <dd className="text-right">{realtime.dialogVariant || "-"}</dd>
-                  </div>
-                  <div className="flex items-start justify-between gap-4">
-                    <dt className="font-semibold text-slate-900">{text.resourceLabel}</dt>
-                    <dd className="break-all text-right text-xs">{realtime.resourceId || "-"}</dd>
-                  </div>
-                  <div className="flex items-start justify-between gap-4">
-                    <dt className="font-semibold text-slate-900">{text.speakerLabel}</dt>
-                    <dd className="text-right">{character.speaker}</dd>
-                  </div>
-                  <div className="flex items-start justify-between gap-4">
-                    <dt className="font-semibold text-slate-900">{text.sampleRate}</dt>
-                    <dd className="text-right">
-                      {character.inputSampleRate / 1000}k / {character.outputSampleRate / 1000}k
-                    </dd>
-                  </div>
-                </dl>
-              </aside>
-            </div>
-
-            {realtime.status ? (
-              <p className="mt-4 rounded-[1rem] bg-[#fff4f0] px-4 py-3 text-sm font-medium text-[#cc5c45]">
-                {realtime.status}
-              </p>
-            ) : null}
-
-            <section className="mt-4 rounded-[1.6rem] border border-slate-100 bg-[#f7f9fc] p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                {text.eventTitle}
-              </p>
-              <div className="mt-4 grid gap-3">
-                {realtime.logs.length > 0 ? (
-                  realtime.logs.map((entry) => (
-                    <div
-                      key={entry.id}
-                      className={`rounded-[1rem] px-4 py-3 text-sm leading-6 ${
-                        entry.tone === "error"
-                          ? "bg-[#fff4f0] text-[#b24734]"
-                          : entry.tone === "warn"
-                            ? "bg-[#fff8e7] text-[#8d5a21]"
-                            : entry.tone === "success"
-                              ? "bg-[#edf7f1] text-[#285f4d]"
-                              : "bg-white text-slate-600"
-                      }`}
-                    >
-                      {entry.message}
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded-[1rem] bg-white px-4 py-3 text-sm leading-6 text-slate-500">
-                    {text.noEvents}
-                  </div>
-                )}
               </div>
-            </section>
-          </main>
-        </div>
+
+              <p className="mt-3 text-xs font-bold uppercase tracking-[0.16em] text-[#708583]/80">
+                {text.bridgeHint} · {bridgeUrl}
+              </p>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );
