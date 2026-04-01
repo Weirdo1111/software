@@ -2,6 +2,7 @@
 
 import {
   AlertCircle,
+  ChevronDown,
   LoaderCircle,
   Mic,
   MicOff,
@@ -29,6 +30,7 @@ type RemoteTile = SeminarRoomCallParticipant & {
 
 type CallViewMode = "focus" | "grid";
 type TileScale = "sm" | "md" | "lg";
+type DeviceControlKind = "audio" | "video";
 
 const tileScaleClasses: Record<TileScale, { stage: string; thumb: string; grid: string }> = {
   sm: {
@@ -103,10 +105,13 @@ export function SeminarCallPanel({
   const [viewMode, setViewMode] = useState<CallViewMode>("focus");
   const [tileScale, setTileScale] = useState<TileScale>("md");
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [openMenu, setOpenMenu] = useState<DeviceControlKind | null>(null);
 
   const sessionIdRef = useRef<string | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
+  const audioMenuRef = useRef<HTMLDivElement | null>(null);
+  const videoMenuRef = useRef<HTMLDivElement | null>(null);
   const remoteVideoRefs = useRef(new Map<string, HTMLVideoElement>());
   const peerConnectionsRef = useRef(new Map<string, RTCPeerConnection>());
   const remoteStreamsRef = useRef(new Map<string, MediaStream>());
@@ -127,12 +132,15 @@ export function SeminarCallPanel({
       subtitle: "轻量会议层直接嵌在房间里，适合小规模 seminar rehearsal 与口语讨论。",
       live: "通话进行中",
       ready: "准备加入",
-      joinVideo: "加入视频",
-      joinAudio: "仅语音加入",
+      joinMeeting: "进入会议",
+      joinHint: "进入后可在底部工具栏快速开闭麦克风和摄像头。",
       leave: "离开会议",
       microphone: "麦克风",
       camera: "摄像头",
-      noCameraTrack: "当前是语音模式，重新以视频方式加入即可开启摄像头。",
+      cameraUnavailable: "当前无法访问摄像头，可稍后在控制栏里再次尝试开启。",
+      microphoneUnavailable: "当前无法访问麦克风，可稍后在控制栏里再次尝试开启。",
+      limitedPermission: "已进入会议，但部分设备未授权。你可以稍后从控制栏再次开启。",
+      noDevices: "已进入会议，但当前没有可用的麦克风或摄像头轨道。",
       waiting: "当前还没有其他参与者。",
       permissionError: "无法获取麦克风或摄像头权限。",
       joinError: "加入会议失败。",
@@ -146,6 +154,12 @@ export function SeminarCallPanel({
       connecting: "连接中...",
       on: "开启",
       off: "关闭",
+      deviceMenu: "设备",
+      turnMicOn: "开启麦克风",
+      turnMicOff: "关闭麦克风",
+      turnCameraOn: "开启摄像头",
+      turnCameraOff: "关闭摄像头",
+      deviceControlBar: "会议控制栏",
       focusView: "聚焦视图",
       gridView: "多人网格",
       tileSize: "画面尺寸",
@@ -162,12 +176,15 @@ export function SeminarCallPanel({
       subtitle: "A lightweight meeting layer inside the room for small seminar rehearsals and spoken discussion.",
       live: "Call live",
       ready: "Ready to join",
-      joinVideo: "Join with video",
-      joinAudio: "Join audio only",
+      joinMeeting: "Join meeting",
+      joinHint: "Mic and camera switches stay in the compact control bar after you enter.",
       leave: "Leave call",
       microphone: "Microphone",
       camera: "Camera",
-      noCameraTrack: "This session started in audio mode. Rejoin with video to enable the camera.",
+      cameraUnavailable: "Camera access is unavailable right now. Try enabling it again from the control bar.",
+      microphoneUnavailable: "Microphone access is unavailable right now. Try enabling it again from the control bar.",
+      limitedPermission: "You joined the meeting, but some devices were not granted access. You can enable them later from the control bar.",
+      noDevices: "You joined the meeting without an active microphone or camera track.",
       waiting: "No other participants are connected yet.",
       permissionError: "Camera or microphone permission was not granted.",
       joinError: "Failed to join the call.",
@@ -181,6 +198,12 @@ export function SeminarCallPanel({
       connecting: "Connecting...",
       on: "On",
       off: "Off",
+      deviceMenu: "Devices",
+      turnMicOn: "Turn on microphone",
+      turnMicOff: "Turn off microphone",
+      turnCameraOn: "Turn on camera",
+      turnCameraOff: "Turn off camera",
+      deviceControlBar: "Meeting controls",
       focusView: "Focus view",
       gridView: "Grid view",
       tileSize: "Tile size",
@@ -209,6 +232,98 @@ export function SeminarCallPanel({
     if (!element) return;
     if (element.srcObject !== stream) {
       element.srcObject = stream;
+    }
+  }
+
+  function replaceLocalStream(nextStream: MediaStream | null) {
+    localStreamRef.current = nextStream;
+    setLocalStream(nextStream);
+  }
+
+  function setDeviceState(kind: DeviceControlKind, nextEnabled: boolean) {
+    if (kind === "audio") {
+      audioEnabledRef.current = nextEnabled;
+      setAudioEnabled(nextEnabled);
+      return;
+    }
+
+    videoEnabledRef.current = nextEnabled;
+    setVideoEnabled(nextEnabled);
+  }
+
+  async function requestTrack(kind: DeviceControlKind) {
+    const stream = await navigator.mediaDevices.getUserMedia(
+      kind === "audio" ? { audio: true, video: false } : { audio: false, video: true },
+    );
+    return kind === "audio" ? stream.getAudioTracks()[0] ?? null : stream.getVideoTracks()[0] ?? null;
+  }
+
+  async function attachRequestedTrack(kind: DeviceControlKind) {
+    const track = await requestTrack(kind);
+
+    if (!track) {
+      throw new Error(kind === "audio" ? text.microphoneUnavailable : text.cameraUnavailable);
+    }
+
+    track.enabled = true;
+    const currentTracks = localStreamRef.current?.getTracks() ?? [];
+    const nextStream = new MediaStream([
+      ...currentTracks.filter((item) => item.kind !== kind),
+      track,
+    ]);
+
+    replaceLocalStream(nextStream);
+
+    peerConnectionsRef.current.forEach((peer) => {
+      const sender = peer.getSenders().find((item) => item.track?.kind === kind);
+
+      if (sender) {
+        void sender.replaceTrack(track);
+      } else {
+        peer.addTrack(track, nextStream);
+      }
+    });
+
+    return track;
+  }
+
+  async function createJoinStream() {
+    try {
+      return {
+        stream: await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: true,
+        }),
+        warning: "",
+      };
+    } catch {
+      const tracks: MediaStreamTrack[] = [];
+      let warning = text.noDevices;
+
+      try {
+        const audioTrack = await requestTrack("audio");
+        if (audioTrack) {
+          tracks.push(audioTrack);
+          warning = text.limitedPermission;
+        }
+      } catch {
+        // Ignore partial permission failures. The user can retry from the control bar later.
+      }
+
+      try {
+        const videoTrack = await requestTrack("video");
+        if (videoTrack) {
+          tracks.push(videoTrack);
+          warning = text.limitedPermission;
+        }
+      } catch {
+        // Ignore partial permission failures. The user can retry from the control bar later.
+      }
+
+      return {
+        stream: new MediaStream(tracks),
+        warning,
+      };
     }
   }
 
@@ -518,7 +633,7 @@ export function SeminarCallPanel({
     }
   });
 
-  async function joinCall(mode: "video" | "audio") {
+  async function joinCall() {
     if (!enabled || joining) {
       return;
     }
@@ -528,39 +643,23 @@ export function SeminarCallPanel({
     setStreamError("");
 
     try {
-      let stream: MediaStream;
-
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: mode === "video",
-        });
-      } catch (permissionError) {
-        if (mode === "video") {
-          stream = await navigator.mediaDevices.getUserMedia({
-            audio: true,
-            video: false,
-          });
-          setStreamError(text.permissionError);
-        } else {
-          throw permissionError;
-        }
-      }
+      const { stream, warning } = await createJoinStream();
 
       const nextSessionId = createSessionId();
       const nextAudioEnabled = stream.getAudioTracks().some((track) => track.enabled);
       const nextVideoEnabled = stream.getVideoTracks().some((track) => track.enabled);
 
-      localStreamRef.current = stream;
-      setLocalStream(stream);
-      setAudioEnabled(nextAudioEnabled);
-      setVideoEnabled(nextVideoEnabled);
-      audioEnabledRef.current = nextAudioEnabled;
-      videoEnabledRef.current = nextVideoEnabled;
+      replaceLocalStream(stream);
+      setDeviceState("audio", nextAudioEnabled);
+      setDeviceState("video", nextVideoEnabled);
       processedSignalIdsRef.current.clear();
       presenceSyncInFlightRef.current = false;
       sessionIdRef.current = nextSessionId;
       joinedRef.current = true;
+
+      if (warning) {
+        setStreamError(warning);
+      }
 
       const response = await fetch(`/api/discussion/seminars/rooms/${roomId}/call/join`, {
         method: "POST",
@@ -591,33 +690,56 @@ export function SeminarCallPanel({
     }
   }
 
-  async function toggleAudio() {
+  async function toggleAudio(forceValue?: boolean) {
     const stream = localStreamRef.current;
     const track = stream?.getAudioTracks()[0];
 
+    const nextEnabled = forceValue ?? !audioEnabledRef.current;
+
     if (!track) {
+      if (!nextEnabled) {
+        setDeviceState("audio", false);
+        return;
+      }
+
+      try {
+        await attachRequestedTrack("audio");
+        setDeviceState("audio", true);
+        setStreamError("");
+      } catch {
+        setStreamError(text.microphoneUnavailable);
+      }
       return;
     }
 
-    const nextEnabled = !track.enabled;
     track.enabled = nextEnabled;
-    audioEnabledRef.current = nextEnabled;
-    setAudioEnabled(nextEnabled);
+    setDeviceState("audio", nextEnabled);
   }
 
-  async function toggleVideo() {
+  async function toggleVideo(forceValue?: boolean) {
     const stream = localStreamRef.current;
     const track = stream?.getVideoTracks()[0];
 
+    const nextEnabled = forceValue ?? !videoEnabledRef.current;
+
     if (!track) {
-      setStreamError(text.noCameraTrack);
+      if (!nextEnabled) {
+        setDeviceState("video", false);
+        return;
+      }
+
+      try {
+        await attachRequestedTrack("video");
+        setDeviceState("video", true);
+        setStreamError("");
+      } catch {
+        setStreamError(text.cameraUnavailable);
+      }
       return;
     }
 
-    const nextEnabled = !track.enabled;
     track.enabled = nextEnabled;
-    videoEnabledRef.current = nextEnabled;
-    setVideoEnabled(nextEnabled);
+    setDeviceState("video", nextEnabled);
   }
 
   useEffect(() => {
@@ -638,6 +760,28 @@ export function SeminarCallPanel({
   useEffect(() => {
     videoEnabledRef.current = videoEnabled;
   }, [videoEnabled]);
+
+  useEffect(() => {
+    if (!openMenu) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+
+      if (audioMenuRef.current?.contains(target) || videoMenuRef.current?.contains(target)) {
+        return;
+      }
+
+      setOpenMenu(null);
+    };
+
+    window.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      window.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [openMenu]);
 
   useEffect(() => {
     if (!enabled) {
@@ -681,6 +825,12 @@ export function SeminarCallPanel({
       void leaveCall();
     };
   }, [leaveCall]);
+
+  useEffect(() => {
+    if (!joined) {
+      setOpenMenu(null);
+    }
+  }, [joined]);
 
   const selfParticipant = useMemo(
     () => participants.find((participant) => participant.isSelf) ?? null,
@@ -789,8 +939,72 @@ export function SeminarCallPanel({
     );
   }
 
+  function renderDeviceControl(kind: DeviceControlKind) {
+    const isAudio = kind === "audio";
+    const isEnabled = isAudio ? audioEnabled : videoEnabled;
+    const Icon = isAudio ? (isEnabled ? Mic : MicOff) : isEnabled ? Video : VideoOff;
+    const label = isAudio ? text.microphone : text.camera;
+    const wrapperRef = isAudio ? audioMenuRef : videoMenuRef;
+
+    return (
+      <div
+        ref={wrapperRef}
+        className="relative flex items-center rounded-full border border-white/10 bg-[rgba(14,22,34,0.78)] p-1 shadow-[0_18px_36px_rgba(7,14,28,0.22)] backdrop-blur"
+      >
+        <button
+          type="button"
+          onClick={() => void (isAudio ? toggleAudio() : toggleVideo())}
+          className={`inline-flex h-11 items-center gap-2 rounded-full px-4 text-sm font-semibold transition ${
+            isEnabled
+              ? "bg-white/10 text-white hover:bg-white/14"
+              : "bg-[rgba(255,255,255,0.04)] text-white/82 hover:bg-white/10"
+          }`}
+          aria-label={label}
+        >
+          <Icon className="size-4" />
+          <span className="hidden sm:inline">{label}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setOpenMenu((current) => (current === kind ? null : kind))}
+          className="inline-flex size-11 items-center justify-center rounded-full text-white/72 transition hover:bg-white/10 hover:text-white"
+          aria-label={`${label} ${text.deviceMenu}`}
+        >
+          <ChevronDown className={`size-4 transition ${openMenu === kind ? "rotate-180" : ""}`} />
+        </button>
+
+        {openMenu === kind ? (
+          <div className="absolute bottom-[calc(100%+0.6rem)] left-0 min-w-[12rem] rounded-[1.1rem] border border-[rgba(31,58,98,0.08)] bg-white/96 p-2 text-[var(--ink)] shadow-[0_22px_40px_rgba(12,28,58,0.18)]">
+            <button
+              type="button"
+              onClick={() => {
+                setOpenMenu(null);
+                void (isAudio ? toggleAudio(true) : toggleVideo(true));
+              }}
+              className="flex w-full items-center justify-between rounded-[0.9rem] px-3 py-2.5 text-sm font-semibold transition hover:bg-[rgba(49,76,122,0.08)]"
+            >
+              <span>{isAudio ? text.turnMicOn : text.turnCameraOn}</span>
+              <span className="text-xs text-[var(--ink-soft)]">{text.on}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setOpenMenu(null);
+                void (isAudio ? toggleAudio(false) : toggleVideo(false));
+              }}
+              className="flex w-full items-center justify-between rounded-[0.9rem] px-3 py-2.5 text-sm font-semibold transition hover:bg-[rgba(49,76,122,0.08)]"
+            >
+              <span>{isAudio ? text.turnMicOff : text.turnCameraOff}</span>
+              <span className="text-xs text-[var(--ink-soft)]">{text.off}</span>
+            </button>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
-    <section className="rounded-[2rem] border border-[rgba(31,58,98,0.08)] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(246,249,255,0.92))] p-5 shadow-[0_24px_60px_rgba(31,58,98,0.08)] sm:p-6">
+    <section className="relative rounded-[2rem] border border-[rgba(31,58,98,0.08)] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(246,249,255,0.92))] p-5 pb-28 shadow-[0_24px_60px_rgba(31,58,98,0.08)] sm:p-6 sm:pb-32">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 rounded-full bg-[rgba(49,76,122,0.08)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
@@ -999,59 +1213,49 @@ export function SeminarCallPanel({
             ))}
           </div>
 
-          <div className="mt-5 grid gap-3">
-            {!joined ? (
-              <>
+        </div>
+      </div>
+
+      <div className="pointer-events-none absolute inset-x-0 bottom-5 z-20 flex justify-center px-4 sm:bottom-6">
+        <div className="pointer-events-auto">
+          {!joined ? (
+            <div className="rounded-[1.7rem] border border-white/12 bg-[rgba(14,22,34,0.82)] px-3 py-3 text-white shadow-[0_24px_50px_rgba(7,14,28,0.28)] backdrop-blur">
+              <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-3">
                 <button
                   type="button"
-                  onClick={() => void joinCall("video")}
+                  onClick={() => void joinCall()}
                   disabled={!enabled || joining}
-                  className="party-button w-full justify-center disabled:cursor-not-allowed disabled:opacity-70"
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-[var(--navy)] transition hover:bg-[rgba(255,255,255,0.92)] disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {joining ? <LoaderCircle className="size-4 animate-spin" /> : <Video className="size-4" />}
-                  {joining ? text.connecting : text.joinVideo}
+                  {joining ? text.connecting : text.joinMeeting}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => void joinCall("audio")}
-                  disabled={!enabled || joining}
-                  className="party-button-ghost w-full justify-center disabled:cursor-not-allowed disabled:opacity-70"
-                >
-                  <Mic className="size-4" />
-                  {text.joinAudio}
-                </button>
-              </>
-            ) : (
-              <>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => void toggleAudio()}
-                    className="inline-flex items-center justify-center gap-2 rounded-full border border-[rgba(31,58,98,0.08)] bg-[rgba(248,251,255,0.9)] px-4 py-3 text-sm font-semibold text-[var(--ink)]"
-                  >
-                    {audioEnabled ? <Mic className="size-4" /> : <MicOff className="size-4" />}
-                    {text.microphone}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void toggleVideo()}
-                    className="inline-flex items-center justify-center gap-2 rounded-full border border-[rgba(31,58,98,0.08)] bg-[rgba(248,251,255,0.9)] px-4 py-3 text-sm font-semibold text-[var(--ink)]"
-                  >
-                    {videoEnabled ? <Video className="size-4" /> : <VideoOff className="size-4" />}
-                    {text.camera}
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => void leaveCall()}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[rgba(255,143,129,0.35)] bg-[rgba(255,143,129,0.1)] px-4 py-3 text-sm font-semibold text-[#92443a]"
-                >
-                  <PhoneOff className="size-4" />
-                  {text.leave}
-                </button>
-              </>
-            )}
-          </div>
+                <span className="max-w-[16rem] text-center text-xs leading-5 text-white/74 sm:text-left">
+                  {text.joinHint}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 rounded-[1.8rem] border border-white/12 bg-[rgba(14,22,34,0.84)] px-2 py-2 text-white shadow-[0_24px_50px_rgba(7,14,28,0.28)] backdrop-blur">
+              <div className="hidden items-center gap-2 rounded-full bg-white/6 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/72 lg:flex">
+                <RadioTower className="size-3.5" />
+                {text.deviceControlBar}
+              </div>
+              {renderDeviceControl("audio")}
+              {renderDeviceControl("video")}
+              <div className="hidden rounded-full bg-white/6 px-4 py-2 text-xs font-semibold text-white/72 sm:block">
+                {statusMessage || text.live}
+              </div>
+              <button
+                type="button"
+                onClick={() => void leaveCall()}
+                className="inline-flex h-12 items-center gap-2 rounded-full border border-[rgba(255,143,129,0.28)] bg-[rgba(255,143,129,0.16)] px-4 text-sm font-semibold text-[#ffd0ca] transition hover:bg-[rgba(255,143,129,0.24)]"
+              >
+                <PhoneOff className="size-4" />
+                <span className="hidden sm:inline">{text.leave}</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </section>
