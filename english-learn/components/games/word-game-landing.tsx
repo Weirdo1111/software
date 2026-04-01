@@ -96,16 +96,63 @@ export function WordGameLanding({ locale }: { locale: Locale }) {
           </button>
           <h3 className="modal-title">Game Rules</h3>
           <div className="rule-block">
-            <div className="rule-title">1. Core Objective</div>
-            <p className="rule-desc">Protect the tower and defeat incoming word monsters before they breach the core.</p>
+            <div className="rule-title">
+              <span className="rule-icon" aria-hidden="true">🎯</span>
+              <span>Core Objective</span>
+            </div>
+            <p className="rule-desc">
+              Defend <span className="rule-key"> waves</span> of word enemies and protect the <span className="rule-key">Knowledge Core</span>. Clear all waves before
+              the core is destroyed.
+            </p>
           </div>
           <div className="rule-block">
-            <div className="rule-title">2. Answer Types</div>
-            <p className="rule-desc">Spelling enemies require the full English word. Meaning enemies require the correct option number.</p>
+            <div className="rule-title">
+              <span className="rule-icon" aria-hidden="true">🔁</span>
+              <span>Wave Structure</span>
+            </div>
+            <p className="rule-desc">
+              Waves alternate between <span className="rule-key">spelling</span> challenges and <span className="rule-key">meaning</span> challenges. Each wave has one
+              active enemy advancing toward the core.
+            </p>
           </div>
           <div className="rule-block">
-            <div className="rule-title">3. Shield Damage</div>
-            <p className="rule-desc">Wrong answers, timeouts, and enemy collisions all reduce shield HP.</p>
+            <div className="rule-title">
+              <span className="rule-icon" aria-hidden="true">⌨️</span>
+              <span>Answer Method</span>
+            </div>
+            <p className="rule-desc">
+              <span className="rule-key">Spelling Mode</span>: type the <span className="rule-key">complete correct word</span>. <span className="rule-key">Meaning
+              Mode</span>: enter the   <span className="rule-key">correct option number</span> to attack.
+            </p>
+          </div>
+          <div className="rule-block">
+            <div className="rule-title">
+              <span className="rule-icon" aria-hidden="true">⭐</span>
+              <span>Scoring Rules</span>
+            </div>
+            <p className="rule-desc">
+              Correct answers grant <span className="rule-key">base points</span>.
+            </p>
+          </div>
+          <div className="rule-block">
+            <div className="rule-title">
+              <span className="rule-icon" aria-hidden="true">🛡️</span>
+              <span>Shield Damage Rules</span>
+            </div>
+            <p className="rule-desc">
+              A wrong answer reduces shield HP by <span className="rule-key">-1</span>. If an enemy reaches the core <span className="rule-key">(progress bar full)</span>,
+              shield HP also decreases by <span className="rule-key">-1</span>.
+            </p>
+          </div>
+          <div className="rule-block">
+            <div className="rule-title">
+              <span className="rule-icon" aria-hidden="true">🚨</span>
+              <span>Critical State and Recovery</span>
+            </div>
+            <p className="rule-desc">
+              When shield HP reaches <span className="rule-key">0</span>, battle enters <span className="rule-key">system critical state</span>. You must complete the
+              recovery review stage before continuing.
+            </p>
           </div>
         </div>
       </div>
@@ -600,11 +647,23 @@ export function WordGameLanding({ locale }: { locale: Locale }) {
         .modal-content {
           position: relative;
           width: min(560px, calc(100vw - 40px));
-          padding: 32px 28px 26px;
+          padding: 34px 32px 28px;
           border-radius: 24px;
-          background: linear-gradient(180deg, rgba(66, 46, 109, 0.98), rgba(40, 25, 69, 0.98));
+          background: radial-gradient(circle at 26% 14%, rgba(136, 104, 206, 0.24), rgba(136, 104, 206, 0) 36%),
+            radial-gradient(circle at 84% 86%, rgba(85, 176, 255, 0.16), rgba(85, 176, 255, 0) 42%),
+            linear-gradient(180deg, rgba(68, 47, 114, 0.98), rgba(39, 24, 67, 0.98));
           border: 3px solid var(--purple-line);
-          box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.12), 0 18px 34px rgba(29, 18, 49, 0.34);
+          box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.12), inset 0 0 0 1px rgba(236, 184, 255, 0.24), 0 0 0 1px rgba(157, 119, 255, 0.25),
+            0 14px 28px rgba(29, 18, 49, 0.34), 0 0 24px rgba(120, 84, 186, 0.26);
+        }
+
+        .modal-content::before {
+          content: "";
+          position: absolute;
+          inset: 14px;
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          pointer-events: none;
         }
 
         .close-btn {
@@ -619,29 +678,69 @@ export function WordGameLanding({ locale }: { locale: Locale }) {
         }
 
         .modal-title {
-          margin: 0 0 20px;
+          margin: 0 0 24px;
           color: var(--cream);
-          font-size: 1.4rem;
-          letter-spacing: 0.08em;
+          font-size: 1.45rem;
+          letter-spacing: 0.1em;
           text-transform: uppercase;
+          text-shadow: 0 0 12px rgba(236, 184, 255, 0.24);
         }
 
         .rule-block {
-          margin-bottom: 14px;
+          position: relative;
+          margin-bottom: 0;
+          padding: 0 2px 18px;
+        }
+
+        .rule-block:not(:last-child) {
+          margin-bottom: 18px;
+        }
+
+        .rule-block:not(:last-child)::after {
+          content: "";
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          height: 1px;
+          background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(180, 232, 255, 0.42), rgba(255, 255, 255, 0));
         }
 
         .rule-title {
-          margin-bottom: 6px;
-          color: #fff;
-          font-size: 1rem;
-          font-weight: 700;
+          margin-bottom: 8px;
+          color: #bdefff;
+          font-size: 1.02rem;
+          font-weight: 800;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          letter-spacing: 0.02em;
+        }
+
+        .rule-icon {
+          width: 28px;
+          height: 28px;
+          border-radius: 9px;
+          border: 1px solid rgba(255, 255, 255, 0.24);
+          background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.06));
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38), 0 3px 8px rgba(25, 15, 43, 0.28);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.95rem;
         }
 
         .rule-desc {
           margin: 0;
           color: rgba(255, 248, 235, 0.8);
-          line-height: 1.7;
+          line-height: 1.75;
           font-size: 0.95rem;
+          padding-left: 38px;
+        }
+
+        .rule-key {
+          color: #ffe39a;
+          font-weight: 800;
         }
 
         @keyframes floatGhost {
