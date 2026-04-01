@@ -17,15 +17,25 @@ import { AIAnalysisState } from "@/components/forms/ai-analysis-state";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { SaveToDeckButton } from "@/components/forms/save-to-deck-button";
 import {
+  buildListeningCoverDataUrl,
+  buildMediaProxyUrl,
+  getListeningPlaybackMode,
+  getListeningSourceProvider,
+  getListeningStudyText,
+  hasTranscriptStudySupport,
   hasStableInlinePreview,
   listeningMaterials,
+  listeningPlaybackModes,
+  listeningSourceProviders,
   scoreListeningMaterial,
+  shouldPreferGeneratedCover,
   type ListeningMaterial,
 } from "@/lib/listening-materials";
 import {
   recordListeningCompletionInStorage,
   recordListeningHistoryInStorage,
 } from "@/lib/listening-library";
+import { recordSkillAttemptInStorage } from "@/lib/learning-tracker";
 import { getDifficultyLabel } from "@/lib/level-labels";
 import { cn } from "@/lib/utils";
 import type { CEFRLevel, ListeningAIFeedback } from "@/types/learning";
@@ -42,12 +52,63 @@ function countWords(value: string) {
   return value.trim().split(/\s+/).filter(Boolean).length;
 }
 
+function normalizeThumbnailUrl(url?: string | null) {
+  if (typeof url !== "string") return null;
+
+  const trimmed = url.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
 function getMaterialThumbnail(material: ListeningMaterial) {
-  return material.thumbnailUrl ?? thumbnailFallbackMap.get(material.materialGroupId) ?? null;
+  const generatedCover = buildListeningCoverDataUrl(material);
+
+  if (shouldPreferGeneratedCover(material)) {
+    return generatedCover;
+  }
+
+  const resolvedThumbnail =
+    normalizeThumbnailUrl(material.thumbnailUrl) ??
+    normalizeThumbnailUrl(thumbnailFallbackMap.get(material.materialGroupId)) ??
+    generatedCover;
+
+  return buildMediaProxyUrl(resolvedThumbnail) ?? generatedCover;
+}
+
+function getSourceProviderMeta(material: ListeningMaterial) {
+  const providerId = getListeningSourceProvider(material);
+  return (
+    listeningSourceProviders.find((provider) => provider.id === providerId) ??
+    listeningSourceProviders[0]
+  );
+}
+
+function getPlaybackModeMeta(material: ListeningMaterial) {
+  const playbackModeId = getListeningPlaybackMode(material);
+
+  if (!playbackModeId) return null;
+
+  return (
+    listeningPlaybackModes.find((playbackMode) => playbackMode.id === playbackModeId) ??
+    listeningPlaybackModes[0]
+  );
+}
+
+function isDataImageUrl(url?: string | null) {
+  return typeof url === "string" && url.startsWith("data:image/");
 }
 
 function TedThumbnail({ src, alt, className }: { src: string; alt: string; className?: string }) {
   const [failed, setFailed] = useState(false);
+
+  if (isDataImageUrl(src)) {
+    return (
+      <div
+        aria-hidden="true"
+        className={cn("absolute inset-0 bg-cover bg-center bg-no-repeat", className)}
+        style={{ backgroundImage: `url("${src}")` }}
+      />
+    );
+  }
 
   if (failed) return null;
 
@@ -78,6 +139,85 @@ function getTranscriptActionLabel(material: ListeningMaterial) {
   return "Transcript";
 }
 
+function getYouTubeThumbnailFromUrl(url?: string) {
+  if (!url) return null;
+
+  try {
+    const parsed = new URL(url);
+    const hostname = parsed.hostname.toLowerCase();
+
+    if (hostname.includes("youtube.com")) {
+      const segments = parsed.pathname.split("/").filter(Boolean);
+      const embedIndex = segments.findIndex((segment) => segment === "embed");
+      const videoId =
+        embedIndex >= 0
+          ? segments[embedIndex + 1]
+          : parsed.searchParams.get("v");
+
+      return videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : null;
+    }
+
+    if (hostname.includes("youtu.be")) {
+      const videoId = parsed.pathname.split("/").filter(Boolean)[0];
+      return videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : null;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+function buildPlayerPoster(material: ListeningMaterial) {
+  const title = material.title
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  const source = material.sourceName
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  const major = material.majorLabel
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720">
+      <defs>
+        <linearGradient id="bg" x1="0%" x2="100%" y1="0%" y2="100%">
+          <stop offset="0%" stop-color="#1c4262" />
+          <stop offset="55%" stop-color="#10253c" />
+          <stop offset="100%" stop-color="#08131f" />
+        </linearGradient>
+      </defs>
+      <rect width="1280" height="720" fill="url(#bg)" />
+      <circle cx="1120" cy="110" r="120" fill="#ffffff" fill-opacity="0.08" />
+      <circle cx="160" cy="620" r="180" fill="#ffffff" fill-opacity="0.05" />
+      <rect x="72" y="72" rx="28" ry="28" width="220" height="54" fill="#ffffff" fill-opacity="0.12" />
+      <text x="104" y="107" font-size="28" font-family="Arial, sans-serif" fill="#f8fafc">${source}</text>
+      <text x="72" y="510" font-size="58" font-weight="700" font-family="Arial, sans-serif" fill="#ffffff">${title}</text>
+      <text x="72" y="576" font-size="28" font-family="Arial, sans-serif" fill="#ffffff" fill-opacity="0.78">${major}</text>
+      <polygon points="610,300 610,430 730,365" fill="#ffffff" fill-opacity="0.92" />
+    </svg>
+  `;
+
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
+function isYouTubeHosted(material: ListeningMaterial) {
+  return [material.embedUrl, material.officialUrl].some((url) => {
+    if (!url) return false;
+
+    try {
+      const hostname = new URL(url).hostname.toLowerCase();
+      return hostname.includes("youtube.com") || hostname.includes("youtu.be");
+    } catch {
+      return false;
+    }
+  });
+}
+
 export function TedDetail({
   material,
   defaultLevel = "B1",
@@ -99,19 +239,61 @@ export function TedDetail({
   const [aiFeedback, setAiFeedback] = useState<ListeningAIFeedback | null>(null);
   const [isAIScoring, setIsAIScoring] = useState(false);
   const [aiStatus, setAiStatus] = useState("");
+  const [preferIframe, setPreferIframe] = useState(false);
+  const [playerIssue, setPlayerIssue] = useState<string | null>(null);
+  const [showTranscript, setShowTranscript] = useState(false);
   const recordedRef = useRef(false);
-
   const canPreviewInline = hasStableInlinePreview(material);
-  const thumbnail = getMaterialThumbnail(material);
+  const hasInAppAudio =
+    !canPreviewInline &&
+    typeof material.audioSrc === "string" &&
+    material.audioSrc.length > 0;
+  const isSourceVideoBlocked =
+    hasInAppAudio &&
+    [material.embedUrl, material.officialUrl].some((url) => {
+      if (!url) return false;
+
+      try {
+        const hostname = new URL(url).hostname.toLowerCase();
+        return hostname.includes("youtube.com") || hostname.includes("youtu.be");
+      } catch {
+        return false;
+      }
+    });
+  const thumbnail =
+    getMaterialThumbnail(material) ??
+    getYouTubeThumbnailFromUrl(material.embedUrl) ??
+    getYouTubeThumbnailFromUrl(material.officialUrl);
+  const proxiedAudioSrc = buildMediaProxyUrl(material.audioSrc);
+  const proxiedVideoSrc = buildMediaProxyUrl(material.videoSrc);
+  const localPoster = buildPlayerPoster(material);
+  const sourceProvider = getSourceProviderMeta(material);
+  const playbackMode = getPlaybackModeMeta(material);
+  const studyText = getListeningStudyText(material);
+  const studyParagraphs = studyText
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter((paragraph) => paragraph.length > 0);
+  const hasReadingMode = hasTranscriptStudySupport(material);
+  const usesTranscriptSummary = material.transcript.trim().length === 0;
   const noteWordCount = countWords(notes);
   const answeredCount = material.questions.filter(
     (question) => (answers[question.id] ?? "").trim().length >= 2,
   ).length;
+  const shouldShowIframe = !!material.embedUrl && (preferIframe || !material.videoSrc);
+  const shouldShowVideo = !!material.videoSrc && !preferIframe;
+  const isYouTubeOnly = isYouTubeHosted(material) && !material.videoSrc;
 
   useEffect(() => {
     if (recordedRef.current) return;
     recordedRef.current = true;
     recordListeningHistoryInStorage(material.materialGroupId);
+  }, [material.materialGroupId]);
+
+  useEffect(() => {
+    setPreferIframe(false);
+    setPlayerIssue(null);
+    setShowTranscript(false);
   }, [material.materialGroupId]);
 
   function handleAnswerChange(questionId: string, value: string) {
@@ -133,6 +315,11 @@ export function TedDetail({
       );
 
       const durationSec = Math.max(45, Math.round((Date.now() - attemptStartedAt) / 1000));
+      recordSkillAttemptInStorage("listening", {
+        correct: nextResult.passed,
+        durationSec,
+        markCompleted: true,
+      });
 
       fetch("/api/attempts", {
         method: "POST",
@@ -207,7 +394,7 @@ export function TedDetail({
       <article className="rounded-[2rem] border border-[rgba(20,50,75,0.12)] bg-white p-5 shadow-[0_18px_38px_rgba(18,32,52,0.06)] sm:p-6">
         <div className="flex items-center justify-between gap-3">
           <Link
-            href={`/listening/ted?lang=${locale}`}
+            href={`/listening?lang=${locale}`}
             className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--navy)] transition hover:gap-3"
           >
             <ArrowLeft className="size-4" />
@@ -232,14 +419,25 @@ export function TedDetail({
             <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
               {material.majorLabel}
             </span>
+            <span className="rounded-full border border-[rgba(28,78,149,0.16)] bg-[rgba(235,244,255,0.9)] px-3 py-1.5 text-[var(--navy)]">
+              {sourceProvider.label}
+            </span>
             <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
               {material.accentLabel}
             </span>
             <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
               {getDifficultyLabel(material.recommendedLevel)}
             </span>
+            {playbackMode ? (
+              <span className="rounded-full border border-[rgba(35,95,79,0.16)] bg-[rgba(237,246,241,0.9)] px-3 py-1.5 text-[#315f4f]">
+                {playbackMode.label}
+              </span>
+            ) : null}
             <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
               {material.sourceName}
+            </span>
+            <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
+              {material.questions.length} {locale === "zh" ? "题" : "questions"}
             </span>
             {material.isCrossDisciplinary ? (
               <span className="rounded-full border border-[rgba(107,79,44,0.18)] bg-[rgba(247,239,227,0.92)] px-3 py-1.5 text-[#6b4f2c]">
@@ -255,7 +453,10 @@ export function TedDetail({
           {canPreviewInline ? (
             <button
               type="button"
-              onClick={() => setShowEmbed((current) => !current)}
+              onClick={() => {
+                setShowEmbed((current) => !current);
+                setPlayerIssue(null);
+              }}
               className="inline-flex items-center gap-2 rounded-full bg-[var(--navy)] px-5 py-3 text-sm font-semibold text-[#f7efe3]"
             >
               <PlayCircle className="size-4" />
@@ -286,6 +487,37 @@ export function TedDetail({
               {getTranscriptActionLabel(material)}
             </a>
           ) : null}
+
+          {hasReadingMode ? (
+            <button
+              type="button"
+              onClick={() => setShowTranscript((current) => !current)}
+              className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white px-5 py-3 text-sm font-semibold text-[var(--ink)]"
+            >
+              <FileText className="size-4" />
+              {showTranscript
+                ? locale === "zh"
+                  ? "隐藏学习文本"
+                  : "Hide study text"
+                : locale === "zh"
+                  ? "查看学习文本"
+                  : "Open study text"}
+            </button>
+          ) : null}
+
+          {showEmbed && material.embedUrl && material.videoSrc ? (
+            <button
+              type="button"
+              onClick={() => {
+                setPreferIframe((current) => !current);
+                setPlayerIssue(null);
+              }}
+              className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white px-5 py-3 text-sm font-semibold text-[var(--ink)]"
+            >
+              <PlayCircle className="size-4" />
+              {preferIframe ? "Use video file" : "Use embed player"}
+            </button>
+          ) : null}
         </div>
 
         {material.embedUrl && !canPreviewInline ? (
@@ -300,48 +532,205 @@ export function TedDetail({
       {/* Video + Notes section */}
       <section className="grid gap-5 xl:grid-cols-[1.04fr_0.96fr]">
         <article className="rounded-[2rem] border border-[rgba(20,50,75,0.12)] bg-white p-5 shadow-[0_18px_38px_rgba(18,32,52,0.06)] sm:p-6">
-          <div className="overflow-hidden rounded-[1.4rem] border border-[rgba(20,50,75,0.12)] bg-[var(--navy)]">
-            <div className="relative aspect-video">
-              {showEmbed && canPreviewInline ? (
-                <iframe
-                  key={material.embedUrl}
-                  src={material.embedUrl}
-                  title={material.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="h-full w-full border-0"
-                />
-              ) : (
-                <div className="absolute inset-0 bg-gradient-to-br from-[#23425c] via-[#11273f] to-[#08131f]">
-                  {thumbnail ? (
-                    <TedThumbnail src={thumbnail} alt={material.title} />
-                  ) : null}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[rgba(8,17,28,0.82)] via-[rgba(8,17,28,0.24)] to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-5">
-                    <h4 className="text-xl font-semibold tracking-tight text-white">
-                      {material.title}
-                    </h4>
-                    <p className="mt-2 text-sm leading-6 text-white/80">
-                      {material.speakerName
-                        ? `${material.speakerName} · ${material.durationLabel}`
-                        : material.durationLabel}
-                    </p>
+          {hasInAppAudio ? (
+            <div className="overflow-hidden rounded-[1.4rem] border border-[rgba(20,50,75,0.12)] bg-[linear-gradient(135deg,rgba(236,244,252,0.96),rgba(247,250,252,0.92))] p-4 sm:p-5">
+              <div className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
+                <div className="relative overflow-hidden rounded-[1.25rem] border border-[rgba(20,50,75,0.12)] bg-[var(--navy)]">
+                  <div className="relative aspect-video">
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#23425c] via-[#11273f] to-[#08131f]">
+                      {thumbnail ? <TedThumbnail src={thumbnail} alt={material.title} /> : null}
+                      <div className="absolute inset-0 bg-gradient-to-t from-[rgba(8,17,28,0.82)] via-[rgba(8,17,28,0.24)] to-transparent" />
+                      <div className="absolute left-4 top-4">
+                        <span className="inline-flex items-center rounded-full border border-white/16 bg-black/28 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/92 backdrop-blur-sm">
+                          {locale === "zh" ? "站内音频" : "In-app audio"}
+                        </span>
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 p-5">
+                        <h4 className="text-xl font-semibold tracking-tight text-white">
+                          {material.title}
+                        </h4>
+                        <p className="mt-2 text-sm leading-6 text-white/80">
+                          {material.speakerName
+                            ? `${material.speakerName} · ${material.durationLabel}`
+                            : material.durationLabel}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              )}
-            </div>
-          </div>
 
-          {!canPreviewInline && material.audioSrc ? (
-            <div className="mt-4 rounded-[1rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] p-4">
-              <p className="text-sm font-semibold text-[var(--ink)]">
-                {locale === "zh" ? "站内音频播放" : "In-app audio playback"}
-              </p>
-              <audio controls preload="none" className="mt-3 w-full" src={material.audioSrc}>
-                {locale === "zh"
-                  ? "当前浏览器不支持音频播放器。"
-                  : "Your browser does not support the audio player."}
-              </audio>
+                <div className="rounded-[1.25rem] border border-[rgba(20,50,75,0.12)] bg-white/86 p-4 shadow-[0_12px_28px_rgba(18,32,52,0.05)] sm:p-5">
+                  <div className="flex flex-wrap gap-2 text-[11px] font-semibold text-[var(--ink-soft)]">
+                    <span className="rounded-full border border-[rgba(35,95,79,0.16)] bg-[rgba(237,246,241,0.92)] px-3 py-1 text-[#315f4f]">
+                      {locale === "zh" ? "已切换为站内学习音频" : "Using in-app study audio"}
+                    </span>
+                    <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1">
+                      {material.accentLabel}
+                    </span>
+                    <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1">
+                      {sourceProvider.label}
+                    </span>
+                  </div>
+
+                  <p className="mt-4 text-sm leading-7 text-[var(--ink-soft)]">
+                    {isSourceVideoBlocked
+                      ? locale === "zh"
+                        ? "这个来源的官方视频走的是 YouTube，在你当前网络里不稳定，所以这里直接提供站内音频播放器；封面和题目仍保留在同一页里。"
+                        : "The official video for this item is hosted on YouTube and is unstable in the current network, so this page switches straight to an in-app audio player while keeping the cover and questions together."
+                      : locale === "zh"
+                        ? "这个条目当前优先使用站内音频，你可以边听边做题，原始来源链接仍然保留。"
+                        : "This item currently prioritizes in-app audio so students can listen and answer in one place while the original source link remains available."}
+                  </p>
+
+                  <div className="mt-4 rounded-[1rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] p-4">
+                    <p className="text-sm font-semibold text-[var(--ink)]">
+                      {locale === "zh" ? "站内音频播放" : "In-app audio playback"}
+                    </p>
+                    <audio
+                      controls
+                      preload="none"
+                      className="mt-3 w-full"
+                      src={proxiedAudioSrc ?? undefined}
+                    >
+                      {locale === "zh"
+                        ? "当前浏览器不支持音频播放器。"
+                        : "Your browser does not support the audio player."}
+                    </audio>
+                  </div>
+
+                  <p className="mt-3 text-xs leading-6 text-[var(--ink-soft)]">
+                    {locale === "zh"
+                      ? "如果你还想看官方原视频，可以继续使用上方来源链接；但站内答题建议直接用这里的音频。"
+                      : "You can still open the official source above if you want the original video, but the in-app exercises are designed to work with this audio player."}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-[1.4rem] border border-[rgba(20,50,75,0.12)] bg-[var(--navy)]">
+              <div className="relative aspect-video">
+                {showEmbed && canPreviewInline ? (
+                  shouldShowIframe ? (
+                    <iframe
+                      key={material.embedUrl}
+                      src={material.embedUrl}
+                      title={material.title}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className="h-full w-full border-0"
+                    />
+                  ) : shouldShowVideo ? (
+                    <video
+                      key={proxiedVideoSrc}
+                      controls
+                      playsInline
+                      preload="metadata"
+                      poster={localPoster}
+                      className="h-full w-full bg-black object-cover"
+                      src={proxiedVideoSrc ?? undefined}
+                      onError={() => {
+                        if (material.embedUrl) {
+                          setPreferIframe(true);
+                          setPlayerIssue(
+                            locale === "zh"
+                              ? "直链视频加载失败，已切换到备用嵌入播放器。"
+                              : "The direct video file failed to load, so the player switched to the embedded fallback.",
+                          );
+                          return;
+                        }
+
+                        setPlayerIssue(
+                          locale === "zh"
+                            ? "这个视频文件在当前网络环境下无法直接加载，请先使用下方来源链接打开原页。"
+                            : "This video file could not load in the current network environment. Use the source link below as a fallback.",
+                        );
+                      }}
+                    >
+                      {locale === "zh"
+                        ? "当前浏览器不支持视频播放器。"
+                        : "Your browser does not support the video player."}
+                    </video>
+                  ) : null
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#23425c] via-[#11273f] to-[#08131f]">
+                    {thumbnail ? <TedThumbnail src={thumbnail} alt={material.title} /> : null}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[rgba(8,17,28,0.82)] via-[rgba(8,17,28,0.24)] to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-5">
+                      <h4 className="text-xl font-semibold tracking-tight text-white">
+                        {material.title}
+                      </h4>
+                      <p className="mt-2 text-sm leading-6 text-white/80">
+                        {material.speakerName
+                          ? `${material.speakerName} · ${material.durationLabel}`
+                          : material.durationLabel}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {showEmbed && isYouTubeOnly ? (
+            <p className="mt-4 rounded-[1rem] border border-[rgba(191,128,64,0.18)] bg-[rgba(247,239,227,0.68)] px-4 py-3 text-sm leading-6 text-[#6b4f2c]">
+              {locale === "zh"
+                ? "这个条目当前只有 YouTube 播放源。如果播放器持续空白，通常是当前网络对 YouTube 访问不稳定，需要替换为非 YouTube 源才能保证站内播放。"
+                : "This item currently only has a YouTube playback source. If the player stays blank, the current network is likely blocking YouTube and the material will need a non-YouTube source to guarantee in-app playback."}
+            </p>
+          ) : null}
+
+          {playerIssue ? (
+            <p className="mt-4 rounded-[1rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-4 py-3 text-sm leading-6 text-[var(--ink-soft)]">
+              {playerIssue}
+            </p>
+          ) : null}
+
+          {isSourceVideoBlocked && !hasInAppAudio ? (
+            <p className="mt-4 rounded-[1rem] border border-[rgba(35,95,79,0.16)] bg-[rgba(237,246,241,0.88)] px-4 py-3 text-sm leading-6 text-[#315f4f]">
+              {locale === "zh"
+                ? "官方视频源当前是 YouTube，在你现在的网络里不稳定，所以这里改用站内学习音频播放；原始来源链接仍然保留。"
+                : "The official source uses YouTube and is unstable in the current network, so this page falls back to in-app study audio while keeping the original source link."}
+            </p>
+          ) : null}
+
+          {showTranscript && hasReadingMode ? (
+            <div className="mt-4 rounded-[1.2rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-[var(--ink)]">
+                    {locale === "zh" ? "学习文本" : "Study text"}
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-[var(--ink-soft)]">
+                    {usesTranscriptSummary
+                      ? locale === "zh"
+                        ? "这是一段站内学习摘要，适合先读后做题；如需官方全文，请打开原始 transcript 页面。"
+                        : "This in-app study brief helps students read before answering. Open the official transcript page when you need the full source text."
+                      : locale === "zh"
+                        ? "可先读这段文本再答题，也可以先听后用它复盘关键词。"
+                        : "Students can read this text before answering, or use it after listening to review the key ideas."}
+                  </p>
+                </div>
+                <span className="rounded-full bg-[rgba(28,78,149,0.08)] px-3 py-1 text-xs font-semibold text-[var(--navy)]">
+                  {usesTranscriptSummary
+                    ? locale === "zh"
+                      ? "摘要模式"
+                      : "Brief mode"
+                    : locale === "zh"
+                      ? "文本模式"
+                      : "Text mode"}
+                </span>
+              </div>
+
+              <div className="mt-4 grid gap-3">
+                {studyParagraphs.map((paragraph) => (
+                  <p
+                    key={paragraph}
+                    className="rounded-[1rem] bg-white px-4 py-3 text-sm leading-7 text-[var(--ink-soft)]"
+                  >
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
             </div>
           ) : null}
 

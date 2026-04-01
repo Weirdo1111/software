@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createAuthSession, createSessionCookieOptions, AUTH_SESSION_COOKIE } from "@/lib/auth-session";
 import { jsonError } from "@/lib/api";
 import {
   AUTH_EMAIL_COOKIE,
@@ -9,7 +9,14 @@ import {
   AUTH_USER_ID_COOKIE,
   AUTH_USERNAME_COOKIE,
 } from "@/lib/current-user";
-import { findLocalUserByLogin, toPublicUser, verifyPassword } from "@/lib/local-auth";
+import { getLocalBuddyProgress } from "@/lib/local-buddy-progress";
+import {
+  findLocalUserByLogin,
+  isDatabaseAuthConfigured,
+  toPublicUser,
+  verifyPassword,
+} from "@/lib/local-auth";
+import { prisma } from "@/lib/prisma";
 
 const schema = z.object({
   email: z.string().email().optional(),
@@ -27,90 +34,101 @@ export async function POST(request: Request) {
       return jsonError("Email or account is required", 422);
     }
 
-    const supabase = await createSupabaseServerClient();
+    const user = await findLocalUserByLogin(loginIdentifier);
 
-    if (!supabase) {
-      const user = await findLocalUserByLogin(loginIdentifier);
-
-      if (!user) {
-        return jsonError("Invalid account or password", 400);
-      }
-
-      const validPassword = await verifyPassword(payload.password, user.passwordHash);
-
-      if (!validPassword) {
-        return jsonError("Invalid account or password", 400);
-      }
-
-      const response = NextResponse.json({
-        user: toPublicUser(user),
-        user_id: user.id,
-        session: true,
-        storage: "local-file",
-      });
-
-      response.cookies.set(AUTH_PROVIDER_COOKIE, "local-file", {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-      });
-      response.cookies.set(AUTH_USER_ID_COOKIE, user.id, {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-      });
-      response.cookies.set(AUTH_USERNAME_COOKIE, user.username, {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-      });
-      response.cookies.set(AUTH_EMAIL_COOKIE, user.email, {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-      });
-
-      return response;
+    if (!user || !user.passwordHash) {
+      return jsonError("Invalid account or password", 400);
     }
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: loginIdentifier,
-      password: payload.password,
+    const validPassword = await verifyPassword(payload.password, user.passwordHash);
+
+    if (!validPassword) {
+      return jsonError("Invalid account or password", 400);
+    }
+
+    const updatedUser =
+      isDatabaseAuthConfigured() && typeof user.id === "bigint"
+        ? await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              lastLoginAt: new Date(),
+            },
+          })
+        : user;
+
+    await getLocalBuddyProgress({
+      authProvider: updatedUser.authProvider || "local-file",
+      authUserId:
+        updatedUser.authUserId ||
+        (typeof updatedUser.id === "bigint" ? updatedUser.id.toString() : updatedUser.id),
+      username: updatedUser.username,
+      email: updatedUser.email ?? undefined,
     });
 
-    if (error) {
-      return jsonError(error.message, 400);
+    const session =
+      isDatabaseAuthConfigured() && typeof updatedUser.id === "bigint"
+        ? await createAuthSession({
+            userId: updatedUser.id,
+            userAgent: request.headers.get("user-agent"),
+            ipAddress:
+              request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+              request.headers.get("x-real-ip"),
+          })
+        : null;
+
+    const authProvider = updatedUser.authProvider || "local-file";
+    const authUserId =
+      updatedUser.authUserId ||
+      (typeof updatedUser.id === "bigint" ? updatedUser.id.toString() : updatedUser.id);
+
+    const response = NextResponse.json({
+      user: toPublicUser(updatedUser),
+      user_id: typeof updatedUser.id === "bigint" ? updatedUser.id.toString() : updatedUser.id,
+      auth_provider: authProvider,
+      auth_user_id: authUserId,
+      session: Boolean(session),
+      storage: isDatabaseAuthConfigured() ? "database" : "local-file",
+    });
+
+    if (session) {
+      response.cookies.set(
+        AUTH_SESSION_COOKIE,
+        session.rawToken,
+        createSessionCookieOptions(session.expiresAt),
+      );
     }
 
-    const response = NextResponse.json({ user_id: data.user.id, session: Boolean(data.session) });
+    const cookieExpires = session?.expiresAt ?? new Date(Date.now() + 1000 * 60 * 60 * 24 * 14);
 
-    if (data.user) {
-      response.cookies.set(AUTH_PROVIDER_COOKIE, "supabase", {
+    response.cookies.set(AUTH_PROVIDER_COOKIE, authProvider, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      expires: cookieExpires,
+    });
+    response.cookies.set(AUTH_USER_ID_COOKIE, authUserId, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      expires: cookieExpires,
+    });
+    response.cookies.set(AUTH_USERNAME_COOKIE, updatedUser.username, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      expires: cookieExpires,
+    });
+    if (updatedUser.email) {
+      response.cookies.set(AUTH_EMAIL_COOKIE, updatedUser.email, {
         httpOnly: true,
         sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
         path: "/",
+        expires: cookieExpires,
       });
-      response.cookies.set(AUTH_USER_ID_COOKIE, data.user.id, {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-      });
-      response.cookies.set(
-        AUTH_USERNAME_COOKIE,
-        String(data.user.user_metadata?.username || data.user.email?.split("@")[0] || "learner"),
-        {
-          httpOnly: true,
-          sameSite: "lax",
-          path: "/",
-        }
-      );
-      if (data.user.email) {
-        response.cookies.set(AUTH_EMAIL_COOKIE, data.user.email, {
-          httpOnly: true,
-          sameSite: "lax",
-          path: "/",
-        });
-      }
     }
 
     return response;

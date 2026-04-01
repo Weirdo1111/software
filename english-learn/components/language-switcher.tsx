@@ -3,6 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { type Locale } from "@/lib/i18n/dictionaries";
+import { startNavigationLoading } from "@/lib/navigation-loading";
 
 export function LanguageSwitcher({ locale }: { locale: Locale }) {
   const router = useRouter();
@@ -14,9 +15,11 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
 
     const params = new URLSearchParams(searchParams.toString());
     params.set("lang", nextLocale);
+    const nextHref = `${pathname}?${params.toString()}`;
     window.localStorage.setItem("english-learn:locale", nextLocale);
     document.cookie = `english-learn-locale=${nextLocale}; path=/; max-age=31536000; samesite=lax`;
-    router.push(`${pathname}?${params.toString()}`);
+    startNavigationLoading(nextHref);
+    router.push(nextHref);
   }
 
   return (

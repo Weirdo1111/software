@@ -40,6 +40,7 @@ import {
   recordListeningHistoryInStorage,
   subscribeListeningLibrary,
 } from "@/lib/listening-library";
+import { recordSkillAttemptInStorage } from "@/lib/learning-tracker";
 import { cn } from "@/lib/utils";
 import { getDifficultyLabel } from "@/lib/level-labels";
 import type { CEFRLevel, ListeningAIFeedback } from "@/types/learning";
@@ -307,6 +308,11 @@ export function ListeningFeedbackForm({
       );
 
       const durationSec = Math.max(45, Math.round((Date.now() - attemptStartedAt) / 1000));
+      recordSkillAttemptInStorage("listening", {
+        correct: nextResult.passed,
+        durationSec,
+        markCompleted: true,
+      });
 
       fetch("/api/attempts", {
         method: "POST",
@@ -380,7 +386,7 @@ export function ListeningFeedbackForm({
       <article className="rounded-[2rem] border border-[rgba(20,50,75,0.12)] bg-white p-5 shadow-[0_18px_38px_rgba(18,32,52,0.06)] sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-display text-2xl tracking-tight text-[var(--ink)]">
-            TED Listening
+            Academic Listening
           </h2>
           <div className="flex flex-wrap gap-2 text-xs font-semibold text-[var(--ink-soft)]">
             <span className="rounded-full border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] px-3 py-1.5">
@@ -950,4 +956,3 @@ export function ListeningFeedbackForm({
     </section>
   );
 }
-

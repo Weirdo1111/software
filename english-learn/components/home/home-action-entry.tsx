@@ -1,32 +1,40 @@
-"use client";
+﻿"use client";
 
 // AI-assisted authorship note: the 2026 Buddy Campus home refresh in this module
 // was drafted with AI help and then reviewed, edited, and integrated by the team.
 
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import {
   ArrowRight,
   CalendarDays,
+  CircleHelp,
   Compass,
   Flame,
   FileText,
   Gamepad2,
+  Glasses,
+  Hand,
+  HatGlasses,
   Headphones,
   LibraryBig,
+  Lock,
   Mic,
   PawPrint,
   PenLine,
   Sparkles,
+  Shirt,
   Target,
   Trophy,
   WandSparkles,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { BuddyCampusLobby } from "@/components/home/buddy-campus-lobby";
-import { BuddyCompanion } from "@/components/home/buddy-companion";
+import { BuddyCompanion, type BuddyVariant } from "@/components/home/buddy-companion";
 import { HomeLearningModules } from "@/components/home/home-learning-modules";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { BUDDY_XP_RULES } from "@/lib/buddy-xp-config";
 import { type Locale } from "@/lib/i18n/dictionaries";
 import {
   createEmptyLearningTrackerSnapshot,
@@ -34,14 +42,33 @@ import {
   subscribeLearningTracker,
 } from "@/lib/learning-tracker";
 import {
+  DEFAULT_BUDDY_OUTFIT,
+  loadBuddyOutfitFromStorage,
+  saveBuddyOutfitToStorage,
+  subscribeBuddyOutfit,
+  type BuddyClothing,
+  type BuddyGlasses,
+  type BuddyHat,
+  type BuddyHeldItem,
+  type BuddyOutfit,
+} from "@/lib/buddy-wardrobe";
+import {
+  createEmptyBuddyXpSummary,
+  fetchBuddyXpSummary,
+  getBuddyXpSummaryFromStorage,
+  subscribeBuddyXpSources,
+} from "@/lib/buddy-xp";
+import {
+  createDefaultSchedulePreferences,
   generateWeeklySchedule,
   getActiveWeekPlanOverrides,
   hydrateSchedulePreferencesFromServer,
   loadSchedulePreferencesFromStorage,
+  saveSchedulePreferencesToStorage,
   subscribeSchedulePreferences,
   type ScheduleGoal,
-  type ScheduleSkill,
-  type ScheduleWeekMode,
+  type ScheduleMode,
+  type StudyWindow,
 } from "@/lib/schedule";
 
 function normalizeLevel(raw: string | null) {
@@ -64,6 +91,31 @@ function clampPercent(value: number) {
 function getAccuracy(correct: number, attempts: number) {
   if (attempts <= 0) return 0;
   return Math.round((correct / attempts) * 100);
+}
+
+const LEVEL_XP_BASE = 100;
+const LEVEL_XP_STEP = 40;
+
+function getXpForLevel(level: number) {
+  if (level <= 1) return 0;
+
+  let total = 0;
+  for (let currentLevel = 1; currentLevel < level; currentLevel += 1) {
+    total += LEVEL_XP_BASE + (currentLevel - 1) * LEVEL_XP_STEP;
+  }
+  return total;
+}
+
+function getBuddyLevel(xp: number) {
+  let level = 1;
+  while (xp >= getXpForLevel(level + 1)) {
+    level += 1;
+  }
+  return level;
+}
+
+function getXpNeededForNextLevel(level: number) {
+  return LEVEL_XP_BASE + (level - 1) * LEVEL_XP_STEP;
 }
 
 function getBuddyStage(xp: number, locale: Locale) {
@@ -130,26 +182,16 @@ function getGoalFocus(goal: ScheduleGoal) {
   return "coursework" as const;
 }
 
+function getGoalVariant(goal: ScheduleGoal): BuddyVariant {
+  if (goal === "research") return "bunny";
+  if (goal === "seminar") return "cat";
+  return "bear";
+}
+
 function getGoalLabel(goal: ScheduleGoal, locale: Locale) {
   if (goal === "research") return locale === "zh" ? "研究模式" : "Research mode";
   if (goal === "seminar") return locale === "zh" ? "研讨模式" : "Seminar mode";
   return locale === "zh" ? "课程模式" : "Coursework mode";
-}
-
-function getWeekModeLabel(mode: ScheduleWeekMode, locale: Locale) {
-  if (mode === "heavy-reading") return locale === "zh" ? "\u9605\u8bfb\u63a8\u8fdb\u5468" : "Reading week";
-  if (mode === "presentation") return locale === "zh" ? "\u5c55\u793a\u51c6\u5907\u5468" : "Presentation week";
-  if (mode === "deadline-rescue") return locale === "zh" ? "\u8d76 due \u5468" : "Deadline week";
-  if (mode === "recovery") return locale === "zh" ? "\u7f13\u51b2\u5468" : "Recovery week";
-  return locale === "zh" ? "\u5e38\u89c4\u5468" : "Normal week";
-}
-
-function getSkillLabel(skill: ScheduleSkill, locale: Locale) {
-  if (skill === "listening") return locale === "zh" ? "\u542c\u529b" : "Listening";
-  if (skill === "speaking") return locale === "zh" ? "\u53e3\u8bed" : "Speaking";
-  if (skill === "reading") return locale === "zh" ? "\u9605\u8bfb" : "Reading";
-  if (skill === "writing") return locale === "zh" ? "\u5199\u4f5c" : "Writing";
-  return locale === "zh" ? "\u590d\u4e60" : "Review";
 }
 
 function getQuestVisual(skill: string) {
@@ -201,13 +243,207 @@ const majorStickers = [
 ] as const;
 
 const weekdayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const LAST_SEEN_BUDDY_LEVEL_KEY = "english-learn:buddy:last-seen-level";
+type WardrobeCategory = "hat" | "clothing" | "glasses" | "heldItem";
+
+const BUDDY_WARDROBE_UNLOCK_ORDER: Array<
+  | { category: "hat"; value: BuddyHat }
+  | { category: "clothing"; value: BuddyClothing }
+  | { category: "glasses"; value: BuddyGlasses }
+  | { category: "heldItem"; value: BuddyHeldItem }
+> = [
+  { category: "hat", value: "sunhat" },
+  { category: "clothing", value: "shorts" },
+  { category: "glasses", value: "star" },
+  { category: "heldItem", value: "flower" },
+  { category: "hat", value: "strawhat" },
+  { category: "clothing", value: "jeans" },
+  { category: "glasses", value: "heart" },
+  { category: "heldItem", value: "tea" },
+  { category: "hat", value: "cap" },
+  { category: "clothing", value: "bloomers" },
+  { category: "glasses", value: "square" },
+  { category: "heldItem", value: "starwand" },
+  { category: "hat", value: "magichat" },
+  { category: "clothing", value: "jk" },
+  { category: "glasses", value: "sunglasses" },
+  { category: "heldItem", value: "notebook" },
+  { category: "hat", value: "chefhat" },
+  { category: "clothing", value: "pleated" },
+  { category: "glasses", value: "round" },
+  { category: "heldItem", value: "paintbrush" },
+  { category: "hat", value: "catears" },
+  { category: "clothing", value: "petal" },
+  { category: "glasses", value: "goggles" },
+  { category: "heldItem", value: "moonwand" },
+  { category: "hat", value: "beret" },
+];
+
+function getWardrobeUnlockKey(category: WardrobeCategory, value: string) {
+  return `${category}:${value}`;
+}
+
+function getWardrobeUnlockLevel(category: WardrobeCategory, value: string) {
+  if (value === "none") return 1;
+  const index = BUDDY_WARDROBE_UNLOCK_ORDER.findIndex(
+    (entry) => entry.category === category && entry.value === value,
+  );
+  return index >= 0 ? index + 1 : Number.POSITIVE_INFINITY;
+}
+
+function createUnlockedWardrobeSet(level: number) {
+  const unlocked = new Set<string>([
+    getWardrobeUnlockKey("hat", "none"),
+    getWardrobeUnlockKey("clothing", "none"),
+    getWardrobeUnlockKey("glasses", "none"),
+    getWardrobeUnlockKey("heldItem", "none"),
+  ]);
+
+  BUDDY_WARDROBE_UNLOCK_ORDER.slice(0, Math.max(0, level)).forEach((entry) => {
+    unlocked.add(getWardrobeUnlockKey(entry.category, entry.value));
+  });
+
+  return unlocked;
+}
+
+function sanitizeBuddyOutfitForLevel(
+  outfit: BuddyOutfit,
+  unlockedSet: Set<string>,
+): BuddyOutfit {
+  return {
+    hat: unlockedSet.has(getWardrobeUnlockKey("hat", outfit.hat)) ? outfit.hat : "none",
+    clothing: unlockedSet.has(getWardrobeUnlockKey("clothing", outfit.clothing)) ? outfit.clothing : "none",
+    glasses: unlockedSet.has(getWardrobeUnlockKey("glasses", outfit.glasses)) ? outfit.glasses : "none",
+    heldItem: unlockedSet.has(getWardrobeUnlockKey("heldItem", outfit.heldItem)) ? outfit.heldItem : "none",
+  };
+}
+
+const buddyWardrobeCopy = {
+  hats: {
+    none: { zh: "\u4e0d\u6234", en: "Bare Head" },
+    sunhat: { zh: "\u906e\u9633\u5e3d", en: "Sun Hat" },
+    strawhat: { zh: "\u8349\u5e3d", en: "Straw Hat" },
+    cap: { zh: "\u9e2d\u820c\u5e3d", en: "Cap" },
+    magichat: { zh: "\u9b54\u672f\u5e3d", en: "Magic Hat" },
+    chefhat: { zh: "\u53a8\u5e08\u5e3d", en: "Chef Hat" },
+    catears: { zh: "\u732b\u8033\u6735", en: "Cat Ears" },
+    beret: { zh: "\u8d1d\u96f7\u5e3d", en: "Beret" },
+  } satisfies Record<BuddyHat, { zh: string; en: string }>,
+  clothing: {
+    none: { zh: "\u9ed8\u8ba4", en: "Default" },
+    shorts: { zh: "\u77ed\u88e4", en: "Shorts" },
+    jeans: { zh: "\u725b\u4ed4\u88e4", en: "Jeans" },
+    bloomers: { zh: "\u706f\u7b3c\u88e4", en: "Bloomers" },
+    jk: { zh: "JK\u88d9", en: "JK Skirt" },
+    pleated: { zh: "\u767e\u8936\u88d9", en: "Pleated Skirt" },
+    petal: { zh: "\u82b1\u74e3\u88d9", en: "Petal Skirt" },
+  } satisfies Record<BuddyClothing, { zh: string; en: string }>,
+  glasses: {
+    none: { zh: "\u4e0d\u6234", en: "None" },
+    star: { zh: "\u661f\u661f\u6846", en: "Star Frames" },
+    heart: { zh: "\u7231\u5fc3\u6846", en: "Heart Frames" },
+    square: { zh: "\u65b9\u5f62\u6846", en: "Square Frames" },
+    sunglasses: { zh: "\u58a8\u955c", en: "Sunglasses" },
+    round: { zh: "\u5706\u6846\u773c\u955c", en: "Round Frames" },
+    goggles: { zh: "\u62a4\u76ee\u955c", en: "Goggles" },
+  } satisfies Record<BuddyGlasses, { zh: string; en: string }>,
+  heldItems: {
+    none: { zh: "\u7a7a\u624b", en: "Empty Hands" },
+    flower: { zh: "\u5c0f\u82b1\u675f", en: "Flower" },
+    tea: { zh: "\u5976\u8336\u676f", en: "Tea Cup" },
+    starwand: { zh: "\u661f\u661f\u68d2", en: "Star Wand" },
+    notebook: { zh: "\u5c0f\u7b14\u8bb0\u672c", en: "Notebook" },
+    paintbrush: { zh: "\u753b\u7b14", en: "Paintbrush" },
+    moonwand: { zh: "\u6708\u4eae\u68d2", en: "Moon Wand" },
+  } satisfies Record<BuddyHeldItem, { zh: string; en: string }>,
+};
+
+function renderWardrobePreviewIcon(
+  category: "hat" | "clothing" | "glasses" | "heldItem",
+  value: string,
+) {
+  return (
+    <span className="buddy-wardrobe-option-preview" aria-hidden="true">
+      {category === "hat" && value === "none" ? <span className="buddy-preview-none" /> : null}
+      {category === "hat" && value === "sunhat" ? (
+        <span className="buddy-preview-hat buddy-preview-hat-sun">
+          <span className="buddy-preview-hat-top" />
+          <span className="buddy-preview-hat-brim" />
+        </span>
+      ) : null}
+      {category === "hat" && value === "strawhat" ? (
+        <span className="buddy-preview-hat buddy-preview-hat-straw">
+          <span className="buddy-preview-hat-top" />
+          <span className="buddy-preview-hat-brim" />
+        </span>
+      ) : null}
+      {category === "hat" && value === "cap" ? (
+        <span className="buddy-preview-hat buddy-preview-hat-cap">
+          <span className="buddy-preview-hat-top" />
+          <span className="buddy-preview-hat-brim" />
+        </span>
+      ) : null}
+      {category === "hat" && value === "magichat" ? (
+        <span className="buddy-preview-hat buddy-preview-hat-magic">
+          <span className="buddy-preview-hat-top" />
+          <span className="buddy-preview-hat-brim" />
+        </span>
+      ) : null}
+      {category === "hat" && value === "chefhat" ? (
+        <span className="buddy-preview-hat buddy-preview-hat-chef">
+          <span className="buddy-preview-hat-top" />
+          <span className="buddy-preview-hat-brim" />
+        </span>
+      ) : null}
+      {category === "hat" && value === "catears" ? <span className="buddy-preview-hat buddy-preview-hat-catears" /> : null}
+      {category === "hat" && value === "beret" ? (
+        <span className="buddy-preview-hat buddy-preview-hat-beret">
+          <span className="buddy-preview-hat-top" />
+        </span>
+      ) : null}
+
+      {category === "clothing" && value === "none" ? <span className="buddy-preview-none" /> : null}
+      {category === "clothing" && value === "shorts" ? <span className="buddy-preview-bottom buddy-preview-bottom-shorts" /> : null}
+      {category === "clothing" && value === "jeans" ? <span className="buddy-preview-bottom buddy-preview-bottom-jeans" /> : null}
+      {category === "clothing" && value === "bloomers" ? <span className="buddy-preview-bottom buddy-preview-bottom-bloomers" /> : null}
+      {category === "clothing" && value === "jk" ? <span className="buddy-preview-bottom buddy-preview-bottom-jk" /> : null}
+      {category === "clothing" && value === "pleated" ? <span className="buddy-preview-bottom buddy-preview-bottom-pleated" /> : null}
+      {category === "clothing" && value === "petal" ? <span className="buddy-preview-bottom buddy-preview-bottom-petal" /> : null}
+
+      {category === "glasses" && value === "none" ? <span className="buddy-preview-none" /> : null}
+      {category === "glasses" && value === "square" ? <span className="buddy-preview-glasses buddy-preview-glasses-square" /> : null}
+      {category === "glasses" && value === "sunglasses" ? <span className="buddy-preview-glasses buddy-preview-glasses-sun" /> : null}
+      {category === "glasses" && value === "star" ? <span className="buddy-preview-glasses buddy-preview-glasses-star" /> : null}
+      {category === "glasses" && value === "heart" ? <span className="buddy-preview-glasses buddy-preview-glasses-heart" /> : null}
+      {category === "glasses" && value === "round" ? <span className="buddy-preview-glasses buddy-preview-glasses-round" /> : null}
+      {category === "glasses" && value === "goggles" ? <span className="buddy-preview-glasses buddy-preview-glasses-goggles" /> : null}
+
+      {category === "heldItem" && value === "none" ? <span className="buddy-preview-none" /> : null}
+      {category === "heldItem" && value === "flower" ? <span className="buddy-preview-held buddy-preview-held-flower" /> : null}
+      {category === "heldItem" && value === "tea" ? <span className="buddy-preview-held buddy-preview-held-tea" /> : null}
+      {category === "heldItem" && value === "starwand" ? <span className="buddy-preview-held buddy-preview-held-starwand" /> : null}
+      {category === "heldItem" && value === "notebook" ? <span className="buddy-preview-held buddy-preview-held-notebook" /> : null}
+      {category === "heldItem" && value === "paintbrush" ? <span className="buddy-preview-held buddy-preview-held-paintbrush" /> : null}
+      {category === "heldItem" && value === "moonwand" ? <span className="buddy-preview-held buddy-preview-held-moonwand" /> : null}
+    </span>
+  );
+}
 
 export function HomeActionEntry({ locale }: { locale: Locale }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [displayName, setDisplayName] = useState("Learner");
   const [levelPrefix, setLevelPrefix] = useState("A2");
   const [snapshot, setSnapshot] = useState(() => createEmptyLearningTrackerSnapshot());
-  const [preferences, setPreferences] = useState(() => loadSchedulePreferencesFromStorage(locale));
+  const stableInitialDate = new Date("2026-01-01T00:00:00.000Z");
+  const [preferences, setPreferences] = useState(() => createDefaultSchedulePreferences(stableInitialDate, locale));
+  const [buddyOutfit, setBuddyOutfit] = useState<BuddyOutfit>(() => DEFAULT_BUDDY_OUTFIT);
+  const [xpSummary, setXpSummary] = useState(() => createEmptyBuddyXpSummary());
+  const [wardrobeOpen, setWardrobeOpen] = useState(false);
+  const [wardrobeTab, setWardrobeTab] = useState<"hat" | "clothing" | "glasses" | "heldItem">("hat");
+  const [wardrobeFlipTick, setWardrobeFlipTick] = useState(0);
+  const [showLevelRules, setShowLevelRules] = useState(false);
+  const [levelUpNotice, setLevelUpNotice] = useState<{ level: number; stageTitle: string } | null>(null);
+  const levelUpNoticeTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const refresh = () => {
@@ -216,12 +452,19 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       setLevelPrefix(normalizeLevel(window.localStorage.getItem("demo_level")));
       setSnapshot(loadLearningTrackerSnapshotFromStorage());
       setPreferences(loadSchedulePreferencesFromStorage(locale));
+      setBuddyOutfit(loadBuddyOutfitFromStorage());
+      setXpSummary(getBuddyXpSummaryFromStorage());
     };
 
     refresh();
     void hydrateSchedulePreferencesFromServer(locale);
+    void fetchBuddyXpSummary()
+      .then((summary) => setXpSummary(summary))
+      .catch(() => undefined);
     const unsubTracker = subscribeLearningTracker(refresh);
     const unsubPrefs = subscribeSchedulePreferences(refresh);
+    const unsubOutfit = subscribeBuddyOutfit(refresh);
+    const unsubBuddyXp = subscribeBuddyXpSources(refresh);
 
     window.addEventListener("storage", refresh);
     window.addEventListener("demo-auth-changed", refresh as EventListener);
@@ -230,6 +473,8 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     return () => {
       unsubTracker();
       unsubPrefs();
+      unsubOutfit();
+      unsubBuddyXp();
       window.removeEventListener("storage", refresh);
       window.removeEventListener("demo-auth-changed", refresh as EventListener);
       window.removeEventListener("demo-placement-changed", refresh as EventListener);
@@ -274,9 +519,20 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   }, [snapshot]);
   const { totalCompleted, totalAttempts, totalMinutes, overallAccuracy } = totalSummary;
 
-  const xp = totalCompleted * 65 + Math.round(totalMinutes * 7) + totalAttempts * 14;
+  const xp = xpSummary.totalXp;
+  const buddyLevel = getBuddyLevel(xp);
+  const levelStartXp = getXpForLevel(buddyLevel);
+  const nextLevelXp = getXpForLevel(buddyLevel + 1);
+  const levelXpProgress = xp - levelStartXp;
+  const levelXpSpan = Math.max(1, nextLevelXp - levelStartXp);
+  const currentLevelProgress = clampPercent((levelXpProgress / levelXpSpan) * 100);
+  const totalCompletedForBuddy = xpSummary.totalCompletedSources;
   const buddyStage = getBuddyStage(xp, locale);
-  const currentStageProgress = clampPercent((xp / buddyStage.nextXp) * 100);
+  const unlockedWardrobeSet = useMemo(() => createUnlockedWardrobeSet(buddyLevel), [buddyLevel]);
+  const effectiveBuddyOutfit = useMemo(
+    () => sanitizeBuddyOutfitForLevel(buddyOutfit, unlockedWardrobeSet),
+    [buddyOutfit, unlockedWardrobeSet],
+  );
   const nextQuestHref =
     todayPlan.blocks.find((block) => block.skill !== "review")?.href ?? `/schedule?lang=${locale}`;
   const readingHref = `/reading?lang=${locale}`;
@@ -285,49 +541,74 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       ? levelPrefix
       : "B2";
   const writingHref = `/lesson/${writingLevel}-writing-starter?lang=${locale}`;
-  const totalWeekDeadlines = weeklySchedule.days.reduce((sum, day) => sum + day.deadlines.length, 0);
-  const totalWeekClasses = weeklySchedule.days.reduce((sum, day) => sum + day.classes.length, 0);
-  const totalWeekQuests = weeklySchedule.days.reduce((sum, day) => sum + day.blocks.length, 0);
-  const activeRouteDays = weeklySchedule.days.filter((day) => day.blocks.length > 0).length;
-  const weekSnapshotHref = `/schedule?lang=${locale}&focus=${encodeURIComponent(todayPlan.dateISO)}#schedule-week`;
-  const homePlannerText =
-    locale === "zh"
-      ? {
-          snapshotLabel: "\u672c\u5468\u6982\u89c8",
-          snapshotTitle: "\u4e00\u773c\u770b\u6e05\u672c\u5468\u8def\u7ebf",
-          snapshotNote: "\u9996\u9875\u53ea\u770b\u9884\u89c8\uff0c\u8c03\u6574\u8def\u7ebf\u53bb\u4efb\u52a1\u5730\u56fe\u3002",
-          openMap: "\u6253\u5f00\u4efb\u52a1\u5730\u56fe",
-          fullPlan: "\u4efb\u52a1\u5730\u56fe",
-          routeTheme: "\u8def\u7ebf\u4e3b\u9898",
-          focus: "\u4e3b\u7ebf",
-          routeState: "\u72b6\u6001",
-          due: "due",
-          activeDays: "\u5df2\u5c55\u5f00",
-          classes: "\u8bfe\u7a0b",
-          quests: "\u4efb\u52a1",
-          routeReady: "\u672c\u5468\u8def\u7ebf\u5df2\u5c31\u7eea",
-          routePending: "\u8fd8\u53ef\u4ee5\u751f\u6210\u6216\u5b8c\u5584\u8def\u7ebf",
-          noPlan: "\u4eca\u5929\u8fd8\u6ca1\u6709\u4efb\u52a1\uff0c\u53ef\u4ee5\u5148\u53bb\u4efb\u52a1\u5730\u56fe\u751f\u6210\u6216\u8c03\u6574\u8def\u7ebf\u3002",
-          launch: "\u8fdb\u5165",
-        }
-      : {
-          snapshotLabel: "Week Snapshot",
-          snapshotTitle: "See this week's route in one glance",
-          snapshotNote: "Keep the overview here and adjust the route inside Quest Map.",
-          openMap: "Open Quest Map",
-          fullPlan: "Quest Map",
-          routeTheme: "Route theme",
-          focus: "Focus lane",
-          routeState: "State",
-          due: "due",
-          activeDays: "Active days",
-          classes: "Classes",
-          quests: "Quests",
-          routeReady: "This week's route is already in motion.",
-          routePending: "You can still generate or refine the route.",
-          noPlan: "No quests are queued yet. Head to Quest Map to generate or refine the route.",
-          launch: "Launch",
-        };
+
+  const updatePrefs = (partial: Partial<typeof preferences>) => {
+    const updated = saveSchedulePreferencesToStorage({ ...preferences, ...partial });
+    setPreferences(updated);
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !isLoggedIn) return;
+
+    const stored = window.localStorage.getItem(LAST_SEEN_BUDDY_LEVEL_KEY);
+    if (stored === null) {
+      window.localStorage.setItem(LAST_SEEN_BUDDY_LEVEL_KEY, String(buddyLevel));
+      return;
+    }
+
+    const previousLevel = Number(stored);
+    if (!Number.isFinite(previousLevel)) {
+      window.localStorage.setItem(LAST_SEEN_BUDDY_LEVEL_KEY, String(buddyLevel));
+      return;
+    }
+
+    if (buddyLevel > previousLevel) {
+      if (levelUpNoticeTimerRef.current) {
+        window.clearTimeout(levelUpNoticeTimerRef.current);
+      }
+      levelUpNoticeTimerRef.current = window.setTimeout(() => {
+        setLevelUpNotice({ level: buddyLevel, stageTitle: buddyStage.title });
+        levelUpNoticeTimerRef.current = null;
+      }, 0);
+      return;
+    }
+
+    if (buddyLevel < previousLevel) {
+      window.localStorage.setItem(LAST_SEEN_BUDDY_LEVEL_KEY, String(buddyLevel));
+    }
+
+    return () => {
+      if (levelUpNoticeTimerRef.current) {
+        window.clearTimeout(levelUpNoticeTimerRef.current);
+        levelUpNoticeTimerRef.current = null;
+      }
+    };
+  }, [buddyLevel, buddyStage.title, isLoggedIn]);
+
+  const updateBuddyOutfit = (partial: Partial<BuddyOutfit>) => {
+    const nextOutfit = { ...effectiveBuddyOutfit, ...partial };
+    const sanitizedOutfit = sanitizeBuddyOutfitForLevel(nextOutfit, unlockedWardrobeSet);
+    const updated = saveBuddyOutfitToStorage(sanitizedOutfit);
+    setBuddyOutfit(updated);
+  };
+
+  useEffect(() => {
+    const differs =
+      buddyOutfit.hat !== effectiveBuddyOutfit.hat ||
+      buddyOutfit.clothing !== effectiveBuddyOutfit.clothing ||
+      buddyOutfit.glasses !== effectiveBuddyOutfit.glasses ||
+      buddyOutfit.heldItem !== effectiveBuddyOutfit.heldItem;
+
+    if (!differs) return;
+
+    saveBuddyOutfitToStorage(effectiveBuddyOutfit);
+  }, [buddyOutfit, effectiveBuddyOutfit]);
+
+  const handleWardrobeTabChange = (tab: "hat" | "clothing" | "glasses" | "heldItem") => {
+    if (tab === wardrobeTab) return;
+    setWardrobeTab(tab);
+    setWardrobeFlipTick((value) => value + 1);
+  };
 
   const growthRows: Array<{ label: string; value: number; hint: string }> = [
     {
@@ -418,6 +699,12 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     },
   ];
 
+  const levelRuleRows = Array.from({ length: 3 }, (_, index) => ({
+    level: index + 1,
+    nextLevel: index + 2,
+    neededXp: getXpNeededForNextLevel(index + 1),
+  }));
+
   if (!isLoggedIn) {
     return (
       <section className="mt-6 grid gap-5 reveal-up">
@@ -451,8 +738,8 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
               </h2>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--ink-soft)] sm:text-base">
                 {locale === "zh"
-                  ? "把 TED 听力、学术口语、论坛互动和每周挑战放进一个更友好、更有吸引力的卡通校园里。你的 Buddy 会随着学习逐步成长。"
-                  : "TED listening, academic speaking, community tasks, and weekly quests all live inside one playful campus. Your buddy grows as you keep learning."}
+                  ? "把工科学术听力、学术口语、论坛互动和每周挑战放进一个更友好、更有吸引力的卡通校园里。你的 Buddy 会随着学习逐步成长。"
+                  : "Academic listening, academic speaking, community tasks, and weekly quests all live inside one playful campus. Your buddy grows as you keep learning."}
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
@@ -497,7 +784,14 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                 </div>
                 <div className="party-stage mt-4 px-5 pb-5 pt-3">
                   <div className="pet-spotlight" />
-                  <BuddyCompanion stage="fresh" focus="coursework" mood="happy" className="mx-auto" />
+                  <BuddyCompanion
+                    stage="fresh"
+                    focus={getGoalFocus(preferences.goal)}
+                    variant={getGoalVariant(preferences.goal)}
+                    mood="happy"
+                    outfit={buddyOutfit}
+                    className="mx-auto"
+                  />
                 </div>
               </div>
             </div>
@@ -507,11 +801,11 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
         <div className="grid gap-4 lg:grid-cols-3">
           {[
             {
-              title: locale === "zh" ? "真实听力" : "Real Listening",
+              title: locale === "zh" ? "学术听力库" : "Academic Listening",
               note:
                 locale === "zh"
-                  ? "TED、公开讲座和播客资源卡片式浏览，更像内容平台。"
-                  : "Browse TED talks, lectures, and podcasts in a content-library style.",
+                  ? "按专业、来源机构、口音和难度浏览材料；支持站内播放，也支持看文本后答题。"
+                  : "Browse by major, provider, accent, and difficulty, then watch in-app or read before answering.",
               Icon: Headphones,
             },
             {
@@ -619,6 +913,35 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
           </div>
 
           <div className="relative z-10">
+            {levelUpNotice ? (
+              <div className="absolute right-4 top-4 z-20 w-[min(20rem,calc(100%-1rem))]">
+                <div className="rounded-[1.45rem] border-2 border-white/92 bg-[linear-gradient(160deg,rgba(255,255,255,0.99),rgba(241,247,255,0.97),rgba(255,241,248,0.95))] p-5 shadow-[0_14px_0_rgba(143,196,255,0.16),0_24px_38px_rgba(90,123,255,0.14)]">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
+                        {locale === "zh" ? "Buddy 升级了" : "Buddy leveled up"}
+                      </p>
+                      <p className="mt-2 text-lg font-semibold text-[var(--ink)]">
+                        {locale === "zh"
+                          ? `升级到 Level ${levelUpNotice.level}`
+                          : `Level ${levelUpNotice.level} reached`}
+                      </p>
+                      <p className="mt-1 text-sm leading-6 text-[var(--ink-soft)]">{levelUpNotice.stageTitle}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLevelUpNotice(null);
+                        window.localStorage.setItem(LAST_SEEN_BUDDY_LEVEL_KEY, String(buddyLevel));
+                      }}
+                      className="pointer-events-auto rounded-full border-2 border-white/90 bg-white/88 px-3 py-1.5 text-sm font-semibold text-[var(--ink)] shadow-[0_8px_0_rgba(143,196,255,0.14)]"
+                    >
+                      {locale === "zh" ? "关闭" : "Close"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
             <div className="mx-auto max-w-[26rem] rounded-[2.2rem] border-2 border-white/90 bg-[rgba(255,255,255,0.72)] p-4 shadow-[0_16px_0_rgba(255,201,225,0.26),0_28px_56px_rgba(90,123,255,0.14)] backdrop-blur-xl">
               <div className="buddy-bubble p-4">
                 <p className="text-sm font-semibold text-[var(--ink)]">{buddyStage.note}</p>
@@ -626,44 +949,83 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
 
               <div className="party-stage mt-4 px-5 pb-5 pt-3">
                 <div className="pet-spotlight" />
-                <BuddyCompanion
-                  stage={buddyStage.id}
-                  focus={getGoalFocus(preferences.goal)}
-                  mood={buddyStage.mood}
-                  className="mx-auto"
-                />
+                {levelUpNotice ? (
+                  <>
+                    <span className="global-buddy-star global-buddy-star-one !left-[24%] !top-[2rem]">✦</span>
+                    <span className="global-buddy-star global-buddy-star-two !right-[23%] !top-[2.5rem]">✦</span>
+                    <span className="global-buddy-star global-buddy-star-three !right-[31%] !top-[5rem]">✦</span>
+                  </>
+                ) : null}
+                <button
+                  type="button"
+                    onClick={() => setWardrobeOpen(true)}
+                  className={`buddy-dressup-trigger mx-auto block rounded-[1.8rem] border-0 bg-transparent p-0${
+                    levelUpNotice ? " animate-[globalBuddyBounceHit_1s_ease-in-out_5]" : ""
+                  }`}
+                  aria-label={locale === "zh" ? "打开桌宠换装" : "Open buddy wardrobe"}
+                >
+                  <BuddyCompanion
+                    stage={buddyStage.id}
+                    focus={getGoalFocus(preferences.goal)}
+                    variant={getGoalVariant(preferences.goal)}
+                    mood={buddyStage.mood}
+                    outfit={effectiveBuddyOutfit}
+                    className="mx-auto"
+                  />
+                </button>
+                <p className="mt-3 text-center text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+                  {locale === "zh" ? "点击桌宠换装" : "Tap buddy to dress up"}
+                </p>
               </div>
 
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 <div className="rounded-[1.45rem] border-2 border-white/90 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(232,244,255,0.92))] p-3 shadow-[0_8px_0_rgba(143,196,255,0.2),0_16px_24px_rgba(90,123,255,0.08)]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+                    {locale === "zh" ? "等级" : "Level"}
+                  </p>
+                  <p className="mt-2 text-2xl font-semibold text-[var(--ink)]">{buddyLevel}</p>
+                </div>
+                <div className="rounded-[1.45rem] border-2 border-white/90 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(239,255,248,0.92))] p-3 shadow-[0_8px_0_rgba(143,240,211,0.2),0_16px_24px_rgba(90,123,255,0.08)]">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">XP</p>
                   <p className="mt-2 text-2xl font-semibold text-[var(--ink)]">{xp}</p>
                 </div>
-                <div className="rounded-[1.45rem] border-2 border-white/90 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(239,255,248,0.92))] p-3 shadow-[0_8px_0_rgba(143,240,211,0.2),0_16px_24px_rgba(90,123,255,0.08)]">
+                <div className="rounded-[1.45rem] border-2 border-white/90 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(255,243,247,0.94))] p-3 shadow-[0_8px_0_rgba(255,201,225,0.24),0_16px_24px_rgba(90,123,255,0.08)]">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
                     {locale === "zh" ? "已完成任务" : "Tasks done"}
                   </p>
-                  <p className="mt-2 text-2xl font-semibold text-[var(--ink)]">{totalCompleted}</p>
-                </div>
-                <div className="rounded-[1.45rem] border-2 border-white/90 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(255,243,247,0.94))] p-3 shadow-[0_8px_0_rgba(255,201,225,0.24),0_16px_24px_rgba(90,123,255,0.08)]">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
-                    {locale === "zh" ? "准确率" : "Accuracy"}
-                  </p>
-                  <p className="mt-2 text-2xl font-semibold text-[var(--ink)]">{overallAccuracy}%</p>
+                  <p className="mt-2 text-2xl font-semibold text-[var(--ink)]">{totalCompletedForBuddy}</p>
                 </div>
               </div>
 
               <div className="mt-4">
                 <div className="mb-2 flex items-center justify-between gap-3 text-sm">
                   <span className="font-semibold text-[var(--ink)]">
-                    {locale === "zh" ? "进化进度" : "Evolution progress"}
+                    {locale === "zh" ? "XP 进度" : "XP progress"}
                   </span>
                   <span className="text-[var(--ink-soft)]">
-                    {xp} / {buddyStage.nextXp}
+                    {levelXpProgress} / {levelXpSpan}
                   </span>
                 </div>
                 <div className="buddy-stage-bar h-3">
-                  <div className="buddy-progress-fill" style={{ width: `${currentStageProgress}%` }} />
+                  <div className="buddy-progress-fill" style={{ width: `${currentLevelProgress}%` }} />
+                </div>
+                <div className="mt-2 flex items-center justify-between gap-3 text-xs text-[var(--ink-soft)]">
+                  <span>
+                    {locale === "zh" ? `当前等级 ${buddyLevel}` : `Current level ${buddyLevel}`}
+                  </span>
+                  <span>
+                    {locale === "zh" ? `下一级 ${buddyLevel + 1}` : `Next level ${buddyLevel + 1}`}
+                  </span>
+                </div>
+                <div className="mt-3 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowLevelRules(true)}
+                    className="party-button-ghost !px-3 !py-2 !text-sm"
+                  >
+                    <CircleHelp className="size-4" />
+                    {locale === "zh" ? "查看升级规则" : "View level rules"}
+                  </button>
                 </div>
               </div>
             </div>
@@ -671,17 +1033,270 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
         </div>
       </article>
 
+      {showLevelRules ? (
+        <div className="fixed inset-0 z-[70] bg-transparent" onClick={() => setShowLevelRules(false)}>
+          <div
+            className="absolute right-[max(1.25rem,calc(50%-35rem))] top-[17.5rem] w-[min(24rem,calc(100vw-2rem))] rounded-[1.7rem] border-2 border-white/90 bg-[linear-gradient(165deg,rgba(255,255,255,0.99),rgba(241,247,255,0.97),rgba(255,246,250,0.94))] p-4 shadow-[0_14px_0_rgba(255,201,225,0.18),0_24px_40px_rgba(90,123,255,0.14)] sm:p-5"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="section-label">
+                  <PawPrint className="size-3.5" />
+                  {locale === "zh" ? "宠物升级规则" : "Buddy level rules"}
+                </p>
+                <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">
+                  {locale === "zh"
+                    ? `第 1 次升级需要 ${LEVEL_XP_BASE} XP，之后每升一级固定多 ${LEVEL_XP_STEP} XP。`
+                    : `The first level-up needs ${LEVEL_XP_BASE} XP, and each later level needs ${LEVEL_XP_STEP} more XP than the one before.`}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowLevelRules(false)}
+                className="rounded-full border-2 border-white/90 bg-white/88 px-3 py-1.5 text-sm font-semibold text-[var(--ink)] shadow-[0_8px_0_rgba(143,196,255,0.14)]"
+              >
+                {locale === "zh" ? "关闭" : "Close"}
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-2.5">
+              {levelRuleRows.map((rule) => (
+                <div
+                  key={rule.level}
+                  className="rounded-[1.2rem] border-2 border-white/90 bg-[rgba(255,255,255,0.84)] px-4 py-3 shadow-[0_8px_0_rgba(143,196,255,0.12),0_14px_20px_rgba(90,123,255,0.07)]"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-[var(--ink)]">
+                      {locale === "zh"
+                        ? `例：等级 ${rule.level} -> ${rule.nextLevel}`
+                        : `Example: Level ${rule.level} -> ${rule.nextLevel}`}
+                    </p>
+                    <span className="buddy-chip !px-3 !py-1">{rule.neededXp} XP</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 rounded-[1.2rem] border-2 border-white/90 bg-[rgba(255,255,255,0.84)] px-4 py-3 shadow-[0_8px_0_rgba(143,196,255,0.12),0_14px_20px_rgba(90,123,255,0.07)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+                {locale === "zh" ? "固定 XP 来源" : "Fixed XP sources"}
+              </p>
+              <div className="mt-3 grid gap-2 text-sm text-[var(--ink)]">
+                <p>{locale === "zh" ? `Listening 完成 +${BUDDY_XP_RULES.listeningCompletion} XP` : `Listening completion +${BUDDY_XP_RULES.listeningCompletion} XP`}</p>
+                <p>{locale === "zh" ? `Speaking 完成 +${BUDDY_XP_RULES.speakingCompletion} XP` : `Speaking completion +${BUDDY_XP_RULES.speakingCompletion} XP`}</p>
+                <p>{locale === "zh" ? `Reading 完成 +${BUDDY_XP_RULES.readingCompletion} XP` : `Reading completion +${BUDDY_XP_RULES.readingCompletion} XP`}</p>
+                <p>{locale === "zh" ? `Writing 完成 +${BUDDY_XP_RULES.writingCompletion} XP` : `Writing completion +${BUDDY_XP_RULES.writingCompletion} XP`}</p>
+                <p>{locale === "zh" ? `Review 完成 +${BUDDY_XP_RULES.reviewSession} XP` : `Review completion +${BUDDY_XP_RULES.reviewSession} XP`}</p>
+                <p>{locale === "zh" ? `Quest Arcade 通关 +${BUDDY_XP_RULES.escapeRoomClear} XP` : `Quest Arcade clear +${BUDDY_XP_RULES.escapeRoomClear} XP`}</p>
+                <p>{locale === "zh" ? `Dorm Lockout 通关 +${BUDDY_XP_RULES.dormLockoutClear} XP` : `Dorm Lockout clear +${BUDDY_XP_RULES.dormLockoutClear} XP`}</p>
+                <p>{locale === "zh" ? `Last Train Escape 通关 +${BUDDY_XP_RULES.lastTrainClear} XP` : `Last Train Escape clear +${BUDDY_XP_RULES.lastTrainClear} XP`}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {wardrobeOpen && typeof document !== "undefined"
+        ? createPortal(
+            <div className="buddy-wardrobe-overlay" role="dialog" aria-modal="true">
+              <div className="buddy-wardrobe-panel">
+                <button
+                  type="button"
+                  onClick={() => setWardrobeOpen(false)}
+                  className="buddy-wardrobe-close"
+                  aria-label={locale === "zh" ? "关闭换装面板" : "Close wardrobe"}
+                >
+                  ×
+                </button>
+
+                <div className="buddy-wardrobe-layout mt-6">
+                  <div className="buddy-wardrobe-tabs">
+                    {(
+                      [
+                        ["hat", locale === "zh" ? "帽子" : "Hats", HatGlasses],
+                        ["clothing", locale === "zh" ? "服装" : "Bottoms", Shirt],
+                        ["glasses", locale === "zh" ? "眼镜" : "Glasses", Glasses],
+                        ["heldItem", locale === "zh" ? "手持物" : "Handhelds", Hand],
+                      ] as const
+                    ).map(([tab, label, Icon]) => (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => handleWardrobeTabChange(tab)}
+                        className={`buddy-wardrobe-tab${wardrobeTab === tab ? " buddy-wardrobe-tab-active" : ""}`}
+                      >
+                        <Icon className="buddy-wardrobe-tab-icon size-4.5" />
+                        <span>{label}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="buddy-wardrobe-page buddy-wardrobe-page-left">
+                    <p className="section-label">
+                      <Sparkles className="size-3.5" />
+                      {locale === "zh" ? "Buddy 换装间" : "Buddy Wardrobe"}
+                    </p>
+                    <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
+                      {locale === "zh" ? "给你的学伴挑一套今天的造型" : "Pick today's look for your buddy"}
+                    </h3>
+                    <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">
+                      {locale === "zh"
+                        ? "帽子、下半身服装和手持物都可以自由搭配，当前分类的选项就显示在这一页。"
+                        : "Mix hats, lower-body outfits, and handheld props freely. The current category appears right on this page."}
+                    </p>
+
+                    <div key={`options-${wardrobeTab}-${wardrobeFlipTick}`} className="buddy-wardrobe-options buddy-wardrobe-page-flip mt-6">
+                      {wardrobeTab === "hat"
+                        ? (Object.entries(buddyWardrobeCopy.hats) as Array<[BuddyHat, { zh: string; en: string }]>).map(([key, copy]) => (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => updateBuddyOutfit({ hat: key })}
+                              disabled={!unlockedWardrobeSet.has(getWardrobeUnlockKey("hat", key))}
+                              className={`buddy-wardrobe-option${effectiveBuddyOutfit.hat === key ? " buddy-wardrobe-option-active" : ""}${!unlockedWardrobeSet.has(getWardrobeUnlockKey("hat", key)) ? " buddy-wardrobe-option-locked" : ""}`}
+                            >
+                              {renderWardrobePreviewIcon("hat", key)}
+                              <span className="min-w-0 flex-1">
+                                <span className="block">{copy[locale]}</span>
+                                {!unlockedWardrobeSet.has(getWardrobeUnlockKey("hat", key)) ? (
+                                  <span className="mt-1 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+                                    <Lock className="size-3" />
+                                    {locale === "zh" ? `等级 ${getWardrobeUnlockLevel("hat", key)} 解锁` : `Unlocks at Lv ${getWardrobeUnlockLevel("hat", key)}`}
+                                  </span>
+                                ) : null}
+                              </span>
+                            </button>
+                          ))
+                        : null}
+                      {wardrobeTab === "clothing"
+                        ? (Object.entries(buddyWardrobeCopy.clothing) as Array<[BuddyClothing, { zh: string; en: string }]>).map(([key, copy]) => (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => updateBuddyOutfit({ clothing: key })}
+                              disabled={!unlockedWardrobeSet.has(getWardrobeUnlockKey("clothing", key))}
+                              className={`buddy-wardrobe-option${effectiveBuddyOutfit.clothing === key ? " buddy-wardrobe-option-active" : ""}${!unlockedWardrobeSet.has(getWardrobeUnlockKey("clothing", key)) ? " buddy-wardrobe-option-locked" : ""}`}
+                            >
+                              {renderWardrobePreviewIcon("clothing", key)}
+                              <span className="min-w-0 flex-1">
+                                <span className="block">{copy[locale]}</span>
+                                {!unlockedWardrobeSet.has(getWardrobeUnlockKey("clothing", key)) ? (
+                                  <span className="mt-1 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+                                    <Lock className="size-3" />
+                                    {locale === "zh" ? `等级 ${getWardrobeUnlockLevel("clothing", key)} 解锁` : `Unlocks at Lv ${getWardrobeUnlockLevel("clothing", key)}`}
+                                  </span>
+                                ) : null}
+                              </span>
+                            </button>
+                          ))
+                        : null}
+                      {wardrobeTab === "glasses"
+                        ? (Object.entries(buddyWardrobeCopy.glasses) as Array<[BuddyGlasses, { zh: string; en: string }]>).map(([key, copy]) => (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => updateBuddyOutfit({ glasses: key })}
+                              disabled={!unlockedWardrobeSet.has(getWardrobeUnlockKey("glasses", key))}
+                              className={`buddy-wardrobe-option${effectiveBuddyOutfit.glasses === key ? " buddy-wardrobe-option-active" : ""}${!unlockedWardrobeSet.has(getWardrobeUnlockKey("glasses", key)) ? " buddy-wardrobe-option-locked" : ""}`}
+                            >
+                              {renderWardrobePreviewIcon("glasses", key)}
+                              <span className="min-w-0 flex-1">
+                                <span className="block">{copy[locale]}</span>
+                                {!unlockedWardrobeSet.has(getWardrobeUnlockKey("glasses", key)) ? (
+                                  <span className="mt-1 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+                                    <Lock className="size-3" />
+                                    {locale === "zh" ? `等级 ${getWardrobeUnlockLevel("glasses", key)} 解锁` : `Unlocks at Lv ${getWardrobeUnlockLevel("glasses", key)}`}
+                                  </span>
+                                ) : null}
+                              </span>
+                            </button>
+                          ))
+                        : null}
+                      {wardrobeTab === "heldItem"
+                        ? (Object.entries(buddyWardrobeCopy.heldItems) as Array<[BuddyHeldItem, { zh: string; en: string }]>).map(([key, copy]) => (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => updateBuddyOutfit({ heldItem: key })}
+                              disabled={!unlockedWardrobeSet.has(getWardrobeUnlockKey("heldItem", key))}
+                              className={`buddy-wardrobe-option${effectiveBuddyOutfit.heldItem === key ? " buddy-wardrobe-option-active" : ""}${!unlockedWardrobeSet.has(getWardrobeUnlockKey("heldItem", key)) ? " buddy-wardrobe-option-locked" : ""}`}
+                            >
+                              {renderWardrobePreviewIcon("heldItem", key)}
+                              <span className="min-w-0 flex-1">
+                                <span className="block">{copy[locale]}</span>
+                                {!unlockedWardrobeSet.has(getWardrobeUnlockKey("heldItem", key)) ? (
+                                  <span className="mt-1 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+                                    <Lock className="size-3" />
+                                    {locale === "zh" ? `等级 ${getWardrobeUnlockLevel("heldItem", key)} 解锁` : `Unlocks at Lv ${getWardrobeUnlockLevel("heldItem", key)}`}
+                                  </span>
+                                ) : null}
+                              </span>
+                            </button>
+                          ))
+                        : null}
+                    </div>
+                  </div>
+
+                  <div
+                    key={`preview-${wardrobeTab}-${wardrobeFlipTick}`}
+                    className="buddy-wardrobe-page buddy-wardrobe-page-right buddy-wardrobe-preview buddy-wardrobe-page-flip"
+                  >
+                    <div className="party-stage px-5 pb-5 pt-3">
+                      <div className="pet-spotlight" />
+                      <BuddyCompanion
+                        stage={buddyStage.id}
+                        focus={getGoalFocus(preferences.goal)}
+                        variant={getGoalVariant(preferences.goal)}
+                        mood="happy"
+                        outfit={effectiveBuddyOutfit}
+                        className="mx-auto"
+                      />
+                    </div>
+                    <div className="buddy-bubble mt-4 p-4">
+                      <p className="text-sm font-semibold text-[var(--ink)]">
+                        {locale === "zh"
+                          ? `当前搭配：${buddyWardrobeCopy.hats[effectiveBuddyOutfit.hat].zh} / ${buddyWardrobeCopy.clothing[effectiveBuddyOutfit.clothing].zh} / ${buddyWardrobeCopy.glasses[effectiveBuddyOutfit.glasses].zh} / ${buddyWardrobeCopy.heldItems[effectiveBuddyOutfit.heldItem].zh}`
+                          : `Current look: ${buddyWardrobeCopy.hats[effectiveBuddyOutfit.hat].en} / ${buddyWardrobeCopy.clothing[effectiveBuddyOutfit.clothing].en} / ${buddyWardrobeCopy.glasses[effectiveBuddyOutfit.glasses].en} / ${buddyWardrobeCopy.heldItems[effectiveBuddyOutfit.heldItem].en}`}
+                      </p>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBuddyOutfit(saveBuddyOutfitToStorage(DEFAULT_BUDDY_OUTFIT));
+                        }}
+                        className="party-button-ghost"
+                      >
+                        {locale === "zh" ? "恢复默认" : "Reset"}
+                      </button>
+                      <button type="button" onClick={() => setWardrobeOpen(false)} className="party-button">
+                        {locale === "zh" ? "完成搭配" : "Done"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
+
       <BuddyCampusLobby
         locale={locale}
         levelPrefix={levelPrefix}
         nextQuestHref={nextQuestHref}
         buddyStage={buddyStage.id}
         buddyFocus={getGoalFocus(preferences.goal)}
+        buddyOutfit={buddyOutfit}
+        selectedGoal={preferences.goal}
+        onSelectGoal={(goal) => updatePrefs({ goal })}
       />
 
       <HomeLearningModules locale={locale} />
 
-      <div className="grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
+      <div className="grid gap-5 xl:grid-cols-[1.04fr_0.96fr]">
         <article className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(246,250,255,0.92),rgba(255,241,248,0.88))] p-6">
           <div className="flex items-center justify-between gap-3">
             <div>
@@ -690,14 +1305,12 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                 {locale === "zh" ? "今日任务" : "Today's Quests"}
               </p>
               <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
-                {locale === "zh"
-                  ? "从今天最值得先做的 3 个任务开始。"
-                  : "Start with the 3 quests worth doing first."}
+                {locale === "zh" ? "从最重要的 3 个任务开始。" : "Start with the 3 quests that matter most."}
               </h3>
             </div>
             <Link href={`/schedule?lang=${locale}`} className="pet-sticker">
               <CalendarDays className="mr-1 size-3.5" />
-              {homePlannerText.fullPlan}
+              {locale === "zh" ? "完整计划" : "Full plan"}
             </Link>
           </div>
 
@@ -717,13 +1330,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <span className={index === 0 ? "mission-badge mission-badge-win" : "mission-badge mission-badge-live"}>
-                            {index === 0
-                              ? locale === "zh"
-                                ? "主线任务"
-                                : "Main quest"
-                              : locale === "zh"
-                                ? "支线任务"
-                                : "Side quest"}
+                            {index === 0 ? (locale === "zh" ? "主任务" : "Main quest") : locale === "zh" ? "支线任务" : "Side quest"}
                           </span>
                           <p className="text-sm font-semibold text-[var(--ink)]">{block.title}</p>
                         </div>
@@ -737,7 +1344,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                       href={block.href}
                       className={`inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r px-4 py-2.5 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(42,107,180,0.16)] ${visual.accent}`}
                     >
-                      {homePlannerText.launch}
+                      {locale === "zh" ? "进入任务" : "Launch"}
                       <ArrowRight className="size-4" />
                     </Link>
                   </div>
@@ -747,141 +1354,21 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
 
             {todayPlan.blocks.length === 0 ? (
               <div className="rounded-[1.4rem] border border-dashed border-[rgba(42,107,180,0.16)] bg-white/70 p-5 text-sm text-[var(--ink-soft)]">
-                {homePlannerText.noPlan}
+                {locale === "zh"
+                  ? "今天还没有生成任务，你可以先去设置计划或打开资源库。"
+                  : "No quests are queued yet. Open your planner or jump into the library first."}
               </div>
             ) : null}
-          </div>
-        </article>
-
-        <article className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(243,248,255,0.92),rgba(240,255,247,0.9))] p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="section-label">
-                <CalendarDays className="size-3.5" />
-                {homePlannerText.snapshotLabel}
-              </p>
-              <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
-                {homePlannerText.snapshotTitle}
-              </h3>
-            </div>
-            <Link href={weekSnapshotHref} className="pet-sticker">
-              <Compass className="mr-1 size-3.5" />
-              {homePlannerText.openMap}
-            </Link>
-          </div>
-
-          <div className="mt-5 flex flex-wrap gap-2">
-            <span className="mission-badge mission-badge-live">
-              {homePlannerText.routeTheme} · {getWeekModeLabel(weeklySchedule.weekMode, locale)}
-            </span>
-            <span className="mission-badge mission-badge-win">
-              {homePlannerText.focus} · {getSkillLabel(weeklySchedule.primarySkill, locale)}
-            </span>
-          </div>
-
-          <p className="mt-4 text-sm text-[var(--ink-soft)]">{homePlannerText.snapshotNote}</p>
-
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-[1.4rem] border border-[rgba(42,107,180,0.1)] bg-white/88 p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
-                {homePlannerText.routeState}
-              </p>
-              <p className="mt-2 text-lg font-semibold text-[var(--ink)]">
-                {totalWeekQuests > 0 ? homePlannerText.routeReady : homePlannerText.routePending}
-              </p>
-            </div>
-            <div className="rounded-[1.4rem] border border-[rgba(42,107,180,0.1)] bg-white/88 p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
-                {locale === "zh" ? "目标" : "Target"}
-              </p>
-              <p className="mt-2 text-2xl font-semibold text-[var(--ink)]">{weeklySchedule.weeklyTargetMinutes} min</p>
-            </div>
-          </div>
-
-          <div className="mt-4 grid grid-cols-4 gap-3">
-            <div className="rounded-[1.2rem] border border-[rgba(42,107,180,0.1)] bg-white/82 p-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
-                {homePlannerText.due}
-              </p>
-              <p className="mt-2 text-xl font-semibold text-[var(--ink)]">{totalWeekDeadlines}</p>
-            </div>
-            <div className="rounded-[1.2rem] border border-[rgba(42,107,180,0.1)] bg-white/82 p-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
-                {homePlannerText.activeDays}
-              </p>
-              <p className="mt-2 text-xl font-semibold text-[var(--ink)]">{activeRouteDays}</p>
-            </div>
-            <div className="rounded-[1.2rem] border border-[rgba(42,107,180,0.1)] bg-white/82 p-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
-                {homePlannerText.classes}
-              </p>
-              <p className="mt-2 text-xl font-semibold text-[var(--ink)]">{totalWeekClasses}</p>
-            </div>
-            <div className="rounded-[1.2rem] border border-[rgba(42,107,180,0.1)] bg-white/82 p-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
-                {homePlannerText.quests}
-              </p>
-              <p className="mt-2 text-xl font-semibold text-[var(--ink)]">{totalWeekQuests}</p>
-            </div>
-          </div>
-
-          <div className="mt-4 grid grid-cols-7 gap-2">
-            {weeklySchedule.days.map((day) => (
-              <Link
-                key={day.dateISO}
-                href={`/schedule?lang=${locale}&focus=${encodeURIComponent(day.dateISO)}#schedule-week`}
-                className={`rounded-[1.15rem] border px-2 py-3 text-center transition ${
-                  day.isToday
-                    ? "border-[rgba(42,107,180,0.32)] bg-[rgba(145,220,255,0.18)]"
-                    : "border-[rgba(42,107,180,0.1)] bg-white/88 hover:bg-[rgba(145,220,255,0.14)]"
-                }`}
-              >
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
-                  {weekdayNames[day.day]}
-                </p>
-                <p className="mt-2 text-sm font-semibold text-[var(--ink)]">{day.blocks.length}</p>
-                <p className="mt-1 text-[10px] text-[var(--ink-soft)]">
-                  {day.deadlines.length} {homePlannerText.due}
-                </p>
-              </Link>
-            ))}
-          </div>
-        </article>
-      </div>
-
-      <div className="grid gap-5 xl:grid-cols-[0.86fr_1.14fr]">
-        <article className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(255,244,248,0.92),rgba(244,248,255,0.9))] p-6">
-          <p className="section-label">
-            <PawPrint className="size-3.5" />
-            {locale === "zh" ? "学伴成长" : "Buddy Growth"}
-          </p>
-          <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
-            {locale === "zh" ? "让 Buddy 的成长跟着你的学习节奏走。" : "Let your buddy grow with your learning rhythm."}
-          </h3>
-
-          <div className="mt-5 grid gap-4">
-            {growthRows.map((row) => (
-              <div key={row.label} className="rounded-[1.4rem] border border-[rgba(42,107,180,0.1)] bg-white/88 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-semibold text-[var(--ink)]">{row.label}</p>
-                  <p className="text-sm font-semibold text-[var(--ink-soft)]">{row.value}%</p>
-                </div>
-                <div className="mt-3 buddy-stage-bar h-2.5">
-                  <div className="buddy-progress-fill" style={{ width: `${row.value}%` }} />
-                </div>
-                <p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">{row.hint}</p>
-              </div>
-            ))}
           </div>
         </article>
 
         <article className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(248,247,255,0.92),rgba(237,254,248,0.9))] p-6">
           <p className="section-label">
             <Trophy className="size-3.5" />
-            {locale === "zh" ? "每周挑战" : "Weekly Mission Board"}
+            {locale === "zh" ? "每周任务板" : "Weekly Mission Board"}
           </p>
           <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
-            {locale === "zh" ? "让本周的挑战和成长一起向前。" : "Keep this week's challenges and growth moving together."}
+            {locale === "zh" ? "让 Buddy 每周都稳定成长。" : "Give your buddy a reason to grow every week."}
           </h3>
 
           <div className="mt-5 grid gap-3">
@@ -923,6 +1410,157 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
             })}
           </div>
         </article>
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-[0.88fr_1.12fr]">
+        <article className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(255,244,248,0.92),rgba(244,248,255,0.9))] p-6">
+          <p className="section-label">
+            <PawPrint className="size-3.5" />
+            {locale === "zh" ? "学伴成长" : "Buddy Growth"}
+          </p>
+          <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
+            {locale === "zh" ? "宠物成长跟着学习数据走。" : "The pet grows with your learning signals."}
+          </h3>
+
+          <div className="mt-5 grid gap-4">
+            {growthRows.map((row) => (
+              <div key={row.label} className="rounded-[1.4rem] border border-[rgba(42,107,180,0.1)] bg-white/88 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-[var(--ink)]">{row.label}</p>
+                  <p className="text-sm font-semibold text-[var(--ink-soft)]">{row.value}%</p>
+                </div>
+                <div className="mt-3 buddy-stage-bar h-2.5">
+                  <div className="buddy-progress-fill" style={{ width: `${row.value}%` }} />
+                </div>
+                <p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">{row.hint}</p>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <div className="grid gap-5">
+          <article className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(243,248,255,0.92),rgba(255,247,239,0.9))] p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="section-label">
+                  <Sparkles className="size-3.5" />
+                  {locale === "zh" ? "任务控制台" : "Mission Controls"}
+                </p>
+                <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
+                  {locale === "zh" ? "直接调整学习模式。" : "Tune the study loop directly from home."}
+                </h3>
+              </div>
+              <Link href={`/schedule?lang=${locale}`} className="pet-sticker">
+                {locale === "zh" ? "打开计划页" : "Open planner"}
+              </Link>
+            </div>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-3">
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+                  {locale === "zh" ? "目标" : "Goal"}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {(["coursework", "research", "seminar"] as ScheduleGoal[]).map((goal) => (
+                    <button
+                      key={goal}
+                      type="button"
+                      onClick={() => updatePrefs({ goal })}
+                      className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
+                        preferences.goal === goal
+                          ? "bg-[linear-gradient(135deg,#2a6bb4,#55b2ff)] text-white shadow-[0_10px_20px_rgba(42,107,180,0.18)]"
+                          : "border border-[rgba(42,107,180,0.12)] bg-white text-[var(--ink)] hover:bg-[rgba(145,220,255,0.14)]"
+                      }`}
+                    >
+                      {getGoalLabel(goal, locale)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+                  {locale === "zh" ? "强度" : "Intensity"}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {(["light", "standard", "intensive"] as ScheduleMode[]).map((mode) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => updatePrefs({ mode })}
+                      className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
+                        preferences.mode === mode
+                          ? "bg-[linear-gradient(135deg,#2a6bb4,#55b2ff)] text-white shadow-[0_10px_20px_rgba(42,107,180,0.18)]"
+                          : "border border-[rgba(42,107,180,0.12)] bg-white text-[var(--ink)] hover:bg-[rgba(145,220,255,0.14)]"
+                      }`}
+                    >
+                      {mode}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+                  {locale === "zh" ? "学习时段" : "Study Window"}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {(["early", "midday", "evening"] as StudyWindow[]).map((windowName) => (
+                    <button
+                      key={windowName}
+                      type="button"
+                      onClick={() => updatePrefs({ studyWindow: windowName })}
+                      className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
+                        preferences.studyWindow === windowName
+                          ? "bg-[linear-gradient(135deg,#2a6bb4,#55b2ff)] text-white shadow-[0_10px_20px_rgba(42,107,180,0.18)]"
+                          : "border border-[rgba(42,107,180,0.12)] bg-white text-[var(--ink)] hover:bg-[rgba(145,220,255,0.14)]"
+                      }`}
+                    >
+                      {windowName}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(242,249,255,0.92),rgba(246,255,247,0.9))] p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="section-label">
+                  <CalendarDays className="size-3.5" />
+                  {locale === "zh" ? "本周节奏" : "Campus Week"}
+                </p>
+                <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
+                  {locale === "zh" ? "本周学习节奏一眼可见。" : "See the week rhythm at a glance."}
+                </h3>
+              </div>
+              <span className="pet-sticker">
+                {locale === "zh" ? "目标" : "Target"} {weeklySchedule.weeklyTargetMinutes} min
+              </span>
+            </div>
+
+            <div className="mt-5 grid grid-cols-7 gap-2">
+              {weeklySchedule.days.map((day) => (
+                <Link
+                  key={day.dateISO}
+                  href={`/schedule?lang=${locale}&focus=${encodeURIComponent(day.dateISO)}#schedule-week`}
+                  className={`rounded-[1.15rem] border p-3 text-center transition ${
+                    day.isToday
+                      ? "border-[rgba(42,107,180,0.32)] bg-[rgba(145,220,255,0.18)]"
+                      : "border-[rgba(42,107,180,0.1)] bg-white/88 hover:bg-[rgba(145,220,255,0.14)]"
+                  }`}
+                >
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+                    {weekdayNames[day.day]}
+                  </p>
+                  <p className="mt-2 text-lg font-semibold text-[var(--ink)]">{day.targetMinutes}</p>
+                  <p className="mt-1 text-[10px] text-[var(--ink-soft)]">{day.deadlines.length} due</p>
+                </Link>
+              ))}
+            </div>
+          </article>
+        </div>
       </div>
 
     </section>

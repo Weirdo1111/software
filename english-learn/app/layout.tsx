@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import { AnalyticsProvider } from "@/components/analytics-provider";
+import { GlobalBuddyCompanion } from "@/components/global-buddy-companion";
+import { NavigationLoadingOverlay } from "@/components/navigation-loading-overlay";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,8 +19,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <AnalyticsProvider />
-        {children}
+        <div className="relative z-[1] min-h-screen">
+          <AnalyticsProvider />
+          <Suspense fallback={null}>
+            <GlobalBuddyCompanion />
+          </Suspense>
+          <Suspense fallback={null}>
+            <NavigationLoadingOverlay />
+          </Suspense>
+          {children}
+        </div>
       </body>
     </html>
   );

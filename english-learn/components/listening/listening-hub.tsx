@@ -14,9 +14,9 @@ export function ListeningHub({ locale }: { locale: Locale }) {
           practiceTitle: "听力训练",
           practiceBody: "选择你的专业话题，边听边看原文、调整语速、做笔记，轻松提升听力。",
           practiceCta: "开始听力训练",
-          tedTitle: "TED 听力",
-          tedBody: "用与你专业相关的 TED 演讲练习真实听力，提升对自然语速的适应。",
-          tedCta: "进入 TED 听力",
+          tedTitle: "学术听力库",
+          tedBody: "浏览 TED、公开讲座、MIT OCW、NPTEL 等材料，按专业和口音做题训练。",
+          tedCta: "进入听力资源库",
         }
       : {
           title: "Listening",
@@ -24,9 +24,9 @@ export function ListeningHub({ locale }: { locale: Locale }) {
           practiceTitle: "Listening Practice",
           practiceBody: "Pick a topic from your major, listen at your own pace with transcript and speed control, and take notes.",
           practiceCta: "Start practice",
-          tedTitle: "TED Listening",
-          tedBody: "Practice with real TED talks matched to your major, building comfort with natural pace and authentic delivery.",
-          tedCta: "Start TED listening",
+          tedTitle: "Academic Listening Library",
+          tedBody: "Browse TED, public lectures, MIT OCW, NPTEL, and other official materials by major and accent.",
+          tedCta: "Open listening library",
         };
 
   return (
@@ -60,9 +60,9 @@ export function ListeningHub({ locale }: { locale: Locale }) {
           </span>
         </Link>
 
-        {/* TED Listening */}
+        {/* Academic Listening Library */}
         <Link
-          href={`/listening/ted?lang=${locale}`}
+          href={`/listening?lang=${locale}`}
           className="group surface-panel rounded-[1.8rem] p-5 sm:p-6 transition hover:translate-y-[-2px] hover:shadow-[0_20px_50px_rgba(28,78,149,0.14)]"
         >
           <div className="inline-flex size-11 items-center justify-center rounded-2xl bg-[var(--coral)] text-white shadow-[0_8px_20px_rgba(195,109,89,0.25)]">

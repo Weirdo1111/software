@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { AUTH_SESSION_COOKIE, createAuthSession, createSessionCookieOptions } from "@/lib/auth-session";
 import { jsonError } from "@/lib/api";
 import {
   AUTH_EMAIL_COOKIE,
@@ -9,7 +9,8 @@ import {
   AUTH_USER_ID_COOKIE,
   AUTH_USERNAME_COOKIE,
 } from "@/lib/current-user";
-import { createLocalUser } from "@/lib/local-auth";
+import { getLocalBuddyProgress } from "@/lib/local-buddy-progress";
+import { createLocalUser, findLocalUserByLogin, isDatabaseAuthConfigured } from "@/lib/local-auth";
 
 const schema = z.object({
   username: z.string().min(3).optional(),
@@ -21,95 +22,100 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const payload = schema.parse(body);
-    const supabase = await createSupabaseServerClient();
+    try {
+      const fallbackUsername = payload.email.split("@")[0]?.slice(0, 24) || "learner";
+      const user = await createLocalUser({
+        ...payload,
+        username: payload.username?.trim() || fallbackUsername,
+      });
+      const createdUser = await findLocalUserByLogin(user.email ?? payload.email);
 
-    if (!supabase) {
-      try {
-        const fallbackUsername = payload.email.split("@")[0]?.slice(0, 24) || "learner";
-        const user = await createLocalUser({
-          ...payload,
-          username: payload.username?.trim() || fallbackUsername,
-        });
-
-        const response = NextResponse.json({
-          user,
-          user_id: user.id,
-          session: true,
-          storage: "local-file",
-        });
-
-        response.cookies.set(AUTH_PROVIDER_COOKIE, "local-file", {
-          httpOnly: true,
-          sameSite: "lax",
-          path: "/",
-        });
-        response.cookies.set(AUTH_USER_ID_COOKIE, user.id, {
-          httpOnly: true,
-          sameSite: "lax",
-          path: "/",
-        });
-        response.cookies.set(AUTH_USERNAME_COOKIE, user.username, {
-          httpOnly: true,
-          sameSite: "lax",
-          path: "/",
-        });
-        response.cookies.set(AUTH_EMAIL_COOKIE, user.email, {
-          httpOnly: true,
-          sameSite: "lax",
-          path: "/",
-        });
-
-        return response;
-      } catch (error) {
-        if (error instanceof Error) {
-          return jsonError(error.message, 409);
-        }
-
-        return jsonError("Failed to sign up", 500);
+      if (!createdUser) {
+        return jsonError("Failed to create account session", 500);
       }
-    }
 
-    const { data, error } = await supabase.auth.signUp({
-      email: payload.email,
-      password: payload.password,
-    });
+      await getLocalBuddyProgress({
+        authProvider: createdUser.authProvider,
+        authUserId: createdUser.authUserId,
+        username: createdUser.username,
+        email: createdUser.email ?? undefined,
+      });
 
-    if (error) {
-      return jsonError(error.message, 400);
-    }
+      const session =
+        isDatabaseAuthConfigured() && typeof createdUser.id === "bigint"
+          ? await createAuthSession({
+              userId: createdUser.id,
+              userAgent: request.headers.get("user-agent"),
+              ipAddress:
+                request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+                request.headers.get("x-real-ip"),
+            })
+          : null;
 
-    const response = NextResponse.json({ user_id: data.user?.id, session: Boolean(data.session) });
+      const authProvider = createdUser.authProvider || "local-file";
+      const authUserId =
+        createdUser.authUserId ||
+        (typeof createdUser.id === "bigint" ? createdUser.id.toString() : createdUser.id);
 
-    if (data.user?.id) {
-      response.cookies.set(AUTH_PROVIDER_COOKIE, "supabase", {
+      const response = NextResponse.json({
+        user,
+        user_id: user.id,
+        auth_provider: authProvider,
+        auth_user_id: authUserId,
+        session: Boolean(session),
+        storage: isDatabaseAuthConfigured() ? "database" : "local-file",
+      });
+
+      if (session) {
+        response.cookies.set(
+          AUTH_SESSION_COOKIE,
+          session.rawToken,
+          createSessionCookieOptions(session.expiresAt),
+        );
+      }
+
+      const cookieExpires = session?.expiresAt ?? new Date(Date.now() + 1000 * 60 * 60 * 24 * 14);
+
+      response.cookies.set(AUTH_PROVIDER_COOKIE, authProvider, {
         httpOnly: true,
         sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
         path: "/",
+        expires: cookieExpires,
       });
-      response.cookies.set(AUTH_USER_ID_COOKIE, data.user.id, {
+      response.cookies.set(AUTH_USER_ID_COOKIE, authUserId, {
         httpOnly: true,
         sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
         path: "/",
+        expires: cookieExpires,
       });
-      response.cookies.set(
-        AUTH_USERNAME_COOKIE,
-        payload.username?.trim() || data.user.email?.split("@")[0] || "learner",
-        {
+      response.cookies.set(AUTH_USERNAME_COOKIE, createdUser.username, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        expires: cookieExpires,
+      });
+      if (createdUser.email) {
+        response.cookies.set(AUTH_EMAIL_COOKIE, createdUser.email, {
           httpOnly: true,
           sameSite: "lax",
+          secure: process.env.NODE_ENV === "production",
           path: "/",
-        }
-      );
-      if (data.user.email) {
-        response.cookies.set(AUTH_EMAIL_COOKIE, data.user.email, {
-          httpOnly: true,
-          sameSite: "lax",
-          path: "/",
+          expires: cookieExpires,
         });
       }
+
+      return response;
+    } catch (error) {
+      if (error instanceof Error) {
+        return jsonError(error.message, 409);
+      }
+
+      return jsonError("Failed to sign up", 500);
     }
 
-    return response;
   } catch (error) {
     if (error instanceof z.ZodError) {
       return jsonError(error.issues[0]?.message ?? "Invalid payload", 422);

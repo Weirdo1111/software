@@ -12,10 +12,26 @@ export type DIICSUMajorId =
   | "mechanical-engineering"
   | "mechanical-engineering-transportation";
 
-export type ListeningAccent = "british" | "american" | "global";
+export type ListeningAccent = "british" | "american" | "indian" | "global";
 export type ListeningContentMode = "practice" | "ted" | "authentic";
 export type ListeningResourceType = "real-talk" | AuthenticResourceType;
 export type SpeakerRegion = "north-america" | "british" | "europe" | "asia" | "latin-america" | "other";
+export type ListeningSourceProviderId =
+  | "ted"
+  | "mit-ocw"
+  | "nptel"
+  | "stanford"
+  | "cambridge"
+  | "oxford"
+  | "asme"
+  | "nature"
+  | "other-official";
+export type ListeningPlaybackModeId =
+  | "youtube"
+  | "ted-player"
+  | "direct-video"
+  | "site-embed"
+  | "audio";
 
 export interface DIICSUMajorProfile {
   id: DIICSUMajorId;
@@ -61,6 +77,7 @@ export interface ListeningMaterial {
   transcriptUrl?: string;
   officialUrl?: string;
   embedUrl?: string;
+  videoSrc?: string;
   thumbnailUrl?: string;
   recommendedLevel: CEFRLevel;
   durationLabel: string;
@@ -121,17 +138,41 @@ export interface ListeningMaterialOption {
   contentMode: ListeningContentMode;
 }
 
-const blockedInlinePreviewHosts = new Set([
-  "youtube.com",
-  "www.youtube.com",
-  "m.youtube.com",
-  "youtu.be",
-  "www.youtu.be",
-  "youtube-nocookie.com",
-  "www.youtube-nocookie.com",
-]);
+function isPlayableUrl(url?: string) {
+  if (!url) return null;
 
-function getHostname(url?: string) {
+  try {
+    return new URL(url).toString();
+  } catch {
+    return null;
+  }
+}
+
+function isAbsoluteHttpUrl(url?: string | null) {
+  if (typeof url !== "string" || url.trim().length === 0) return false;
+
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+export function buildMediaProxyUrl(url?: string | null) {
+  if (!isAbsoluteHttpUrl(url)) {
+    return typeof url === "string" ? url : null;
+  }
+
+  if (typeof url !== "string") {
+    return null;
+  }
+
+  const resolvedUrl = url.trim();
+  return `/api/media-proxy?url=${encodeURIComponent(resolvedUrl)}`;
+}
+
+function getUrlHostname(url?: string) {
   if (!url) return null;
 
   try {
@@ -141,16 +182,35 @@ function getHostname(url?: string) {
   }
 }
 
-export function hasStableInlinePreview(
-  material: Pick<ListeningMaterial, "embedUrl">,
-): material is Pick<ListeningMaterial, "embedUrl"> & { embedUrl: string } {
-  const hostname = getHostname(material.embedUrl);
+function isYouTubeHost(hostname?: string | null) {
+  if (!hostname) return false;
 
-  if (!hostname || typeof material.embedUrl !== "string") {
+  return (
+    hostname.includes("youtube.com") ||
+    hostname.includes("youtu.be") ||
+    hostname.includes("youtube-nocookie.com") ||
+    hostname.includes("ytimg.com")
+  );
+}
+
+export function hasStableInlinePreview(
+  material: Pick<ListeningMaterial, "embedUrl" | "videoSrc">,
+): boolean {
+  if (typeof material.videoSrc === "string" && material.videoSrc.length > 0) {
+    return isPlayableUrl(material.videoSrc) !== null;
+  }
+
+  if (typeof material.embedUrl !== "string" || material.embedUrl.length === 0) {
     return false;
   }
 
-  return !blockedInlinePreviewHosts.has(hostname);
+  const embedHostname = getUrlHostname(material.embedUrl);
+
+  if (isYouTubeHost(embedHostname)) {
+    return false;
+  }
+
+  return isPlayableUrl(material.embedUrl) !== null;
 }
 
 interface AccentVariant {
@@ -165,6 +225,8 @@ interface AccentVariant {
   voiceLocales: string[];
 }
 
+type PracticeListeningAccent = Exclude<ListeningAccent, "indian">;
+
 interface ListeningBlueprint {
   groupId: string;
   groupLabel: string;
@@ -174,7 +236,7 @@ interface ListeningBlueprint {
   vocabulary: ListeningVocabularyItem[];
   questions: ListeningQuestion[];
   followUpTask: string;
-  variants: Record<ListeningAccent, AccentVariant>;
+  variants: Record<PracticeListeningAccent, AccentVariant>;
 }
 
 const accentMeta: Record<ListeningAccent, { label: string; hint: string }> = {
@@ -185,6 +247,10 @@ const accentMeta: Record<ListeningAccent, { label: string; hint: string }> = {
   american: {
     label: "American English",
     hint: "A US-style classroom or project briefing with clearer stress and pacing shifts.",
+  },
+  indian: {
+    label: "Indian English",
+    hint: "An engineering-classroom delivery common in Indian higher education and NPTEL-style lectures.",
   },
   global: {
     label: "Global English",
@@ -228,6 +294,7 @@ export const listeningMajors: DIICSUMajorProfile[] = [
 export const listeningAccents = [
   { id: "british", label: accentMeta.british.label, hint: accentMeta.british.hint },
   { id: "american", label: accentMeta.american.label, hint: accentMeta.american.hint },
+  { id: "indian", label: accentMeta.indian.label, hint: accentMeta.indian.hint },
   { id: "global", label: accentMeta.global.label, hint: accentMeta.global.hint },
 ] as const;
 
@@ -1270,6 +1337,8 @@ const tedTalkThumbnailBySlug: Record<string, string> = {
 
 const crossDisciplinaryGroupIds = new Set([
   "maths-ai-science-oxford",
+  "maths-mit-linear-algebra-vision",
+  "maths-stanford-linear-systems",
   "computing-ai-healthcare-stanford",
   "ted-civil-better-world-2030",
   "ted-civil-flood-fighting-landscapes",
@@ -3260,6 +3329,7 @@ export const authenticListeningMaterials: ListeningMaterial[] = authenticListeni
         transcriptUrl: blueprint.transcriptUrl,
         officialUrl: blueprint.officialUrl,
         embedUrl: blueprint.embedUrl,
+        videoSrc: blueprint.videoSrc,
         thumbnailUrl: blueprint.thumbnailUrl,
         recommendedLevel: blueprint.recommendedLevel,
         durationLabel: blueprint.durationLabel,
@@ -3302,6 +3372,175 @@ export const speakerRegions: { id: SpeakerRegion; label: string; shortLabel: str
   { id: "latin-america", label: "Latin America", shortLabel: "L. America" },
   { id: "other", label: "Other", shortLabel: "Other" },
 ];
+
+export const listeningSourceProviders: {
+  id: ListeningSourceProviderId;
+  label: string;
+  shortLabel: string;
+  priority: number;
+}[] = [
+  { id: "ted", label: "TED", shortLabel: "TED", priority: 3 },
+  { id: "mit-ocw", label: "MIT OpenCourseWare", shortLabel: "MIT OCW", priority: 2 },
+  { id: "nptel", label: "NPTEL", shortLabel: "NPTEL", priority: 4 },
+  { id: "stanford", label: "Stanford", shortLabel: "Stanford", priority: 1 },
+  { id: "cambridge", label: "Cambridge CSIC", shortLabel: "Cambridge", priority: 1 },
+  { id: "oxford", label: "Oxford Mathematics", shortLabel: "Oxford", priority: 1 },
+  { id: "asme", label: "ASME TechCast", shortLabel: "ASME", priority: 5 },
+  { id: "nature", label: "Nature Podcast", shortLabel: "Nature", priority: 5 },
+  { id: "other-official", label: "Other official", shortLabel: "Official", priority: 5 },
+] as const;
+
+export const listeningPlaybackModes: {
+  id: ListeningPlaybackModeId;
+  label: string;
+  shortLabel: string;
+}[] = [
+  { id: "youtube", label: "YouTube embed", shortLabel: "YouTube" },
+  { id: "ted-player", label: "TED embed", shortLabel: "TED" },
+  { id: "direct-video", label: "Direct video", shortLabel: "Video" },
+  { id: "site-embed", label: "Site embed", shortLabel: "Embed" },
+  { id: "audio", label: "Audio player", shortLabel: "Audio" },
+] as const;
+
+export function getListeningSourceProvider(
+  material: Pick<ListeningMaterial, "contentMode" | "sourceName">,
+): ListeningSourceProviderId {
+  if (material.contentMode === "ted") return "ted";
+
+  const normalizedSource = material.sourceName.trim().toLowerCase();
+
+  if (normalizedSource.includes("mit opencourseware")) return "mit-ocw";
+  if (normalizedSource.includes("nptel")) return "nptel";
+  if (normalizedSource.includes("stanford")) return "stanford";
+  if (normalizedSource.includes("cambridge")) return "cambridge";
+  if (normalizedSource.includes("oxford")) return "oxford";
+  if (normalizedSource.includes("asme")) return "asme";
+  if (normalizedSource.includes("nature")) return "nature";
+
+  return "other-official";
+}
+
+export function getListeningPlaybackMode(
+  material: Pick<ListeningMaterial, "audioSrc" | "embedUrl" | "officialUrl" | "videoSrc">,
+): ListeningPlaybackModeId | null {
+  if (typeof material.videoSrc === "string" && material.videoSrc.trim().length > 0) {
+    return "direct-video";
+  }
+
+  const embedHostname = getUrlHostname(material.embedUrl);
+  const officialHostname = getUrlHostname(material.officialUrl);
+  const playbackHost = embedHostname ?? officialHostname;
+
+  if (playbackHost?.includes("ted.com")) return "ted-player";
+  if (isYouTubeHost(playbackHost)) {
+    if (typeof material.audioSrc === "string" && material.audioSrc.trim().length > 0) {
+      return "audio";
+    }
+
+    return "youtube";
+  }
+
+  if (typeof material.embedUrl === "string" && material.embedUrl.trim().length > 0) {
+    return "site-embed";
+  }
+
+  if (typeof material.audioSrc === "string" && material.audioSrc.trim().length > 0) {
+    return "audio";
+  }
+
+  return null;
+}
+
+export function getListeningStudyText(
+  material: Pick<ListeningMaterial, "scenario" | "supportFocus" | "transcript">,
+) {
+  const transcript = material.transcript.trim();
+
+  if (transcript.length > 0) {
+    return transcript;
+  }
+
+  return [material.scenario.trim(), material.supportFocus.trim()]
+    .filter((item) => item.length > 0)
+    .join("\n\n")
+    .trim();
+}
+
+export function buildListeningCoverDataUrl(
+  material: Pick<
+    ListeningMaterial,
+    "accentLabel" | "majorLabel" | "resourceType" | "sourceName"
+  >,
+) {
+  const safe = (value: string) =>
+    value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+  const source = safe(material.sourceName);
+  const major = safe(material.majorLabel);
+  const accent = safe(material.accentLabel);
+  const resourceType =
+    material.resourceType === "real-talk"
+      ? "Talk"
+      : material.resourceType.charAt(0).toUpperCase() + material.resourceType.slice(1);
+
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720">
+      <defs>
+        <linearGradient id="bg" x1="0%" x2="100%" y1="0%" y2="100%">
+          <stop offset="0%" stop-color="#163651" />
+          <stop offset="55%" stop-color="#10273d" />
+          <stop offset="100%" stop-color="#08131f" />
+        </linearGradient>
+        <linearGradient id="glow" x1="0%" x2="100%" y1="0%" y2="100%">
+          <stop offset="0%" stop-color="#9cc8ff" stop-opacity="0.32" />
+          <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+        </linearGradient>
+        <linearGradient id="panel" x1="0%" x2="100%" y1="0%" y2="0%">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18" />
+          <stop offset="100%" stop-color="#ffffff" stop-opacity="0.06" />
+        </linearGradient>
+      </defs>
+      <rect width="1280" height="720" fill="url(#bg)" />
+      <rect width="1280" height="720" fill="url(#glow)" />
+      <circle cx="1086" cy="112" r="132" fill="#ffffff" fill-opacity="0.09" />
+      <circle cx="1170" cy="218" r="76" fill="#ffffff" fill-opacity="0.05" />
+      <circle cx="170" cy="620" r="190" fill="#ffffff" fill-opacity="0.05" />
+      <path d="M0 560 C170 500, 320 470, 520 520 S900 650, 1280 520 L1280 720 L0 720 Z" fill="#ffffff" fill-opacity="0.05" />
+      <path d="M0 610 C220 530, 420 520, 650 570 S1020 700, 1280 590" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="14" stroke-linecap="round" />
+      <rect x="72" y="68" width="290" height="58" rx="29" fill="#0c1d2e" fill-opacity="0.72" />
+      <text x="104" y="106" font-size="28" font-family="Arial, sans-serif" fill="#f8fafc">${source}</text>
+      <rect x="1010" y="68" width="198" height="58" rx="29" fill="url(#panel)" stroke="#ffffff" stroke-opacity="0.22" />
+      <text x="1052" y="106" font-size="28" font-family="Arial, sans-serif" fill="#f8fafc">${safe(resourceType)}</text>
+      <rect x="72" y="494" width="272" height="50" rx="25" fill="#08131f" fill-opacity="0.4" />
+      <text x="104" y="528" font-size="24" font-family="Arial, sans-serif" fill="#dbeafe">${major}</text>
+      <rect x="72" y="560" width="250" height="44" rx="22" fill="#08131f" fill-opacity="0.24" />
+      <text x="104" y="589" font-size="22" font-family="Arial, sans-serif" fill="#ffffff" fill-opacity="0.78">${accent}</text>
+      <circle cx="1098" cy="530" r="88" fill="#ffffff" fill-opacity="0.14" />
+      <circle cx="1098" cy="530" r="58" fill="#08131f" fill-opacity="0.18" />
+      <polygon points="1072,488 1072,572 1148,530" fill="#ffffff" fill-opacity="0.96" />
+    </svg>
+  `;
+
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
+export function shouldPreferGeneratedCover(
+  material: Pick<ListeningMaterial, "officialUrl" | "thumbnailUrl">,
+) {
+  return isYouTubeHost(getUrlHostname(material.thumbnailUrl)) || isYouTubeHost(getUrlHostname(material.officialUrl));
+}
+
+export function hasTranscriptStudySupport(
+  material: Pick<ListeningMaterial, "scenario" | "supportFocus" | "transcript" | "transcriptUrl">,
+) {
+  return (
+    getListeningStudyText(material).length > 0 ||
+    (typeof material.transcriptUrl === "string" && material.transcriptUrl.trim().length > 0)
+  );
+}
 
 export function getListeningMaterialOptions(
   materials: ListeningMaterial[],

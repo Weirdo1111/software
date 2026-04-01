@@ -1,10 +1,6 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 
-import { PageFrame } from "@/components/page-frame";
-import { TedDetail } from "@/components/ted/ted-detail";
 import { getLocale } from "@/lib/i18n/get-locale";
-import { getListeningMaterialsCatalog } from "@/lib/listening-materials-repository";
-import type { CEFRLevel } from "@/types/learning";
 
 export default async function TedDetailPage({
   params,
@@ -16,19 +12,8 @@ export default async function TedDetailPage({
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
   const locale = await getLocale(resolvedSearchParams);
-  const catalog = await getListeningMaterialsCatalog();
+  const level = resolvedSearchParams.level;
+  const levelParam = typeof level === "string" && level.length > 0 ? `&level=${encodeURIComponent(level)}` : "";
 
-  const material = catalog.find((m) => m.materialGroupId === resolvedParams.groupId);
-
-  if (!material) {
-    notFound();
-  }
-
-  const level = (resolvedSearchParams.level ?? material.recommendedLevel ?? "B1") as CEFRLevel;
-
-  return (
-    <PageFrame locale={locale} title={material.title} description={material.scenario} showHeader={false}>
-      <TedDetail material={material} defaultLevel={level} locale={locale} />
-    </PageFrame>
-  );
+  redirect(`/listening/${resolvedParams.groupId}?lang=${locale}${levelParam}`);
 }

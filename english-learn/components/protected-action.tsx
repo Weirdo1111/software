@@ -3,6 +3,7 @@
 import { ReactNode, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoginRequiredModal } from "@/components/login-required-modal";
+import { startNavigationLoading } from "@/lib/navigation-loading";
 
 type ProtectedActionProps = {
   href?: string;
@@ -36,6 +37,7 @@ export function ProtectedAction({
     }
 
     if (href) {
+      startNavigationLoading(href);
       router.push(href);
     }
   };

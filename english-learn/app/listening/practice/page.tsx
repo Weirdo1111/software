@@ -9,5 +9,5 @@ export default async function ListeningPracticePage({
 }) {
   const locale = await getLocale(searchParams);
 
-  redirect(`/listening/ted?lang=${locale}`);
+  redirect(`/listening?lang=${locale}`);
 }

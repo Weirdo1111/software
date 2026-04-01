@@ -16,6 +16,7 @@ import {
   getLevelForDifficulty,
   type DifficultyLabel,
 } from "@/lib/level-labels";
+import { recordSkillAttemptInStorage } from "@/lib/learning-tracker";
 import { writingDisciplineLabels, type WritingDiscipline } from "@/lib/writing-language-bank";
 import {
   getWritingPromptById,
@@ -84,6 +85,7 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: CE
   const [result, setResult] = useState<WritingFeedback | null>(null);
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [startedAt, setStartedAt] = useState(() => Date.now());
 
   const availablePrompts = getWritingPromptsForLevelAndDiscipline(targetLevel, selectedDiscipline);
   const selectedPrompt =
@@ -158,6 +160,7 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: CE
     setEssay(nextPrompt.sample_response);
     setResult(null);
     setStatus("");
+    setStartedAt(Date.now());
   }
 
   function handleTargetDifficultyChange(nextDifficulty: DifficultyLabel) {
@@ -205,6 +208,14 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: CE
       }
 
       setResult(data);
+
+      const durationSec = Math.max(45, Math.round((Date.now() - startedAt) / 1000));
+      const passed = (data.overall_score as number) >= 6;
+      recordSkillAttemptInStorage("writing", {
+        correct: passed,
+        durationSec,
+        markCompleted: true,
+      });
     } catch (nextError) {
       const message = nextError instanceof Error ? nextError.message : "Failed to generate writing feedback.";
       setStatus(message);

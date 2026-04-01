@@ -1,0 +1,204 @@
+{
+  "records": [
+    {
+      "authProvider": "local-file",
+      "authUserId": "7ec4c8b5-4d18-45cc-a5d5-58bf0f1b25a6",
+      "username": "wzx",
+      "email": "111111@11.com",
+      "counts": {
+        "listeningCompletions": 28,
+        "speakingCompletions": 0,
+        "readingCompletions": 0,
+        "writingCompletions": 0,
+        "reviewSessions": 0,
+        "escapeRoomClears": 0,
+        "dormLockoutClears": 0,
+        "lastTrainClears": 0
+      },
+      "totalXp": 420,
+      "totalCompletedSources": 28,
+      "createdAt": "2026-03-31T09:37:07.411Z",
+      "updatedAt": "2026-03-31T09:37:07.424Z"
+    },
+    {
+      "authProvider": "local-file",
+      "authUserId": "00000000-0000-0000-0000-000000000001",
+      "username": "admin",
+      "email": "admin@example.com",
+      "counts": {
+        "listeningCompletions": 60,
+        "speakingCompletions": 0,
+        "readingCompletions": 0,
+        "writingCompletions": 0,
+        "reviewSessions": 0,
+        "escapeRoomClears": 0,
+        "dormLockoutClears": 0,
+        "lastTrainClears": 0
+      },
+      "totalXp": 900,
+      "totalCompletedSources": 60,
+      "createdAt": "2026-03-31T09:40:48.145Z",
+      "updatedAt": "2026-03-31T15:11:03.662Z"
+    },
+    {
+      "authProvider": "local-file",
+      "authUserId": "133bf6c4-3daa-4dca-8eb0-ec4db1ba605d",
+      "username": "bob",
+      "email": "1111111@11.com",
+      "counts": {
+        "listeningCompletions": 30,
+        "speakingCompletions": 0,
+        "readingCompletions": 0,
+        "writingCompletions": 0,
+        "reviewSessions": 0,
+        "escapeRoomClears": 0,
+        "dormLockoutClears": 0,
+        "lastTrainClears": 0
+      },
+      "totalXp": 450,
+      "totalCompletedSources": 30,
+      "createdAt": "2026-03-31T09:49:59.572Z",
+      "updatedAt": "2026-03-31T09:49:59.580Z"
+    },
+    {
+      "authProvider": "local-file",
+      "authUserId": "8b3f41f2-e7ae-4f94-8661-880a30f483af",
+      "username": "qqqq",
+      "email": "11121@11.com",
+      "counts": {
+        "listeningCompletions": 1,
+        "speakingCompletions": 0,
+        "readingCompletions": 0,
+        "writingCompletions": 0,
+        "reviewSessions": 0,
+        "escapeRoomClears": 0,
+        "dormLockoutClears": 0,
+        "lastTrainClears": 0
+      },
+      "totalXp": 15,
+      "totalCompletedSources": 1,
+      "createdAt": "2026-03-31T09:57:54.105Z",
+      "updatedAt": "2026-03-31T11:47:17.693Z"
+    },
+    {
+      "authProvider": "local-file",
+      "authUserId": "07b069b0-0b40-4d88-94cf-958ed4095973",
+      "username": "wzx_test_user",
+      "email": "wzx_test_user@example.com",
+      "counts": {
+        "listeningCompletions": 0,
+        "speakingCompletions": 0,
+        "readingCompletions": 0,
+        "writingCompletions": 0,
+        "reviewSessions": 0,
+        "escapeRoomClears": 0,
+        "dormLockoutClears": 0,
+        "lastTrainClears": 0
+      },
+      "totalXp": 0,
+      "totalCompletedSources": 0,
+      "createdAt": "2026-03-31T10:30:00.000Z",
+      "updatedAt": "2026-03-31T10:30:00.000Z"
+    },
+    {
+      "authProvider": "local-file",
+      "authUserId": "eac00e96-b396-4b32-b4e0-6221bf272b47",
+      "username": "wax",
+      "email": "2181232397@qq.com",
+      "counts": {
+        "listeningCompletions": 0,
+        "speakingCompletions": 0,
+        "readingCompletions": 0,
+        "writingCompletions": 0,
+        "reviewSessions": 0,
+        "escapeRoomClears": 0,
+        "dormLockoutClears": 0,
+        "lastTrainClears": 0
+      },
+      "totalXp": 0,
+      "totalCompletedSources": 0,
+      "createdAt": "2026-03-31T10:30:00.000Z",
+      "updatedAt": "2026-03-31T10:30:00.000Z"
+    },
+    {
+      "authProvider": "local-file",
+      "authUserId": "06d27ce1-9c72-4f51-965d-69afbcd22a7c",
+      "username": "qqq",
+      "email": "2424242424@qq.com",
+      "counts": {
+        "listeningCompletions": 0,
+        "speakingCompletions": 0,
+        "readingCompletions": 0,
+        "writingCompletions": 0,
+        "reviewSessions": 0,
+        "escapeRoomClears": 0,
+        "dormLockoutClears": 0,
+        "lastTrainClears": 0
+      },
+      "totalXp": 0,
+      "totalCompletedSources": 0,
+      "createdAt": "2026-03-31T10:30:00.000Z",
+      "updatedAt": "2026-03-31T10:30:00.000Z"
+    },
+    {
+      "authProvider": "local-file",
+      "authUserId": "d9660300-96ee-497d-87de-c6ca894b1236",
+      "username": "user846765",
+      "email": "user846765@example.com",
+      "counts": {
+        "listeningCompletions": 0,
+        "speakingCompletions": 0,
+        "readingCompletions": 0,
+        "writingCompletions": 0,
+        "reviewSessions": 0,
+        "escapeRoomClears": 0,
+        "dormLockoutClears": 0,
+        "lastTrainClears": 0
+      },
+      "totalXp": 0,
+      "totalCompletedSources": 0,
+      "createdAt": "2026-03-31T10:30:00.000Z",
+      "updatedAt": "2026-03-31T10:30:00.000Z"
+    },
+    {
+      "authProvider": "local-file",
+      "authUserId": "fba00cfa-b6cc-490a-90c9-e41e1ba75bed",
+      "username": "user434272",
+      "email": "user434272@example.com",
+      "counts": {
+        "listeningCompletions": 0,
+        "speakingCompletions": 0,
+        "readingCompletions": 0,
+        "writingCompletions": 0,
+        "reviewSessions": 0,
+        "escapeRoomClears": 0,
+        "dormLockoutClears": 0,
+        "lastTrainClears": 0
+      },
+      "totalXp": 0,
+      "totalCompletedSources": 0,
+      "createdAt": "2026-03-31T10:30:00.000Z",
+      "updatedAt": "2026-03-31T10:30:00.000Z"
+    },
+    {
+      "authProvider": "local-file",
+      "authUserId": "98d4e4ad-d28d-4920-9bdf-c82804bca4a0",
+      "username": "Edison",
+      "email": "2617341@dundee.ac.uk",
+      "counts": {
+        "listeningCompletions": 0,
+        "speakingCompletions": 0,
+        "readingCompletions": 0,
+        "writingCompletions": 0,
+        "reviewSessions": 0,
+        "escapeRoomClears": 0,
+        "dormLockoutClears": 0,
+        "lastTrainClears": 0
+      },
+      "totalXp": 0,
+      "totalCompletedSources": 0,
+      "createdAt": "2026-03-31T10:30:00.000Z",
+      "updatedAt": "2026-03-31T10:30:00.000Z"
+    }
+  ]
+}

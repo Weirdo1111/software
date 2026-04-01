@@ -2,8 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   authenticListeningMaterials,
+  buildListeningCoverDataUrl,
   buildListeningSentenceSegments,
   findEvidenceSentence,
+  getListeningPlaybackMode,
+  getListeningSourceProvider,
+  getListeningStudyText,
   getTedListeningMaterial,
   hasStableInlinePreview,
   listeningMaterials,
@@ -19,8 +23,10 @@ describe("listening materials", () => {
     expect(listeningMajors).toHaveLength(5);
     expect(practiceListeningMaterials).toHaveLength(0);
     expect(tedListeningMaterials).toHaveLength(30);
-    expect(authenticListeningMaterials).toHaveLength(10);
-    expect(listeningMaterials).toHaveLength(40);
+    expect(authenticListeningMaterials.length).toBeGreaterThanOrEqual(20);
+    expect(listeningMaterials).toHaveLength(
+      tedListeningMaterials.length + authenticListeningMaterials.length,
+    );
 
     for (const major of listeningMajors) {
       const majorMaterials = listeningMaterials.filter((item) => item.majorId === major.id);
@@ -29,9 +35,10 @@ describe("listening materials", () => {
         (item) => item.majorId === major.id,
       );
 
-      expect(majorMaterials).toHaveLength(8);
+      expect(majorMaterials.length).toBeGreaterThanOrEqual(10);
       expect(tedForMajor).toHaveLength(6);
-      expect(authenticForMajor).toHaveLength(2);
+      expect(authenticForMajor.length).toBeGreaterThanOrEqual(4);
+      expect(majorMaterials).toHaveLength(tedForMajor.length + authenticForMajor.length);
       expect(majorMaterials.every((item) => item.contentMode !== "practice")).toBe(true);
       expect(tedForMajor.every((item) => item.audioSrc === null)).toBe(true);
     }
@@ -39,7 +46,16 @@ describe("listening materials", () => {
     expect(authenticListeningMaterials.some((item) => item.resourceType === "lecture")).toBe(true);
     expect(authenticListeningMaterials.some((item) => item.resourceType === "interview")).toBe(true);
     expect(authenticListeningMaterials.some((item) => item.resourceType === "podcast")).toBe(true);
+    expect(authenticListeningMaterials.some((item) => item.accent === "indian")).toBe(true);
     expect(tedListeningMaterials.filter((item) => item.isCrossDisciplinary).length).toBe(12);
+
+    const providerSet = new Set(listeningMaterials.map((item) => getListeningSourceProvider(item)));
+
+    expect(providerSet.has("ted")).toBe(true);
+    expect(providerSet.has("mit-ocw")).toBe(true);
+    expect(providerSet.has("nptel")).toBe(true);
+    expect(providerSet.has("stanford")).toBe(true);
+    expect(providerSet.size).toBeGreaterThanOrEqual(6);
   });
 
   it("keeps TED items retrievable for each major", () => {
@@ -65,7 +81,8 @@ describe("listening materials", () => {
     expect(
       authenticListeningMaterials.every(
         (item) =>
-          typeof item.thumbnailUrl === "string" && item.thumbnailUrl.startsWith("https://"),
+          (typeof item.thumbnailUrl === "string" && item.thumbnailUrl.startsWith("https://")) ||
+          buildListeningCoverDataUrl(item).startsWith("data:image/svg+xml"),
       ),
     ).toBe(true);
 
@@ -77,18 +94,68 @@ describe("listening materials", () => {
     expect(naturePodcast?.audioSrc).toContain("media.nature.com");
   });
 
-  it("keeps only stable inline previews for the main listening gallery", () => {
+  it("keeps every library item playable inside the app", () => {
     const tedMaterial = listeningMaterials.find(
       (item) => item.materialGroupId === "ted-civil-climate-resilient-buildings",
     );
-    const youtubeMaterial = listeningMaterials.find(
+    const directCivilMaterial = listeningMaterials.find(
       (item) => item.materialGroupId === "civil-bridge-maintenance-cambridge",
+    );
+    const audioFallbackMaterial = listeningMaterials.find(
+      (item) => item.materialGroupId === "computing-nptel-dsa",
+    );
+    const stanfordMaterial = listeningMaterials.find(
+      (item) => item.materialGroupId === "maths-stanford-linear-systems",
+    );
+    const dijkstraMaterial = listeningMaterials.find(
+      (item) => item.materialGroupId === "computing-mit-dijkstra",
     );
 
     expect(tedMaterial).toBeTruthy();
-    expect(youtubeMaterial).toBeTruthy();
+    expect(directCivilMaterial).toBeTruthy();
+    expect(audioFallbackMaterial).toBeTruthy();
+    expect(stanfordMaterial).toBeTruthy();
+    expect(dijkstraMaterial).toBeTruthy();
     expect(hasStableInlinePreview(tedMaterial!)).toBe(true);
-    expect(hasStableInlinePreview(youtubeMaterial!)).toBe(false);
+    expect(hasStableInlinePreview(directCivilMaterial!)).toBe(true);
+    expect(hasStableInlinePreview(audioFallbackMaterial!)).toBe(false);
+    expect(hasStableInlinePreview(stanfordMaterial!)).toBe(true);
+    expect(directCivilMaterial?.videoSrc).toContain("archive.org");
+    expect(audioFallbackMaterial?.audioSrc).toContain("/audio/listening/");
+    expect(stanfordMaterial?.videoSrc).toContain("html5.stanford.edu");
+    expect(dijkstraMaterial?.videoSrc).toContain("archive.org");
+    expect(
+      listeningMaterials.every((item) => hasStableInlinePreview(item) || item.audioSrc !== null),
+    ).toBe(true);
+    expect(getListeningPlaybackMode(tedMaterial!)).toBe("ted-player");
+    expect(getListeningPlaybackMode(directCivilMaterial!)).toBe("direct-video");
+    expect(getListeningPlaybackMode(audioFallbackMaterial!)).toBe("audio");
+    expect(getListeningPlaybackMode(stanfordMaterial!)).toBe("direct-video");
+  });
+
+  it("builds generated cover art for items whose remote thumbnails are unstable", () => {
+    const generatedCoverMaterial = listeningMaterials.find(
+      (item) => item.materialGroupId === "computing-ai-healthcare-stanford",
+    );
+
+    expect(generatedCoverMaterial).toBeTruthy();
+    expect(buildListeningCoverDataUrl(generatedCoverMaterial!)).toContain("data:image/svg+xml");
+  });
+
+  it("keeps a study-text path for every listening material", () => {
+    expect(
+      listeningMaterials.every((item) => getListeningStudyText(item).trim().length > 0),
+    ).toBe(true);
+
+    const tedMaterial = listeningMaterials.find(
+      (item) => item.materialGroupId === "ted-computing-ai-coder",
+    );
+
+    expect(tedMaterial).toBeTruthy();
+    expect(tedMaterial?.transcript).toBe("");
+    expect(getListeningStudyText(tedMaterial!)).toBe(
+      `${tedMaterial!.scenario}\n\n${tedMaterial!.supportFocus}`,
+    );
   });
 
   it("scores a strong authentic-source answer correctly", () => {
@@ -101,13 +168,13 @@ describe("listening materials", () => {
     const result = scoreListeningMaterial(
       material!,
       {
-        gist: "The lecture says bridge maintenance should be planned with data and prioritisation.",
-        detail: "Inspection records and monitoring data support the decisions.",
-        signpost: "Earlier action improves safety and limited budgets.",
-        term: "asset management",
+        gist: "The lecture explains how trusses are analysed by connecting members and joints to equilibrium and matrix methods.",
+        detail: "It emphasises joint equilibrium, member forces, and stiffness.",
+        signpost: "The matrix form helps engineers solve larger structures while preserving load paths.",
+        term: "stiffness matrix",
       },
-      "Bridge maintenance should be data-led with better prioritisation and asset management.",
-      "B1",
+      "Truss analysis becomes clearer when engineers move from the physical structure to equilibrium equations and a stiffness matrix.",
+      "B2",
     );
 
     expect(result.correctCount).toBe(4);
@@ -139,7 +206,9 @@ describe("listening materials", () => {
     const detailQuestion = material?.questions.find((question) => question.id === "detail");
 
     expect(detailQuestion).toBeTruthy();
-    expect(findEvidenceSentence(material!, detailQuestion!)).toContain("prompting");
+    expect(findEvidenceSentence(material!, detailQuestion!)).toContain(
+      "depth-first and breadth-first search",
+    );
   });
 
   it("scores shadowing attempts based on authentic listening prompts", () => {

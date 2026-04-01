@@ -1,30 +1,33 @@
 import { NextResponse } from "next/server";
 
-import { getRequestUserId } from "@/lib/api";
+import { resolveRequestUserId } from "@/lib/api";
 import { todayTasks } from "@/lib/mock-data";
-import { createSupabaseServiceClient } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
-  const userId = getRequestUserId(request);
-  const today = new Date().toISOString().slice(0, 10);
+  const userId = await resolveRequestUserId(request);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  const supabase = createSupabaseServiceClient();
+  const data = await prisma.dailyPlan.findUnique({
+    where: {
+      userId_date: {
+        userId,
+        date: today,
+      },
+    },
+    select: {
+      tasks: true,
+      estimatedMinutes: true,
+    },
+  });
 
-  if (supabase) {
-    const { data } = await supabase
-      .from("daily_plans")
-      .select("tasks, estimated_minutes")
-      .eq("user_id", userId)
-      .eq("date", today)
-      .maybeSingle();
-
-    if (data) {
-      return NextResponse.json({
-        tasks: data.tasks,
-        estimated_minutes: data.estimated_minutes,
-        streak_info: { current_streak: 7, best_streak: 21 },
-      });
-    }
+  if (data) {
+    return NextResponse.json({
+      tasks: data.tasks,
+      estimated_minutes: data.estimatedMinutes,
+      streak_info: { current_streak: 7, best_streak: 21 },
+    });
   }
 
   return NextResponse.json({

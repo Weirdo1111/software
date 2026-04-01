@@ -4,6 +4,12 @@ import { getCurrentDiscussionUser } from "@/lib/current-user";
 import { jsonError } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { readSeminarAttachment } from "@/lib/seminar-room-storage";
+import {
+  SeminarLocalStoreError,
+  getCurrentSeminarLocalActor,
+  getLocalSeminarAttachment,
+  shouldUseSeminarLocalStore,
+} from "@/lib/seminar-room-local-store";
 
 export async function GET(
   _request: Request,
@@ -15,6 +21,22 @@ export async function GET(
 ) {
   try {
     const { roomId, attachmentId } = await params;
+
+    if (shouldUseSeminarLocalStore()) {
+      const currentUser = await getCurrentSeminarLocalActor(false);
+      const attachment = await getLocalSeminarAttachment(roomId, attachmentId, currentUser?.id);
+      const bytes = await readSeminarAttachment(attachment);
+
+      return new NextResponse(bytes, {
+        headers: {
+          "Content-Type": attachment.mimeType,
+          "Content-Length": String(bytes.byteLength),
+          "Content-Disposition": `inline; filename="${attachment.fileName.replace(/"/g, "")}"`,
+          "Cache-Control": "private, max-age=60",
+        },
+      });
+    }
+
     const roomIdValue = BigInt(roomId);
     const attachmentIdValue = BigInt(attachmentId);
     const currentUser = await getCurrentDiscussionUser();
@@ -73,6 +95,10 @@ export async function GET(
       },
     });
   } catch (error) {
+    if (error instanceof SeminarLocalStoreError) {
+      return jsonError(error.message, error.status);
+    }
+
     console.error("seminar attachment GET failed", error);
     return jsonError("Failed to load seminar attachment", 500);
   }

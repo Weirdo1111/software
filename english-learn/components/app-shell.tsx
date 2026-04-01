@@ -107,7 +107,50 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
     };
   }, []);
 
-  const handleLogout = () => {
+  useEffect(() => {
+    if (isLoggedIn) return;
+
+    let cancelled = false;
+
+    const syncSession = async () => {
+      try {
+        const response = await fetch("/api/auth/session", { cache: "no-store" });
+        if (!response.ok) return;
+
+        const payload = (await response.json()) as {
+          authenticated?: boolean;
+          user?: { username?: string; email?: string } | null;
+        };
+
+        if (!payload.authenticated || cancelled) return;
+
+        localStorage.setItem("demo_logged_in", "true");
+        localStorage.setItem(
+          "demo_user",
+          payload.user?.username || payload.user?.email || "Learner",
+        );
+        window.dispatchEvent(new Event("demo-auth-changed"));
+      } catch {
+        // Ignore silent session sync failures on the nav shell.
+      }
+    };
+
+    void syncSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn]);
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/sign-out", {
+        method: "POST",
+      });
+    } catch {
+      // Ignore sign-out network errors and still clear local client state.
+    }
+
     localStorage.removeItem("demo_logged_in");
     localStorage.removeItem("demo_user");
     window.dispatchEvent(new Event("demo-auth-changed"));
@@ -145,10 +188,10 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
           : "w-full",
       )}
     >
-      <div className="grid gap-2 xl:grid-cols-[auto_1fr_auto] xl:items-center">
-        <div className="flex items-center justify-between gap-3 rounded-[1.55rem] border-2 border-white/85 bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(240,247,255,0.9))] px-3 py-2.5 shadow-[0_10px_0_rgba(255,201,225,0.24),0_18px_28px_rgba(90,123,255,0.1)]">
-          <InstitutionBrand locale={locale} embedded />
-          <span className="hidden items-center gap-1 rounded-full border-2 border-white/90 bg-[linear-gradient(135deg,rgba(255,242,165,0.95),rgba(255,212,231,0.9))] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--navy)] shadow-[0_8px_0_rgba(255,201,225,0.25),0_14px_22px_rgba(90,123,255,0.12)] lg:inline-flex">
+      <div className="grid gap-2 xl:grid-cols-[minmax(12rem,13.5rem)_1fr_auto] xl:items-center">
+        <div className="flex flex-col items-start gap-2 rounded-[1.55rem] border-2 border-white/85 bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(240,247,255,0.9))] px-3 py-2.5 shadow-[0_10px_0_rgba(255,201,225,0.24),0_18px_28px_rgba(90,123,255,0.1)]">
+          <InstitutionBrand locale={locale} embedded compact className="w-full justify-center" />
+          <span className="inline-flex items-center gap-1 self-center rounded-full border-2 border-white/90 bg-[linear-gradient(135deg,rgba(255,242,165,0.95),rgba(255,212,231,0.9))] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--navy)] shadow-[0_8px_0_rgba(255,201,225,0.25),0_14px_22px_rgba(90,123,255,0.12)]">
             <Sparkles className="size-3.5" />
             {buddyLabel}
           </span>
