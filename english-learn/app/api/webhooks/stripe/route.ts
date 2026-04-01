@@ -2,8 +2,8 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
-import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
   if (!env.server.STRIPE_SECRET_KEY || !env.server.STRIPE_WEBHOOK_SECRET) {
@@ -29,29 +29,42 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid webhook signature" }, { status: 400 });
   }
 
-  const supabase = createSupabaseServiceClient();
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object as Stripe.Checkout.Session;
+    const rawUserId = typeof session.client_reference_id === "string" ? session.client_reference_id : null;
+    const userId = rawUserId && /^\d+$/.test(rawUserId) ? BigInt(rawUserId) : null;
+    const subscriptionId = typeof session.subscription === "string" ? session.subscription : null;
 
-  if (supabase) {
-    if (event.type === "checkout.session.completed") {
-      const session = event.data.object as Stripe.Checkout.Session;
-      await supabase.from("subscriptions").upsert(
-        {
-          user_id: session.client_reference_id,
-          stripe_customer_id: typeof session.customer === "string" ? session.customer : null,
-          stripe_subscription_id: typeof session.subscription === "string" ? session.subscription : null,
+    if (subscriptionId) {
+      await prisma.subscription.upsert({
+        where: {
+          stripeSubscriptionId: subscriptionId,
+        },
+        update: {
+          userId,
+          stripeCustomerId: typeof session.customer === "string" ? session.customer : null,
           status: "active",
         },
-        { onConflict: "stripe_subscription_id" },
-      );
+        create: {
+          userId,
+          stripeCustomerId: typeof session.customer === "string" ? session.customer : null,
+          stripeSubscriptionId: subscriptionId,
+          status: "active",
+        },
+      });
     }
+  }
 
-    if (event.type === "customer.subscription.deleted") {
-      const subscription = event.data.object as Stripe.Subscription;
-      await supabase
-        .from("subscriptions")
-        .update({ status: "canceled" })
-        .eq("stripe_subscription_id", subscription.id);
-    }
+  if (event.type === "customer.subscription.deleted") {
+    const subscription = event.data.object as Stripe.Subscription;
+    await prisma.subscription.updateMany({
+      where: {
+        stripeSubscriptionId: subscription.id,
+      },
+      data: {
+        status: "canceled",
+      },
+    });
   }
 
   return NextResponse.json({ received: true });

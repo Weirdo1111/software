@@ -1,18 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { getRequestUserId, jsonError } from "@/lib/api";
-import {
-  createLocalReviewCards,
-  deleteLocalReviewCard,
-  listLocalReviewCards,
-  listLocalReviewHistory,
-  updateLocalReviewCard,
-} from "@/lib/local-review-cards";
+import { jsonError, resolveRequestUserId } from "@/lib/api";
+import { prisma } from "@/lib/prisma";
 import { calculateNextReview } from "@/lib/srs";
-import { createSupabaseServiceClient } from "@/lib/supabase/server";
-
-/* ── POST: create new cards ─────────────────────────────────────── */
 
 const createSchema = z.object({
   words: z
@@ -31,36 +22,28 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const payload = createSchema.parse(body);
-    const userId = getRequestUserId(request);
+    const userId = await resolveRequestUserId(request);
 
-    const supabase = createSupabaseServiceClient();
-
-    if (!supabase) {
-      const result = await createLocalReviewCards(userId, payload.words);
-      return NextResponse.json({
-        saved: result.saved,
-        skipped: result.skipped,
-        persisted: true,
-        message:
-          result.skipped > 0
-            ? `${result.saved} card(s) added, ${result.skipped} duplicate(s) skipped.`
-            : `${result.saved} card(s) added to review deck.`,
-      });
-    }
-
-    // Dedup: check which words already exist for this user
-    const fronts = payload.words.map((w) => w.front.toLowerCase());
-    const { data: existing } = await supabase
-      .from("review_cards")
-      .select("front, back")
-      .eq("user_id", userId)
-      .in("front", fronts);
+    const existing = await prisma.reviewCard.findMany({
+      where: {
+        userId,
+        OR: payload.words.map((word) => ({
+          front: word.front,
+          back: word.back,
+        })),
+      },
+      select: {
+        front: true,
+        back: true,
+      },
+    });
 
     const existingSet = new Set(
-      (existing ?? []).map((r) => `${r.front.toLowerCase()}::${String(r.back ?? "").toLowerCase()}`),
+      existing.map((item) => `${item.front.toLowerCase()}::${item.back.toLowerCase()}`),
     );
-    const newWords = payload.words.filter((w) => {
-      return !existingSet.has(`${w.front.toLowerCase()}::${w.back.toLowerCase()}`);
+
+    const newWords = payload.words.filter((word) => {
+      return !existingSet.has(`${word.front.toLowerCase()}::${word.back.toLowerCase()}`);
     });
 
     if (newWords.length === 0) {
@@ -69,34 +52,31 @@ export async function POST(request: Request) {
         saved: 0,
         skipped,
         persisted: true,
-        message: `${skipped} card(s) already in your deck — no duplicates added.`,
+        message: `${skipped} card(s) already in your deck - no duplicates added.`,
       });
     }
 
-    const rows = newWords.map((word) => ({
-      user_id: userId,
-      front: word.front,
-      back: word.back,
-      tag: word.tag ?? "general",
-      stability: 2,
-      difficulty: 5,
-      due_at: new Date().toISOString(),
-    }));
-
-    const { error } = await supabase.from("review_cards").insert(rows);
-
-    if (error) {
-      return jsonError("Failed to save vocabulary cards", 500);
-    }
+    await prisma.reviewCard.createMany({
+      data: newWords.map((word) => ({
+        userId,
+        front: word.front,
+        back: word.back,
+        tag: word.tag ?? "general",
+        stability: 2,
+        difficulty: 5,
+        dueAt: new Date(),
+      })),
+    });
 
     const skipped = payload.words.length - newWords.length;
     return NextResponse.json({
       saved: newWords.length,
       skipped,
       persisted: true,
-      message: skipped > 0
-        ? `${newWords.length} card(s) added, ${skipped} duplicate(s) skipped.`
-        : `${newWords.length} card(s) added to review deck.`,
+      message:
+        skipped > 0
+          ? `${newWords.length} card(s) added, ${skipped} duplicate(s) skipped.`
+          : `${newWords.length} card(s) added to review deck.`,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -107,101 +87,75 @@ export async function POST(request: Request) {
   }
 }
 
-/* ── GET: retrieve cards for current user ────────────────────────── */
-
 export async function GET(request: Request) {
   try {
-    const userId = getRequestUserId(request);
+    const userId = await resolveRequestUserId(request);
     const url = new URL(request.url);
-    const filter = url.searchParams.get("filter"); // "due" | "all"
-    const tag = url.searchParams.get("tag"); // e.g. "Reading"
+    const filter = url.searchParams.get("filter");
+    const tag = url.searchParams.get("tag");
 
-    const supabase = createSupabaseServiceClient();
+    const cards = await prisma.reviewCard.findMany({
+      where: {
+        userId,
+        ...(filter === "due"
+          ? {
+              dueAt: {
+                lte: new Date(),
+              },
+            }
+          : {}),
+        ...(tag ? { tag } : {}),
+      },
+      orderBy: {
+        dueAt: "asc",
+      },
+    });
 
-    if (!supabase) {
-      const cards = await listLocalReviewCards(userId, {
-        dueOnly: filter === "due",
-        tag,
-      });
-      const reviewHistory = await listLocalReviewHistory(userId);
-      const now = new Date();
-      const due = cards.filter((c) => new Date(c.due_at) <= now).length;
-      const mature = cards.filter((c) => c.stability >= 10).length;
-      const atRisk = cards.filter((c) => c.lapses >= 3).length;
-      return NextResponse.json({
-        cards,
-        stats: { due, total: cards.length, mature, at_risk: atRisk },
-        review_history: reviewHistory,
-        persisted: true,
-      });
-    }
+    const due = cards.filter((card) => card.dueAt <= new Date()).length;
+    const mature = cards.filter((card) => card.stability >= 10).length;
+    const atRisk = cards.filter((card) => card.lapses >= 3).length;
 
-    let query = supabase
-      .from("review_cards")
-      .select("id, front, back, tag, stability, difficulty, due_at, last_reviewed_at, lapses, created_at")
-      .eq("user_id", userId)
-      .order("due_at", { ascending: true });
-
-    if (filter === "due") {
-      query = query.lte("due_at", new Date().toISOString());
-    }
-
-    if (tag) {
-      query = query.eq("tag", tag);
-    }
-
-    const { data: cards, error } = await query;
-
-    if (error) {
-      return jsonError("Failed to load review cards", 500);
-    }
-
-    const now = new Date();
-    const allCards = cards ?? [];
-    const due = allCards.filter((c) => new Date(c.due_at) <= now).length;
-    const mature = allCards.filter((c) => c.stability >= 10).length;
-    const atRisk = allCards.filter((c) => c.lapses >= 3).length;
-
-    // Fetch recent review history (last 10 entries)
-    const { data: logs } = await supabase
-      .from("review_logs")
-      .select("id, card_id, rating, next_due_at, created_at")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(10);
-
-    // Resolve card fronts for the logs
-    const logCardIds = [...new Set((logs ?? []).map((l) => l.card_id))];
-    const cardFrontMap: Record<string, string> = {};
-    if (logCardIds.length > 0) {
-      const { data: logCards } = await supabase
-        .from("review_cards")
-        .select("id, front, tag")
-        .in("id", logCardIds);
-      for (const c of logCards ?? []) {
-        cardFrontMap[c.id] = c.front;
-      }
-    }
-
-    const reviewHistory = (logs ?? []).map((l) => ({
-      id: l.id,
-      card_front: cardFrontMap[l.card_id] ?? "Unknown",
-      rating: l.rating,
-      reviewed_at: l.created_at,
-    }));
+    const logs = await prisma.reviewLog.findMany({
+      where: { userId },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 10,
+      include: {
+        card: {
+          select: {
+            front: true,
+          },
+        },
+      },
+    });
 
     return NextResponse.json({
-      cards: allCards,
-      stats: { due, total: allCards.length, mature, at_risk: atRisk },
-      review_history: reviewHistory,
+      cards: cards.map((card) => ({
+        id: card.id,
+        front: card.front,
+        back: card.back,
+        tag: card.tag,
+        stability: card.stability,
+        difficulty: card.difficulty,
+        due_at: card.dueAt.toISOString(),
+        last_reviewed_at: card.lastReviewedAt?.toISOString() ?? null,
+        lapses: card.lapses,
+        created_at: card.createdAt.toISOString(),
+      })),
+      stats: { due, total: cards.length, mature, at_risk: atRisk },
+      review_history: logs.map((log) => ({
+        id: log.id,
+        card_front: log.card.front,
+        rating: log.rating,
+        reviewed_at: log.createdAt.toISOString(),
+      })),
       persisted: true,
     });
   } catch {
     return jsonError("Failed to load review cards", 500);
   }
 }
-
-/* ── PATCH: submit a review rating and apply SRS ─────────────────── */
 
 const reviewSchema = z.object({
   card_id: z.string().min(1),
@@ -214,52 +168,16 @@ export async function PATCH(request: Request) {
   try {
     const body = await request.json();
     const payload = reviewSchema.parse(body);
-    const userId = getRequestUserId(request);
+    const userId = await resolveRequestUserId(request);
 
-    const supabase = createSupabaseServiceClient();
-
-    if (!supabase) {
-      const currentCards = await listLocalReviewCards(userId);
-      const card = currentCards.find((entry) => entry.id === payload.card_id);
-      if (!card) {
-        return jsonError("Card not found", 404);
-      }
-
-      const result = calculateNextReview({
-        stability: Number(card.stability),
-        difficulty: Number(card.difficulty),
-        rating: payload.rating,
-      });
-      const nextLapses = payload.rating <= 1 ? card.lapses + 1 : card.lapses;
-
-      await updateLocalReviewCard(
+    const card = await prisma.reviewCard.findFirst({
+      where: {
+        id: payload.card_id,
         userId,
-        payload.card_id,
-        {
-          stability: result.next_stability,
-          difficulty: result.next_difficulty,
-          due_at: result.next_due_at,
-          last_reviewed_at: new Date().toISOString(),
-          lapses: nextLapses,
-        },
-        {
-          rating: payload.rating,
-          next_due_at: result.next_due_at,
-        },
-      );
+      },
+    });
 
-      return NextResponse.json({ ...result, persisted: true });
-    }
-
-    // Fetch current card state
-    const { data: card, error: fetchError } = await supabase
-      .from("review_cards")
-      .select("stability, difficulty, lapses")
-      .eq("id", payload.card_id)
-      .eq("user_id", userId)
-      .single();
-
-    if (fetchError || !card) {
+    if (!card) {
       return jsonError("Card not found", 404);
     }
 
@@ -270,30 +188,26 @@ export async function PATCH(request: Request) {
     });
 
     const nextLapses = payload.rating <= 1 ? card.lapses + 1 : card.lapses;
+    const reviewedAt = new Date();
 
-    // Update the card
-    const { error: updateError } = await supabase
-      .from("review_cards")
-      .update({
+    await prisma.reviewCard.update({
+      where: { id: payload.card_id },
+      data: {
         stability: result.next_stability,
         difficulty: result.next_difficulty,
-        due_at: result.next_due_at,
-        last_reviewed_at: new Date().toISOString(),
+        dueAt: new Date(result.next_due_at),
+        lastReviewedAt: reviewedAt,
         lapses: nextLapses,
-      })
-      .eq("id", payload.card_id)
-      .eq("user_id", userId);
+      },
+    });
 
-    if (updateError) {
-      return jsonError("Failed to update card", 500);
-    }
-
-    // Write review log
-    await supabase.from("review_logs").insert({
-      card_id: payload.card_id,
-      user_id: userId,
-      rating: payload.rating,
-      next_due_at: result.next_due_at,
+    await prisma.reviewLog.create({
+      data: {
+        cardId: payload.card_id,
+        userId,
+        rating: payload.rating,
+        nextDueAt: new Date(result.next_due_at),
+      },
     });
 
     return NextResponse.json({ ...result, persisted: true });
@@ -306,8 +220,6 @@ export async function PATCH(request: Request) {
   }
 }
 
-/* ── DELETE: remove a card ────────────────────────────────────── */
-
 const deleteSchema = z.object({
   card_id: z.string().min(1),
 });
@@ -316,26 +228,17 @@ export async function DELETE(request: Request) {
   try {
     const body = await request.json();
     const payload = deleteSchema.parse(body);
-    const userId = getRequestUserId(request);
+    const userId = await resolveRequestUserId(request);
 
-    const supabase = createSupabaseServiceClient();
+    const deleted = await prisma.reviewCard.deleteMany({
+      where: {
+        id: payload.card_id,
+        userId,
+      },
+    });
 
-    if (!supabase) {
-      const deleted = await deleteLocalReviewCard(userId, payload.card_id);
-      if (!deleted) {
-        return jsonError("Card not found", 404);
-      }
-      return NextResponse.json({ deleted: true, persisted: true });
-    }
-
-    const { error } = await supabase
-      .from("review_cards")
-      .delete()
-      .eq("id", payload.card_id)
-      .eq("user_id", userId);
-
-    if (error) {
-      return jsonError("Failed to delete card", 500);
+    if (deleted.count === 0) {
+      return jsonError("Card not found", 404);
     }
 
     return NextResponse.json({ deleted: true, persisted: true });
