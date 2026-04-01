@@ -18,6 +18,7 @@ export default async function SeminarRoomsPage({
           ? "在现有论坛之上补一层更适合专题讨论、资料交换和近实时聊天的在线研讨空间。"
           : "A seminar-style layer on top of the existing forum for focused discussion, media sharing, and near real-time chat."
       }
+      showHeader={false}
     >
       <SeminarRoomsClient locale={locale} />
     </PageFrame>
