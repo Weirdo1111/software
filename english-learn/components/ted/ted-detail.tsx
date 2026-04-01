@@ -240,14 +240,13 @@ export function TedDetail({
   const [isAIScoring, setIsAIScoring] = useState(false);
   const [aiStatus, setAiStatus] = useState("");
   const [preferIframe, setPreferIframe] = useState(false);
+  const [forceAudioMode, setForceAudioMode] = useState(false);
   const [playerIssue, setPlayerIssue] = useState<string | null>(null);
   const [showTranscript, setShowTranscript] = useState(false);
   const recordedRef = useRef(false);
   const canPreviewInline = hasStableInlinePreview(material);
-  const hasInAppAudio =
-    !canPreviewInline &&
-    typeof material.audioSrc === "string" &&
-    material.audioSrc.length > 0;
+  const hasAudioTrack = typeof material.audioSrc === "string" && material.audioSrc.length > 0;
+  const hasInAppAudio = hasAudioTrack && (forceAudioMode || !canPreviewInline);
   const isSourceVideoBlocked =
     hasInAppAudio &&
     [material.embedUrl, material.officialUrl].some((url) => {
@@ -292,6 +291,7 @@ export function TedDetail({
 
   useEffect(() => {
     setPreferIframe(false);
+    setForceAudioMode(false);
     setPlayerIssue(null);
     setShowTranscript(false);
   }, [material.materialGroupId]);
@@ -518,6 +518,35 @@ export function TedDetail({
               {preferIframe ? "Use video file" : "Use embed player"}
             </button>
           ) : null}
+
+          {hasAudioTrack && !hasInAppAudio ? (
+            <button
+              type="button"
+              onClick={() => {
+                setForceAudioMode(true);
+                setShowEmbed(false);
+                setPlayerIssue(null);
+              }}
+              className="inline-flex items-center gap-2 rounded-full border border-[rgba(35,95,79,0.22)] bg-[rgba(237,246,241,0.9)] px-5 py-3 text-sm font-semibold text-[#315f4f]"
+            >
+              <PlayCircle className="size-4" />
+              {locale === "zh" ? "切换到站内音频" : "Use in-app audio"}
+            </button>
+          ) : null}
+
+          {hasInAppAudio && canPreviewInline ? (
+            <button
+              type="button"
+              onClick={() => {
+                setForceAudioMode(false);
+                setPlayerIssue(null);
+              }}
+              className="inline-flex items-center gap-2 rounded-full border border-[rgba(20,50,75,0.16)] bg-white px-5 py-3 text-sm font-semibold text-[var(--ink)]"
+            >
+              <PlayCircle className="size-4" />
+              {locale === "zh" ? "切回源视频播放器" : "Use source player"}
+            </button>
+          ) : null}
         </div>
 
         {material.embedUrl && !canPreviewInline ? (
@@ -635,6 +664,17 @@ export function TedDetail({
                             locale === "zh"
                               ? "直链视频加载失败，已切换到备用嵌入播放器。"
                               : "The direct video file failed to load, so the player switched to the embedded fallback.",
+                          );
+                          return;
+                        }
+
+                        if (hasAudioTrack) {
+                          setForceAudioMode(true);
+                          setShowEmbed(false);
+                          setPlayerIssue(
+                            locale === "zh"
+                              ? "视频直链加载失败，已自动切换到站内音频。"
+                              : "The direct video file failed to load, so playback switched to in-app audio.",
                           );
                           return;
                         }

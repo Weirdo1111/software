@@ -1256,6 +1256,7 @@ interface TedListeningBlueprint {
   vocabulary: ListeningVocabularyItem[];
   questions: ListeningQuestion[];
   followUpTask: string;
+  isCrossDisciplinary?: boolean;
 }
 
 function buildTedTalkUrls(slug: string) {
@@ -1333,6 +1334,66 @@ const tedTalkThumbnailBySlug: Record<string, string> = {
     "https://pi.tedcdn.com/r/talkstar-photos.s3.amazonaws.com/uploads/7d9dbaf3-9c76-45f3-9609-a2369f00848d/PeterCalthorpe_2017-embed.jpg?u%5Br%5D=2&u%5Bs%5D=0.5&u%5Ba%5D=0.8&u%5Bt%5D=0.03&quality=82c=1050%2C550&w=1050",
   enrique_penalosa_why_buses_represent_democracy_in_action:
     "https://pi.tedcdn.com/r/pe.tedcdn.com/images/ted/915e59caaa1b90365d5474ec55a29aea13a31ed4_1600x1200.jpg?u%5Br%5D=2&u%5Bs%5D=0.5&u%5Ba%5D=0.8&u%5Bt%5D=0.03&quality=82c=1050%2C550&w=1050",
+  paul_scharre_the_case_for_regulating_ai_like_critical_infrastructure:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_145080/b529bd1b-6239-408d-949f-b47265f49efd/PaulScharre_2024S-embed.jpg?h=315&w=560",
+  vit_ruzicka_how_ai_helps_us_track_methane_from_space:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_142901/d18a6c70-e1a7-4aa6-907d-20b59e94de8f/VitRuzicka_2024S-embed.jpg?h=315&w=560",
+  shaolei_ren_ai_consumes_a_lot_of_water_but_why:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_142899/670b0690-60ab-4903-843e-c42f3b923597/ShaoleiRen_2024S-embed.jpg?h=315&w=560",
+  franziska_trautmann_your_empty_wine_bottle_could_help_rebuild_coastlines:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_139428/26a18550-7d97-4dbb-94a8-7c54e6178e61/FranziskaTrautmann_2024N-embed.jpg?h=315&w=560",
+  leo_villareal_how_light_and_code_can_transform_a_city:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_147273/f56ac5c7-7d86-4107-bcf3-2de3ad578aaa/LeoVillareal_2024N-embed.jpg?h=315&w=560",
+  lauren_taylor_the_key_to_sustainable_growth_is_deep_innovation:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_147819/933bb8f8-ebb8-4f5e-8021-913d87575f4f/LaurenTaylor_2024S-embed.jpg?h=315&w=560",
+  carlo_rovelli_4_lessons_on_time_and_technology:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_145083/ef5b4ecd-ec7a-4409-bc16-3a49951e8d3b/CarloRovelli_2024S-embed.jpg?h=315&w=560",
+  guillaume_verdon_the_future_of_civilization_powered_by_physics_and_ai:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_145088/5d395513-c40b-47a6-b5a1-5ae6cc8ec43b/GuillaumeVerdon_2024S-embed.jpg?h=315&w=560",
+  pedro_domingos_can_ai_help_build_a_collective_human_intelligence:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_145081/a1d0f685-7fe4-4ab8-9fe3-66bbfbfab619/PedroDomingos_2024S-embed.jpg?h=315&w=560",
+  juergen_schmidhuber_why_2042_will_be_a_big_year_for_ai:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_142893/482df936-e489-4005-8394-8fae4c492632/JuergenSchmidhuber_2024S-embed.jpg?h=315&w=560",
+  oliver_brock_the_science_of_intelligence_and_a_bold_new_principle:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_142892/0ee5d8b1-7be6-490c-a0c6-cd9635178529/OliverBrock_2024S-embed.jpg?h=315&w=560",
+  ramin_hasani_how_a_worm_could_save_humanity_from_bad_ai:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_138320/9c4e6714-b8ec-4895-92f2-3c6c06fe5c21/2024_TED_Fellows_Films_Thumbs_Ramin-Hasani-2880x1620.jpg?h=315&w=560",
+  jessica_coon_lessons_from_linguistics_for_the_future_of_ai:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_145082/98de7531-91cf-4f4d-9e97-0d1d53185e8a/JessicaCoon_2024S-embed.jpg?h=315&w=560",
+  jakob_uszkoreit_how_ai_sidesteps_traditional_science:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_145084/bc899604-6105-4acd-a984-a750fabf695a/JakobUszkoreit_2024S-embed.jpg?h=315&w=560",
+  ethan_mollick_ai_s_productivity_paradox_and_what_it_means_for_you:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_145086/64866f5e-0987-43dc-987a-f96f96bc38d2/EthanMollick_2024S-embed.jpg?h=315&w=560",
+  tri_dao_how_ai_is_transforming_work_and_everyday_life:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_145091/612a4488-59ba-47c6-8e45-167bfdc403ff/TriDao_2024S-embed.jpg?h=315&w=560",
+  joelle_pineau_what_s_inside_the_black_box_of_ai:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_146793/fe601fe0-fd27-44e3-a7d1-9ff932d5b355/JoellePineau_2024S-embed.jpg?h=315&w=560",
+  thomas_wolf_what_if_ai_just_works:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_142883/f11d8b37-cd59-4ca8-9b58-5303952bc698/ThomasWolf_2024S-embed.jpg?h=315&w=560",
+  george_zaidan_and_sajan_saini_how_are_microchips_made:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_146758/0a05e76d-5b14-4043-b93d-fcce3e26fbee/microchips_textless.jpg?h=315&w=560",
+  jerome_monceaux_the_wonderful_world_of_joyful_robots:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_145094/6010044b-51e1-4cba-8032-7f9006d8123c/JeromeMonceaux_2024S-embed.jpg?h=315&w=560",
+  yves_behar_and_christoph_kohstall_building_robots_with_heart_and_mind:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_146370/8328fd9f-23af-4659-9a44-948443e9e11c/YvesBeharandChristophKontshall_2024S-embed.jpg?h=315&w=560",
+  kiran_bhat_how_to_build_the_3d_world_of_your_dreams_with_just_a_text_prompt:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_156781/8e09675a-30d1-4843-a66f-a46750c6792a/KiranBhat_2025-embed.jpg?h=315&w=560",
+  norah_magero_this_refrigerator_is_saving_lives:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_138323/045d396d-a648-4ca9-9381-01aca29fbf2f/2024_TED_Fellows_Films_Thumbs_Norah-Magero-2880x1620.jpg?h=315&w=560",
+  xu_hao_how_we_re_turning_pollution_into_toys_toothpaste_and_more:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_160684/baf2c833-e827-4693-8ff7-0333a86020d2/XuHao_2025T-embed.jpg?h=315&w=560",
+  doreen_orishaba_how_to_make_transportation_quieter_cleaner_and_cheaper:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_174283/2864f8c8-ba02-4ae8-abad-a55d356f4319/DoreenOrishaba_2025T-embed.jpg?h=315&w=560",
+  refilwe_ledwaba_how_to_empower_the_next_generation_of_pilots:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_161946/62afd5b5-bdcf-4296-99de-93975c30e0e3/01_2025_TED_FF_TED.com_2880x1620_Refilwe_Ledwaba.jpg?h=315&w=560",
+  katja_hofmann_why_we_re_training_ai_on_video_games:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_142884/c0a2b103-124e-4807-b8aa-8f9a3b98e42d/KatjaHofmann_2024S-embed.jpg?h=315&w=560",
+  ramin_hasani_meet_the_ai_system_inspired_by_the_human_brain:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_142895/dca17ca8-5778-4118-9384-3983ee386650/RaminHasani_2024S-embed.jpg?h=315&w=560",
+  ben_zhao_can_we_authenticate_human_creativity:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_145093/14433acc-5153-41d6-a37e-01818f4a42b8/BenZao_2024S-embed.jpg?h=315&w=560",
+  selena_deckelmann_why_ai_should_be_more_like_wikipedia:
+    "https://pi.tedcdn.com/r/talkstar-assets.s3.amazonaws.com/production/talks/talk_142880/77108c4c-83dd-4af6-825f-1c6c29eaecbe/SelenaDeckelmann_2024S-embed.jpg?h=315&w=560",
 };
 
 const crossDisciplinaryGroupIds = new Set([
@@ -3247,7 +3308,484 @@ const tedListeningBlueprints: TedListeningBlueprint[] = [
   },
 ];
 
-export const tedListeningMaterials: ListeningMaterial[] = tedListeningBlueprints.flatMap((blueprint) => {
+interface TedAdditionalSpec {
+  groupId: string;
+  majorId: DIICSUMajorId;
+  talkSlug: string;
+  title: string;
+  speakerName: string;
+  speakerRole: string;
+  speakerRegion: SpeakerRegion;
+  focusArea: string;
+  keyTerm: string;
+  isCrossDisciplinary: boolean;
+}
+
+const tedAdditionalLevelSequence: CEFRLevel[] = ["A1", "A2", "B1", "B2", "A2", "B1"];
+const tedAdditionalDurationSequence = [
+  "8 min TED Talk",
+  "10 min TED Talk",
+  "12 min TED Talk",
+  "14 min TED Talk",
+  "16 min TED Talk",
+  "18 min TED Talk",
+] as const;
+
+function buildGeneratedTedBlueprint(
+  spec: TedAdditionalSpec,
+  recommendedLevel: CEFRLevel,
+  durationLabel: string,
+): TedListeningBlueprint {
+  const majorLabel =
+    listeningMajors.find((major) => major.id === spec.majorId)?.label ?? "Engineering";
+  const focusWord = spec.focusArea.split(/\s+/).filter(Boolean)[0]?.toLowerCase() ?? "systems";
+  const keyTermLower = spec.keyTerm.toLowerCase();
+
+  return {
+    groupId: spec.groupId,
+    majorId: spec.majorId,
+    talkSlug: spec.talkSlug,
+    title: spec.title,
+    speakerName: spec.speakerName,
+    speakerRole: spec.speakerRole,
+    speakerRegion: spec.speakerRegion,
+    scenario:
+      `Real TED listening for ${majorLabel.toLowerCase()} students on ${spec.focusArea.toLowerCase()} and practical project communication.`,
+    recommendedLevel,
+    durationLabel,
+    supportFocus:
+      `Follow the speaker's claim, supporting evidence, and engineering implications for ${majorLabel.toLowerCase()} coursework.`,
+    notePrompts: [
+      "What is the speaker's central claim?",
+      `Which example best supports the point about ${spec.focusArea.toLowerCase()}?`,
+      "Which evidence sentence should you quote in your notes?",
+      `Which technical term (such as "${spec.keyTerm}") is worth keeping for review?`,
+    ],
+    vocabulary: [
+      { term: spec.keyTerm, definition: "a key technical expression emphasized in this TED talk" },
+      { term: "trade-off", definition: "a balance between competing design or system priorities" },
+      { term: "evidence", definition: "data or examples used to justify a technical argument" },
+    ],
+    questions: [
+      {
+        id: "gist",
+        prompt: "What is the main focus of the talk?",
+        placeholder: "Write the main idea in one or two sentences.",
+        modelAnswer:
+          `The speaker explains how ${spec.focusArea.toLowerCase()} should be understood and applied more effectively in real-world contexts.`,
+        rubricNote: "Summarize both the topic and the practical purpose.",
+        matchGroups: [[focusWord], [keyTermLower]],
+      },
+      {
+        id: "detail",
+        prompt: "Which concrete detail or example supports the speaker's claim?",
+        placeholder: "Write one key detail.",
+        modelAnswer:
+          "A strong answer identifies one specific example and links it directly to the main argument.",
+        rubricNote: "Look for a concrete case, not only a general opinion.",
+        matchGroups: [[keyTermLower], ["example", "case", "evidence", "data"]],
+      },
+      {
+        id: "signpost",
+        prompt: "Why does this topic matter for engineering decisions?",
+        placeholder: "Write one practical reason.",
+        modelAnswer:
+          "It matters because better technical decisions need clear evidence, system thinking, and explicit trade-offs.",
+        rubricNote: "Connect listening content with real project decisions.",
+        matchGroups: [["system", "evidence", "decision", "trade-off", "impact"]],
+      },
+      {
+        id: "term",
+        prompt: "Which technical term should you keep from this talk?",
+        placeholder: "Write one term.",
+        modelAnswer: `A precise term to keep is "${spec.keyTerm}".`,
+        rubricNote: "Use an exact term that can be reused in class discussions.",
+        matchGroups: [[keyTermLower]],
+      },
+    ],
+    followUpTask:
+      `Use your notes to explain how this talk can improve one ${majorLabel.toLowerCase()} discussion, report, or design review.`,
+    isCrossDisciplinary: spec.isCrossDisciplinary,
+  };
+}
+
+const tedAdditionalSpecs: TedAdditionalSpec[] = [
+  {
+    groupId: "ted-civil-ai-critical-infrastructure",
+    majorId: "civil-engineering",
+    talkSlug: "paul_scharre_the_case_for_regulating_ai_like_critical_infrastructure",
+    title: "The case for regulating AI like critical infrastructure",
+    speakerName: "Paul Scharre",
+    speakerRole: "TED speaker and defense technology policy expert",
+    speakerRegion: "north-america",
+    focusArea: "critical infrastructure governance",
+    keyTerm: "critical infrastructure",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-civil-ai-methane-space",
+    majorId: "civil-engineering",
+    talkSlug: "vit_ruzicka_how_ai_helps_us_track_methane_from_space",
+    title: "How AI helps us track methane from space",
+    speakerName: "Vit Ruzicka",
+    speakerRole: "TED speaker and climate-tech researcher",
+    speakerRegion: "europe",
+    focusArea: "satellite climate monitoring",
+    keyTerm: "methane tracking",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-civil-ai-water-use",
+    majorId: "civil-engineering",
+    talkSlug: "shaolei_ren_ai_consumes_a_lot_of_water_but_why",
+    title: "AI consumes a lot of water, but why?",
+    speakerName: "Shaolei Ren",
+    speakerRole: "TED speaker and sustainability systems researcher",
+    speakerRegion: "asia",
+    focusArea: "water and digital infrastructure",
+    keyTerm: "water footprint",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-civil-rebuild-coastlines",
+    majorId: "civil-engineering",
+    talkSlug: "franziska_trautmann_your_empty_wine_bottle_could_help_rebuild_coastlines",
+    title: "Your empty wine bottle could help rebuild coastlines",
+    speakerName: "Franziska Trautmann",
+    speakerRole: "TED speaker and circular-materials innovator",
+    speakerRegion: "europe",
+    focusArea: "coastal resilience materials",
+    keyTerm: "coastal restoration",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-civil-code-transform-city",
+    majorId: "civil-engineering",
+    talkSlug: "leo_villareal_how_light_and_code_can_transform_a_city",
+    title: "How light and code can transform a city",
+    speakerName: "Leo Villareal",
+    speakerRole: "TED speaker and urban media artist",
+    speakerRegion: "latin-america",
+    focusArea: "smart city systems",
+    keyTerm: "urban systems",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-civil-deep-innovation-growth",
+    majorId: "civil-engineering",
+    talkSlug: "lauren_taylor_the_key_to_sustainable_growth_is_deep_innovation",
+    title: "The key to sustainable growth is deep innovation",
+    speakerName: "Lauren Taylor",
+    speakerRole: "TED speaker and innovation strategist",
+    speakerRegion: "north-america",
+    focusArea: "sustainable development strategy",
+    keyTerm: "deep innovation",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-maths-time-technology",
+    majorId: "mathematics",
+    talkSlug: "carlo_rovelli_4_lessons_on_time_and_technology",
+    title: "4 lessons on time and technology",
+    speakerName: "Carlo Rovelli",
+    speakerRole: "TED speaker and theoretical physicist",
+    speakerRegion: "europe",
+    focusArea: "time models and technology",
+    keyTerm: "time model",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-maths-physics-ai-civilization",
+    majorId: "mathematics",
+    talkSlug: "guillaume_verdon_the_future_of_civilization_powered_by_physics_and_ai",
+    title: "The future of civilization, powered by physics and AI",
+    speakerName: "Guillaume Verdon",
+    speakerRole: "TED speaker and AI-physics researcher",
+    speakerRegion: "europe",
+    focusArea: "physics-informed AI",
+    keyTerm: "computational model",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-maths-collective-intelligence-ai",
+    majorId: "mathematics",
+    talkSlug: "pedro_domingos_can_ai_help_build_a_collective_human_intelligence",
+    title: "Can AI help build a collective human intelligence?",
+    speakerName: "Pedro Domingos",
+    speakerRole: "TED speaker and machine learning professor",
+    speakerRegion: "europe",
+    focusArea: "collective intelligence modeling",
+    keyTerm: "collective intelligence",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-maths-ai-2042",
+    majorId: "mathematics",
+    talkSlug: "juergen_schmidhuber_why_2042_will_be_a_big_year_for_ai",
+    title: "Why 2042 will be a big year for AI",
+    speakerName: "Juergen Schmidhuber",
+    speakerRole: "TED speaker and AI scientist",
+    speakerRegion: "europe",
+    focusArea: "long-term AI forecasting",
+    keyTerm: "forecast horizon",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-maths-science-of-intelligence",
+    majorId: "mathematics",
+    talkSlug: "oliver_brock_the_science_of_intelligence_and_a_bold_new_principle",
+    title: "The science of intelligence and a bold new principle",
+    speakerName: "Oliver Brock",
+    speakerRole: "TED speaker and robotics scientist",
+    speakerRegion: "europe",
+    focusArea: "intelligence theory",
+    keyTerm: "learning principle",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-maths-worm-inspired-ai",
+    majorId: "mathematics",
+    talkSlug: "ramin_hasani_how_a_worm_could_save_humanity_from_bad_ai",
+    title: "How a worm could save humanity from bad AI",
+    speakerName: "Ramin Hasani",
+    speakerRole: "TED speaker and computational scientist",
+    speakerRegion: "asia",
+    focusArea: "biological computation",
+    keyTerm: "neural dynamics",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-computing-linguistics-future-ai",
+    majorId: "computing-science",
+    talkSlug: "jessica_coon_lessons_from_linguistics_for_the_future_of_ai",
+    title: "Lessons from linguistics for the future of AI",
+    speakerName: "Jessica Coon",
+    speakerRole: "TED speaker and linguistics researcher",
+    speakerRegion: "north-america",
+    focusArea: "language and AI systems",
+    keyTerm: "language model",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-computing-ai-sidesteps-science",
+    majorId: "computing-science",
+    talkSlug: "jakob_uszkoreit_how_ai_sidesteps_traditional_science",
+    title: "How AI sidesteps traditional science",
+    speakerName: "Jakob Uszkoreit",
+    speakerRole: "TED speaker and AI engineer",
+    speakerRegion: "europe",
+    focusArea: "AI research methods",
+    keyTerm: "model-first discovery",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-computing-ai-productivity-paradox",
+    majorId: "computing-science",
+    talkSlug: "ethan_mollick_ai_s_productivity_paradox_and_what_it_means_for_you",
+    title: "AI's productivity paradox and what it means for you",
+    speakerName: "Ethan Mollick",
+    speakerRole: "TED speaker and technology educator",
+    speakerRegion: "north-america",
+    focusArea: "AI productivity workflows",
+    keyTerm: "productivity paradox",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-computing-ai-transforming-work",
+    majorId: "computing-science",
+    talkSlug: "tri_dao_how_ai_is_transforming_work_and_everyday_life",
+    title: "How AI is transforming work and everyday life",
+    speakerName: "Tri Dao",
+    speakerRole: "TED speaker and AI systems researcher",
+    speakerRegion: "asia",
+    focusArea: "AI-enabled workflows",
+    keyTerm: "workflow automation",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-computing-black-box-ai",
+    majorId: "computing-science",
+    talkSlug: "joelle_pineau_what_s_inside_the_black_box_of_ai",
+    title: "What's inside the black box of AI",
+    speakerName: "Joelle Pineau",
+    speakerRole: "TED speaker and AI research leader",
+    speakerRegion: "north-america",
+    focusArea: "model interpretability",
+    keyTerm: "black-box model",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-computing-ai-just-works",
+    majorId: "computing-science",
+    talkSlug: "thomas_wolf_what_if_ai_just_works",
+    title: "What if AI just works?",
+    speakerName: "Thomas Wolf",
+    speakerRole: "TED speaker and open-source AI developer",
+    speakerRegion: "europe",
+    focusArea: "robust AI deployment",
+    keyTerm: "reliable inference",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-mechanical-microchips-made",
+    majorId: "mechanical-engineering",
+    talkSlug: "george_zaidan_and_sajan_saini_how_are_microchips_made",
+    title: "How are microchips made?",
+    speakerName: "George Zaidan and Sajan Saini",
+    speakerRole: "TED speakers and science communicators",
+    speakerRegion: "north-america",
+    focusArea: "fabrication process engineering",
+    keyTerm: "manufacturing process",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-mechanical-joyful-robots",
+    majorId: "mechanical-engineering",
+    talkSlug: "jerome_monceaux_the_wonderful_world_of_joyful_robots",
+    title: "The wonderful world of joyful robots",
+    speakerName: "Jerome Monceaux",
+    speakerRole: "TED speaker and robotics designer",
+    speakerRegion: "europe",
+    focusArea: "human-centered robotics",
+    keyTerm: "robot interaction",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-mechanical-robots-heart-mind",
+    majorId: "mechanical-engineering",
+    talkSlug: "yves_behar_and_christoph_kohstall_building_robots_with_heart_and_mind",
+    title: "Building robots with heart and mind",
+    speakerName: "Yves Behar and Christoph Kohstall",
+    speakerRole: "TED speakers and product-robotics innovators",
+    speakerRegion: "europe",
+    focusArea: "robot product design",
+    keyTerm: "human-robot design",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-mechanical-3d-world-text-prompt",
+    majorId: "mechanical-engineering",
+    talkSlug: "kiran_bhat_how_to_build_the_3d_world_of_your_dreams_with_just_a_text_prompt",
+    title: "How to build the 3D world of your dreams with just a text prompt",
+    speakerName: "Kiran Bhat",
+    speakerRole: "TED speaker and immersive-technology engineer",
+    speakerRegion: "asia",
+    focusArea: "3D generative design",
+    keyTerm: "3D pipeline",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-mechanical-refrigerator-saving-lives",
+    majorId: "mechanical-engineering",
+    talkSlug: "norah_magero_this_refrigerator_is_saving_lives",
+    title: "This refrigerator is saving lives",
+    speakerName: "Norah Magero",
+    speakerRole: "TED speaker and hardware entrepreneur",
+    speakerRegion: "other",
+    focusArea: "applied thermal engineering",
+    keyTerm: "cold-chain system",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-mechanical-pollution-to-products",
+    majorId: "mechanical-engineering",
+    talkSlug: "xu_hao_how_we_re_turning_pollution_into_toys_toothpaste_and_more",
+    title: "How we're turning pollution into toys, toothpaste and more",
+    speakerName: "Xu Hao",
+    speakerRole: "TED speaker and materials innovator",
+    speakerRegion: "asia",
+    focusArea: "circular materials engineering",
+    keyTerm: "waste valorization",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-transport-cleaner-cheaper-transport",
+    majorId: "mechanical-engineering-transportation",
+    talkSlug: "doreen_orishaba_how_to_make_transportation_quieter_cleaner_and_cheaper",
+    title: "How to make transportation quieter, cleaner and cheaper",
+    speakerName: "Doreen Orishaba",
+    speakerRole: "TED speaker and transport innovation advocate",
+    speakerRegion: "other",
+    focusArea: "transport systems design",
+    keyTerm: "transport optimization",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-transport-next-generation-pilots",
+    majorId: "mechanical-engineering-transportation",
+    talkSlug: "refilwe_ledwaba_how_to_empower_the_next_generation_of_pilots",
+    title: "How to empower the next generation of pilots",
+    speakerName: "Refilwe Ledwaba",
+    speakerRole: "TED speaker and aviation entrepreneur",
+    speakerRegion: "other",
+    focusArea: "aviation talent systems",
+    keyTerm: "flight operations",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-transport-ai-video-games-training",
+    majorId: "mechanical-engineering-transportation",
+    talkSlug: "katja_hofmann_why_we_re_training_ai_on_video_games",
+    title: "Why we're training AI on video games",
+    speakerName: "Katja Hofmann",
+    speakerRole: "TED speaker and interactive AI researcher",
+    speakerRegion: "europe",
+    focusArea: "simulation-based control",
+    keyTerm: "simulation environment",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-transport-brain-inspired-ai-system",
+    majorId: "mechanical-engineering-transportation",
+    talkSlug: "ramin_hasani_meet_the_ai_system_inspired_by_the_human_brain",
+    title: "Meet the AI system inspired by the human brain",
+    speakerName: "Ramin Hasani",
+    speakerRole: "TED speaker and AI systems scientist",
+    speakerRegion: "asia",
+    focusArea: "autonomous control systems",
+    keyTerm: "adaptive controller",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-transport-authenticate-creativity",
+    majorId: "mechanical-engineering-transportation",
+    talkSlug: "ben_zhao_can_we_authenticate_human_creativity",
+    title: "Can we authenticate human creativity?",
+    speakerName: "Ben Zhao",
+    speakerRole: "TED speaker and security researcher",
+    speakerRegion: "north-america",
+    focusArea: "authenticity and verification systems",
+    keyTerm: "signal authenticity",
+    isCrossDisciplinary: true,
+  },
+  {
+    groupId: "ted-transport-ai-like-wikipedia",
+    majorId: "mechanical-engineering-transportation",
+    talkSlug: "selena_deckelmann_why_ai_should_be_more_like_wikipedia",
+    title: "Why AI should be more like Wikipedia",
+    speakerName: "Selena Deckelmann",
+    speakerRole: "TED speaker and open-knowledge technologist",
+    speakerRegion: "north-america",
+    focusArea: "collaborative knowledge infrastructure",
+    keyTerm: "open knowledge",
+    isCrossDisciplinary: true,
+  },
+];
+
+const tedAdditionalBlueprints = tedAdditionalSpecs.map((spec, index) =>
+  buildGeneratedTedBlueprint(
+    spec,
+    tedAdditionalLevelSequence[index % tedAdditionalLevelSequence.length],
+    tedAdditionalDurationSequence[index % tedAdditionalDurationSequence.length],
+  ),
+);
+
+const tedCatalogBlueprints: TedListeningBlueprint[] = [
+  ...tedListeningBlueprints,
+  ...tedAdditionalBlueprints,
+];
+
+export const tedListeningMaterials: ListeningMaterial[] = tedCatalogBlueprints.flatMap((blueprint) => {
   const major = listeningMajors.find((item) => item.id === blueprint.majorId);
 
   if (!major) return [];
@@ -3260,7 +3798,8 @@ export const tedListeningMaterials: ListeningMaterial[] = tedListeningBlueprints
       id: blueprint.groupId,
       contentMode: "ted",
       resourceType: "real-talk",
-      isCrossDisciplinary: crossDisciplinaryGroupIds.has(blueprint.groupId),
+      isCrossDisciplinary:
+        blueprint.isCrossDisciplinary ?? crossDisciplinaryGroupIds.has(blueprint.groupId),
       materialGroupId: blueprint.groupId,
       materialGroupLabel: blueprint.title,
       majorId: blueprint.majorId,

@@ -201,7 +201,6 @@ export function TedLibrary({
   const catalog = useMemo(() => {
     const source = materials && materials.length > 0 ? materials : listeningMaterials;
     const seenGroupIds = new Set<string>();
-    const seenPlaybackKeys = new Set<string>();
 
     return source
       .filter((material) => material.contentMode !== "practice")
@@ -213,22 +212,6 @@ export function TedLibrary({
         }
 
         seenGroupIds.add(groupKey);
-
-        const playbackKey = (
-          material.videoSrc ??
-          material.embedUrl ??
-          material.audioSrc ??
-          material.officialUrl ??
-          material.materialGroupId
-        )
-          .trim()
-          .toLowerCase();
-
-        if (seenPlaybackKeys.has(playbackKey)) {
-          return false;
-        }
-
-        seenPlaybackKeys.add(playbackKey);
         return true;
       })
       .sort(

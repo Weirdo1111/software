@@ -13,8 +13,8 @@ export default async function ListeningPage({
 
   const copy =
     locale === "zh"
-      ? { title: "听力资源库", description: "按专业、来源与口音浏览 TED、公开讲座、学术访谈和播客。" }
-      : { title: "Listening Library", description: "Browse TED talks, lectures, interviews, and podcasts by major, source, and accent." };
+      ? { title: "TED 听力资源库", description: "按专业、口音与地区浏览 TED 听力材料，并在站内完成做题训练。" }
+      : { title: "TED Listening Library", description: "Browse TED listening materials by major, accent, and region, and complete in-app questions." };
 
   return (
     <PageFrame locale={locale} title={copy.title} description={copy.description} showHeader={false}>

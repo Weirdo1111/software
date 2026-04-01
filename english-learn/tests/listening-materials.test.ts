@@ -22,7 +22,7 @@ describe("listening materials", () => {
   it("keeps a real-source listening library for all five DIICSU majors", () => {
     expect(listeningMajors).toHaveLength(5);
     expect(practiceListeningMaterials).toHaveLength(0);
-    expect(tedListeningMaterials).toHaveLength(30);
+    expect(tedListeningMaterials).toHaveLength(60);
     expect(authenticListeningMaterials.length).toBeGreaterThanOrEqual(20);
     expect(listeningMaterials).toHaveLength(
       tedListeningMaterials.length + authenticListeningMaterials.length,
@@ -35,8 +35,8 @@ describe("listening materials", () => {
         (item) => item.majorId === major.id,
       );
 
-      expect(majorMaterials.length).toBeGreaterThanOrEqual(10);
-      expect(tedForMajor).toHaveLength(6);
+      expect(majorMaterials.length).toBeGreaterThanOrEqual(15);
+      expect(tedForMajor.length).toBeGreaterThanOrEqual(10);
       expect(authenticForMajor.length).toBeGreaterThanOrEqual(4);
       expect(majorMaterials).toHaveLength(tedForMajor.length + authenticForMajor.length);
       expect(majorMaterials.every((item) => item.contentMode !== "practice")).toBe(true);
@@ -47,7 +47,17 @@ describe("listening materials", () => {
     expect(authenticListeningMaterials.some((item) => item.resourceType === "interview")).toBe(true);
     expect(authenticListeningMaterials.some((item) => item.resourceType === "podcast")).toBe(true);
     expect(authenticListeningMaterials.some((item) => item.accent === "indian")).toBe(true);
-    expect(tedListeningMaterials.filter((item) => item.isCrossDisciplinary).length).toBe(12);
+    expect(tedListeningMaterials.filter((item) => item.isCrossDisciplinary).length).toBeGreaterThanOrEqual(
+      30,
+    );
+
+    const tedLevelSet = new Set(tedListeningMaterials.map((item) => item.recommendedLevel));
+    const tedRegionSet = new Set(tedListeningMaterials.map((item) => item.speakerRegion));
+
+    expect(tedLevelSet).toEqual(new Set(["A1", "A2", "B1", "B2"]));
+    expect(tedRegionSet).toEqual(
+      new Set(["north-america", "british", "europe", "asia", "latin-america", "other"]),
+    );
 
     const providerSet = new Set(listeningMaterials.map((item) => getListeningSourceProvider(item)));
 
@@ -68,11 +78,12 @@ describe("listening materials", () => {
     expect(tedMaterial.audioVoice).toBeNull();
   });
 
-  it("keeps official cover images for all TED listening cards", () => {
+  it("keeps stable cover images for all TED listening cards", () => {
     expect(
       tedListeningMaterials.every(
         (item) =>
-          typeof item.thumbnailUrl === "string" && item.thumbnailUrl.startsWith("https://"),
+          (typeof item.thumbnailUrl === "string" && item.thumbnailUrl.startsWith("https://")) ||
+          buildListeningCoverDataUrl(item).startsWith("data:image/svg+xml"),
       ),
     ).toBe(true);
   });

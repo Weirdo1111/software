@@ -94,6 +94,7 @@ export const authenticListeningBlueprints: AuthenticListeningBlueprint[] = [
     officialUrl:
       "https://ocw.mit.edu/courses/18-085-computational-science-and-engineering-i-fall-2008/resources/lecture-15-trusses-and-a-t-ca/",
     videoSrc: "https://archive.org/download/MIT18.085F08/ocw-18.085-f08-lec15_300k.mp4",
+    audioSrc: "/audio/listening/civil-bridge-maintenance-cambridge.m4a",
     recommendedLevel: "B2",
     durationLabel: "MIT OCW lecture",
     supportFocus:
@@ -161,102 +162,103 @@ export const authenticListeningBlueprints: AuthenticListeningBlueprint[] = [
   {
     groupId: "civil-built-sustainability-asme",
     majorId: "civil-engineering",
-    resourceType: "interview",
-    accent: "american",
-    speakerRegion: "north-america",
-    title: "Managing Floods in Haiti",
+    resourceType: "lecture",
+    accent: "british",
+    speakerRegion: "british",
+    title: "Thermally Induced Lateral Buckling of Subsea Pipelines",
     source:
-      "ASME interview on flood-risk management systems for Haiti and other developing nations.",
-    sourceName: "ASME TechCast",
-    speakerRole: "Podcast interview guest",
-    speakerName: "Raha Hakimdavar",
+      "University of Oxford engineering lecture on subsea pipeline buckling, thermal stress, and offshore design safety.",
+    sourceName: "University of Oxford Podcasts",
+    speakerRole: "Oxford engineering mini-lecture",
+    speakerName: "Chris Martin",
     scenario:
-      "Civil-engineering interview listening on flood risk, missing baseline data, and practical planning for resilient infrastructure.",
+      "Civil-engineering lecture listening on thermal loading in subsea pipelines, lateral buckling risk, and why restraint design must be checked before offshore deployment.",
     transcript:
-      "The interview explains that flood management in developing regions is often limited by missing baseline data and weak risk mapping. The speaker describes why a structured flood-risk management program is needed for planning and disaster response. A key message is that better data and local implementation can improve resilience and reduce repeated losses.",
+      "The lecture explains that subsea pipelines can experience lateral buckling when thermal expansion is restrained by seabed friction and route constraints. It shows that engineers must model thermal load, restraint conditions, and allowable deformation together rather than checking each factor in isolation. A key message is that robust pipeline design depends on balancing stress control, stability, and practical installation constraints.",
+    transcriptUrl:
+      "https://podcasts.ox.ac.uk/thermally-induced-lateral-buckling-subsea-pipelines",
     officialUrl:
-      "https://www.asme.org/topics-resources/content/podcast-managing-floods-in-haiti",
-    embedUrl:
-      "https://players.brightcove.net/1711318824001/default_default/index.html?videoId=2494890025001",
-    thumbnailUrl:
-      "https://www.asme.org/getmedia/c1d0d864-abe2-4697-b1e1-7a942b8b8193/managing-floods-in-haiti.jpg?width=640&height=360&ext=.jpg",
-    recommendedLevel: "B1",
-    durationLabel: "Podcast interview",
+      "https://podcasts.ox.ac.uk/thermally-induced-lateral-buckling-subsea-pipelines",
+    videoSrc:
+      "https://media.podcasts.ox.ac.uk/engsci/general/2019-05-22-engsci-lubbock-1-720p.mp4",
+    audioSrc: "/audio/listening/civil-built-sustainability-asme.m4a",
+    recommendedLevel: "B2",
+    durationLabel: "29 min Oxford engineering lecture",
     supportFocus:
-      "Listen for how the speaker links data gaps, flood-risk mapping, and decision-making in civil-engineering practice.",
+      "Track how the lecturer links thermal expansion, lateral restraint, and failure prevention in offshore pipeline design.",
     notePrompts: [
-      "What flood-management challenge is highlighted first?",
-      "Which type of data is missing or hard to collect?",
-      "Why does the speaker argue for a formal management program?",
-      "Which civil-engineering term should stay in your notes?",
+      "What loading mechanism is introduced first in the lecture?",
+      "Which restraint condition makes lateral buckling more likely?",
+      "Why does the speaker stress system-level modelling rather than single-factor checks?",
+      "Which pipeline-design term should stay in your notes?",
     ],
     vocabulary: [
       {
-        term: "flood risk",
+        term: "lateral buckling",
         definition:
-          "the likelihood and potential impact of flood events on people, assets, or infrastructure",
+          "sideways instability that can occur when a pipeline expands under thermal load",
       },
       {
-        term: "baseline data",
+        term: "thermal expansion",
         definition:
-          "reference information collected before planning so engineers can compare and model risk",
+          "increase in material dimensions caused by temperature rise",
       },
       {
-        term: "resilience planning",
+        term: "restraint",
         definition:
-          "designing systems and procedures so infrastructure can withstand and recover from shocks",
+          "a condition that limits movement and changes how stress builds in a structure",
       },
     ],
     questions: [
       {
         id: "gist",
-        prompt: "What is the main topic of the interview?",
+        prompt: "What is the main engineering focus of the lecture?",
         placeholder: "Write the main topic in one or two sentences.",
         modelAnswer:
-          "The interview explains why Haiti needs stronger flood-risk management supported by better engineering data.",
-        rubricNote: "Mention both flood management and the data problem.",
+          "The lecture explains how thermal expansion and restraint can cause lateral buckling in subsea pipelines and how engineers design against it.",
+        rubricNote: "Mention both loading mechanism and design response.",
         matchGroups: [
-          ["flood", "risk", "management"],
-          ["haiti"],
-          ["data", "mapping", "baseline"],
+          ["pipeline", "subsea"],
+          ["thermal", "expansion"],
+          ["lateral", "buckling"],
         ],
       },
       {
         id: "detail",
-        prompt: "What practical gap does the speaker identify as a major obstacle?",
+        prompt: "Which condition in the environment increases buckling risk?",
         placeholder: "Name one or two examples.",
         modelAnswer:
-          "A strong answer mentions missing baseline data, weak flood records, or limited risk information.",
-        rubricNote: "The detail should describe a concrete information gap.",
+          "A strong answer mentions strong restraint from seabed friction or routing constraints that prevent free thermal movement.",
+        rubricNote: "Use concrete restraint factors from the lecture.",
         matchGroups: [
-          ["missing", "lack", "baseline"],
-          ["data", "records", "information", "mapping"],
+          ["restraint", "friction", "seabed"],
+          ["constraint", "route", "movement"],
         ],
       },
       {
         id: "signpost",
-        prompt: "Why does the speaker say a structured flood-management program matters?",
+        prompt: "Why does the speaker recommend system-level analysis?",
         placeholder: "Write one practical reason.",
         modelAnswer:
-          "It helps turn risk knowledge into practical planning and can reduce repeated damage in vulnerable areas.",
-        rubricNote: "Link the program to implementation and resilience outcomes.",
+          "Because safe pipeline decisions require thermal load, restraint, and allowable deformation to be evaluated together.",
+        rubricNote: "Connect modelling scope to safety decisions.",
         matchGroups: [
-          ["planning", "program", "management"],
-          ["resilience", "reduce", "damage", "disaster"],
+          ["model", "analysis", "system"],
+          ["load", "restraint", "deformation", "safety"],
         ],
       },
       {
         id: "term",
-        prompt: "Which built-environment term should you keep from this interview?",
+        prompt: "Which pipeline-design term should you keep from this lecture?",
         placeholder: "Write one technical term.",
         modelAnswer:
-          "A correct term is 'flood risk', 'baseline data', or 'resilience planning'.",
-        rubricNote: "Choose one term you can reuse in civil-infrastructure discussions.",
-        matchGroups: [["flood risk", "baseline data", "resilience planning"]],
+          "A correct term is 'lateral buckling', 'thermal expansion', or 'restraint'.",
+        rubricNote: "Choose one term you can reuse in offshore civil design discussions.",
+        matchGroups: [["lateral buckling", "thermal expansion", "restraint"]],
       },
     ],
     followUpTask:
-      "Use your notes to explain how a data-led flood-risk program could improve infrastructure planning in another vulnerable city.",
+      "Use your notes to explain how civil engineers can reduce thermal-buckling risk when designing long subsea pipelines.",
   },
   {
     groupId: "maths-uncertainty-oxford",
@@ -276,8 +278,7 @@ export const authenticListeningBlueprints: AuthenticListeningBlueprint[] = [
     officialUrl: "https://podcasts.ox.ac.uk/problems-probability",
     videoSrc:
       "https://media.podcasts.ox.ac.uk/conted/2014-MT-emergent-multiverse/2014-11-22_wallace_probability_puzzle.mp4",
-    audioSrc:
-      "https://media.podcasts.ox.ac.uk/conted/2014-MT-emergent-multiverse/2014-11-22_wallace_probability_puzzle.mp3",
+    audioSrc: "/audio/listening/maths-uncertainty-oxford.m4a",
     recommendedLevel: "B2",
     durationLabel: "20 min Oxford discussion",
     supportFocus:
@@ -355,8 +356,7 @@ export const authenticListeningBlueprints: AuthenticListeningBlueprint[] = [
     officialUrl: "https://podcasts.ox.ac.uk/will-computers-prove-theorems",
     videoSrc:
       "https://media.podcasts.ox.ac.uk/comlab/comsci/strachey/2025-05-06-consci-strachey-buzzard-720p.mp4",
-    audioSrc:
-      "https://media.podcasts.ox.ac.uk/comlab/comsci/strachey/2025-05-06-consci-strachey-buzzard.mp3",
+    audioSrc: "/audio/listening/maths-ai-science-oxford.m4a",
     recommendedLevel: "B2",
     durationLabel: "46 min Oxford lecture",
     supportFocus:
@@ -435,6 +435,7 @@ export const authenticListeningBlueprints: AuthenticListeningBlueprint[] = [
     transcriptUrl: "https://see.stanford.edu/Course/CS106B/150",
     officialUrl: "https://see.stanford.edu/Course/CS106B/150",
     videoSrc: "https://html5.stanford.edu/videos/courses/see/CS106B/CS106B-lecture23.mp4",
+    audioSrc: "/audio/listening/computing-software-changing-stanford.m4a",
     recommendedLevel: "B1",
     durationLabel: "46 min Stanford SEE lecture",
     supportFocus:
@@ -516,7 +517,7 @@ export const authenticListeningBlueprints: AuthenticListeningBlueprint[] = [
     transcript:
       "The discussion looks at how AI can mine large health datasets and support clinical decisions, while also raising questions about trust, policy, and patient impact. It highlights that medical deployment depends on more than model performance because clinicians and institutions need reliable data, clear evaluation, and responsible oversight. A central message is that healthcare AI has to be useful, understandable, and accountable in real practice.",
     officialUrl: "https://podcasts.ox.ac.uk/ai-good-our-health",
-    audioSrc: "https://media.podcasts.ox.ac.uk/devoff/futuremakers/2018-11-05-futuremakers-eps4.mp3",
+    audioSrc: "/audio/listening/computing-ai-healthcare-stanford.m4a",
     recommendedLevel: "B2",
     durationLabel: "47 min Oxford podcast",
     supportFocus:
@@ -655,96 +656,94 @@ export const authenticListeningBlueprints: AuthenticListeningBlueprint[] = [
     groupId: "mechanical-czinger-hypercar-asme",
     majorId: "mechanical-engineering",
     resourceType: "interview",
-    accent: "global",
+    accent: "american",
     speakerRegion: "north-america",
-    title: "How 3D Printed Structures Are Changing Bioengineering",
+    title: "Modeling Dynamics and Control I: System Modeling Briefing",
     source:
-      "ASME interview on 3D bioprinted structures, scaffold design, and structural uniformity.",
-    sourceName: "ASME TechCast",
-    speakerRole: "Podcast interview guest",
-    speakerName: "Roger Narayan",
+      "MIT OpenCourseWare lecture context on dynamic-system modelling, state variables, and control-oriented engineering analysis.",
+    sourceName: "MIT OpenCourseWare",
+    speakerRole: "MIT course lecture",
+    speakerName: "David Trumper and Steven Dubowsky",
     scenario:
-      "Mechanical and bioengineering interview listening on 3D printed scaffolds, lattices, and design quality in biomedical applications.",
+      "Mechanical-engineering lecture listening on modelling dynamic systems, defining state variables, and connecting physical plant behaviour to control design choices.",
     transcript:
-      "The interview explains how 3D bioprinted structures such as scaffolds and lattices are being used in bioengineering. It highlights that structural uniformity and repeatable geometry matter for practical outcomes. A key idea is that additive manufacturing is not only about speed, but also about controllable structure and application-specific performance.",
+      "The briefing explains that dynamic-system modelling should begin from clear physical assumptions and a transparent variable definition before moving to controller design. It highlights that engineers must separate plant behaviour, disturbance input, and desired response to avoid unstable conclusions. A key message is that control performance improves when modelling decisions are explicit and testable from the start.",
+    transcriptUrl:
+      "https://ocw.mit.edu/courses/2-003-modeling-dynamics-and-control-i-spring-2005/pages/syllabus/",
     officialUrl:
-      "https://www.asme.org/topics-resources/content/podcast-3d-printed-structures-changing",
-    embedUrl:
-      "https://players.brightcove.net/1711318824001/default_default/index.html?videoId=5524719189001",
-    thumbnailUrl:
-      "https://www.asme.org/getmedia/bba32584-a2d7-4460-9d79-64f077e12c5d/how-3d-printed-structures-are-changing-bioengineering.jpg?width=1280&height=720&ext=.jpg",
-    recommendedLevel: "B1",
-    durationLabel: "Podcast interview",
+      "https://ocw.mit.edu/courses/2-003-modeling-dynamics-and-control-i-spring-2005/pages/syllabus/",
+    audioSrc: "/audio/listening/mechanical-czinger-hypercar-asme.m4a",
+    recommendedLevel: "B2",
+    durationLabel: "MIT OCW dynamics and control briefing",
     supportFocus:
-      "Listen for how the speaker links printed geometry, uniformity, and biomedical function.",
+      "Track how the lecture links physical modelling assumptions, state-space thinking, and controllability.",
     notePrompts: [
-      "What structures are repeatedly mentioned in the interview?",
-      "Why does the speaker stress uniformity?",
-      "How does this use of 3D printing differ from simple rapid prototyping?",
-      "Which additive-manufacturing term should stay in your notes?",
+      "What system-modeling step is introduced first?",
+      "Which variable choices are treated as most important?",
+      "Why does the speaker stress model assumptions before controller tuning?",
+      "Which dynamics term should stay in your notes?",
     ],
     vocabulary: [
       {
-        term: "scaffold",
+        term: "state variable",
         definition:
-          "a three-dimensional support structure used to guide cell growth or tissue engineering",
+          "a variable that describes the internal condition of a dynamic system at a given time",
       },
       {
-        term: "lattice",
+        term: "plant model",
         definition:
-          "a repeating geometric structure used to control stiffness, weight, or flow behavior",
+          "a mathematical representation of the physical system being controlled",
       },
       {
-        term: "uniformity",
+        term: "feedback control",
         definition:
-          "the consistency of structure and properties across printed parts or regions",
+          "a control approach that uses measured output to adjust future input",
       },
     ],
     questions: [
       {
         id: "gist",
-        prompt: "What is the main engineering idea in the interview?",
+        prompt: "What is the main engineering focus of the lecture?",
         placeholder: "Write the main idea in one or two sentences.",
         modelAnswer:
-          "The interview explains how 3D printed scaffolds and lattices are changing bioengineering, with emphasis on structural control and consistency.",
-        rubricNote: "Mention both printed structures and why they matter.",
+          "The lecture explains how to model dynamic systems clearly before designing feedback control.",
+        rubricNote: "Mention both modelling and control.",
         matchGroups: [
-          ["3d", "printed", "bioprinted", "additive"],
-          ["scaffold", "lattice"],
-          ["uniformity", "control", "consistency"],
+          ["dynamic", "system", "model"],
+          ["control", "feedback"],
         ],
       },
       {
         id: "detail",
-        prompt: "Which specific structure types does the speaker discuss?",
+        prompt: "Which modelling elements are emphasized as a starting point?",
         placeholder: "Write one short answer.",
-        modelAnswer: "A strong answer includes scaffolds and lattices.",
-        rubricNote: "Capture concrete structure terms, not only '3D printing' in general.",
-        matchGroups: [["scaffold", "lattice"]],
+        modelAnswer: "A strong answer includes state variables, plant behaviour, and disturbance inputs.",
+        rubricNote: "Capture concrete modelling elements rather than generic control terms.",
+        matchGroups: [["state", "variable"], ["plant", "disturbance", "input"]],
       },
       {
         id: "signpost",
-        prompt: "Why is uniformity important in this context?",
+        prompt: "Why does the lecture stress explicit assumptions early in the process?",
         placeholder: "Write one practical reason.",
         modelAnswer:
-          "Because reliable biomedical structures need consistent geometry and material behavior across prints.",
-        rubricNote: "Link uniformity to reliability and practical application.",
+          "Because unclear assumptions make the model unreliable and can lead to unstable control decisions.",
+        rubricNote: "Connect assumptions to model reliability and control quality.",
         matchGroups: [
-          ["uniformity", "consistent", "consistency"],
-          ["reliable", "biomedical", "application", "geometry"],
+          ["assumption", "model", "reliable"],
+          ["control", "unstable", "decision"],
         ],
       },
       {
         id: "term",
-        prompt: "Which additive-manufacturing term should you keep from this interview?",
+        prompt: "Which dynamics term should you keep from this lecture?",
         placeholder: "Write one technical term.",
-        modelAnswer: "A correct term is 'scaffold', 'lattice', or 'uniformity'.",
-        rubricNote: "Keep a term that helps you describe printed-structure quality.",
-        matchGroups: [["scaffold", "lattice", "uniformity"]],
+        modelAnswer: "A correct term is 'state variable', 'plant model', or 'feedback control'.",
+        rubricNote: "Keep a term you can reuse in modelling and controls coursework.",
+        matchGroups: [["state variable", "plant model", "feedback control"]],
       },
     ],
     followUpTask:
-      "Use your notes to explain how structure-level control in 3D printing can improve mechanical performance in biomedical design.",
+      "Use your notes to explain why control-system design quality depends on clear dynamic modelling assumptions.",
   },
   {
     groupId: "transport-highway-decarbonisation-cambridge",
@@ -766,6 +765,7 @@ export const authenticListeningBlueprints: AuthenticListeningBlueprint[] = [
     officialUrl: "https://podcasts.ox.ac.uk/zero-carbon-energy-systems",
     videoSrc:
       "https://media.podcasts.ox.ac.uk/jmar/general/zero-carbon-energy-systemsnick-eyremp4.mp4",
+    audioSrc: "/audio/listening/transport-highway-decarbonisation-cambridge.m4a",
     recommendedLevel: "B2",
     durationLabel: "60 min Oxford discussion",
     supportFocus:
@@ -824,75 +824,81 @@ export const authenticListeningBlueprints: AuthenticListeningBlueprint[] = [
   {
     groupId: "transport-hyperloop-asme",
     majorId: "mechanical-engineering-transportation",
-    resourceType: "podcast",
+    resourceType: "lecture",
     accent: "american",
     speakerRegion: "north-america",
-    title: "MIT Student Engineer’s Team Leads Hyperloop Effort",
-    source: "Engineering podcast on Hyperloop pod development and high-speed transport design.",
-    sourceName: "ASME TechCast",
-    speakerRole: "Podcast interview",
+    title: "Lecture 20: Service Reliability",
+    source:
+      "MIT Public Transportation Systems lecture on service reliability, delay propagation, and control strategies in urban transit.",
+    sourceName: "MIT OpenCourseWare",
+    speakerRole: "MIT course lecture",
+    speakerName: "Nigel Wilson",
     scenario:
-      "Transport podcast listening on Hyperloop development, pod design, and multidisciplinary engineering teamwork.",
+      "Transportation-engineering lecture listening on service reliability, headway irregularity, and why robust operations planning is essential for dense urban systems.",
     transcript:
-      "The podcast focuses on a student engineering team working on Hyperloop pod design. It highlights systems integration, competition constraints, and the challenge of turning transport ideas into workable prototypes. The discussion shows how high-speed transport design depends on mechanics, control, and team coordination.",
+      "The lecture explains that transit reliability is determined not only by average travel speed but by variation in headway, dwell-time disturbances, and recovery strategy. It shows that delay propagation can quickly reduce passenger trust when operations teams optimize for mean performance alone. A key message is that planners need reliability-focused metrics and control interventions to keep service robust under real demand fluctuations.",
+    transcriptUrl:
+      "https://ocw.mit.edu/courses/1-258j-public-transportation-systems-spring-2017/resources/lecture-20-service-reliability/",
     officialUrl:
-      "https://www.asme.org/topics-resources/content/podcast-mit-student-engineers-team-leads",
-    embedUrl:
-      "https://players.brightcove.net/1711318824001/default_default/index.html?videoId=4825130975001",
-    thumbnailUrl:
-      "https://www.asme.org/getmedia/6cd22ff6-bd8b-4b74-9cf0-b10b5352b560/Podcast-MIT-Student-Engineers-Team-Leads-Hyperloop-Effort_hero.jpg.aspx?width=460&height=360&ext=.jpg",
-    recommendedLevel: "B1",
-    durationLabel: "Podcast interview",
+      "https://ocw.mit.edu/courses/1-258j-public-transportation-systems-spring-2017/resources/lecture-20-service-reliability/",
+    videoSrc: "https://archive.org/download/MIT1.258JS17/MIT1_258JS17_lec20_300k.mp4",
+    audioSrc: "/audio/listening/transport-hyperloop-asme.m4a",
+    recommendedLevel: "B2",
+    durationLabel: "52 min MIT transport lecture",
     supportFocus:
-      "Listen for how the team combines prototype design, system constraints, and transport ambition in one project.",
+      "Track how the lecture connects headway variation, passenger waiting outcomes, and reliability-focused control actions.",
     notePrompts: [
-      "What transport concept is the team developing?",
-      "Which engineering constraints shape the design?",
-      "Why is systems integration important here?",
-      "Which transport term should stay in your notes?",
+      "What reliability issue appears first in the lecture?",
+      "Which operational variables drive headway instability?",
+      "Why is average performance an insufficient metric for service quality?",
+      "Which transport-operations term should stay in your notes?",
     ],
     vocabulary: [
-      { term: "prototype", definition: "an early working version of a system built for testing" },
-      { term: "systems integration", definition: "making different subsystems work together as one whole" },
-      { term: "high-speed transport", definition: "transport designed for movement at very high velocity" },
+      { term: "service reliability", definition: "the consistency of transit service relative to schedule and expected headway" },
+      { term: "headway variance", definition: "the spread in time gaps between consecutive vehicles on the same route" },
+      { term: "delay propagation", definition: "the process in which one disruption creates downstream delays across a network" },
     ],
     questions: [
       {
         id: "gist",
-        prompt: "What is the main focus of the podcast interview?",
+        prompt: "What is the main focus of this lecture?",
         placeholder: "Write the main idea in one or two sentences.",
         modelAnswer:
-          "The interview follows a student team building a Hyperloop prototype and managing the engineering challenges of high-speed transport design.",
-        rubricNote: "Mention both the prototype and the transport system challenge.",
-        matchGroups: [["hyperloop", "high-speed transport"], ["student", "team", "prototype"], ["engineering", "design"]],
+          "The lecture explains how transit systems can improve service reliability by managing headway variation and delay propagation.",
+        rubricNote: "Mention both reliability target and operational mechanism.",
+        matchGroups: [
+          ["service reliability", "reliability", "transit"],
+          ["headway", "variance", "delay propagation"],
+          ["operations", "control", "planning"],
+        ],
       },
       {
         id: "detail",
-        prompt: "Which kind of engineering challenge shapes the project strongly?",
+        prompt: "Which variables are emphasized as drivers of unreliable service?",
         placeholder: "Write one short answer.",
-        modelAnswer: "A strong answer includes system constraints, prototype design, or subsystem coordination.",
-        rubricNote: "Choose a specific engineering challenge rather than a vague answer.",
-        matchGroups: [["constraint", "prototype", "subsystem", "coordination", "integration"]],
+        modelAnswer: "A strong answer includes headway variance, dwell-time disturbances, or delay propagation.",
+        rubricNote: "Use specific operational variables from the lecture.",
+        matchGroups: [["headway", "variance"], ["dwell", "delay", "propagation"]],
       },
       {
         id: "signpost",
-        prompt: "Why is systems integration important in the interview?",
+        prompt: "Why does the speaker say average speed alone is not enough?",
         placeholder: "Write one practical reason.",
-        modelAnswer: "Because the transport concept only works when multiple parts of the pod system operate together reliably.",
-        rubricNote: "The answer should show whole-system thinking, not one isolated part.",
-        matchGroups: [["system", "parts", "together"], ["reliable", "work"]],
+        modelAnswer: "Because passengers experience unreliability through irregular waiting and bunching, even when average speed appears acceptable.",
+        rubricNote: "Connect metrics to real rider experience.",
+        matchGroups: [["average", "not enough"], ["waiting", "bunching", "reliability"]],
       },
       {
         id: "term",
-        prompt: "Which transport-engineering term should you keep from this interview?",
+        prompt: "Which transport-operations term should you keep from this lecture?",
         placeholder: "Write one technical term.",
-        modelAnswer: "A correct term is 'prototype', 'systems integration', or 'high-speed transport'.",
-        rubricNote: "Choose a term you can reuse in transport-systems discussion.",
-        matchGroups: [["prototype", "systems integration", "high-speed transport"]],
+        modelAnswer: "A correct term is 'service reliability', 'headway variance', or 'delay propagation'.",
+        rubricNote: "Choose a term reusable in transit planning and operations analysis.",
+        matchGroups: [["service reliability", "headway variance", "delay propagation"]],
       },
     ],
     followUpTask:
-      "Use your notes to explain why transport innovation projects need both ambitious ideas and strong subsystem coordination.",
+      "Use your notes to explain how a reliability-first strategy could reduce passenger disruption on a busy transit corridor.",
   },
   {
     groupId: "civil-mit-structural-design",
@@ -915,6 +921,7 @@ export const authenticListeningBlueprints: AuthenticListeningBlueprint[] = [
     officialUrl:
       "https://ocw.mit.edu/courses/1-103-civil-engineering-materials-laboratory-spring-2004/pages/video-demonstrations/",
     videoSrc: "https://archive.org/download/MIT1.103S04/mit-ocw-1.103-lab-part-a-300k.mp4",
+    audioSrc: "/audio/listening/civil-mit-structural-design.m4a",
     recommendedLevel: "B1",
     durationLabel: "15 min MIT lab demonstration",
     supportFocus:
@@ -1417,6 +1424,7 @@ export const authenticListeningBlueprints: AuthenticListeningBlueprint[] = [
     officialUrl:
       "https://ocw.mit.edu/courses/2-003sc-engineering-dynamics-fall-2011/resources/recitation-5-equations-of-motion-1/",
     videoSrc: "https://archive.org/download/MIT2.003SCF11/MIT2_003SCF11_rec05_300k.mp4",
+    audioSrc: "/audio/listening/mechanical-mit-engineering-dynamics.m4a",
     recommendedLevel: "B2",
     durationLabel: "MIT OCW recitation",
     supportFocus:
