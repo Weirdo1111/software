@@ -1612,6 +1612,53 @@ body::after {
   background: rgba(244, 249, 255, 0.96);
 }
 
+.global-buddy-xp-text {
+  position: absolute;
+  left: 50%;
+  bottom: 7.15rem;
+  z-index: 7;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 0.92rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: #3559d6;
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95),
+    0 0 12px rgba(255, 255, 255, 0.72);
+  animation: globalBuddyXpFloat 2s ease both;
+}
+
+.global-buddy-star {
+  position: absolute;
+  z-index: 6;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: #ffe07d;
+  text-shadow:
+    0 0 10px rgba(255, 255, 255, 0.92),
+    0 0 18px rgba(255, 225, 125, 0.82);
+  animation: globalBuddyStarBurst 1.1s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.global-buddy-star-one {
+  left: 1rem;
+  top: 1.15rem;
+}
+
+.global-buddy-star-two {
+  right: 0.9rem;
+  top: 1.5rem;
+  animation-delay: 0.18s;
+}
+
+.global-buddy-star-three {
+  right: 1.5rem;
+  top: 3.35rem;
+  animation-delay: 0.34s;
+}
+
 .global-buddy-card-blink .global-buddy-figure {
   animation: globalBuddyBlinkHit 0.55s ease-in-out both;
 }
@@ -1634,6 +1681,40 @@ body::after {
 
 .global-buddy-card-easter .global-buddy-figure {
   animation: globalBuddyEasterHit 0.9s ease-in-out both;
+}
+
+@keyframes globalBuddyXpFloat {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px) scale(0.92);
+  }
+  18% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+  78% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-6px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-14px) scale(1.03);
+  }
+}
+
+@keyframes globalBuddyStarBurst {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.5) rotate(-10deg);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(2deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-16px) scale(1.18) rotate(10deg);
+  }
 }
 
 .party-tab {
