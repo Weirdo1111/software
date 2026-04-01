@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "node:crypto";
 
 import { getCurrentUser } from "@/lib/current-user";
-import { findLocalUserByLogin } from "@/lib/local-auth";
+import { isDatabaseAuthConfigured } from "@/lib/local-auth";
 import { prisma } from "@/lib/prisma";
 
 export const DEMO_USER_ID = "00000000-0000-0000-0000-000000000001";
@@ -15,6 +16,10 @@ export function getRequestUserId(request: Request) {
 }
 
 async function findUserByHeaderUserId(rawUserId: string) {
+  if (!isDatabaseAuthConfigured()) {
+    return null;
+  }
+
   const normalized = rawUserId.trim();
 
   if (/^\d+$/.test(normalized)) {
@@ -35,22 +40,29 @@ async function findUserByHeaderUserId(rawUserId: string) {
   if (byComposite) {
     return byComposite;
   }
-
-  return findLocalUserByLogin(normalized);
+  return null;
 }
 
 async function ensureFallbackDemoUserId() {
+  if (!isDatabaseAuthConfigured()) {
+    throw new Error("DATABASE_AUTH_NOT_CONFIGURED");
+  }
+
   const demoUser =
     (await prisma.user.findFirst({
       where: {
         OR: [{ username: "admin" }, { authProvider: "local-file", authUserId: DEMO_USER_ID }],
       },
     })) ??
-    (await findLocalUserByLogin("admin"));
-
-  if (!demoUser) {
-    throw new Error("DEFAULT_DEMO_USER_NOT_FOUND");
-  }
+    (await prisma.user.create({
+      data: {
+        username: "admin",
+        email: "admin@example.com",
+        displayName: "Admin",
+        authProvider: "database",
+        authUserId: randomUUID(),
+      },
+    }));
 
   return demoUser.id;
 }
