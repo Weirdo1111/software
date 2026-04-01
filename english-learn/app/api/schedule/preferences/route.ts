@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 
-import { getRequestUserId, jsonError } from "@/lib/api";
-import { createSupabaseServiceClient } from "@/lib/supabase/server";
+import { jsonError, resolveRequestUserId } from "@/lib/api";
+import { prisma } from "@/lib/prisma";
 
 const classSchema = z.object({
   id: z.string().min(1),
@@ -54,6 +55,16 @@ function addDays(value: string, amount: number) {
   return next.toISOString().slice(0, 10);
 }
 
+function toDateOnly(value: string) {
+  const next = new Date(`${value}T00:00:00`);
+  next.setHours(0, 0, 0, 0);
+  return next;
+}
+
+function toJsonArrayOrEmpty<T>(value: Prisma.JsonValue | null | undefined) {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
 function getCurrentWeekStartISO() {
   const next = new Date();
   next.setHours(0, 0, 0, 0);
@@ -64,116 +75,126 @@ function getCurrentWeekStartISO() {
 }
 
 function mapPlanRows(
-  userId: string,
+  userId: bigint,
   weekStartISO: string,
   planOverrides: z.infer<typeof planOverrideSchema>[],
 ) {
   return planOverrides.map((item) => ({
-    user_id: userId,
-    date: addDays(weekStartISO, item.day),
-    tasks: item.blocks,
-    estimated_minutes: item.blocks.reduce((sum, block) => sum + block.minutes, 0),
+    userId,
+    date: toDateOnly(addDays(weekStartISO, item.day)),
+    tasks: item.blocks as Prisma.InputJsonValue,
+    estimatedMinutes: item.blocks.reduce((sum, block) => sum + block.minutes, 0),
   }));
 }
 
 export async function GET(request: Request) {
-  const supabase = createSupabaseServiceClient();
-  if (!supabase) {
-    return NextResponse.json({ preferences: null });
-  }
+  const userId = await resolveRequestUserId(request);
 
-  const userId = getRequestUserId(request);
-
-  try {
-    const [{ data: goalRow }, { data: scheduleRow }] = await Promise.all([
-      supabase
-        .from("learning_goals")
-        .select("goal, daily_minutes, schedule_mode, study_window, updated_at")
-        .eq("user_id", userId)
-        .maybeSingle(),
-      supabase
-        .from("schedule_profiles")
-        .select("classes, deadlines, plan_week_start, plan_overrides, updated_at")
-        .eq("user_id", userId)
-        .maybeSingle(),
-    ]);
-
-    if (!goalRow && !scheduleRow) {
-      return NextResponse.json({ preferences: null });
-    }
-
-    return NextResponse.json({
-      preferences: {
-        version: 1,
-        goal: goalRow?.goal ?? "coursework",
-        dailyMinutes: goalRow?.daily_minutes ?? 35,
-        mode: goalRow?.schedule_mode ?? "standard",
-        studyWindow: goalRow?.study_window ?? "evening",
-        classes: Array.isArray(scheduleRow?.classes) ? scheduleRow.classes : [],
-        deadlines: Array.isArray(scheduleRow?.deadlines) ? scheduleRow.deadlines : [],
-        planWeekStartISO: scheduleRow?.plan_week_start ?? null,
-        planOverrides: Array.isArray(scheduleRow?.plan_overrides) ? scheduleRow.plan_overrides : [],
-        updatedAt:
-          scheduleRow?.updated_at ??
-          goalRow?.updated_at ??
-          new Date().toISOString(),
+  const [goalRow, scheduleRow] = await Promise.all([
+    prisma.learningGoal.findUnique({
+      where: { userId },
+      select: {
+        goal: true,
+        dailyMinutes: true,
+        scheduleMode: true,
+        studyWindow: true,
+        updatedAt: true,
       },
-    });
-  } catch {
+    }),
+    prisma.scheduleProfile.findUnique({
+      where: { userId },
+      select: {
+        classes: true,
+        deadlines: true,
+        planWeekStart: true,
+        planOverrides: true,
+        updatedAt: true,
+      },
+    }),
+  ]);
+
+  if (!goalRow && !scheduleRow) {
     return NextResponse.json({ preferences: null });
   }
+
+  return NextResponse.json({
+    preferences: {
+      version: 1,
+      goal: goalRow?.goal ?? "coursework",
+      dailyMinutes: goalRow?.dailyMinutes ?? 35,
+      mode: goalRow?.scheduleMode ?? "standard",
+      studyWindow: goalRow?.studyWindow ?? "evening",
+      classes: toJsonArrayOrEmpty(scheduleRow?.classes),
+      deadlines: toJsonArrayOrEmpty(scheduleRow?.deadlines),
+      planWeekStartISO: scheduleRow?.planWeekStart
+        ? scheduleRow.planWeekStart.toISOString().slice(0, 10)
+        : null,
+      planOverrides: toJsonArrayOrEmpty(scheduleRow?.planOverrides),
+      updatedAt:
+        scheduleRow?.updatedAt?.toISOString() ??
+        goalRow?.updatedAt?.toISOString() ??
+        new Date().toISOString(),
+    },
+  });
 }
 
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
     const payload = preferencesSchema.parse(body.preferences ?? body);
-    const userId = getRequestUserId(request);
-    const supabase = createSupabaseServiceClient();
+    const userId = await resolveRequestUserId(request);
 
-    if (!supabase) {
-      return NextResponse.json({ saved: false, fallback: true });
-    }
-
-    await supabase.from("learning_goals").upsert(
-      {
-        user_id: userId,
+    await prisma.learningGoal.upsert({
+      where: { userId },
+      update: {
         goal: payload.goal,
-        daily_minutes: payload.dailyMinutes,
-        schedule_mode: payload.mode,
-        study_window: payload.studyWindow,
-        updated_at: payload.updatedAt,
+        dailyMinutes: payload.dailyMinutes,
+        scheduleMode: payload.mode,
+        studyWindow: payload.studyWindow,
       },
-      { onConflict: "user_id" },
-    );
+      create: {
+        userId,
+        goal: payload.goal,
+        dailyMinutes: payload.dailyMinutes,
+        scheduleMode: payload.mode,
+        studyWindow: payload.studyWindow,
+      },
+    });
 
-    await supabase.from("schedule_profiles").upsert(
-      {
-        user_id: userId,
-        classes: payload.classes,
-        deadlines: payload.deadlines,
-        plan_week_start: payload.planWeekStartISO,
-        plan_overrides: payload.planOverrides,
-        updated_at: payload.updatedAt,
+    await prisma.scheduleProfile.upsert({
+      where: { userId },
+      update: {
+        classes: payload.classes as Prisma.InputJsonValue,
+        deadlines: payload.deadlines as Prisma.InputJsonValue,
+        planWeekStart: payload.planWeekStartISO ? toDateOnly(payload.planWeekStartISO) : null,
+        planOverrides: payload.planOverrides as Prisma.InputJsonValue,
       },
-      { onConflict: "user_id" },
-    );
+      create: {
+        userId,
+        classes: payload.classes as Prisma.InputJsonValue,
+        deadlines: payload.deadlines as Prisma.InputJsonValue,
+        planWeekStart: payload.planWeekStartISO ? toDateOnly(payload.planWeekStartISO) : null,
+        planOverrides: payload.planOverrides as Prisma.InputJsonValue,
+      },
+    });
 
     const targetWeekStart = payload.planWeekStartISO ?? getCurrentWeekStartISO();
     const targetWeekEnd = addDays(targetWeekStart, 6);
 
-    await supabase
-      .from("daily_plans")
-      .delete()
-      .eq("user_id", userId)
-      .gte("date", targetWeekStart)
-      .lte("date", targetWeekEnd);
+    await prisma.dailyPlan.deleteMany({
+      where: {
+        userId,
+        date: {
+          gte: toDateOnly(targetWeekStart),
+          lte: toDateOnly(targetWeekEnd),
+        },
+      },
+    });
 
     if (payload.planOverrides.length > 0) {
-      await supabase.from("daily_plans").upsert(
-        mapPlanRows(userId, targetWeekStart, payload.planOverrides),
-        { onConflict: "user_id,date" },
-      );
+      await prisma.dailyPlan.createMany({
+        data: mapPlanRows(userId, targetWeekStart, payload.planOverrides),
+      });
     }
 
     return NextResponse.json({ saved: true });
