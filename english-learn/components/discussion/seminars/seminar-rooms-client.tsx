@@ -83,8 +83,6 @@ export function SeminarRoomsClient({ locale }: { locale: Locale }) {
     zh: {
       badge: "Seminar Studio",
       title: "在线研讨室",
-      subtitle:
-        "把 forum 延伸成更聚焦的 seminar workspace。房间内支持实时聊天、资料共享，以及轻量语音 / 视频讨论。",
       create: "创建研讨室",
       forumFeed: "返回论坛帖子",
       searchPlaceholder: "搜索房间标题、简介或主持人",
@@ -126,8 +124,6 @@ export function SeminarRoomsClient({ locale }: { locale: Locale }) {
     en: {
       badge: "Seminar Studio",
       title: "Seminar Rooms",
-      subtitle:
-        "A calmer seminar workspace layered onto the forum, with focused chat, shared materials, and lightweight voice/video discussion.",
       create: "Create room",
       forumFeed: "Back to forum posts",
       searchPlaceholder: "Search by room title, summary, or host",
@@ -294,9 +290,6 @@ export function SeminarRoomsClient({ locale }: { locale: Locale }) {
             <h2 className="mt-4 font-display text-3xl leading-tight tracking-tight sm:text-4xl">
               {text.title}
             </h2>
-            <p className="mt-4 max-w-3xl text-sm leading-7 text-[var(--ink-soft)] sm:text-base">
-              {text.subtitle}
-            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">

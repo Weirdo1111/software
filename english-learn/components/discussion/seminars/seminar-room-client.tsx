@@ -534,9 +534,9 @@ export function SeminarRoomClient({ locale, roomId }: { locale: Locale; roomId: 
 
   return (
     <>
-      <section className="surface-panel reveal-up rounded-[2rem] p-6 sm:p-7">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-          <div className="space-y-4">
+      <section className="surface-panel reveal-up rounded-[2rem] p-5 sm:p-6">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div className="space-y-3">
             <Link
               href={`/discussion/seminars?lang=${locale}`}
               className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--ink-soft)]"
@@ -559,47 +559,44 @@ export function SeminarRoomClient({ locale, roomId }: { locale: Locale; roomId: 
                 {room.title}
               </h2>
               {room.description ? (
-                <p className="mt-3 max-w-3xl text-sm leading-7 text-[var(--ink-soft)] sm:text-base">
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--ink-soft)] sm:text-base">
                   {room.description}
                 </p>
               ) : null}
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:w-[360px]">
-            <div className="rounded-[1.4rem] border border-white/80 bg-white/84 p-4 shadow-[0_10px_22px_rgba(20,50,75,0.05)]">
-              <div className="text-xs uppercase tracking-[0.18em] text-[var(--ink-soft)]">{text.host}</div>
-              <div className="mt-2 text-sm font-semibold text-[var(--ink)]">{room.ownerName}</div>
+          <div className="flex flex-wrap items-center gap-2 xl:max-w-[34rem] xl:justify-end">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/84 px-3 py-2 text-sm text-[var(--ink)] shadow-[0_10px_22px_rgba(20,50,75,0.05)]">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">{text.host}</span>
+              <span className="font-semibold">{room.ownerName}</span>
             </div>
-            <div className="rounded-[1.4rem] border border-white/80 bg-white/84 p-4 shadow-[0_10px_22px_rgba(20,50,75,0.05)]">
-              <div className="text-xs uppercase tracking-[0.18em] text-[var(--ink-soft)]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/84 px-3 py-2 text-sm text-[var(--ink)] shadow-[0_10px_22px_rgba(20,50,75,0.05)]">
+              <Users className="size-4 text-[var(--navy)]" />
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
                 {text.participants}
-              </div>
-              <div className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-[var(--ink)]">
-                <Users className="size-4 text-[var(--navy)]" />
-                {room.participantCount}
-              </div>
+              </span>
+              <span className="font-semibold">{room.participantCount}</span>
             </div>
-            <div className="rounded-[1.4rem] border border-white/80 bg-white/84 p-4 shadow-[0_10px_22px_rgba(20,50,75,0.05)] sm:col-span-2">
-              <div className="text-xs uppercase tracking-[0.18em] text-[var(--ink-soft)]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/84 px-3 py-2 text-sm text-[var(--ink)] shadow-[0_10px_22px_rgba(20,50,75,0.05)]">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
                 {text.lastActive}
-              </div>
-              <div className="mt-2 text-sm font-semibold text-[var(--ink)]">
-                {formatRelativeTime(room.lastActiveAt, locale)}
-                <span className="ml-2 text-[var(--ink-soft)]">({formatAbsoluteTime(room.lastActiveAt, locale)})</span>
-              </div>
+              </span>
+              <span className="font-semibold">{formatRelativeTime(room.lastActiveAt, locale)}</span>
             </div>
+
+            {room.canManage ? (
+              <button
+                type="button"
+                onClick={() => setSettingsOpen(true)}
+                className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/84 px-3.5 py-2 text-sm font-semibold text-[var(--ink)] shadow-[0_10px_22px_rgba(20,50,75,0.05)]"
+              >
+                <MoreHorizontal className="size-4" />
+                {text.settings}
+              </button>
+            ) : null}
           </div>
         </div>
-
-        {room.canManage ? (
-          <div className="mt-5 flex justify-end">
-            <button type="button" onClick={() => setSettingsOpen(true)} className="party-button-ghost">
-              <MoreHorizontal className="size-4" />
-              {text.settings}
-            </button>
-          </div>
-        ) : null}
       </section>
 
       {!room.hasAccess ? (
@@ -647,19 +644,30 @@ export function SeminarRoomClient({ locale, roomId }: { locale: Locale; roomId: 
             </div>
           ) : null}
 
-          <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(20rem,0.8fr)]">
+          <section className="mt-6">
             <div className="rounded-[2rem] border border-[rgba(31,58,98,0.08)] bg-white/90 p-4 shadow-[0_24px_60px_rgba(31,58,98,0.06)] sm:p-5">
-              <div className="mb-4 flex items-center justify-between gap-3 border-b border-[rgba(31,58,98,0.08)] pb-4">
+              <div className="mb-4 flex flex-col gap-4 border-b border-[rgba(31,58,98,0.08)] pb-4 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <p className="section-label">Seminar thread</p>
-                  <p className="mt-2 text-sm text-[var(--ink-soft)]">
-                    {groupedMessages.length === 0 ? text.noMessages : `${groupedMessages.length} messages`}
-                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[var(--ink-soft)]">
+                    <span>{groupedMessages.length === 0 ? text.noMessages : `${groupedMessages.length} messages`}</span>
+                    <span className="text-xs font-semibold uppercase tracking-[0.16em]">{formatAbsoluteTime(room.lastActiveAt, locale)}</span>
+                  </div>
                 </div>
-                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
-                  {formatAbsoluteTime(room.lastActiveAt, locale)}
+
+                <div className="flex flex-wrap items-center justify-start gap-2 lg:max-w-[26rem] lg:justify-end">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(31,58,98,0.08)] bg-[rgba(248,251,255,0.84)] px-3 py-2 text-sm text-[var(--ink)]">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">{text.host}</span>
+                    <span className="font-semibold">{room.ownerName}</span>
+                  </div>
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(31,58,98,0.08)] bg-[rgba(248,251,255,0.84)] px-3 py-2 text-sm text-[var(--ink)]">
+                    <Users className="size-4 text-[var(--navy)]" />
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">{text.participants}</span>
+                    <span className="font-semibold">{room.participantCount}</span>
+                  </div>
                 </div>
               </div>
+
               <div className="max-h-[62vh] space-y-4 overflow-y-auto px-1 py-1">
                 {groupedMessages.length === 0 ? (
                   <div className="rounded-[1.5rem] border border-dashed border-white/70 bg-white/70 px-5 py-10 text-center text-sm text-[var(--ink-soft)]">
@@ -697,105 +705,89 @@ export function SeminarRoomClient({ locale, roomId }: { locale: Locale; roomId: 
                   ))
                 )}
               </div>
-            </div>
 
-            <aside className="space-y-6">
-              <div className="rounded-[2rem] border border-[rgba(31,58,98,0.08)] bg-white/88 p-4 shadow-[0_18px_44px_rgba(31,58,98,0.05)] sm:p-5">
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-                  <div className="rounded-[1.3rem] border border-[rgba(31,58,98,0.08)] bg-[rgba(248,251,255,0.84)] px-4 py-3">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">{text.host}</div>
-                    <div className="mt-2 text-sm font-semibold text-[var(--ink)]">{room.ownerName}</div>
+              <div className="mt-6 border-t border-[rgba(31,58,98,0.08)] pt-6">
+                <div className="space-y-3">
+                  <div>
+                    <p className="section-label">{text.composerLabel}</p>
+                    <textarea
+                      value={composerText}
+                      onChange={(event) => setComposerText(event.target.value)}
+                      placeholder={text.composerPlaceholder}
+                      disabled={!canCompose}
+                      className="mt-3 min-h-[7.5rem] w-full rounded-[1.4rem] border border-white/80 bg-white/88 px-4 py-3 text-sm leading-6 outline-none disabled:cursor-not-allowed disabled:opacity-70"
+                    />
                   </div>
-                  <div className="rounded-[1.3rem] border border-[rgba(31,58,98,0.08)] bg-[rgba(248,251,255,0.84)] px-4 py-3">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">{text.participants}</div>
-                    <div className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-[var(--ink)]">
-                      <Users className="size-4 text-[var(--navy)]" />
-                      {room.participantCount}
-                    </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <label className="flex cursor-pointer items-center justify-between rounded-[1.35rem] border border-dashed border-white/80 bg-white/80 px-4 py-2.5 text-sm font-semibold text-[var(--ink)]">
+                      <span className="inline-flex items-center gap-2">
+                        <Paperclip className="size-4 text-[var(--navy)]" />
+                        {text.attach}
+                      </span>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.zip"
+                        className="hidden"
+                        disabled={!canCompose}
+                        onChange={(event) =>
+                          setSelectedFiles(Array.from(event.target.files ?? []).slice(0, 6))
+                        }
+                      />
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={() => void handleSendMessage()}
+                      disabled={!canCompose || sending}
+                      className="party-button min-w-[11rem] justify-center disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      <Send className="size-4" />
+                      {sending ? text.sending : text.send}
+                    </button>
                   </div>
-                </div>
-              </div>
 
-              <div className="rounded-[2rem] border border-[rgba(31,58,98,0.08)] bg-white/88 p-4 shadow-[0_18px_44px_rgba(31,58,98,0.05)] sm:p-5">
-                <div className="space-y-4">
-                <div>
-                  <p className="section-label">{text.composerLabel}</p>
-                  <textarea
-                    value={composerText}
-                    onChange={(event) => setComposerText(event.target.value)}
-                    placeholder={text.composerPlaceholder}
-                    disabled={!canCompose}
-                    className="mt-4 min-h-36 w-full rounded-[1.4rem] border border-white/80 bg-white/88 px-4 py-3 text-sm leading-6 outline-none disabled:cursor-not-allowed disabled:opacity-70"
-                  />
-                </div>
+                  {selectedFiles.length > 0 ? (
+                    <div className="space-y-2">
+                      {selectedFiles.map((file, index) => {
+                        const Icon = file.type.startsWith("image/")
+                          ? ImageIcon
+                          : file.type.startsWith("video/")
+                            ? Video
+                            : file.type.startsWith("audio/")
+                              ? Volume2
+                              : FileText;
 
-                <label className="flex cursor-pointer items-center justify-between rounded-[1.35rem] border border-dashed border-white/80 bg-white/80 px-4 py-3 text-sm font-semibold text-[var(--ink)]">
-                  <span className="inline-flex items-center gap-2">
-                    <Paperclip className="size-4 text-[var(--navy)]" />
-                    {text.attach}
-                  </span>
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.zip"
-                    className="hidden"
-                    disabled={!canCompose}
-                    onChange={(event) =>
-                      setSelectedFiles(Array.from(event.target.files ?? []).slice(0, 6))
-                    }
-                  />
-                </label>
-
-                {selectedFiles.length > 0 ? (
-                  <div className="space-y-2">
-                    {selectedFiles.map((file, index) => {
-                      const Icon = file.type.startsWith("image/")
-                        ? ImageIcon
-                        : file.type.startsWith("video/")
-                          ? Video
-                          : file.type.startsWith("audio/")
-                            ? Volume2
-                            : FileText;
-
-                      return (
-                        <div
-                          key={`${file.name}-${index}`}
-                          className="flex items-center gap-3 rounded-[1.2rem] border border-white/70 bg-white/90 px-4 py-3 text-sm"
-                        >
-                          <Icon className="size-4 text-[var(--navy)]" />
-                          <div className="min-w-0 flex-1">
-                            <div className="truncate font-medium text-[var(--ink)]">{file.name}</div>
-                            <div className="text-xs text-[var(--ink-soft)]">{fileSizeLabel(file.size)}</div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSelectedFiles((current) => current.filter((_, currentIndex) => currentIndex !== index))
-                            }
-                            className="rounded-full bg-[rgba(20,50,75,0.06)] p-1.5 text-[var(--ink-soft)]"
+                        return (
+                          <div
+                            key={`${file.name}-${index}`}
+                            className="flex items-center gap-3 rounded-[1.2rem] border border-white/70 bg-white/90 px-4 py-3 text-sm"
                           >
-                            <X className="size-3.5" />
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : null}
+                            <Icon className="size-4 text-[var(--navy)]" />
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate font-medium text-[var(--ink)]">{file.name}</div>
+                              <div className="text-xs text-[var(--ink-soft)]">{fileSizeLabel(file.size)}</div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setSelectedFiles((current) => current.filter((_, currentIndex) => currentIndex !== index))
+                              }
+                              className="rounded-full bg-[rgba(20,50,75,0.06)] p-1.5 text-[var(--ink-soft)]"
+                            >
+                              <X className="size-3.5" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : null}
 
-                {error ? <p className="text-sm text-[#8c3e3a]">{error}</p> : null}
-
-                <button
-                  type="button"
-                  onClick={() => void handleSendMessage()}
-                  disabled={!canCompose || sending}
-                  className="party-button w-full justify-center disabled:cursor-not-allowed disabled:opacity-70"
-                >
-                  <Send className="size-4" />
-                  {sending ? text.sending : text.send}
-                </button>
+                  {error ? <p className="text-sm text-[#8c3e3a]">{error}</p> : null}
                 </div>
               </div>
-            </aside>
+            </div>
           </section>
         </>
       )}

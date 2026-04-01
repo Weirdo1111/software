@@ -103,7 +103,6 @@ export function SeminarCallPanel({
   const [error, setError] = useState("");
   const [streamError, setStreamError] = useState("");
   const [viewMode, setViewMode] = useState<CallViewMode>("focus");
-  const [tileScale, setTileScale] = useState<TileScale>("md");
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [openMenu, setOpenMenu] = useState<DeviceControlKind | null>(null);
 
@@ -860,6 +859,7 @@ export function SeminarCallPanel({
     [allTiles, spotlightTile],
   );
   const connectedCount = participants.length;
+  const tileScale: TileScale = "md";
 
   useEffect(() => {
     const available = new Set(allTiles.map((participant) => participant.sessionId));
@@ -1003,6 +1003,30 @@ export function SeminarCallPanel({
     );
   }
 
+  function renderViewModeControl() {
+    return (
+      <div className="flex items-center gap-1 rounded-full border border-white/10 bg-[rgba(14,22,34,0.78)] p-1 shadow-[0_18px_36px_rgba(7,14,28,0.22)] backdrop-blur">
+        {([
+          ["focus", text.focusView],
+          ["grid", text.gridView],
+        ] as Array<[CallViewMode, string]>).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setViewMode(value)}
+            className={`inline-flex h-11 items-center rounded-full px-4 text-sm font-semibold transition ${
+              viewMode === value
+                ? "bg-white text-[var(--navy)] shadow-[0_10px_24px_rgba(255,255,255,0.12)]"
+                : "text-white/76 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <section className="relative rounded-[2rem] border border-[rgba(31,58,98,0.08)] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(246,249,255,0.92))] p-5 pb-28 shadow-[0_24px_60px_rgba(31,58,98,0.08)] sm:p-6 sm:pb-32">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -1013,7 +1037,6 @@ export function SeminarCallPanel({
           </div>
           <div>
             <h3 className="text-xl font-semibold tracking-tight text-[var(--ink)] sm:text-2xl">{text.title}</h3>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--ink-soft)]">{text.subtitle}</p>
           </div>
         </div>
 
@@ -1061,50 +1084,6 @@ export function SeminarCallPanel({
           {streamError}
         </div>
       ) : null}
-
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-[1.5rem] border border-[rgba(31,58,98,0.08)] bg-white/72 px-4 py-3">
-        <div className="flex flex-wrap gap-2">
-          {([
-            ["focus", text.focusView],
-            ["grid", text.gridView],
-          ] as Array<[CallViewMode, string]>).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setViewMode(value)}
-              className={`rounded-full px-3.5 py-2 text-sm font-semibold transition ${
-                viewMode === value
-                  ? "bg-[var(--navy)] text-white shadow-[0_10px_24px_rgba(31,58,98,0.16)]"
-                  : "border border-[rgba(31,58,98,0.08)] bg-white/82 text-[var(--ink)]"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">{text.tileSize}</span>
-          {([
-            ["sm", text.small],
-            ["md", text.medium],
-            ["lg", text.large],
-          ] as Array<[TileScale, string]>).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setTileScale(value)}
-              className={`rounded-full px-3 py-1.5 text-sm font-semibold transition ${
-                tileScale === value
-                  ? "bg-[rgba(49,76,122,0.12)] text-[var(--navy)]"
-                  : "text-[var(--ink-soft)]"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
 
       <div className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(18rem,0.85fr)]">
         <div className="space-y-4">
@@ -1241,6 +1220,7 @@ export function SeminarCallPanel({
                 <RadioTower className="size-3.5" />
                 {text.deviceControlBar}
               </div>
+              {renderViewModeControl()}
               {renderDeviceControl("audio")}
               {renderDeviceControl("video")}
               <div className="hidden rounded-full bg-white/6 px-4 py-2 text-xs font-semibold text-white/72 sm:block">
