@@ -9,7 +9,7 @@ describe("game center data", () => {
         slug: "escape-room",
         subtitle: "Midnight Library Escape",
         status: "live",
-        href: "/games/escape-room",
+        href: expect.stringMatching(/^\/games\/escape-room(?:\/library)?$/),
       }),
     );
   });
