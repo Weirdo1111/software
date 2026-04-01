@@ -53,7 +53,7 @@ export function GameResultScreen({
       failureReason === "attempts"
         ? (failAttemptsBody ?? "You exceeded the allowed number of wrong keypad attempts. Reset the run and regroup your library clues.")
         : (failTimerBody ?? "You ran out of time before clearing the library. Restart the stage and try a cleaner route."),
-    back: "Back to Game Center",
+    back: "Back to stages",
     retry: "Retry Run",
     cleared: "Stage Result",
     failed: "Run Failed",
@@ -146,7 +146,7 @@ export function GameResultScreen({
                 </button>
 
                 <Link
-                  href={`/games?lang=${locale}`}
+                  href={`/games/escape-room?lang=${locale}`}
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-[#ddd7ca] bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >
                   {copy.back}
