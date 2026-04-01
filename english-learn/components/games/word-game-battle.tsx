@@ -51,13 +51,15 @@ const shuffle = <T,>(list: T[]) => {
   return copy;
 };
 
+const toReadableWord = (word: string) => (word ? `${word.charAt(0).toUpperCase()}${word.slice(1).toLowerCase()}` : word);
+
 const maskWord = (word: string) => {
+  const readable = toReadableWord(word);
   const idx = Math.min(2, Math.max(1, word.length - 2));
-  return word
+  return readable
     .split("")
     .map((ch, i) => (i === idx ? "_" : ch))
-    .join("")
-    .toUpperCase();
+    .join("");
 };
 
 const buildQuestions = (): BattleQuestion[] =>
@@ -251,9 +253,9 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
                 <div className="enemy-body" /><div className="enemy-face"><div className="enemy-eye left" /><div className="enemy-eye right" /><div className="enemy-mouth" /></div>
                 <div className="question-banner">
                   <div id="enemyType">{question.type === "spell" ? t.spellMode : t.meaningMode}</div>
-                  <div id="enemyWord">{question.type === "spell" ? question.maskedWord : question.entry.word.toUpperCase()}</div>
+                  <div id="enemyWord">{question.type === "spell" ? question.maskedWord : toReadableWord(question.entry.word)}</div>
                   <div id="enemyHint">{question.type === "spell" ? t.spellHint : t.meaningHint}</div>
-                  <div id="enemyOptions">{question.type === "meaning" ? question.options.map((option, i) => <span className="enemy-option" key={`${option.word}-${i}`}>{i + 1}. {locale === "zh" ? option.meaningZh : option.meaningEn}</span>) : null}</div>
+                  <div id="enemyOptions">{question.type === "meaning" ? question.options.map((option, i) => <span className="enemy-option" key={`${option.word}-${i}`}>{i + 1}. {option.meaningZh}</span>) : null}</div>
                 </div>
               </div>
             ) : null}
