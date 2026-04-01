@@ -405,6 +405,13 @@ export function GlobalBuddyCompanion() {
             {activeBubbleText}
           </span>
         ) : null}
+        {isPlainBubble ? (
+          <>
+            <span className="global-buddy-star global-buddy-star-one">✦</span>
+            <span className="global-buddy-star global-buddy-star-two">✦</span>
+            <span className="global-buddy-star global-buddy-star-three">✦</span>
+          </>
+        ) : null}
         <button
           type="button"
           className={`global-buddy-sound-toggle${soundEnabled ? " global-buddy-sound-toggle-on" : ""}`}
