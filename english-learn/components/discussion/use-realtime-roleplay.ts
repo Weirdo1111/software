@@ -332,10 +332,7 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
         setDialogVariant(payload.dialogVariant ?? "");
         setResourceId(payload.resourceId ?? "");
         setLogId(payload.logId ?? "");
-        pushLog(
-          `Connected to ${payload.botName}. Voice speaker: ${payload.speaker}.${payload.dialogVariant ? ` Variant: ${payload.dialogVariant}.` : ""}${payload.resourceId ? ` Resource: ${payload.resourceId}.` : ""}`,
-          "success",
-        );
+        pushLog(`Connected to ${payload.botName}.`, "success");
         return;
       }
 
