@@ -120,6 +120,8 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
         const payload = (await response.json()) as {
           authenticated?: boolean;
           user?: { username?: string; email?: string } | null;
+          auth_provider?: string;
+          auth_user_id?: string;
         };
 
         if (!payload.authenticated || cancelled) return;
@@ -129,6 +131,12 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
           "demo_user",
           payload.user?.username || payload.user?.email || "Learner",
         );
+        if (payload.auth_user_id) {
+          localStorage.setItem("demo_auth_user_id", payload.auth_user_id);
+        }
+        if (payload.auth_provider) {
+          localStorage.setItem("demo_auth_provider", payload.auth_provider);
+        }
         window.dispatchEvent(new Event("demo-auth-changed"));
       } catch {
         // Ignore silent session sync failures on the nav shell.
@@ -153,6 +161,8 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
 
     localStorage.removeItem("demo_logged_in");
     localStorage.removeItem("demo_user");
+    localStorage.removeItem("demo_auth_provider");
+    localStorage.removeItem("demo_auth_user_id");
     window.dispatchEvent(new Event("demo-auth-changed"));
     window.location.href = "/";
   };

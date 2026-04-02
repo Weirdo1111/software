@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import type { User as PrismaUser } from "@prisma/client";
 
 import { AUTH_SESSION_COOKIE, getUserFromSessionToken } from "@/lib/auth-session";
-import { isDatabaseAuthConfigured } from "@/lib/local-auth";
+import { findLocalUserByAuthIdentity, isDatabaseAuthConfigured } from "@/lib/local-auth";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -91,6 +91,10 @@ async function buildUniqueUsername(base: string, authUserId: string) {
 async function getIdentityFromCookies() {
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get(AUTH_SESSION_COOKIE)?.value;
+  const authProvider = cookieStore.get(AUTH_PROVIDER_COOKIE)?.value;
+  const authUserId = cookieStore.get(AUTH_USER_ID_COOKIE)?.value;
+  const usernameCookie = cookieStore.get(AUTH_USERNAME_COOKIE)?.value;
+  const emailCookie = cookieStore.get(AUTH_EMAIL_COOKIE)?.value;
 
   if (sessionToken && isDatabaseAuthConfigured()) {
     const sessionUser = await getUserFromSessionToken(sessionToken);
@@ -99,15 +103,25 @@ async function getIdentityFromCookies() {
     }
   }
 
-  const authProvider = cookieStore.get(AUTH_PROVIDER_COOKIE)?.value;
-  const authUserId = cookieStore.get(AUTH_USER_ID_COOKIE)?.value;
-
   if (authProvider && authUserId) {
-    if (!isDatabaseAuthConfigured()) {
-      return null;
+    const existingLocal = await findLocalUserByAuthIdentity(authProvider, authUserId);
+    if (existingLocal) {
+      return buildIdentityFromUser(existingLocal);
     }
 
-    const existing = await prisma.user.findUnique({
+    if (!isDatabaseAuthConfigured()) {
+      return {
+        authProvider,
+        authUserId,
+        username:
+          normalizeUsername(usernameCookie || "") ||
+          `user-${authUserId.replace(/[^a-zA-Z0-9]/g, "").slice(0, 8).toLowerCase()}`,
+        email: emailCookie || undefined,
+        displayName: buildDisplayName(usernameCookie, emailCookie || undefined),
+      } satisfies CurrentAuthIdentity;
+    }
+
+    const existingDb = await prisma.user.findUnique({
       where: {
         authProvider_authUserId: {
           authProvider,
@@ -116,12 +130,9 @@ async function getIdentityFromCookies() {
       },
     });
 
-    if (existing) {
-      return buildIdentityFromUser(existing);
+    if (existingDb) {
+      return buildIdentityFromUser(existingDb);
     }
-
-    const usernameCookie = cookieStore.get(AUTH_USERNAME_COOKIE)?.value;
-    const emailCookie = cookieStore.get(AUTH_EMAIL_COOKIE)?.value;
 
     return {
       authProvider,
@@ -133,9 +144,6 @@ async function getIdentityFromCookies() {
       displayName: buildDisplayName(usernameCookie, emailCookie || undefined),
     } satisfies CurrentAuthIdentity;
   }
-
-  const emailCookie = cookieStore.get(AUTH_EMAIL_COOKIE)?.value;
-  const usernameCookie = cookieStore.get(AUTH_USERNAME_COOKIE)?.value;
 
   if (emailCookie || usernameCookie) {
     if (!isDatabaseAuthConfigured()) {
@@ -209,13 +217,13 @@ async function getIdentityFromSupabase(): Promise<CurrentAuthIdentity | null> {
 }
 
 export async function getCurrentAuthIdentity(): Promise<CurrentAuthIdentity | null> {
-  if (!isDatabaseAuthConfigured()) {
-    return null;
-  }
-
   const cookieIdentity = await getIdentityFromCookies();
   if (cookieIdentity) {
     return cookieIdentity;
+  }
+
+  if (!isDatabaseAuthConfigured()) {
+    return null;
   }
 
   return getIdentityFromSupabase();

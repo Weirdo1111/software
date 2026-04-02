@@ -1,17 +1,21 @@
 import { NextResponse } from "next/server";
 
-import { getCurrentUser } from "@/lib/current-user";
-import { toPublicUser } from "@/lib/local-auth";
+import { getCurrentAuthIdentity } from "@/lib/current-user";
 
 export async function GET() {
-  const user = await getCurrentUser();
+  const identity = await getCurrentAuthIdentity();
 
-  if (!user) {
+  if (!identity) {
     return NextResponse.json({ authenticated: false, user: null });
   }
 
   return NextResponse.json({
     authenticated: true,
-    user: toPublicUser(user),
+    user: {
+      username: identity.username,
+      email: identity.email ?? null,
+    },
+    auth_provider: identity.authProvider,
+    auth_user_id: identity.authUserId,
   });
 }
