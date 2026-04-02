@@ -709,9 +709,6 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     return (
       <section className="mt-6 grid gap-5 reveal-up">
         <article className="sky-panel rounded-[2.5rem] px-6 py-7 sm:px-8 sm:py-9">
-          <span className="party-floater left-6 top-6 h-11 w-11">
-            <Sparkles className="size-5" />
-          </span>
           <span className="party-floater right-8 top-12 h-12 w-12">
             <Trophy className="size-5" />
           </span>
@@ -731,7 +728,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                 </span>
               </div>
 
-              <h2 className="font-display game-title mt-5 max-w-3xl text-4xl tracking-tight text-[var(--ink)] sm:text-5xl">
+              <h2 className="font-display game-title mt-3 max-w-3xl text-4xl tracking-tight text-[var(--ink)] sm:text-5xl">
                 {locale === "zh"
                   ? "为 DIICSU 新生打造的英语冒险校园。"
                   : "A DIICSU English adventure campus built for first-year students."}
@@ -844,9 +841,6 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   return (
     <section className="mt-6 grid gap-5 reveal-up">
       <article className="sky-panel rounded-[2.5rem] px-6 py-7 sm:px-8 sm:py-8">
-        <span className="party-floater left-6 top-7 h-11 w-11">
-          <Sparkles className="size-5" />
-        </span>
         <span className="party-floater right-10 top-14 h-12 w-12">
           <Trophy className="size-5" />
         </span>
@@ -873,10 +867,10 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
               <LanguageSwitcher locale={locale} />
             </div>
 
-            <p className="mt-5 text-sm font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
+            <p className="mt-3 text-sm font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
               {locale === "zh" ? "欢迎回来" : "Welcome back"} · {getStageLabel(levelPrefix, locale)} · {levelPrefix}
             </p>
-            <h2 className="font-display game-title mt-3 max-w-3xl text-4xl tracking-tight text-[var(--ink)] sm:text-5xl">
+            <h2 className="font-display game-title mt-2 max-w-3xl text-4xl tracking-tight text-[var(--ink)] sm:text-5xl">
               {locale === "zh"
                 ? `你好，${displayName}。今天让你的 Buddy 再进化一点。`
                 : `Hi, ${displayName}. Let's help your buddy evolve a little more today.`}
