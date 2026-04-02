@@ -7,6 +7,7 @@ import type { RecoveryWord } from "@/lib/games/word-game-recovery";
 import type { Locale } from "@/lib/i18n/dictionaries";
 
 type EnemyType = "spell" | "meaning";
+type RecoverySource = "critical" | "victory";
 
 type WordEntry = RecoveryWord;
 
@@ -76,6 +77,19 @@ const buildQuestions = (): BattleQuestion[] =>
       };
     });
 
+const buildRecoveryExamples = (entry: WordEntry) => {
+  const rows = entry.examples
+    .map((example) => ({ en: (example.en || "").trim(), zh: (example.zh || "").trim() }))
+    .filter((example) => example.en.length > 0 || example.zh.length > 0)
+    .map((example) => ({
+      en: example.en || `The term "${entry.word}" appears in many academic contexts.`,
+      zh: example.zh || `"${entry.word}" 在学术语境中较常见。`,
+    }));
+
+  if (rows.length > 0) return rows;
+  return [{ en: `The term "${entry.word}" appears in many academic contexts.`, zh: `"${entry.word}" 在学术语境中较常见。` }];
+};
+
 export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string }) {
   const router = useRouter();
   const questions = useMemo(() => buildQuestions(), []);
@@ -89,10 +103,18 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
   const [feedbackTone, setFeedbackTone] = useState<"ok" | "bad" | "warn">("warn");
   const [showPause, setShowPause] = useState(false);
   const [showCritical, setShowCritical] = useState(false);
+  const [showRecovery, setShowRecovery] = useState(false);
   const [isResolving, setIsResolving] = useState(false);
   const [wrongWords, setWrongWords] = useState<WordEntry[]>([]);
+  const [recoverySource, setRecoverySource] = useState<RecoverySource>("critical");
+  const [recoveryQueue, setRecoveryQueue] = useState<WordEntry[]>([]);
+  const [recoveryIndex, setRecoveryIndex] = useState(0);
+  const [recoveryDone, setRecoveryDone] = useState(false);
 
   const question = questions[Math.min(completedWaves, TOTAL_WAVES - 1)];
+  const recoveryWord = recoveryQueue[Math.min(recoveryIndex, Math.max(recoveryQueue.length - 1, 0))];
+  const recoveryExamples = useMemo(() => (recoveryWord ? buildRecoveryExamples(recoveryWord) : []), [recoveryWord]);
+  const recoveryMeaning = useMemo(() => (recoveryWord ? recoveryWord.meaningZh.trim() || recoveryWord.meaningEn.trim() : ""), [recoveryWord]);
 
   const t = useMemo(
     () =>
@@ -125,31 +147,41 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
     setWrongWords((prev) => (prev.some((item) => item.word === entry.word) ? prev : [...prev, entry].slice(-8)));
   }, []);
 
-  const openRecoveryPage = useCallback(
-    (source: "critical" | "victory") => {
+  const buildRecoveryQueue = useCallback(
+    (source: RecoverySource) => {
       const sourceQueue = source === "critical" ? [...wrongWords, ...questions.map((q) => q.entry)] : [...wrongWords, ...questions.map((q) => q.entry).slice(0, 2)];
       const queue = sourceQueue
         .filter((entry, index, arr) => arr.findIndex((item) => item.word === entry.word) === index)
         .slice(0, 3);
 
-      const safeQueue = queue.length > 0 ? queue : questions.slice(0, 3).map((q) => q.entry);
-      const encodedQueue = encodeURIComponent(JSON.stringify(safeQueue));
-      router.push(`/games/word-game/recovery?lang=${locale}&bank=${bank}&source=${source}&queue=${encodedQueue}`);
+      return queue.length > 0 ? queue : questions.slice(0, 3).map((q) => q.entry);
     },
-    [bank, locale, questions, router, wrongWords],
+    [questions, wrongWords],
+  );
+
+  const openRecoveryModal = useCallback(
+    (source: RecoverySource) => {
+      const queue = buildRecoveryQueue(source);
+      setRecoverySource(source);
+      setRecoveryQueue(queue);
+      setRecoveryIndex(0);
+      setRecoveryDone(false);
+      setShowRecovery(true);
+    },
+    [buildRecoveryQueue],
   );
 
   const advanceWave = useCallback(() => {
     setCompletedWaves((prev) => {
       const next = Math.min(prev + 1, TOTAL_WAVES);
       if (next >= TOTAL_WAVES && prev < TOTAL_WAVES) {
-        window.setTimeout(() => openRecoveryPage("victory"), 520);
+        window.setTimeout(() => openRecoveryModal("victory"), 520);
       }
       return next;
     });
     setEnemyProgress(0);
     setAnswer("");
-  }, [openRecoveryPage]);
+  }, [openRecoveryModal]);
 
   const applyDamage = useCallback(
     (msg: string, advanceAfter: boolean) => {
@@ -167,7 +199,7 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
     [advanceWave],
   );
 
-  const battleActive = !showPause && !showCritical && !isResolving && hp > 0 && completedWaves < TOTAL_WAVES;
+  const battleActive = !showPause && !showCritical && !showRecovery && !isResolving && hp > 0 && completedWaves < TOTAL_WAVES;
 
   useEffect(() => {
     if (!battleActive) return;
@@ -219,11 +251,41 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
     applyDamage(t.bad, false);
   }, [advanceWave, answer, applyDamage, completedWaves, enemyProgress, question, rememberWrong, t.bad, t.empty, t.ok]);
 
-  const openRecovery = useCallback(() => {
+  const startRecovery = useCallback(() => {
     setShowCritical(false);
     setHp((prev) => Math.max(prev, RECOVER_HP));
-    openRecoveryPage("critical");
-  }, [openRecoveryPage]);
+    openRecoveryModal("critical");
+  }, [openRecoveryModal]);
+
+  const nextRecoveryWord = useCallback(() => {
+    setRecoveryIndex((prev) => {
+      const next = prev + 1;
+      if (next >= recoveryQueue.length) {
+        setRecoveryDone(true);
+        return prev;
+      }
+      return next;
+    });
+  }, [recoveryQueue.length]);
+
+  const closeRecoveryModal = useCallback(() => {
+    setShowRecovery(false);
+    if (recoverySource === "victory") {
+      router.push(`/games/word-game?lang=${locale}`);
+      return;
+    }
+    setFeedbackTone("warn");
+    setFeedback(t.reviewDone);
+    setEnemyProgress(0);
+  }, [locale, recoverySource, router, t.reviewDone]);
+
+  const speak = useCallback((text: string, lang: string) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  }, []);
 
   const enemyLeft = Math.max(24, 74 - enemyProgress * 0.5);
 
@@ -277,11 +339,75 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
         </section>
       </main>
       <div id="critical" style={{ display: showCritical ? "flex" : "none" }}>
-        <section className="overlay-card"><div className="eyebrow">Emergency Warning</div><h2>SYSTEM CRITICAL</h2><p>Core breached. Emergency data recovery is required before combat can continue.</p><button id="goRecovery" type="button" onClick={openRecovery}>Start Recovery</button></section>
+        <section className="overlay-card"><div className="eyebrow">Emergency Warning</div><h2>SYSTEM CRITICAL</h2><p>Core breached. Emergency data recovery is required before combat can continue.</p><button id="goRecovery" type="button" onClick={startRecovery}>Start Recovery</button></section>
       </div>
 
       <div id="pauseOverlay" style={{ display: showPause ? "flex" : "none" }}>
         <section className="overlay-card"><div className="eyebrow">Battle Paused</div><h2>{t.pauseTitle}</h2><p>{t.pauseDesc}</p><div className="pause-actions"><button id="resumeBattle" type="button" onClick={() => setShowPause(false)}>{t.resume}</button><button id="leaveBattle" type="button" onClick={() => router.push(`/games/word-game?lang=${locale}`)}>{t.home}</button></div></section>
+      </div>
+
+      <div id="recoveryOverlay" style={{ display: showRecovery ? "flex" : "none" }}>
+        <section className={`review-modal ${recoveryDone ? "is-done" : ""}`}>
+          <div className="review-top">
+            <div>{t.reviewTitle}</div>
+            <div>{`${Math.min(recoveryIndex + 1, Math.max(recoveryQueue.length, 1))}/${Math.max(recoveryQueue.length, 1)}`}</div>
+          </div>
+          <h2 id="mWord">{recoveryDone ? (locale === "zh" ? "复习完成" : "Recovery Complete") : recoveryWord?.word ?? "ability"}</h2>
+
+          {!recoveryDone ? (
+            <div id="mReviewBody">
+              <div className="m-pron-row">
+                <div className="m-pron">
+                  <button className="m-speak" type="button" onClick={() => speak(recoveryWord?.word ?? "ability", "en-GB")} aria-label="Play UK pronunciation">
+                    {"\u25B6"}
+                  </button>
+                  <span>{recoveryWord?.uk ?? "UK /ability/"}</span>
+                </div>
+                <div className="m-pron">
+                  <button className="m-speak" type="button" onClick={() => speak(recoveryWord?.word ?? "ability", "en-US")} aria-label="Play US pronunciation">
+                    {"\u25B6"}
+                  </button>
+                  <span>{recoveryWord?.us ?? "US /ability/"}</span>
+                </div>
+              </div>
+              <section className="m-section">
+                <h3>{t.meaning}</h3>
+                <div id="mMeaning">{recoveryMeaning || "能力；本领"}</div>
+              </section>
+              <section className="m-section">
+                <h3>{t.examples}</h3>
+                <div id="mExamples">
+                  {recoveryExamples.map((row, index) => (
+                    <div className="m-ex" key={`${row.en}-${row.zh}-${index}`}>
+                      <p className="m-ex-en">{row.en}</p>
+                      <p className="m-ex-zh">{row.zh}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </div>
+          ) : null}
+
+          {!recoveryDone ? (
+            <>
+              <div className="m-actions">
+                <button id="mNext" type="button" onClick={nextRecoveryWord}>
+                  {recoveryIndex >= recoveryQueue.length - 1 ? (locale === "zh" ? "完成恢复" : "Complete Recovery") : t.next}
+                </button>
+              </div>
+              <div id="mFeedback">{t.reviewHint}</div>
+            </>
+          ) : (
+            <div id="mDone">
+              <p>{t.reviewDone}</p>
+              <div className="m-actions">
+                <button id="mReturn" type="button" onClick={closeRecoveryModal}>
+                  {recoverySource === "victory" ? t.home : t.back}
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
       </div>
 
       <style jsx global>{`
@@ -297,7 +423,12 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
         .lane-progress{position:absolute;left:28%;right:16%;bottom:3%;z-index:2}.progress-track{height:18px;border-radius:999px;overflow:hidden;background:rgba(27,22,53,.44)}#enemyProg{height:100%;background:linear-gradient(90deg,#ffd573,#ff8b56,#e94c54);transition:width .1s linear}
         .answer-board{height:100%;border-radius:28px;padding:16px 18px 18px;background:linear-gradient(180deg,#f0d9ad 0%,#d7b98d 58%,#b07d53 100%);border:4px solid #6e472f}.answer-content{height:100%;display:grid;grid-template-rows:auto 1fr auto;gap:12px}.answer-head{display:flex;justify-content:space-between;align-items:center;color:#55341f;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.answer-input-row{display:grid;grid-template-columns:1fr 126px;gap:12px;align-items:center}#answer{height:56px;border-radius:14px;border:3px solid rgba(97,61,35,.46);background:linear-gradient(180deg,#fffef9,#f3efe6);color:#2c2017;font-size:1.08rem;font-weight:700;padding:0 18px;outline:none}#submit{height:56px;border-radius:14px;border:3px solid #6f2d1e;background:linear-gradient(180deg,#d97d54,#a84e30);color:#fffef8;font-size:1rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}#submit:disabled,#answer:disabled{opacity:.6;cursor:not-allowed}.feedback{min-height:24px;font-size:.95rem;font-weight:800;display:flex;align-items:center;color:#61452d}.feedback.ok{color:#2d7a28}.feedback.bad{color:#9a2923}.feedback.warn{color:#8f5c14}
         #critical,#pauseOverlay,#recoveryOverlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(8px);z-index:20}#critical{background:rgba(34,12,19,.72)}#pauseOverlay{background:rgba(20,18,36,.58);z-index:19}#recoveryOverlay{background:rgba(18,24,34,.58);z-index:21}.overlay-card{width:min(520px,calc(100vw - 32px));padding:28px 26px 24px;border-radius:28px;background:linear-gradient(180deg,#f3dec0 0%,#d2ae84 100%);border:4px solid #6c4128;box-shadow:inset 0 3px 0 rgba(255,251,232,.6),0 18px 0 rgba(85,54,34,.28);color:#33231a;text-align:center}.overlay-card .eyebrow{font-size:.88rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#9a3b36}.overlay-card h2{margin:12px 0 10px;font-size:2.2rem;line-height:1}.overlay-card p{margin:0 0 20px;color:rgba(51,35,26,.78);line-height:1.6}.pause-actions,.m-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:10px}#goRecovery,#resumeBattle,#mNext,#mReturn,#leaveBattle{height:52px;min-width:190px;border-radius:14px;font:inherit;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}#goRecovery,#resumeBattle,#mNext,#mReturn{border:3px solid #6f2d1e;background:linear-gradient(180deg,#d97d54,#a84e30);color:#fffef8;box-shadow:inset 0 2px 0 rgba(255,255,255,.18),inset 0 -5px 0 rgba(109,41,25,.36),0 6px 0 rgba(109,41,25,.38)}#leaveBattle{border:3px solid #251945;background:linear-gradient(180deg,rgba(61,45,112,.94),rgba(47,33,88,.98));color:#fff1d3}
-        .review-modal{width:min(920px,calc(100vw - 30px));max-height:calc(100vh - 40px);overflow:auto;border-radius:26px;padding:22px;background:#f9f4e8;border:2px solid #e2d7c1;color:#3b2f26}.review-modal.is-done .review-top,.review-modal.is-done #mReviewBody{display:none}.review-top{display:flex;align-items:center;justify-content:space-between;color:#8f9276;font-size:1.02rem}#mWord{margin:8px 0 12px;text-align:center;font-size:clamp(3rem,8vw,5rem);font-weight:900;color:#9aaf2e}#mReviewBody{display:grid;gap:14px}.m-pron-row{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}.m-pron{display:inline-flex;align-items:center;gap:8px;font-size:.88rem;color:#6f695f;background:rgba(255,255,255,.5);border-radius:14px;padding:4px 10px 4px 6px}.m-speak{width:24px;height:24px;border:none;border-radius:50%;background:#9aaf2e;color:#fffef8;cursor:pointer}.m-section h3{margin:0 0 8px;color:#4a4037;font-size:1.2rem;font-weight:900}#mMeaning,#mExamples{border-radius:14px;background:#fff;border:1px solid rgba(140,131,119,.2);padding:14px 16px}#mExamples{display:grid;gap:12px}.m-ex{padding-bottom:10px;border-bottom:1px dashed rgba(150,140,126,.4)}.m-ex:last-child{border-bottom:none;padding-bottom:0}.m-ex-en{margin:0;color:#2f2721}.m-ex-zh{margin:4px 0 0;color:#7a736b}#mFeedback{min-height:22px;text-align:center;color:#7d7468;font-size:.92rem;font-weight:700}
+        .review-modal{width:min(920px,calc(100vw - 30px));max-height:calc(100vh - 40px);overflow:auto;border-radius:26px;padding:22px;background:#f9f4e8;border:2px solid #e2d7c1;color:#3b2f26}.review-modal.is-done .review-top,.review-modal.is-done #mReviewBody{display:none}.review-top{display:flex;align-items:center;justify-content:space-between;color:#8f9276;font-size:1.02rem;letter-spacing:.06em}#mWord{margin:8px 0 12px;text-align:center;font-size:clamp(3rem,8vw,5rem);font-weight:900;color:#9aaf2e;text-transform:lowercase}#mReviewBody{display:grid;gap:14px}.m-pron-row{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}.m-pron{display:inline-flex;align-items:center;gap:8px;font-size:.88rem;color:#6f695f;background:rgba(255,255,255,.5);border:1px solid rgba(140,131,119,.18);border-radius:14px;padding:4px 10px 4px 6px}.m-speak{width:24px;height:24px;border:none;border-radius:50%;background:#9aaf2e;color:#fffef8;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}.m-section h3{margin:0 0 8px;color:#4a4037;font-size:1.55rem;font-weight:900}#mMeaning,#mExamples{border-radius:14px;background:#fff;border:1px solid rgba(140,131,119,.2);padding:14px 16px}#mMeaning{font-size:1.15rem;line-height:1.6}#mExamples{display:grid;gap:12px}.m-ex{padding-bottom:10px;border-bottom:1px dashed rgba(150,140,126,.4)}.m-ex:last-child{border-bottom:none;padding-bottom:0}.m-ex-en{margin:0;font-size:1.2rem;line-height:1.55;color:#2f2721}.m-ex-zh{margin:4px 0 0;font-size:1.1rem;line-height:1.55;color:#7a736b}#mFeedback{min-height:22px;text-align:center;color:#7d7468;font-size:.92rem;font-weight:700}#mDone{text-align:center}#mDone p{margin:0 0 14px;color:#726758;line-height:1.6}
+        .review-modal.is-done{width:min(700px,calc(100vw - 40px));max-height:none;padding:24px 26px 20px}
+        .review-modal.is-done #mWord{font-size:clamp(2.1rem,5.4vw,3.4rem);margin:6px 0 10px}
+        .review-modal.is-done #mDone p{font-size:1.05rem;line-height:1.5;margin:0 0 12px}
+        .review-modal.is-done .m-actions{margin-top:6px}
+        .review-modal.is-done #mReturn{height:48px;min-width:220px;font-size:0.92rem}
         @media (max-width:1180px){.scene{width:calc(100vw - 24px);min-height:calc(100vh - 24px);grid-template-rows:auto minmax(420px,1fr) 210px}.top-hud{grid-template-columns:repeat(2,minmax(0,1fr));padding-right:0}.system-controls{position:static;grid-column:1 / -1;width:100%}}
         @media (max-width:860px){.scene{width:calc(100vw - 16px);margin:8px auto;padding:10px;grid-template-rows:auto 560px 224px}.top-hud{grid-template-columns:1fr;gap:8px}.system-controls{position:static;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%}.battle-lane{left:3%;right:3%;top:8%}.tower-block{left:-2%;bottom:20%;transform:scale(.72);transform-origin:bottom left}.question-banner{left:34px;width:240px}.answer-input-row{grid-template-columns:1fr}}
       `}</style>
