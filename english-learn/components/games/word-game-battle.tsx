@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { awardBuddyXpInStorage } from "@/lib/buddy-xp";
+import { getWordGamePool } from "@/lib/games/word-game-lexicon";
 import type { RecoveryWord } from "@/lib/games/word-game-recovery";
 import type { Locale } from "@/lib/i18n/dictionaries";
 
@@ -34,17 +35,6 @@ const BANK_LABELS: Record<string, string> = {
   transport: "Transportation Engineering",
 };
 
-const WORD_POOL: WordEntry[] = [
-  { word: "algorithm", meaningEn: "A step-by-step method.", meaningZh: "步骤化求解方法。", examples: [{ en: "This algorithm is fast.", zh: "这个算法很快。" }], uk: "UK /ˈælɡərɪðəm/", us: "US /ˈælɡərɪðəm/" },
-  { word: "dataset", meaningEn: "A structured data collection.", meaningZh: "结构化数据集合。", examples: [{ en: "The dataset is clean.", zh: "这个数据集很干净。" }], uk: "UK /ˈdeɪtəset/", us: "US /ˈdeɪtəset/" },
-  { word: "protocol", meaningEn: "A formal communication rule.", meaningZh: "正式通信规则。", examples: [{ en: "HTTPS is a protocol.", zh: "HTTPS 是一种协议。" }], uk: "UK /ˈprəʊtəkɒl/", us: "US /ˈproʊtəkɔːl/" },
-  { word: "optimize", meaningEn: "Make as effective as possible.", meaningZh: "使其尽可能高效。", examples: [{ en: "Optimize this query.", zh: "优化这个查询。" }], uk: "UK /ˈɒptɪmaɪz/", us: "US /ˈɑːptəmaɪz/" },
-  { word: "resilient", meaningEn: "Able to recover quickly.", meaningZh: "能快速恢复。", examples: [{ en: "A resilient design helps.", zh: "有韧性的设计很有帮助。" }], uk: "UK /rɪˈzɪliənt/", us: "US /rɪˈzɪliənt/" },
-  { word: "simulate", meaningEn: "Imitate system behavior.", meaningZh: "模拟系统行为。", examples: [{ en: "Simulate user traffic.", zh: "模拟用户流量。" }], uk: "UK /ˈsɪmjʊleɪt/", us: "US /ˈsɪmjəleɪt/" },
-  { word: "robust", meaningEn: "Strong and reliable.", meaningZh: "强健且可靠。", examples: [{ en: "Need a robust service.", zh: "需要稳健的服务。" }], uk: "UK /rəʊˈbʌst/", us: "US /roʊˈbʌst/" },
-  { word: "inference", meaningEn: "A conclusion from evidence.", meaningZh: "依据证据得出的推断。", examples: [{ en: "The inference is correct.", zh: "这个推断是正确的。" }], uk: "UK /ˈɪnfərəns/", us: "US /ˈɪnfərəns/" },
-];
-
 const shuffle = <T,>(list: T[]) => {
   const copy = [...list];
   for (let i = copy.length - 1; i > 0; i -= 1) {
@@ -65,11 +55,17 @@ const maskWord = (word: string) => {
     .join("");
 };
 
-const buildQuestions = (): BattleQuestion[] =>
-  shuffle(WORD_POOL)
+const buildOptionSet = (entry: WordEntry, pool: WordEntry[]) => {
+  const distractors = shuffle(pool.filter((word) => word.word !== entry.word)).slice(0, 2);
+  const options = shuffle([entry, ...distractors]);
+  return options.length >= 3 ? options : [entry, ...shuffle(pool).slice(0, 2)];
+};
+
+const buildQuestions = (pool: WordEntry[]): BattleQuestion[] =>
+  shuffle(pool)
     .slice(0, TOTAL_WAVES)
     .map((entry, index) => {
-      const options = shuffle([entry, ...shuffle(WORD_POOL.filter((w) => w.word !== entry.word)).slice(0, 2)]);
+      const options = buildOptionSet(entry, pool);
       return {
         type: index % 2 === 0 ? "spell" : "meaning",
         entry,
@@ -79,11 +75,11 @@ const buildQuestions = (): BattleQuestion[] =>
       };
     });
 
-const buildQuestionForWave = (waveIndex: number, excludeWord?: string): BattleQuestion => {
-  const entryPool = WORD_POOL.filter((entry) => entry.word !== excludeWord);
-  const selectedPool = entryPool.length > 0 ? entryPool : WORD_POOL;
-  const entry = shuffle(selectedPool)[0] ?? WORD_POOL[0];
-  const options = shuffle([entry, ...shuffle(WORD_POOL.filter((word) => word.word !== entry.word)).slice(0, 2)]);
+const buildQuestionForWave = (pool: WordEntry[], waveIndex: number, excludeWord?: string): BattleQuestion => {
+  const entryPool = pool.filter((entry) => entry.word !== excludeWord);
+  const selectedPool = entryPool.length > 0 ? entryPool : pool;
+  const entry = shuffle(selectedPool)[0] ?? pool[0];
+  const options = buildOptionSet(entry, pool);
 
   return {
     type: waveIndex % 2 === 0 ? "spell" : "meaning",
@@ -109,7 +105,12 @@ const buildRecoveryExamples = (entry: WordEntry) => {
 
 export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string }) {
   const router = useRouter();
-  const questions = useMemo(() => buildQuestions(), []);
+  const wordPool = useMemo(() => {
+    const selected = getWordGamePool(bank);
+    if (selected.length >= 3) return selected;
+    return getWordGamePool("general");
+  }, [bank]);
+  const questions = useMemo(() => buildQuestions(wordPool), [wordPool]);
   const initialIdle = locale === "zh" ? "按 Enter 提交答案。" : "Press Enter to submit.";
   const [answer, setAnswer] = useState("");
   const [hp, setHp] = useState(MAX_HP);
@@ -128,7 +129,7 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
   const [recoveryIndex, setRecoveryIndex] = useState(0);
   const [recoveryDone, setRecoveryDone] = useState(false);
   const victoryXpAwardedRef = useRef(false);
-  const [question, setQuestion] = useState<BattleQuestion>(() => buildQuestionForWave(0));
+  const [question, setQuestion] = useState<BattleQuestion>(() => buildQuestionForWave(wordPool, 0));
 
   const recoveryWord = recoveryQueue[Math.min(recoveryIndex, Math.max(recoveryQueue.length - 1, 0))];
   const recoveryExamples = useMemo(() => (recoveryWord ? buildRecoveryExamples(recoveryWord) : []), [recoveryWord]);
@@ -190,7 +191,7 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
       );
 
       if (queue.length < requiredCount) {
-        for (const candidate of shuffle(WORD_POOL)) {
+        for (const candidate of shuffle(wordPool)) {
           if (queue.some((entry) => entry.word === candidate.word)) continue;
           queue.push(candidate);
           if (queue.length >= requiredCount) break;
@@ -199,7 +200,7 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
 
       return queue.slice(0, requiredCount);
     },
-    [questions, wrongWords],
+    [questions, wordPool, wrongWords],
   );
 
   const openRecoveryModal = useCallback(
@@ -220,17 +221,17 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
     if (nextWave >= TOTAL_WAVES) {
       window.setTimeout(() => openRecoveryModal("victory"), 520);
     } else {
-      setQuestion(buildQuestionForWave(nextWave));
+      setQuestion(buildQuestionForWave(wordPool, nextWave));
     }
     setEnemyProgress(0);
     setAnswer("");
-  }, [completedWaves, openRecoveryModal]);
+  }, [completedWaves, openRecoveryModal, wordPool]);
 
   const refreshQuestionInCurrentWave = useCallback(
     (excludeWord?: string) => {
-      setQuestion(buildQuestionForWave(completedWaves, excludeWord));
+      setQuestion(buildQuestionForWave(wordPool, completedWaves, excludeWord));
     },
-    [completedWaves],
+    [completedWaves, wordPool],
   );
 
   const applyDamage = useCallback(
