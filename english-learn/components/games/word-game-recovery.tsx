@@ -19,20 +19,24 @@ const FALLBACK_QUEUE: RecoveryWord[] = [
   },
 ];
 
-function buildReviewExamples(item: RecoveryWord, meaning: string) {
-  const first = item.examples[0]?.en || `The term "${item.word}" appears in many academic contexts.`;
+function buildRecoveryExamples(item: RecoveryWord) {
+  const rows = item.examples
+    .map((example) => ({
+      en: (example.en || "").trim(),
+      zh: (example.zh || "").trim(),
+    }))
+    .filter((example) => example.en.length > 0 || example.zh.length > 0)
+    .map((example) => ({
+      en: example.en || `The term "${item.word}" appears in many academic contexts.`,
+      zh: example.zh || `"${item.word}" 在学术语境中较常见。`,
+    }));
+
+  if (rows.length > 0) return rows;
+
   return [
     {
-      en: first,
-      zh: `This sentence shows how "${item.word}" is used in context.`,
-    },
-    {
-      en: `Understanding "${item.word}" improves your precision in technical writing.`,
-      zh: `It helps express ideas more clearly when discussing ${meaning}.`,
-    },
-    {
-      en: `In assignments and projects, "${item.word}" is a high-frequency term.`,
-      zh: "Reviewing it now makes later reading and writing much easier.",
+      en: `The term "${item.word}" appears in many academic contexts.`,
+      zh: `"${item.word}" 在学术语境中较常见。`,
     },
   ];
 }
@@ -47,14 +51,13 @@ export function WordGameRecovery({ locale, bank, initialQueue, source }: { local
 
   const meaningText = useMemo(() => {
     if (!word) return "";
-    return locale === "zh" ? word.meaningZh : word.meaningEn;
-  }, [locale, word]);
+    return word.meaningZh.trim() || word.meaningEn.trim();
+  }, [word]);
 
   const exampleRows = useMemo(() => {
     if (!word) return [];
-    const referenceMeaning = locale === "zh" ? word.meaningZh : word.meaningEn;
-    return buildReviewExamples(word, referenceMeaning);
-  }, [locale, word]);
+    return buildRecoveryExamples(word);
+  }, [word]);
 
   const feedback = done ? "All corrupted units reviewed." : "Review this word and continue.";
 
@@ -118,14 +121,14 @@ export function WordGameRecovery({ locale, bank, initialQueue, source }: { local
 
                 <section className="section">
                   <h3>Meaning</h3>
-                  <div id="rZh">{`n. ${meaningText || "ability"}`}</div>
+                  <div id="rZh">{meaningText || "能力；本领"}</div>
                 </section>
 
                 <section className="section">
                   <h3>Examples</h3>
                   <div id="rExamples">
-                    {exampleRows.map((row) => (
-                      <div key={row.en} className="ex-item">
+                    {exampleRows.map((row, idx) => (
+                      <div key={`${row.en}-${row.zh}-${idx}`} className="ex-item">
                         <p className="ex-en">{row.en}</p>
                         <p className="ex-zh">{row.zh}</p>
                       </div>
