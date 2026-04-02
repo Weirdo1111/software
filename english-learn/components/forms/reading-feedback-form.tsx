@@ -19,6 +19,22 @@ import type { ReadingFeedback } from "@/types/learning";
 const MAX_VOCAB = 2;
 type ReadingLevel = "A1" | "A2" | "B1" | "B2";
 
+function normalizeReadingTips(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => String(item).trim())
+      .filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    return value
+      .split(/[,，]/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
 
 export function ReadingFeedbackForm({
   defaultLevel = "B1",
@@ -163,10 +179,15 @@ export function ReadingFeedbackForm({
         throw new Error(data.error || "Failed to generate reading feedback.");
       }
 
-      setResult(data);
+      const normalizedResult: ReadingFeedback = {
+        ...data,
+        tips: normalizeReadingTips(data.tips),
+      };
+
+      setResult(normalizedResult);
 
       const durationSec = Math.max(45, Math.round((Date.now() - startedAt) / 1000));
-      const passed = (data.comprehension_score as number) >= 6;
+      const passed = (normalizedResult.comprehension_score as number) >= 6;
       recordSkillAttemptInStorage("reading", {
         correct: passed,
         durationSec,
@@ -183,7 +204,7 @@ export function ReadingFeedbackForm({
             evidence,
             contrast_signal: contrastSignal,
             vocabulary: selectedVocab,
-            comprehension_score: data.comprehension_score,
+            comprehension_score: normalizedResult.comprehension_score,
             answer: passed,
             correct_answer: true,
           },
@@ -389,7 +410,7 @@ export function ReadingFeedbackForm({
 
           <div className="grid gap-2">
             <p className="text-sm font-semibold text-[var(--ink)]">Coach tips</p>
-            {result.tips.map((tip) => (
+            {normalizeReadingTips(result.tips).map((tip) => (
               <div key={tip} className="rounded-[1rem] bg-white/80 px-4 py-3 text-sm leading-6 text-[var(--ink-soft)]">
                 {tip}
               </div>

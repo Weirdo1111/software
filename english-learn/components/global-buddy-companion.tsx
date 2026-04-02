@@ -1,7 +1,8 @@
 "use client";
 
-import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowRight, LoaderCircle, X } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
 import {
   BuddyCompanion,
@@ -30,6 +31,11 @@ import {
   subscribeLearningTracker,
 } from "@/lib/learning-tracker";
 import { isBuddySoundEnabled, playBuddySound, setBuddySoundEnabled, unlockBuddySound } from "@/lib/buddy-sound";
+import {
+  getBuddyCurrentPageGuide,
+  getBuddyDefaultQuestions,
+  type BuddyGuideAction,
+} from "@/lib/buddy-site-guide";
 import { loadSchedulePreferencesFromStorage, subscribeSchedulePreferences } from "@/lib/schedule";
 
 type UiLocale = "zh" | "en";
@@ -38,6 +44,20 @@ type BuddyReactionBubble = {
   text: string;
   plain?: boolean;
 } | null;
+
+type BuddyAssistantResponse = {
+  mode: "faq" | "guide" | "ai";
+  answer: string;
+  actions: BuddyGuideAction[];
+  quickReplies: string[];
+  confidence: number;
+};
+
+function getStoredLevelPrefix() {
+  if (typeof window === "undefined") return "A2";
+  const next = String(window.localStorage.getItem("demo_level") ?? "A2").toUpperCase();
+  return ["A1", "A2", "B1", "B2", "C1", "C2"].includes(next) ? next : "A2";
+}
 
 function getBuddyStage(xp: number): BuddyStage {
   if (xp >= 780) return "scholar";
@@ -133,6 +153,7 @@ function resolveLocale(queryLang: string | null, storedLocale: string | null): U
 
 export function GlobalBuddyCompanion() {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [snapshot, setSnapshot] = useState(() => createEmptyLearningTrackerSnapshot());
   const [xpSummary, setXpSummary] = useState(() => createEmptyBuddyXpSummary());
@@ -145,6 +166,13 @@ export function GlobalBuddyCompanion() {
   const [reaction, setReaction] = useState<BuddyReaction>("idle");
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [outfit, setOutfit] = useState<BuddyOutfit>(DEFAULT_BUDDY_OUTFIT);
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const [assistantQuery, setAssistantQuery] = useState("");
+  const [assistantLoading, setAssistantLoading] = useState(false);
+  const [assistantError, setAssistantError] = useState("");
+  const [assistantResponse, setAssistantResponse] = useState<BuddyAssistantResponse | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [levelPrefix, setLevelPrefix] = useState("A2");
   const greetingTimerRef = useRef<number | null>(null);
   const reactionTimerRef = useRef<number | null>(null);
   const faceTimerRef = useRef<number | null>(null);
@@ -161,6 +189,14 @@ export function GlobalBuddyCompanion() {
   const locale = resolveLocale(searchParams.get("lang"), storedLocale);
   const greetingKey = getPageGreetingKey(pathname);
   const greetingPool = PAGE_GREETINGS[greetingKey]?.[locale] ?? PAGE_GREETINGS.default[locale];
+  const currentPageGuide = useMemo(
+    () => getBuddyCurrentPageGuide(locale, pathname, levelPrefix),
+    [levelPrefix, locale, pathname],
+  );
+  const defaultQuestions = useMemo(
+    () => getBuddyDefaultQuestions(locale, pathname).slice(0, 4),
+    [locale, pathname],
+  );
 
   useEffect(() => {
     const refresh = () => {
@@ -170,6 +206,8 @@ export function GlobalBuddyCompanion() {
       setOutfit(loadBuddyOutfitFromStorage());
       setStoredLocale(resolveLocale(null, window.localStorage.getItem("english-learn:locale")));
       setSoundEnabled(isBuddySoundEnabled());
+      setIsLoggedIn(window.localStorage.getItem("demo_logged_in") === "true");
+      setLevelPrefix(getStoredLevelPrefix());
     };
 
     refresh();
@@ -182,9 +220,13 @@ export function GlobalBuddyCompanion() {
     const unsubOutfit = subscribeBuddyOutfit(refresh);
     const onStorage = () => {
       setStoredLocale(resolveLocale(null, window.localStorage.getItem("english-learn:locale")));
+      setIsLoggedIn(window.localStorage.getItem("demo_logged_in") === "true");
+      setLevelPrefix(getStoredLevelPrefix());
     };
 
     window.addEventListener("storage", onStorage);
+    window.addEventListener("demo-auth-changed", refresh as EventListener);
+    window.addEventListener("demo-placement-changed", refresh as EventListener);
 
     return () => {
       unsubTracker();
@@ -192,6 +234,8 @@ export function GlobalBuddyCompanion() {
       unsubPrefs();
       unsubOutfit();
       window.removeEventListener("storage", onStorage);
+      window.removeEventListener("demo-auth-changed", refresh as EventListener);
+      window.removeEventListener("demo-placement-changed", refresh as EventListener);
     };
   }, []);
 
@@ -280,10 +324,92 @@ export function GlobalBuddyCompanion() {
   const variant = getBuddyVariant(focus);
   const activeBubbleText = reactionBubble?.text ?? greeting;
   const isPlainBubble = Boolean(reactionBubble?.plain);
+  const displayedAssistantAnswer = assistantResponse?.answer ?? currentPageGuide.answer;
+  const displayedAssistantActions =
+    assistantResponse?.actions?.length ? assistantResponse.actions : currentPageGuide.actions;
+  const displayedQuickReplies =
+    assistantResponse?.quickReplies?.length ? assistantResponse.quickReplies : defaultQuestions;
 
   const playSoundIfEnabled = (kind: Parameters<typeof playBuddySound>[0]) => {
     if (!soundEnabled) return;
     void playBuddySound(kind);
+  };
+
+  const navigateFromAssistant = (action: BuddyGuideAction) => {
+    const targetHref =
+      action.requiresLogin && !isLoggedIn
+        ? `/auth/sign-in?lang=${locale}`
+        : action.href;
+
+    router.push(targetHref);
+    setAssistantOpen(false);
+    setAssistantError("");
+    setAssistantQuery("");
+    setAssistantResponse(null);
+    triggerReaction("wave", locale === "zh" ? "带你去" : "Let's go", "open", 760);
+    playSoundIfEnabled("wave");
+  };
+
+  const askBuddyAssistant = async (nextQuery: string) => {
+    const trimmedQuery = nextQuery.trim();
+
+    if (!trimmedQuery) {
+      setAssistantResponse(null);
+      setAssistantError("");
+      return;
+    }
+
+    setAssistantLoading(true);
+    setAssistantError("");
+
+    try {
+      const response = await fetch("/api/buddy/assistant", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: trimmedQuery,
+          locale,
+          pathname,
+          levelPrefix,
+        }),
+      });
+
+      const payload = (await response.json().catch(() => ({}))) as Partial<BuddyAssistantResponse> & {
+        error?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Failed to get buddy guidance.");
+      }
+
+      const normalizedActions = Array.isArray(payload.actions) ? payload.actions : [];
+      const normalizedQuickReplies = Array.isArray(payload.quickReplies) ? payload.quickReplies : [];
+
+      setAssistantResponse({
+        mode: payload.mode === "faq" || payload.mode === "guide" || payload.mode === "ai" ? payload.mode : "guide",
+        answer: String(payload.answer ?? "").trim() || currentPageGuide.answer,
+        actions: normalizedActions,
+        quickReplies: normalizedQuickReplies,
+        confidence:
+          typeof payload.confidence === "number" && Number.isFinite(payload.confidence)
+            ? payload.confidence
+            : 0.5,
+      });
+      triggerReaction("blink", locale === "zh" ? "收到" : "Got it", "blink", 620);
+      playSoundIfEnabled("click");
+    } catch (error) {
+      setAssistantError(
+        error instanceof Error
+          ? error.message
+          : locale === "zh"
+            ? "导航回答获取失败，请重试。"
+            : "Failed to get navigation help. Please retry.",
+      );
+    } finally {
+      setAssistantLoading(false);
+    }
   };
 
   const triggerReaction = (
@@ -323,6 +449,9 @@ export function GlobalBuddyCompanion() {
   useEffect(() => {
     if (pageWelcomeRef.current === pathname) return;
     pageWelcomeRef.current = pathname;
+    setAssistantResponse(null);
+    setAssistantError("");
+    setAssistantQuery("");
     setFace("happy");
     triggerReaction("wave", locale === "zh" ? "\u8bf4\u51fa\u6765" : "Speak up!", "blink", 900);
     playSoundIfEnabled("wave");
@@ -349,6 +478,18 @@ export function GlobalBuddyCompanion() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    if (!assistantOpen) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setAssistantOpen(false);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [assistantOpen]);
 
   useEffect(() => {
     const onSubmit = () => {
@@ -394,7 +535,101 @@ export function GlobalBuddyCompanion() {
   if (pathname === "/" || pathname.startsWith("/games/word-game")) return null;
 
   return (
-    <div className="global-buddy-shell" aria-hidden="true">
+    <div className="global-buddy-shell">
+      <section
+        className={`global-buddy-assistant-panel${assistantOpen ? " global-buddy-assistant-panel-open" : ""}`}
+        aria-hidden={!assistantOpen}
+      >
+        <div className="global-buddy-assistant-header">
+          <div>
+            <p className="global-buddy-assistant-eyebrow">
+              {locale === "zh" ? "Buddy 导航" : "Buddy Guide"}
+            </p>
+            <h2 className="global-buddy-assistant-title">
+              {locale === "zh" ? "问我网站怎么用" : "Ask how the site works"}
+            </h2>
+          </div>
+          <button
+            type="button"
+            className="global-buddy-assistant-close"
+            onClick={() => setAssistantOpen(false)}
+            aria-label={locale === "zh" ? "关闭助手面板" : "Close buddy guide"}
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <p className="global-buddy-assistant-answer" lang={locale === "zh" ? "zh-CN" : "en"}>
+          {displayedAssistantAnswer}
+        </p>
+
+        <div className="global-buddy-assistant-actions">
+          {displayedAssistantActions.map((action) => (
+            <button
+              key={`${action.id}:${action.href}`}
+              type="button"
+              className="global-buddy-assistant-action"
+              onClick={() => navigateFromAssistant(action)}
+            >
+              <span>{action.label}</span>
+              <ArrowRight className="size-4" />
+            </button>
+          ))}
+        </div>
+
+        <div className="global-buddy-assistant-quick-list">
+          {displayedQuickReplies.map((reply) => (
+            <button
+              key={reply}
+              type="button"
+              className="global-buddy-assistant-chip"
+              onClick={() => {
+                setAssistantQuery(reply);
+                void askBuddyAssistant(reply);
+              }}
+            >
+              {reply}
+            </button>
+          ))}
+        </div>
+
+        <form
+          className="global-buddy-assistant-form"
+          onSubmit={(event: FormEvent<HTMLFormElement>) => {
+            event.preventDefault();
+            void askBuddyAssistant(assistantQuery);
+          }}
+        >
+          <input
+            type="text"
+            value={assistantQuery}
+            onChange={(event) => setAssistantQuery(event.target.value)}
+            autoComplete="off"
+            aria-label={locale === "zh" ? "桌宠导航提问输入框" : "Buddy guide question input"}
+            placeholder={
+              locale === "zh"
+                ? "比如：阅读批改在哪里"
+                : "For example: where is reading feedback"
+            }
+            className="global-buddy-assistant-input"
+          />
+          <button
+            type="submit"
+            className="global-buddy-assistant-submit"
+            disabled={assistantLoading}
+          >
+            {assistantLoading ? <LoaderCircle className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
+            {locale === "zh" ? "发送" : "Ask"}
+          </button>
+        </form>
+
+        {assistantError ? (
+          <p className="global-buddy-assistant-error" lang={locale === "zh" ? "zh-CN" : "en"}>
+            {assistantError}
+          </p>
+        ) : null}
+      </section>
+
       <div className={`global-buddy-card${reaction !== "idle" ? ` global-buddy-card-${reaction}` : ""}`}>
         <span className="global-buddy-shadow" />
         {activeBubbleText ? (
@@ -431,6 +666,8 @@ export function GlobalBuddyCompanion() {
           type="button"
           className="global-buddy-button"
           onClick={() => {
+            setAssistantOpen(true);
+            setAssistantError("");
             void unlockBuddySound();
             const nextCount = clickCount + 1;
             setClickCount(nextCount);
@@ -466,7 +703,7 @@ export function GlobalBuddyCompanion() {
             triggerReaction(nextReaction.reaction, nextReaction.emoji, nextFace);
             playSoundIfEnabled(nextReaction.reaction === "bounce" ? "bounce" : "click");
           }}
-          aria-label={locale === "zh" ? "\u70b9\u51fb\u684c\u5ba0" : "Click buddy"}
+          aria-label={locale === "zh" ? "点击桌宠打开导航助手" : "Click buddy to open the guide"}
         >
           <span className="global-buddy-figure">
             <BuddyCompanion
