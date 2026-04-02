@@ -146,7 +146,7 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
             pauseTitle: "战斗已暂停", pauseDesc: "战场已冻结，准备好后继续，或返回主页。", resume: "继续", home: "返回主页",
             criticalTitle: "SYSTEM CRITICAL", criticalDesc: "核心受损，需要紧急词汇恢复后再继续战斗。", recovery: "开始恢复",
             reviewTitle: "WORD REVIEW", meaning: "词义", examples: "例句", next: "下一词", back: "返回防守", reviewHint: "复习该词后继续。", reviewDone: "复习完成，核心护盾已恢复。",
-            victoryWord: "VICTORY", victoryHint: "全部波次已完成，防守成功！",
+            victoryWord: "VICTORY", victoryHint: "全部波次已完成，防守成功！", victoryReviewTitle: "VICTORY REVIEW", victoryDoneTitle: "胜利达成", victoryDoneDesc: "你已完成全部波次，知识核心稳定。", victoryScore: "最终分数", victoryWaves: "通关波次", victoryPlayAgain: "再来一局",
           }
         : {
             discipline: "Discipline", hp: "HP", score: "Score", wave: "Wave", pause: "Pause", exit: "Exit",
@@ -157,7 +157,7 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
             pauseTitle: "Battle Paused", pauseDesc: "The battlefield is frozen. Resume when ready, or return home.", resume: "Resume", home: "Return Home",
             criticalTitle: "SYSTEM CRITICAL", criticalDesc: "Core breached. Emergency review is required.", recovery: "Start Recovery",
             reviewTitle: "WORD REVIEW", meaning: "Meaning", examples: "Examples", next: "Next Word", back: "Return to Defense", reviewHint: "Review this word and continue.", reviewDone: "Review complete. Core shield restored.",
-            victoryWord: "VICTORY", victoryHint: "All waves cleared. Defense successful!",
+            victoryWord: "VICTORY", victoryHint: "All waves cleared. Defense successful!", victoryReviewTitle: "VICTORY REVIEW", victoryDoneTitle: "Victory Complete", victoryDoneDesc: "All waves cleared. The Knowledge Core is fully secured.", victoryScore: "Final Score", victoryWaves: "Waves Cleared", victoryPlayAgain: "Play Again",
           },
     [locale],
   );
@@ -323,17 +323,20 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
     });
   }, [recoveryQueue.length]);
 
+  const awardVictoryXpOnce = useCallback(async () => {
+    if (victoryXpAwardedRef.current) return;
+    victoryXpAwardedRef.current = true;
+    try {
+      await awardBuddyXpInStorage("wordGameClear");
+    } catch {
+      victoryXpAwardedRef.current = false;
+    }
+  }, []);
+
   const closeRecoveryModal = useCallback(async () => {
     setShowRecovery(false);
     if (recoverySource === "victory") {
-      if (!victoryXpAwardedRef.current) {
-        victoryXpAwardedRef.current = true;
-        try {
-          await awardBuddyXpInStorage("wordGameClear");
-        } catch {
-          victoryXpAwardedRef.current = false;
-        }
-      }
+      await awardVictoryXpOnce();
       router.push(`/games/word-game?lang=${locale}`);
       return;
     }
@@ -342,7 +345,13 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
     setFeedbackTone("warn");
     setFeedback(t.reviewDone);
     setEnemyProgress(0);
-  }, [locale, recoverySource, router, t.reviewDone]);
+  }, [awardVictoryXpOnce, locale, recoverySource, router, t.reviewDone]);
+
+  const playVictoryAgain = useCallback(async () => {
+    setShowRecovery(false);
+    await awardVictoryXpOnce();
+    router.push(`/games/word-game/battle?lang=${locale}&bank=${bank}`);
+  }, [awardVictoryXpOnce, bank, locale, router]);
 
   const speak = useCallback((text: string, lang: string) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
@@ -353,6 +362,8 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
   }, []);
 
   const enemyLeft = Math.max(24, 74 - enemyProgress * 0.5);
+  const isVictoryFlow = recoverySource === "victory";
+  const isVictoryDone = isVictoryFlow && recoveryDone;
 
   return (
     <div className="word-battle-root" data-page="battle">
@@ -412,12 +423,12 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
       </div>
 
       <div id="recoveryOverlay" style={{ display: showRecovery ? "flex" : "none" }}>
-        <section className={`review-modal ${recoveryDone ? "is-done" : ""}`}>
+        <section className={`review-modal ${recoveryDone ? "is-done" : ""} ${isVictoryDone ? "is-victory-done" : ""}`}>
           <div className="review-top">
-            <div>{t.reviewTitle}</div>
+            <div>{isVictoryFlow ? t.victoryReviewTitle : t.reviewTitle}</div>
             <div>{`${Math.min(recoveryIndex + 1, Math.max(recoveryQueue.length, 1))}/${Math.max(recoveryQueue.length, 1)}`}</div>
           </div>
-          <h2 id="mWord">{recoveryDone ? (locale === "zh" ? "复习完成" : "Recovery Complete") : recoveryWord?.word ?? "ability"}</h2>
+          <h2 id="mWord">{recoveryDone ? (isVictoryFlow ? t.victoryDoneTitle : locale === "zh" ? "复习完成" : "Recovery Complete") : recoveryWord?.word ?? "ability"}</h2>
 
           {!recoveryDone ? (
             <div id="mReviewBody">
@@ -464,12 +475,26 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
             </>
           ) : (
             <div id="mDone">
-              <p>{t.reviewDone}</p>
-              <div className="m-actions">
-                <button id="mReturn" type="button" onClick={closeRecoveryModal}>
-                  {recoverySource === "victory" ? t.home : t.back}
-                </button>
-              </div>
+              {isVictoryDone ? (
+                <>
+                  <p className="victory-done-desc">{t.victoryDoneDesc}</p>
+                  <div className="victory-stats">
+                    <div className="victory-stat"><span>{t.victoryScore}</span><strong>{score}</strong></div>
+                    <div className="victory-stat"><span>{t.victoryWaves}</span><strong>{TOTAL_WAVES}</strong></div>
+                  </div>
+                  <div className="m-actions">
+                    <button id="mReturn" type="button" onClick={closeRecoveryModal}>{t.home}</button>
+                    <button id="mReplay" type="button" onClick={playVictoryAgain}>{t.victoryPlayAgain}</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p>{t.reviewDone}</p>
+                  <div className="m-actions">
+                    <button id="mReturn" type="button" onClick={closeRecoveryModal}>{t.back}</button>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </section>
@@ -494,8 +519,17 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
         .review-modal.is-done #mDone p{font-size:1.05rem;line-height:1.5;margin:0 0 12px}
         .review-modal.is-done .m-actions{margin-top:6px}
         .review-modal.is-done #mReturn{height:48px;min-width:220px;font-size:0.92rem}
+        #mReplay{height:48px;min-width:220px;border-radius:14px;border:3px solid #251945;background:linear-gradient(180deg,rgba(61,45,112,.94),rgba(47,33,88,.98));color:#fff1d3;font:inherit;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+        .review-modal.is-victory-done{width:min(760px,calc(100vw - 36px));padding:22px 24px 20px}
+        .review-modal.is-victory-done .review-top{display:none}
+        .review-modal.is-victory-done #mWord{text-transform:uppercase;color:#4a3a2d;font-size:clamp(2.2rem,5.2vw,3.3rem);margin:4px 0 10px}
+        .review-modal.is-victory-done .victory-done-desc{font-size:1.05rem;line-height:1.5;color:#6b635a;max-width:560px;margin:0 auto 14px}
+        .review-modal.is-victory-done .victory-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-width:520px;margin:0 auto 10px}
+        .review-modal.is-victory-done .victory-stat{border-radius:14px;border:1px solid rgba(140,131,119,.28);background:rgba(255,255,255,.62);padding:12px 14px}
+        .review-modal.is-victory-done .victory-stat span{display:block;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:#8d867b;margin-bottom:4px}
+        .review-modal.is-victory-done .victory-stat strong{font-size:1.35rem;color:#42362c}
         @media (max-width:1180px){.scene{width:calc(100vw - 24px);min-height:calc(100vh - 24px);grid-template-rows:auto minmax(420px,1fr) 210px}.top-hud{grid-template-columns:repeat(2,minmax(0,1fr));padding-right:0}.system-controls{position:static;grid-column:1 / -1;width:100%}}
-        @media (max-width:860px){.scene{width:calc(100vw - 16px);margin:8px auto;padding:10px;grid-template-rows:auto 560px 224px}.top-hud{grid-template-columns:1fr;gap:8px}.system-controls{position:static;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%}.battle-lane{left:3%;right:3%;top:8%}.tower-block{left:-2%;bottom:20%;transform:scale(.72);transform-origin:bottom left}.question-banner{left:34px;width:240px}.answer-input-row{grid-template-columns:1fr}}
+        @media (max-width:860px){.scene{width:calc(100vw - 16px);margin:8px auto;padding:10px;grid-template-rows:auto 560px 224px}.top-hud{grid-template-columns:1fr;gap:8px}.system-controls{position:static;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%}.battle-lane{left:3%;right:3%;top:8%}.tower-block{left:-2%;bottom:20%;transform:scale(.72);transform-origin:bottom left}.question-banner{left:34px;width:240px}.answer-input-row{grid-template-columns:1fr}.review-modal.is-victory-done .victory-stats{grid-template-columns:1fr}.review-modal.is-victory-done .m-actions{flex-direction:column}.review-modal.is-victory-done #mReturn,.review-modal.is-victory-done #mReplay{width:100%}}
       `}</style>
     </div>
   );
