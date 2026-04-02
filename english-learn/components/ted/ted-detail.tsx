@@ -7,6 +7,7 @@ import {
   ExternalLink,
   FileText,
   LoaderCircle,
+  Mic,
   PlayCircle,
   Sparkles,
 } from "lucide-react";
@@ -14,6 +15,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { AIAnalysisState } from "@/components/forms/ai-analysis-state";
+import { useShadowingPractice } from "@/components/forms/listening/use-shadowing-practice";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { SaveToDeckButton } from "@/components/forms/save-to-deck-button";
 import {
@@ -218,6 +220,18 @@ function isYouTubeHosted(material: ListeningMaterial) {
   });
 }
 
+function getPreferredSpeechLocales(accent: ListeningMaterial["accent"]) {
+  if (accent === "british") {
+    return { primary: "en-GB", fallback: "en-US" };
+  }
+
+  if (accent === "indian") {
+    return { primary: "en-IN", fallback: "en-US" };
+  }
+
+  return { primary: "en-US", fallback: "en-GB" };
+}
+
 export function TedDetail({
   material,
   defaultLevel = "B1",
@@ -243,7 +257,16 @@ export function TedDetail({
   const [forceAudioMode, setForceAudioMode] = useState(false);
   const [playerIssue, setPlayerIssue] = useState<string | null>(null);
   const [showTranscript, setShowTranscript] = useState(false);
+  const [activeVoiceField, setActiveVoiceField] = useState<string | null>(null);
   const recordedRef = useRef(false);
+  const {
+    isSupported: isVoiceInputSupported,
+    status: voiceInputStatus,
+    error: voiceInputError,
+    startListening,
+    stopListening,
+    resetListening,
+  } = useShadowingPractice();
   const canPreviewInline = hasStableInlinePreview(material);
   const hasAudioTrack = typeof material.audioSrc === "string" && material.audioSrc.length > 0;
   const hasInAppAudio = hasAudioTrack && (forceAudioMode || !canPreviewInline);
@@ -282,6 +305,22 @@ export function TedDetail({
   const shouldShowIframe = !!material.embedUrl && (preferIframe || !material.videoSrc);
   const shouldShowVideo = !!material.videoSrc && !preferIframe;
   const isYouTubeOnly = isYouTubeHosted(material) && !material.videoSrc;
+  const isZh = locale === "zh" || locale.startsWith("zh");
+  const voiceInputCopy = isZh
+    ? {
+        input: "语音输入",
+        stop: "停止录音",
+        recording: "正在语音输入…",
+        unsupported: "当前浏览器不支持语音输入，建议使用 Chrome 或 Edge。",
+        errorPrefix: "语音输入异常：",
+      }
+    : {
+        input: "Voice input",
+        stop: "Stop recording",
+        recording: "Recording to text...",
+        unsupported: "Voice input is not available in this browser. Try Chrome or Edge.",
+        errorPrefix: "Voice input error: ",
+      };
 
   useEffect(() => {
     if (recordedRef.current) return;
@@ -294,14 +333,72 @@ export function TedDetail({
     setForceAudioMode(false);
     setPlayerIssue(null);
     setShowTranscript(false);
-  }, [material.materialGroupId]);
+    setActiveVoiceField(null);
+    resetListening();
+  }, [material.materialGroupId, resetListening]);
+
+  useEffect(() => {
+    if (voiceInputStatus !== "listening" && activeVoiceField !== null) {
+      setActiveVoiceField(null);
+    }
+  }, [activeVoiceField, voiceInputStatus]);
 
   function handleAnswerChange(questionId: string, value: string) {
     setAnswers((current) => ({ ...current, [questionId]: value }));
   }
 
+  function startVoiceInputForField(
+    fieldId: string,
+    initialText: string,
+    onTranscriptChange: (transcript: string) => void,
+  ) {
+    const { primary, fallback } = getPreferredSpeechLocales(material.accent);
+
+    if (voiceInputStatus === "listening") {
+      resetListening();
+    }
+
+    setActiveVoiceField(fieldId);
+    startListening(primary, {
+      initialText,
+      continuous: true,
+      fallbackLocale: fallback,
+      stopOnSilence: false,
+      onTranscriptChange,
+    });
+  }
+
+  function toggleVoiceInputForNotes() {
+    const fieldId = "notes";
+
+    if (voiceInputStatus === "listening" && activeVoiceField === fieldId) {
+      stopListening();
+      return;
+    }
+
+    startVoiceInputForField(fieldId, notes, setNotes);
+  }
+
+  function toggleVoiceInputForQuestion(questionId: string) {
+    const fieldId = `question:${questionId}`;
+
+    if (voiceInputStatus === "listening" && activeVoiceField === fieldId) {
+      stopListening();
+      return;
+    }
+
+    startVoiceInputForField(fieldId, answers[questionId] ?? "", (transcript) => {
+      handleAnswerChange(questionId, transcript);
+    });
+  }
+
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (voiceInputStatus === "listening") {
+      stopListening();
+    }
+
     setIsScoring(true);
     setSubmitStatus("");
 
@@ -790,6 +887,36 @@ export function TedDetail({
 
           <label className="mt-5 grid gap-2 text-sm font-medium text-[var(--ink)]">
             Listening notes
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={toggleVoiceInputForNotes}
+                disabled={!isVoiceInputSupported}
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-45",
+                  voiceInputStatus === "listening" && activeVoiceField === "notes"
+                    ? "border border-[#e25d4b] bg-[#c74435] text-white"
+                    : "border border-[rgba(20,50,75,0.14)] bg-white text-[var(--ink)]",
+                )}
+              >
+                <Mic
+                  className={cn(
+                    "size-3.5",
+                    voiceInputStatus === "listening" && activeVoiceField === "notes"
+                      ? "animate-pulse text-white"
+                      : "text-[var(--ink-soft)]",
+                  )}
+                />
+                {voiceInputStatus === "listening" && activeVoiceField === "notes"
+                  ? voiceInputCopy.stop
+                  : voiceInputCopy.input}
+              </button>
+              {voiceInputStatus === "listening" && activeVoiceField === "notes" ? (
+                <span className="text-xs font-semibold text-[var(--ink-soft)]">
+                  {voiceInputCopy.recording}
+                </span>
+              ) : null}
+            </div>
             <textarea
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
@@ -839,30 +966,73 @@ export function TedDetail({
           </div>
 
           <form onSubmit={onSubmit} className="mt-5 grid gap-4">
-            {material.questions.map((question, index) => (
-              <label
-                key={question.id}
-                className="rounded-[1.2rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] p-4"
-              >
-                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
-                  Q{index + 1}
-                </span>
-                <span className="mt-3 block text-sm font-semibold leading-6 text-[var(--ink)]">
-                  {question.prompt}
-                </span>
-                <textarea
-                  value={answers[question.id] ?? ""}
-                  onChange={(event) => handleAnswerChange(question.id, event.target.value)}
-                  rows={3}
-                  placeholder={question.placeholder}
-                  className="mt-3 w-full rounded-[1rem] border border-[rgba(20,50,75,0.14)] bg-white px-4 py-3 text-sm leading-7 outline-none"
-                />
-              </label>
-            ))}
+            {material.questions.map((question, index) => {
+              const voiceFieldId = `question:${question.id}`;
+              const isRecordingThisField =
+                voiceInputStatus === "listening" && activeVoiceField === voiceFieldId;
+
+              return (
+                <label
+                  key={question.id}
+                  className="rounded-[1.2rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(247,250,252,0.88)] p-4"
+                >
+                  <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
+                    Q{index + 1}
+                  </span>
+                  <span className="mt-3 block text-sm font-semibold leading-6 text-[var(--ink)]">
+                    {question.prompt}
+                  </span>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => toggleVoiceInputForQuestion(question.id)}
+                      disabled={!isVoiceInputSupported}
+                      className={cn(
+                        "inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-45",
+                        isRecordingThisField
+                          ? "border border-[#e25d4b] bg-[#c74435] text-white"
+                          : "border border-[rgba(20,50,75,0.14)] bg-white text-[var(--ink)]",
+                      )}
+                    >
+                      <Mic
+                        className={cn(
+                          "size-3.5",
+                          isRecordingThisField ? "animate-pulse text-white" : "text-[var(--ink-soft)]",
+                        )}
+                      />
+                      {isRecordingThisField ? voiceInputCopy.stop : voiceInputCopy.input}
+                    </button>
+                    {isRecordingThisField ? (
+                      <span className="text-xs font-semibold text-[var(--ink-soft)]">
+                        {voiceInputCopy.recording}
+                      </span>
+                    ) : null}
+                  </div>
+                  <textarea
+                    value={answers[question.id] ?? ""}
+                    onChange={(event) => handleAnswerChange(question.id, event.target.value)}
+                    rows={3}
+                    placeholder={question.placeholder}
+                    className="mt-3 w-full rounded-[1rem] border border-[rgba(20,50,75,0.14)] bg-white px-4 py-3 text-sm leading-7 outline-none"
+                  />
+                </label>
+              );
+            })}
 
             {submitStatus ? (
               <p className="rounded-[1rem] border border-[#e0b48a] bg-[#fff4eb] px-4 py-3 text-sm text-[#7a4517]">
                 {submitStatus}
+              </p>
+            ) : null}
+            {!isVoiceInputSupported ? (
+              <p className="rounded-[1rem] border border-[#dbe4ef] bg-[#f6f9fd] px-4 py-3 text-sm text-[var(--ink-soft)]">
+                {voiceInputCopy.unsupported}
+              </p>
+            ) : null}
+            {voiceInputError ? (
+              <p className="rounded-[1rem] border border-[#e0b48a] bg-[#fff4eb] px-4 py-3 text-sm text-[#7a4517]">
+                {voiceInputCopy.errorPrefix}
+                {voiceInputError}
               </p>
             ) : null}
 
