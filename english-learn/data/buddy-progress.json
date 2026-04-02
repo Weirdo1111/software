@@ -6,19 +6,20 @@
       "username": "admin",
       "email": "admin@example.com",
       "counts": {
-        "listeningCompletions": 63,
+        "listeningCompletions": 64,
         "speakingCompletions": 1,
         "readingCompletions": 0,
         "writingCompletions": 1,
         "reviewSessions": 0,
+        "wordGameClears": 1,
         "escapeRoomClears": 0,
         "dormLockoutClears": 0,
         "lastTrainClears": 0
       },
-      "totalXp": 985,
-      "totalCompletedSources": 65,
+      "totalXp": 1025,
+      "totalCompletedSources": 67,
       "createdAt": "2026-03-31T09:40:48.145Z",
-      "updatedAt": "2026-04-02T05:48:51.845Z"
+      "updatedAt": "2026-04-02T06:40:28.078Z"
     },
     {
       "authProvider": "local-file",
@@ -31,6 +32,7 @@
         "readingCompletions": 0,
         "writingCompletions": 0,
         "reviewSessions": 0,
+        "wordGameClears": 0,
         "escapeRoomClears": 0,
         "dormLockoutClears": 0,
         "lastTrainClears": 0
@@ -51,6 +53,7 @@
         "readingCompletions": 0,
         "writingCompletions": 0,
         "reviewSessions": 0,
+        "wordGameClears": 0,
         "escapeRoomClears": 0,
         "dormLockoutClears": 0,
         "lastTrainClears": 0
@@ -71,6 +74,7 @@
         "readingCompletions": 0,
         "writingCompletions": 0,
         "reviewSessions": 0,
+        "wordGameClears": 0,
         "escapeRoomClears": 0,
         "dormLockoutClears": 0,
         "lastTrainClears": 0
@@ -91,6 +95,7 @@
         "readingCompletions": 0,
         "writingCompletions": 0,
         "reviewSessions": 0,
+        "wordGameClears": 0,
         "escapeRoomClears": 0,
         "dormLockoutClears": 0,
         "lastTrainClears": 0
@@ -111,6 +116,7 @@
         "readingCompletions": 0,
         "writingCompletions": 0,
         "reviewSessions": 0,
+        "wordGameClears": 0,
         "escapeRoomClears": 0,
         "dormLockoutClears": 0,
         "lastTrainClears": 0
@@ -131,6 +137,7 @@
         "readingCompletions": 0,
         "writingCompletions": 0,
         "reviewSessions": 0,
+        "wordGameClears": 0,
         "escapeRoomClears": 0,
         "dormLockoutClears": 0,
         "lastTrainClears": 0
@@ -151,6 +158,7 @@
         "readingCompletions": 0,
         "writingCompletions": 0,
         "reviewSessions": 0,
+        "wordGameClears": 0,
         "escapeRoomClears": 0,
         "dormLockoutClears": 0,
         "lastTrainClears": 0
@@ -171,6 +179,7 @@
         "readingCompletions": 0,
         "writingCompletions": 0,
         "reviewSessions": 0,
+        "wordGameClears": 0,
         "escapeRoomClears": 0,
         "dormLockoutClears": 0,
         "lastTrainClears": 0
