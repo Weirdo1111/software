@@ -657,15 +657,6 @@ export function WordGameLanding({ locale }: { locale: Locale }) {
             0 14px 28px rgba(29, 18, 49, 0.34), 0 0 24px rgba(120, 84, 186, 0.26);
         }
 
-        .modal-content::before {
-          content: "";
-          position: absolute;
-          inset: 14px;
-          border-radius: 16px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          pointer-events: none;
-        }
-
         .close-btn {
           position: absolute;
           top: 14px;
