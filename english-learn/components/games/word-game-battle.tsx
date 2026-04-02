@@ -1,8 +1,9 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { awardBuddyXpInStorage } from "@/lib/buddy-xp";
 import type { RecoveryWord } from "@/lib/games/word-game-recovery";
 import type { Locale } from "@/lib/i18n/dictionaries";
 
@@ -110,6 +111,7 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
   const [recoveryQueue, setRecoveryQueue] = useState<WordEntry[]>([]);
   const [recoveryIndex, setRecoveryIndex] = useState(0);
   const [recoveryDone, setRecoveryDone] = useState(false);
+  const victoryXpAwardedRef = useRef(false);
 
   const question = questions[Math.min(completedWaves, TOTAL_WAVES - 1)];
   const recoveryWord = recoveryQueue[Math.min(recoveryIndex, Math.max(recoveryQueue.length - 1, 0))];
@@ -268,9 +270,17 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
     });
   }, [recoveryQueue.length]);
 
-  const closeRecoveryModal = useCallback(() => {
+  const closeRecoveryModal = useCallback(async () => {
     setShowRecovery(false);
     if (recoverySource === "victory") {
+      if (!victoryXpAwardedRef.current) {
+        victoryXpAwardedRef.current = true;
+        try {
+          await awardBuddyXpInStorage("wordGameClear");
+        } catch {
+          victoryXpAwardedRef.current = false;
+        }
+      }
       router.push(`/games/word-game?lang=${locale}`);
       return;
     }

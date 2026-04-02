@@ -4,6 +4,7 @@ export const BUDDY_XP_RULES = {
   readingCompletion: 15,
   writingCompletion: 20,
   reviewSession: 10,
+  wordGameClear: 25,
   escapeRoomClear: 50,
   dormLockoutClear: 60,
   lastTrainClear: 70,
@@ -19,6 +20,7 @@ export type BuddyXpAwardSource =
   | "readingCompletion"
   | "writingCompletion"
   | "reviewSession"
+  | "wordGameClear"
   | "escapeRoomClear"
   | "dormLockoutClear"
   | "lastTrainClear";

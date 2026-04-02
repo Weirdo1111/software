@@ -58,6 +58,9 @@ export function getBuddyXpSourceLabel(source: BuddyXpAwardSource, locale: Locale
   if (source === "reviewSession") {
     return locale === "zh" ? "Review 完成" : "Review complete";
   }
+  if (source === "wordGameClear") {
+    return locale === "zh" ? "Word Game 通关" : "Word game clear";
+  }
   if (source === "escapeRoomClear") {
     return locale === "zh" ? "Quest Arcade 通关" : "Quest Arcade clear";
   }

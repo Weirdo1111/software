@@ -1083,6 +1083,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                 <p>{locale === "zh" ? `Reading 完成 +${BUDDY_XP_RULES.readingCompletion} XP` : `Reading completion +${BUDDY_XP_RULES.readingCompletion} XP`}</p>
                 <p>{locale === "zh" ? `Writing 完成 +${BUDDY_XP_RULES.writingCompletion} XP` : `Writing completion +${BUDDY_XP_RULES.writingCompletion} XP`}</p>
                 <p>{locale === "zh" ? `Review 完成 +${BUDDY_XP_RULES.reviewSession} XP` : `Review completion +${BUDDY_XP_RULES.reviewSession} XP`}</p>
+                <p>{locale === "zh" ? `Word Game 通关 +${BUDDY_XP_RULES.wordGameClear} XP` : `Word game clear +${BUDDY_XP_RULES.wordGameClear} XP`}</p>
                 <p>{locale === "zh" ? `Quest Arcade 通关 +${BUDDY_XP_RULES.escapeRoomClear} XP` : `Quest Arcade clear +${BUDDY_XP_RULES.escapeRoomClear} XP`}</p>
                 <p>{locale === "zh" ? `Dorm Lockout 通关 +${BUDDY_XP_RULES.dormLockoutClear} XP` : `Dorm Lockout clear +${BUDDY_XP_RULES.dormLockoutClear} XP`}</p>
                 <p>{locale === "zh" ? `Last Train Escape 通关 +${BUDDY_XP_RULES.lastTrainClear} XP` : `Last Train Escape clear +${BUDDY_XP_RULES.lastTrainClear} XP`}</p>
