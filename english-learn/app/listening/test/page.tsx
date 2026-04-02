@@ -1,9 +1,9 @@
+import { ListeningTestModule } from "@/components/listening/listening-test-module";
 import { PageFrame } from "@/components/page-frame";
-import { TedLibrary } from "@/components/ted/ted-library";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { getListeningMaterialsCatalog } from "@/lib/listening-materials-repository";
 
-export default async function ListeningPage({
+export default async function ListeningTestPage({
   searchParams,
 }: {
   searchParams: Promise<{ lang?: string }>;
@@ -14,17 +14,18 @@ export default async function ListeningPage({
   const copy =
     locale === "zh"
       ? {
-          title: "TED 听力资源库",
-          description: "按专业、口音与地区浏览 TED 听力材料，并在站内完成做题训练。",
+          title: "听力测试",
+          description: "每次测试随机抽取 2 条 TED 听力材料，回答问题后即时评分。",
         }
       : {
-          title: "TED Listening Library",
-          description: "Browse TED listening materials by major, accent, and region, and complete in-app questions.",
+          title: "Listening Test",
+          description:
+            "Each session randomly selects 2 TED listening materials and scores answers immediately.",
         };
 
   return (
     <PageFrame locale={locale} title={copy.title} description={copy.description} showHeader={false}>
-      <TedLibrary materials={materials} locale={locale} />
+      <ListeningTestModule locale={locale} materials={materials} />
     </PageFrame>
   );
 }
