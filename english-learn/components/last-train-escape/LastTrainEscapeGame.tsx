@@ -15,6 +15,7 @@ import { KeypadModal } from "@/components/escape-room/KeypadModal";
 import { RewardModal } from "@/components/escape-room/RewardModal";
 import { RoomScene } from "@/components/escape-room/RoomScene";
 import { SceneRail } from "@/components/escape-room/SceneRail";
+import { useEscapeRoomStageBootstrap, useEscapeRoomStagePersistence } from "@/components/escape-room/use-stage-progress";
 import { formatGameTime, getTimeRank } from "@/components/escape-room/time-utils";
 import { useEscapeTimer } from "@/components/escape-room/use-escape-timer";
 import type { ModalType, RoomObjectId, SceneId } from "@/components/escape-room/types";
@@ -99,12 +100,29 @@ export function LastTrainEscapeGame({ locale }: { locale: Locale }) {
   const resultRef = useRef<"success" | "failed" | null>(null);
   const warningMarksRef = useRef(new Set<number>());
   const modalRef = useRef<ModalType | null>(null);
+  const { ready: stageProgressReady, persistedBestSeconds, resumeElapsedSeconds } = useEscapeRoomStageBootstrap({
+    stage: "station",
+    setProgress: (nextProgress) => dispatch({ type: "SET_PROGRESS", progress: nextProgress }),
+    setScene,
+  });
 
   const { elapsedSeconds, bestSeconds, remainingSeconds, expired, resetTimer } = useEscapeTimer({
     started: progress.started,
     escaped: progress.reward.escaped,
     durationSeconds: LAST_TRAIN_COUNTDOWN_SECONDS,
     bestTimeKey: TRAIN_BEST_TIME_KEY,
+    initialBestSeconds: persistedBestSeconds,
+    resumeElapsedSeconds,
+  });
+
+  useEscapeRoomStagePersistence({
+    ready: stageProgressReady,
+    stage: "station",
+    scene,
+    progress,
+    bestSeconds,
+    elapsedSeconds,
+    remainingSeconds,
   });
 
   const copy = {

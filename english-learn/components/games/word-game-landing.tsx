@@ -8,6 +8,7 @@ import type { Locale } from "@/lib/i18n/dictionaries";
 export function WordGameLanding({ locale }: { locale: Locale }) {
   const router = useRouter();
   const [showRules, setShowRules] = useState(false);
+  const backLabel = locale === "zh" ? "返回游戏选择" : "Back To Games";
 
   return (
     <div className="page-root" data-page="landing">
@@ -71,6 +72,15 @@ export function WordGameLanding({ locale }: { locale: Locale }) {
 
         <div className="hero-overlay" />
         <div className="frame-line" />
+        <button
+          className="landing-return-btn"
+          type="button"
+          onClick={() => router.push(`/games?lang=${locale}`)}
+          aria-label={backLabel}
+        >
+          <span aria-hidden="true">←</span>
+          <span>{backLabel}</span>
+        </button>
 
         <section className="hero-copy">
           <h1 className="hero-title">
@@ -629,6 +639,32 @@ export function WordGameLanding({ locale }: { locale: Locale }) {
           pointer-events: none;
         }
 
+        .landing-return-btn {
+          position: absolute;
+          top: 34px;
+          left: 38px;
+          z-index: 4;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          border-radius: 999px;
+          border: 3px solid var(--purple-line);
+          background: linear-gradient(180deg, rgba(91, 65, 146, 0.98), rgba(61, 39, 103, 1));
+          color: var(--cream);
+          box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.14), inset 0 -5px 0 rgba(28, 17, 52, 0.3), 0 6px 0 rgba(36, 21, 65, 0.34);
+          font-weight: 900;
+          font-size: 0.95rem;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          padding: 10px 18px;
+          cursor: pointer;
+          transition: transform 0.2s ease;
+        }
+
+        .landing-return-btn:hover {
+          transform: translateY(-2px);
+        }
+
         #rules-modal {
           position: fixed;
           inset: 0;
@@ -786,6 +822,14 @@ export function WordGameLanding({ locale }: { locale: Locale }) {
           .hero-actions {
             flex-direction: column;
             max-width: 360px;
+          }
+
+          .landing-return-btn {
+            top: 20px;
+            left: 18px;
+            padding: 9px 14px;
+            font-size: 0.82rem;
+            letter-spacing: 0.04em;
           }
 
           .tower-block {

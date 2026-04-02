@@ -32,7 +32,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { BuddyCampusLobby } from "@/components/home/buddy-campus-lobby";
 import { BuddyCompanion, type BuddyVariant } from "@/components/home/buddy-companion";
-import { HomeLearningModules } from "@/components/home/home-learning-modules";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { BUDDY_XP_RULES } from "@/lib/buddy-xp-config";
 import { type Locale } from "@/lib/i18n/dictionaries";
@@ -1288,8 +1287,6 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
         selectedGoal={preferences.goal}
         onSelectGoal={(goal) => updatePrefs({ goal })}
       />
-
-      <HomeLearningModules locale={locale} />
 
       <div className="grid gap-5 xl:grid-cols-[1.04fr_0.96fr]">
         <article className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(246,250,255,0.92),rgba(255,241,248,0.88))] p-6">

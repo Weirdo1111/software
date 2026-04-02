@@ -4,6 +4,7 @@ export const officialGameLevels: GameLevel[] = [
   {
     id: "official-01",
     slug: "escape-room",
+    stageSlug: "library",
     title: "Stage 01",
     subtitle: "Midnight Library Escape",
     difficulty: "Campus Puzzle",
@@ -18,6 +19,7 @@ export const officialGameLevels: GameLevel[] = [
   {
     id: "official-02",
     slug: "dorm-lockout",
+    stageSlug: "dorm",
     title: "Stage 02",
     subtitle: "Dorm Lounge Lockout",
     difficulty: "Residence Puzzle",
@@ -32,6 +34,7 @@ export const officialGameLevels: GameLevel[] = [
   {
     id: "official-03",
     slug: "last-train-escape",
+    stageSlug: "station",
     title: "Stage 03",
     subtitle: "Last Train Escape",
     difficulty: "Transit Puzzle",
