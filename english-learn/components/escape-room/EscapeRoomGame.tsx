@@ -15,6 +15,7 @@ import { KeypadModal } from "@/components/escape-room/KeypadModal";
 import { RewardModal } from "@/components/escape-room/RewardModal";
 import { RoomScene } from "@/components/escape-room/RoomScene";
 import { SceneRail } from "@/components/escape-room/SceneRail";
+import { useEscapeRoomStageBootstrap, useEscapeRoomStagePersistence } from "@/components/escape-room/use-stage-progress";
 import {
   BOOKSHELF_CLUE,
   BOOKSHELF_NOTE,
@@ -89,11 +90,28 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
   const resultRef = useRef<"success" | "failed" | null>(null);
   const warningMarksRef = useRef(new Set<number>());
   const modalRef = useRef<ModalType | null>(null);
+  const { ready: stageProgressReady, persistedBestSeconds, resumeElapsedSeconds } = useEscapeRoomStageBootstrap({
+    stage: "library",
+    setProgress: (nextProgress) => dispatch({ type: "SET_PROGRESS", progress: nextProgress }),
+    setScene,
+  });
 
   const { elapsedSeconds, bestSeconds, remainingSeconds, expired, resetTimer } = useEscapeTimer({
     started: progress.started,
     escaped: progress.reward.escaped,
     durationSeconds: ESCAPE_ROOM_COUNTDOWN_SECONDS,
+    initialBestSeconds: persistedBestSeconds,
+    resumeElapsedSeconds,
+  });
+
+  useEscapeRoomStagePersistence({
+    ready: stageProgressReady,
+    stage: "library",
+    scene,
+    progress,
+    bestSeconds,
+    elapsedSeconds,
+    remainingSeconds,
   });
 
   const copy = {

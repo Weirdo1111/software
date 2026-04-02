@@ -15,23 +15,47 @@ export function useEscapeTimer({
   escaped,
   durationSeconds,
   bestTimeKey = ESCAPE_ROOM_BEST_TIME_KEY,
+  initialBestSeconds = null,
+  resumeElapsedSeconds = 0,
 }: {
   started: boolean;
   escaped: boolean;
   durationSeconds: number;
   bestTimeKey?: string;
+  initialBestSeconds?: number | null;
+  resumeElapsedSeconds?: number;
 }) {
   const startedAtRef = useRef<number | null>(null);
   const savedForRunRef = useRef(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [bestSeconds, setBestSeconds] = useState<number | null>(() => {
+  const [storedBestSeconds, setStoredBestSeconds] = useState<number | null>(() => {
     if (typeof window === "undefined") {
-      return null;
+      return initialBestSeconds;
     }
 
     const stored = window.localStorage.getItem(bestTimeKey);
-    return stored ? Number(stored) : null;
+    return stored ? Number(stored) : initialBestSeconds;
   });
+
+  useEffect(() => {
+    if (initialBestSeconds === null || initialBestSeconds === undefined) {
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      const stored = window.localStorage.getItem(bestTimeKey);
+      if (!stored || Number(stored) > initialBestSeconds) {
+        window.localStorage.setItem(bestTimeKey, String(initialBestSeconds));
+      }
+    }
+  }, [bestTimeKey, initialBestSeconds]);
+
+  const bestSeconds =
+    initialBestSeconds === null || initialBestSeconds === undefined
+      ? storedBestSeconds
+      : storedBestSeconds === null
+        ? initialBestSeconds
+        : Math.min(storedBestSeconds, initialBestSeconds);
 
   useEffect(() => {
     if (!started) {
@@ -41,10 +65,11 @@ export function useEscapeTimer({
     }
 
     if (startedAtRef.current === null) {
-      startedAtRef.current = Date.now();
+      const resumeSeconds = Math.max(0, Math.floor(resumeElapsedSeconds));
+      startedAtRef.current = Date.now() - resumeSeconds * 1000;
       savedForRunRef.current = false;
     }
-  }, [started]);
+  }, [resumeElapsedSeconds, started]);
 
   useEffect(() => {
     if (!started || escaped || startedAtRef.current === null) {
@@ -76,7 +101,7 @@ export function useEscapeTimer({
     setElapsedSeconds(finalSeconds);
 
     if (bestSeconds === null || finalSeconds < bestSeconds) {
-      setBestSeconds(finalSeconds);
+      setStoredBestSeconds(finalSeconds);
 
       if (typeof window !== "undefined") {
         const isFirstClear = window.localStorage.getItem(bestTimeKey) === null;

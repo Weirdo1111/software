@@ -151,6 +151,7 @@ export interface ProgressTask {
 export interface GameLevel {
   id: string;
   slug: string;
+  stageSlug?: "library" | "dorm" | "station";
   title: string;
   subtitle: string;
   difficulty: string;

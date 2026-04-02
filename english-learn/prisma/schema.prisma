@@ -33,6 +33,8 @@ model User {
   contextCommentLikes        ContextCommentLike[]
   subscriptions              Subscription[]
   eventLogs                  EventLog[]
+  escapeRoomStageProgresses  EscapeRoomStageProgress[]
+  escapeRoomRuns             EscapeRoomRun[]
   posts                      DiscussionPost[]         @relation("PostAuthor")
   comments                   DiscussionComment[]
   likes                      DiscussionPostLike[]
@@ -305,6 +307,53 @@ model EventLog {
 
   @@index([userId, createdAt])
   @@map("event_logs")
+}
+
+model EscapeRoomStageProgress {
+  id                  String   @id @default(uuid()) @db.Char(36)
+  userId              BigInt
+  stageSlug           String   @db.VarChar(30)
+  status              String   @default("idle") @db.VarChar(20)
+  scene               String   @default("briefing") @db.VarChar(20)
+  started             Boolean  @default(false)
+  escaped             Boolean  @default(false)
+  bestSeconds         Int?
+  lastElapsedSeconds  Int?
+  lastRemainingSeconds Int?
+  keypadAttempts      Int      @default(0)
+  clearCount          Int      @default(0)
+  latestRunStartedAt  DateTime?
+  latestClearedAt     DateTime?
+  progressPayload     Json?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, stageSlug])
+  @@index([stageSlug, escaped, bestSeconds])
+  @@map("escape_room_stage_progresses")
+}
+
+model EscapeRoomRun {
+  id               String   @id @default(uuid()) @db.Char(36)
+  userId           BigInt
+  stageSlug        String   @db.VarChar(30)
+  result           String   @db.VarChar(20)
+  startedAt        DateTime?
+  endedAt          DateTime @default(now())
+  elapsedSeconds   Int?
+  remainingSeconds Int?
+  keypadAttempts   Int      @default(0)
+  rewardXp         Int      @default(0)
+  progressPayload  Json?
+  createdAt        DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, endedAt])
+  @@index([stageSlug, result, elapsedSeconds])
+  @@map("escape_room_runs")
 }
 
 model DiscussionPost {
