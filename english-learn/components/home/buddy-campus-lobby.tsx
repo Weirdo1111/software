@@ -33,6 +33,7 @@ import {
   type BuddyStage,
   type BuddyVariant,
 } from "@/components/home/buddy-companion";
+import { type BuddyOutfit } from "@/lib/buddy-wardrobe";
 import { type Locale } from "@/lib/i18n/dictionaries";
 import { cn } from "@/lib/utils";
 
@@ -85,12 +86,14 @@ export function BuddyCampusLobby({
   nextQuestHref,
   buddyStage,
   buddyFocus,
+  buddyOutfit,
 }: {
   locale: Locale;
   levelPrefix: string;
   nextQuestHref: string;
   buddyStage: BuddyStage;
   buddyFocus: BuddyFocus;
+  buddyOutfit: BuddyOutfit;
 }) {
   const router = useRouter();
   const arenaRef = useRef<HTMLDivElement>(null);
@@ -624,6 +627,7 @@ export function BuddyCampusLobby({
               focus={buddyFocus}
               mood={activeZone ? "proud" : "happy"}
               variant={primaryBuddyVariant}
+              outfit={buddyOutfit}
               float={false}
               className="relative z-10 w-[4.8rem] max-w-[4.8rem] drop-shadow-[0_18px_22px_rgba(63,85,129,0.16)]"
             />

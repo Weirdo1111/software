@@ -1284,7 +1284,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
         nextQuestHref={nextQuestHref}
         buddyStage={buddyStage.id}
         buddyFocus={getGoalFocus(preferences.goal)}
-        buddyOutfit={buddyOutfit}
+        buddyOutfit={effectiveBuddyOutfit}
         selectedGoal={preferences.goal}
         onSelectGoal={(goal) => updatePrefs({ goal })}
       />

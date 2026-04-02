@@ -15,6 +15,14 @@
       "username": "tianbo",
       "email": "123@qq.com",
       "displayName": "tianbo"
+    },
+    {
+      "id": "local-file:a4fbda5c-90a4-4d5e-bcd6-e7ffdbc62e2e",
+      "authProvider": "local-file",
+      "authUserId": "a4fbda5c-90a4-4d5e-bcd6-e7ffdbc62e2e",
+      "username": "bob",
+      "email": "1111@11.com",
+      "displayName": "bob"
     }
   ],
   "rooms": [
@@ -46,10 +54,30 @@
       "role": "MEMBER",
       "joinedAt": "2026-03-31T07:28:51.381Z",
       "lastSeenAt": "2026-03-31T09:02:29.306Z"
+    },
+    {
+      "id": "7b844d00-3cbb-49c0-9274-67a49eb8b940",
+      "roomId": "8cb6bcde-758f-4cf8-9dd5-df2ebad253a9",
+      "userId": "local-file:a4fbda5c-90a4-4d5e-bcd6-e7ffdbc62e2e",
+      "role": "MEMBER",
+      "joinedAt": "2026-04-02T09:35:07.179Z",
+      "lastSeenAt": "2026-04-02T09:36:14.857Z"
     }
   ],
   "messages": [],
   "attachments": [],
-  "callParticipants": [],
+  "callParticipants": [
+    {
+      "id": "6b9f1486-2cd1-4598-bac7-96efa42cf81e",
+      "roomId": "8cb6bcde-758f-4cf8-9dd5-df2ebad253a9",
+      "userId": "local-file:a4fbda5c-90a4-4d5e-bcd6-e7ffdbc62e2e",
+      "sessionId": "cde90cc8-48c5-44a5-a9ba-ca3b2593b3ff",
+      "displayName": "bob",
+      "audioEnabled": true,
+      "videoEnabled": true,
+      "joinedAt": "2026-04-02T09:35:41.666Z",
+      "lastSeenAt": "2026-04-02T09:36:11.736Z"
+    }
+  ],
   "callSignals": []
 }
