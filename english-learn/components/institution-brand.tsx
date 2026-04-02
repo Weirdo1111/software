@@ -7,10 +7,12 @@ export function InstitutionBrand({
   locale,
   className,
   embedded = false,
+  compact = false,
 }: {
   locale: Locale;
   className?: string;
   embedded?: boolean;
+  compact?: boolean;
 }) {
   const alt =
     locale === "zh"
@@ -27,7 +29,10 @@ export function InstitutionBrand({
             width={380}
             height={52}
             priority
-            className="institution-brand-image institution-brand-image-embedded"
+            className={cn(
+              "institution-brand-image institution-brand-image-embedded",
+              compact && "institution-brand-image-compact",
+            )}
           />
         </div>
       </div>

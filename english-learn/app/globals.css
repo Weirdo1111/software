@@ -1489,6 +1489,171 @@ body::after {
   pointer-events: none;
 }
 
+.global-buddy-assistant-panel {
+  position: absolute;
+  right: 0.25rem;
+  bottom: 7.6rem;
+  width: min(21rem, calc(100vw - 1.5rem));
+  border: 2px solid rgba(255, 255, 255, 0.94);
+  border-radius: 1.6rem;
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.99), rgba(242, 247, 255, 0.97), rgba(255, 246, 250, 0.94));
+  box-shadow:
+    0 14px 0 rgba(255, 201, 225, 0.18),
+    0 24px 40px rgba(90, 123, 255, 0.14);
+  padding: 0.95rem;
+  opacity: 0;
+  transform: translateY(12px) scale(0.96);
+  transform-origin: right bottom;
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.global-buddy-assistant-panel-open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.global-buddy-assistant-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.global-buddy-assistant-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.global-buddy-assistant-title {
+  margin-top: 0.32rem;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.global-buddy-assistant-close {
+  display: inline-flex;
+  height: 2rem;
+  width: 2rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(20, 50, 75, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.global-buddy-assistant-answer {
+  margin-top: 0.85rem;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.global-buddy-assistant-actions {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.9rem;
+}
+
+.global-buddy-assistant-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 1px solid rgba(20, 50, 75, 0.12);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.72rem 0.85rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--navy);
+  cursor: pointer;
+}
+
+.global-buddy-assistant-action:hover,
+.global-buddy-assistant-action:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(90, 123, 255, 0.1);
+}
+
+.global-buddy-assistant-quick-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
+.global-buddy-assistant-chip {
+  border: 1px solid rgba(20, 50, 75, 0.12);
+  border-radius: 999px;
+  background: rgba(247, 250, 252, 0.95);
+  padding: 0.45rem 0.75rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.global-buddy-assistant-chip:hover,
+.global-buddy-assistant-chip:focus-visible {
+  background: rgba(236, 244, 255, 0.98);
+  color: var(--navy);
+}
+
+.global-buddy-assistant-form {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.95rem;
+}
+
+.global-buddy-assistant-input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid rgba(20, 50, 75, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 0.72rem 0.95rem;
+  font-size: 0.86rem;
+  color: var(--ink);
+  outline: none;
+}
+
+.global-buddy-assistant-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--navy);
+  padding: 0.72rem 0.92rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #f7efe3;
+  cursor: pointer;
+}
+
+.global-buddy-assistant-submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.global-buddy-assistant-error {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #d55a52;
+}
+
 .global-buddy-card {
   position: relative;
   width: 7.6rem;
@@ -3420,6 +3585,34 @@ body::after {
 }
 
 @media (max-width: 768px) {
+  .global-buddy-shell {
+    right: 0.55rem;
+    bottom: 0.75rem;
+  }
+
+  .global-buddy-assistant-panel {
+    right: 0;
+    bottom: 6.75rem;
+    width: min(19rem, calc(100vw - 1rem));
+    padding: 0.85rem;
+  }
+
+  .global-buddy-assistant-answer {
+    margin-top: 0.7rem;
+    font-size: 0.84rem;
+    line-height: 1.58;
+  }
+
+  .global-buddy-assistant-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .global-buddy-assistant-submit {
+    min-height: 2.7rem;
+    width: 100%;
+  }
+
   .institution-brand-image {
     width: 11.3rem;
   }

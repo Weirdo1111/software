@@ -83,6 +83,23 @@ function safeParseJSON<T>(text: string, fallback: T): T {
   }
 }
 
+function normalizeTips(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => String(item).trim())
+      .filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    return value
+      .split(/[,，]/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -103,7 +120,10 @@ export async function POST(request: Request) {
       tips: ["Re-read the passage focusing on how each paragraph relates to the central claim."],
     });
 
-    return NextResponse.json(parsed);
+    return NextResponse.json({
+      ...parsed,
+      tips: normalizeTips((parsed as { tips?: unknown }).tips),
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return jsonError(error.issues[0]?.message ?? "Invalid payload", 422);
