@@ -708,8 +708,8 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   if (!isLoggedIn) {
     return (
       <section className="mt-6 grid gap-5 reveal-up">
-        <article className="sky-panel rounded-[2.5rem] px-6 py-7 sm:px-8 sm:py-9">
-          <span className="party-floater right-8 top-12 h-12 w-12">
+        <article className="sky-panel rounded-[2.5rem] px-6 pb-7 pt-4 sm:px-8 sm:pb-9 sm:pt-5">
+          <span className="party-floater right-8 top-10 h-12 w-12">
             <Trophy className="size-5" />
           </span>
           <span className="party-floater bottom-[4.5rem] right-[28%] h-10 w-10">
@@ -840,8 +840,8 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
 
   return (
     <section className="mt-6 grid gap-5 reveal-up">
-      <article className="sky-panel rounded-[2.5rem] px-6 py-7 sm:px-8 sm:py-8">
-        <span className="party-floater right-10 top-14 h-12 w-12">
+      <article className="sky-panel rounded-[2.5rem] px-6 pb-7 pt-4 sm:px-8 sm:pb-8 sm:pt-5">
+        <span className="party-floater right-10 top-11 h-12 w-12">
           <Trophy className="size-5" />
         </span>
         <span className="party-floater bottom-16 right-[32%] h-10 w-10">
