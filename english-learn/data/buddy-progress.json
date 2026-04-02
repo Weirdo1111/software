@@ -2,83 +2,23 @@
   "records": [
     {
       "authProvider": "local-file",
-      "authUserId": "7ec4c8b5-4d18-45cc-a5d5-58bf0f1b25a6",
-      "username": "wzx",
-      "email": "111111@11.com",
-      "counts": {
-        "listeningCompletions": 28,
-        "speakingCompletions": 0,
-        "readingCompletions": 0,
-        "writingCompletions": 0,
-        "reviewSessions": 0,
-        "escapeRoomClears": 0,
-        "dormLockoutClears": 0,
-        "lastTrainClears": 0
-      },
-      "totalXp": 420,
-      "totalCompletedSources": 28,
-      "createdAt": "2026-03-31T09:37:07.411Z",
-      "updatedAt": "2026-03-31T09:37:07.424Z"
-    },
-    {
-      "authProvider": "local-file",
       "authUserId": "00000000-0000-0000-0000-000000000001",
       "username": "admin",
       "email": "admin@example.com",
       "counts": {
-        "listeningCompletions": 60,
-        "speakingCompletions": 0,
+        "listeningCompletions": 61,
+        "speakingCompletions": 1,
         "readingCompletions": 0,
-        "writingCompletions": 0,
+        "writingCompletions": 1,
         "reviewSessions": 0,
         "escapeRoomClears": 0,
         "dormLockoutClears": 0,
         "lastTrainClears": 0
       },
-      "totalXp": 900,
-      "totalCompletedSources": 60,
+      "totalXp": 955,
+      "totalCompletedSources": 63,
       "createdAt": "2026-03-31T09:40:48.145Z",
-      "updatedAt": "2026-03-31T15:11:03.662Z"
-    },
-    {
-      "authProvider": "local-file",
-      "authUserId": "133bf6c4-3daa-4dca-8eb0-ec4db1ba605d",
-      "username": "bob",
-      "email": "1111111@11.com",
-      "counts": {
-        "listeningCompletions": 30,
-        "speakingCompletions": 0,
-        "readingCompletions": 0,
-        "writingCompletions": 0,
-        "reviewSessions": 0,
-        "escapeRoomClears": 0,
-        "dormLockoutClears": 0,
-        "lastTrainClears": 0
-      },
-      "totalXp": 450,
-      "totalCompletedSources": 30,
-      "createdAt": "2026-03-31T09:49:59.572Z",
-      "updatedAt": "2026-03-31T09:49:59.580Z"
-    },
-    {
-      "authProvider": "local-file",
-      "authUserId": "8b3f41f2-e7ae-4f94-8661-880a30f483af",
-      "username": "qqqq",
-      "email": "11121@11.com",
-      "counts": {
-        "listeningCompletions": 1,
-        "speakingCompletions": 0,
-        "readingCompletions": 0,
-        "writingCompletions": 0,
-        "reviewSessions": 0,
-        "escapeRoomClears": 0,
-        "dormLockoutClears": 0,
-        "lastTrainClears": 0
-      },
-      "totalXp": 15,
-      "totalCompletedSources": 1,
-      "createdAt": "2026-03-31T09:57:54.105Z",
-      "updatedAt": "2026-03-31T11:47:17.693Z"
+      "updatedAt": "2026-04-01T00:29:05.131Z"
     },
     {
       "authProvider": "local-file",
@@ -199,6 +139,46 @@
       "totalCompletedSources": 0,
       "createdAt": "2026-03-31T10:30:00.000Z",
       "updatedAt": "2026-03-31T10:30:00.000Z"
+    },
+    {
+      "authProvider": "local-file",
+      "authUserId": "a4716bb9-3d34-4f6a-9cc2-875a9a532002",
+      "username": "tianbo",
+      "email": "123@qq.com",
+      "counts": {
+        "listeningCompletions": 0,
+        "speakingCompletions": 0,
+        "readingCompletions": 0,
+        "writingCompletions": 0,
+        "reviewSessions": 0,
+        "escapeRoomClears": 0,
+        "dormLockoutClears": 0,
+        "lastTrainClears": 0
+      },
+      "totalXp": 0,
+      "totalCompletedSources": 0,
+      "createdAt": "2026-04-01T00:12:46.548Z",
+      "updatedAt": "2026-04-01T00:12:46.548Z"
+    },
+    {
+      "authProvider": "local-file",
+      "authUserId": "8ed9f393-5820-42e8-aada-70762c184120",
+      "username": "wzx",
+      "email": "11@11.com",
+      "counts": {
+        "listeningCompletions": 1,
+        "speakingCompletions": 0,
+        "readingCompletions": 0,
+        "writingCompletions": 0,
+        "reviewSessions": 0,
+        "escapeRoomClears": 0,
+        "dormLockoutClears": 0,
+        "lastTrainClears": 0
+      },
+      "totalXp": 15,
+      "totalCompletedSources": 1,
+      "createdAt": "2026-04-01T00:29:54.301Z",
+      "updatedAt": "2026-04-01T00:31:08.887Z"
     }
   ]
 }

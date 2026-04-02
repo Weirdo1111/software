@@ -55,6 +55,13 @@
       "email": "123@qq.com",
       "passwordHash": "f93f1bcd7671429fa05bd4416d3c1af2:520ba101e5fcc002cb5d96a9e150189ef6d2e877506820793fc2e22b36b63a32ea373e792d5d4320f1f793326935cf5fc3a72bd3c3de097af0388ff9e43f3979",
       "createdAt": "2026-03-31T07:25:10.476Z"
+    },
+    {
+      "id": "8ed9f393-5820-42e8-aada-70762c184120",
+      "username": "wzx",
+      "email": "11@11.com",
+      "passwordHash": "7fd1f6548762423bb269c8318fef8727:72352f8d0a08f98fc8c15717c72ef09b48ea4ab7c0f373c3c34ba72cbb8f32d21af96bd4d6ecd458596be4a2633f4f5248e2593f855b8a53f98168c415d8af28",
+      "createdAt": "2026-04-01T00:29:54.298Z"
     }
   ]
 }
