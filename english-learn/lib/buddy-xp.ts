@@ -10,6 +10,7 @@ export interface BuddyXpSourceCounts {
   readingCompletions: number;
   writingCompletions: number;
   reviewSessions: number;
+  wordGameClears: number;
   escapeRoomClears: number;
   dormLockoutClears: number;
   lastTrainClears: number;
@@ -43,6 +44,7 @@ export function createEmptyBuddyXpSummary(): BuddyXpSummary {
       readingCompletions: 0,
       writingCompletions: 0,
       reviewSessions: 0,
+      wordGameClears: 0,
       escapeRoomClears: 0,
       dormLockoutClears: 0,
       lastTrainClears: 0,
@@ -62,6 +64,7 @@ function normalizeSummary(value: unknown): BuddyXpSummary {
     readingCompletions: Math.max(0, Math.floor(counts.readingCompletions ?? 0)),
     writingCompletions: Math.max(0, Math.floor(counts.writingCompletions ?? 0)),
     reviewSessions: Math.max(0, Math.floor(counts.reviewSessions ?? 0)),
+    wordGameClears: Math.max(0, Math.floor(counts.wordGameClears ?? 0)),
     escapeRoomClears: Math.max(0, Math.floor(counts.escapeRoomClears ?? 0)),
     dormLockoutClears: Math.max(0, Math.floor(counts.dormLockoutClears ?? 0)),
     lastTrainClears: Math.max(0, Math.floor(counts.lastTrainClears ?? 0)),

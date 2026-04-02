@@ -13,6 +13,7 @@ export interface BuddyProgressCounts {
   readingCompletions: number;
   writingCompletions: number;
   reviewSessions: number;
+  wordGameClears: number;
   escapeRoomClears: number;
   dormLockoutClears: number;
   lastTrainClears: number;
@@ -49,6 +50,7 @@ function createEmptyCounts(): BuddyProgressCounts {
     readingCompletions: 0,
     writingCompletions: 0,
     reviewSessions: 0,
+    wordGameClears: 0,
     escapeRoomClears: 0,
     dormLockoutClears: 0,
     lastTrainClears: 0,
@@ -82,6 +84,7 @@ function cloneCounts(counts?: Partial<BuddyProgressCounts>): BuddyProgressCounts
     readingCompletions: Math.max(0, Math.floor(counts?.readingCompletions ?? 0)),
     writingCompletions: Math.max(0, Math.floor(counts?.writingCompletions ?? 0)),
     reviewSessions: Math.max(0, Math.floor(counts?.reviewSessions ?? 0)),
+    wordGameClears: Math.max(0, Math.floor(counts?.wordGameClears ?? 0)),
     escapeRoomClears: Math.max(0, Math.floor(counts?.escapeRoomClears ?? 0)),
     dormLockoutClears: Math.max(0, Math.floor(counts?.dormLockoutClears ?? 0)),
     lastTrainClears: Math.max(0, Math.floor(counts?.lastTrainClears ?? 0)),
@@ -95,6 +98,7 @@ function sumCompletedSources(counts: BuddyProgressCounts) {
     counts.readingCompletions +
     counts.writingCompletions +
     counts.reviewSessions +
+    counts.wordGameClears +
     counts.escapeRoomClears +
     counts.dormLockoutClears +
     counts.lastTrainClears
@@ -108,6 +112,7 @@ function sumTotalXp(counts: BuddyProgressCounts) {
     counts.readingCompletions * getBuddyXpForSource("readingCompletion") +
     counts.writingCompletions * getBuddyXpForSource("writingCompletion") +
     counts.reviewSessions * getBuddyXpForSource("reviewSession") +
+    counts.wordGameClears * getBuddyXpForSource("wordGameClear") +
     counts.escapeRoomClears * getBuddyXpForSource("escapeRoomClear") +
     counts.dormLockoutClears * getBuddyXpForSource("dormLockoutClear") +
     counts.lastTrainClears * getBuddyXpForSource("lastTrainClear")
@@ -187,6 +192,7 @@ function applyAwardToCounts(counts: BuddyProgressCounts, source: BuddyXpAwardSou
   if (source === "readingCompletion") next.readingCompletions += 1;
   if (source === "writingCompletion") next.writingCompletions += 1;
   if (source === "reviewSession") next.reviewSessions += 1;
+  if (source === "wordGameClear") next.wordGameClears += 1;
   if (source === "escapeRoomClear") next.escapeRoomClears = 1;
   if (source === "dormLockoutClear") next.dormLockoutClears = 1;
   if (source === "lastTrainClear") next.lastTrainClears = 1;
