@@ -532,7 +532,7 @@ export function GlobalBuddyCompanion() {
     };
   }, [soundEnabled]);
 
-  if (pathname === "/" || pathname.startsWith("/games/word-game")) return null;
+  if (pathname.startsWith("/games/word-game")) return null;
 
   return (
     <div className="global-buddy-shell">
