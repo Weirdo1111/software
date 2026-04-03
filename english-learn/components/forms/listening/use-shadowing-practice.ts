@@ -27,6 +27,14 @@ type StartListeningOptions = {
 
 const SILENCE_TIMEOUT_MS = 2500;
 
+function shouldRetryWithFallback(error?: string) {
+  return (
+    error === "network" ||
+    error === "language-not-supported" ||
+    error === "service-not-allowed"
+  );
+}
+
 function estimateAudioLevel(analyser: AnalyserNode) {
   const data = new Uint8Array(analyser.fftSize);
   analyser.getByteTimeDomainData(data);
@@ -201,9 +209,13 @@ export function useShadowingPractice() {
         clearSilenceTimer();
         void stopAudioMonitor();
 
-        if (event.error === "network" && options?.fallbackLocale && !options?.hasRetried) {
+        if (
+          shouldRetryWithFallback(event.error) &&
+          options?.fallbackLocale &&
+          !options?.hasRetried
+        ) {
           recognitionRef.current = null;
-          setError("Primary speech service did not respond. Retrying once...");
+          setError("Primary speech locale failed. Retrying once with a backup locale...");
           void Promise.resolve().then(() =>
             startListeningRef.current(options.fallbackLocale, {
               ...options,
@@ -218,6 +230,8 @@ export function useShadowingPractice() {
         setError(
           event.error === "network"
             ? "Browser speech recognition could not reach its online service. Try Chrome or Edge, check your network, or configure a backup speech provider."
+            : event.error === "language-not-supported"
+              ? "This speech locale is not supported in your browser. Try Chrome or Edge, switch browser language settings, or use a different locale."
             : event.error
               ? `Speech recognition failed: ${event.error}.`
               : "Speech recognition failed.",
@@ -232,7 +246,32 @@ export function useShadowingPractice() {
       };
 
       recognitionRef.current = recognition;
-      recognition.start();
+      try {
+        recognition.start();
+      } catch (nextError) {
+        clearSilenceTimer();
+        void stopAudioMonitor();
+        recognitionRef.current = null;
+
+        if (options?.fallbackLocale && !options?.hasRetried) {
+          setError("Primary speech locale could not start. Retrying with a backup locale...");
+          void Promise.resolve().then(() =>
+            startListeningRef.current(options.fallbackLocale, {
+              ...options,
+              fallbackLocale: undefined,
+              hasRetried: true,
+            }),
+          );
+          return;
+        }
+
+        setStatus("error");
+        const message =
+          nextError instanceof Error
+            ? `Speech recognition failed to start: ${nextError.message}`
+            : "Speech recognition failed to start.";
+        setError(message);
+      }
     },
     [clearSilenceTimer, restartSilenceTimer, startAudioMonitor, stopAudioMonitor],
   );
