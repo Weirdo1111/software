@@ -45,7 +45,7 @@ export async function GET(
   try {
     const { roomId } = await params;
 
-    if (shouldUseSeminarLocalStore()) {
+    if (await shouldUseSeminarLocalStore()) {
       const currentUser = await getCurrentSeminarLocalActor(false);
       const afterRaw = request.nextUrl.searchParams.get("after");
       const messages = await listLocalSeminarMessages(roomId, currentUser?.id, afterRaw);
@@ -123,7 +123,7 @@ export async function POST(
   try {
     const { roomId } = await params;
 
-    if (shouldUseSeminarLocalStore()) {
+    if (await shouldUseSeminarLocalStore()) {
       const currentUser = await getCurrentSeminarLocalActor(true);
       const formData = await request.formData();
       const content = normalizeSeminarTextContent(formData.get("content"));

@@ -63,6 +63,45 @@ async function writeLegacyAuthDb(db: AuthDatabase) {
   await fs.writeFile(authDbPath, JSON.stringify(db, null, 2), "utf8");
 }
 
+function toLegacyLocalAuthUser(user: LegacyStoredUser): LocalAuthUserRecord {
+  return {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    passwordHash: user.passwordHash,
+    createdAt: user.createdAt,
+    authProvider: "local-file",
+    authUserId: user.id,
+    displayName: user.username,
+    lastLoginAt: null,
+  };
+}
+
+async function findLegacyUserByLogin(identifier: string) {
+  const normalized = identifier.trim().toLowerCase();
+  const db = await readLegacyAuthDb();
+  const matched = db.users.find((user) => {
+    return (
+      user.id === identifier.trim() ||
+      user.username.trim() === identifier.trim() ||
+      user.username.trim().toLowerCase() === normalized ||
+      toNormalizedEmail(user.email) === normalized
+    );
+  });
+
+  return matched ? toLegacyLocalAuthUser(matched) : null;
+}
+
+async function findLegacyUserByAuthIdentity(authProvider: string, authUserId: string) {
+  if (authProvider !== "local-file" && authProvider !== "database") {
+    return null;
+  }
+
+  const db = await readLegacyAuthDb();
+  const matched = db.users.find((user) => user.id === authUserId);
+  return matched ? toLegacyLocalAuthUser(matched) : null;
+}
+
 function toNormalizedEmail(value: string) {
   return value.trim().toLowerCase();
 }
@@ -156,47 +195,26 @@ export async function verifyPassword(password: string, passwordHash: string) {
 }
 
 export async function findLocalUserByLogin(identifier: string) {
-  const normalized = identifier.trim().toLowerCase();
-
   if (!isDatabaseAuthConfigured()) {
-    const db = await readLegacyAuthDb();
-    const matched = db.users.find((user) => {
-      return (
-        user.id === identifier.trim() ||
-        user.username.trim() === identifier.trim() ||
-        user.username.trim().toLowerCase() === normalized ||
-        toNormalizedEmail(user.email) === normalized
-      );
-    });
-
-    if (!matched) {
-      return null;
-    }
-
-    return {
-      id: matched.id,
-      username: matched.username,
-      email: matched.email,
-      passwordHash: matched.passwordHash,
-      createdAt: matched.createdAt,
-      authProvider: "local-file",
-      authUserId: matched.id,
-      displayName: matched.username,
-      lastLoginAt: null,
-    } satisfies LocalAuthUserRecord;
+    return findLegacyUserByLogin(identifier);
   }
 
-  await ensureLegacyUsersImported();
+  try {
+    const normalized = identifier.trim().toLowerCase();
+    await ensureLegacyUsersImported();
 
-  return prisma.user.findFirst({
-    where: {
-      OR: [
-        { email: normalized },
-        { username: identifier.trim() },
-        { username: normalized },
-      ],
-    },
-  });
+    return await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: normalized },
+          { username: identifier.trim() },
+          { username: normalized },
+        ],
+      },
+    });
+  } catch {
+    return findLegacyUserByLogin(identifier);
+  }
 }
 
 export async function findLocalUserByAuthIdentity(authProvider: string, authUserId: string) {
@@ -205,39 +223,22 @@ export async function findLocalUserByAuthIdentity(authProvider: string, authUser
   }
 
   if (!isDatabaseAuthConfigured()) {
-    if (authProvider !== "local-file" && authProvider !== "database") {
-      return null;
-    }
-
-    const db = await readLegacyAuthDb();
-    const matched = db.users.find((user) => user.id === authUserId);
-
-    if (!matched) {
-      return null;
-    }
-
-    return {
-      id: matched.id,
-      username: matched.username,
-      email: matched.email,
-      passwordHash: matched.passwordHash,
-      createdAt: matched.createdAt,
-      authProvider: "local-file",
-      authUserId: matched.id,
-      displayName: matched.username,
-      lastLoginAt: null,
-    } satisfies LocalAuthUserRecord;
+    return findLegacyUserByAuthIdentity(authProvider, authUserId);
   }
 
-  await ensureLegacyUsersImported();
-  return prisma.user.findUnique({
-    where: {
-      authProvider_authUserId: {
-        authProvider,
-        authUserId,
+  try {
+    await ensureLegacyUsersImported();
+    return await prisma.user.findUnique({
+      where: {
+        authProvider_authUserId: {
+          authProvider,
+          authUserId,
+        },
       },
-    },
-  });
+    });
+  } catch {
+    return findLegacyUserByAuthIdentity(authProvider, authUserId);
+  }
 }
 
 export async function createLocalUser(input: {

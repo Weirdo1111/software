@@ -20,7 +20,7 @@ export async function POST(
   try {
     const { roomId } = await params;
 
-    if (shouldUseSeminarLocalStore()) {
+    if (await shouldUseSeminarLocalStore()) {
       const currentUser = await getCurrentSeminarLocalActor(true);
       const payload = seminarJoinSchema.parse(await request.json());
       await joinLocalProtectedSeminarRoom(roomId, currentUser, payload.password);

@@ -17,7 +17,7 @@ import {
 
 export async function GET() {
   try {
-    if (shouldUseSeminarLocalStore()) {
+    if (await shouldUseSeminarLocalStore()) {
       const currentUser = await getCurrentSeminarLocalActor(false);
       return NextResponse.json(await listLocalSeminarRooms(currentUser?.id));
     }
@@ -85,7 +85,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    if (shouldUseSeminarLocalStore()) {
+    if (await shouldUseSeminarLocalStore()) {
       const currentUser = await getCurrentSeminarLocalActor(true);
       const body = await request.json();
       const payload = seminarRoomCreateSchema.parse(body);

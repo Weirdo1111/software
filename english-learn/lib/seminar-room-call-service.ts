@@ -253,7 +253,7 @@ async function loadDbCallState(
 }
 
 export async function joinSeminarRoomCall(inputRoomId: string, payload: JoinCallInput) {
-  if (shouldUseSeminarLocalStore()) {
+  if (await shouldUseSeminarLocalStore()) {
     const actor = await getCurrentSeminarLocalActor(true);
     return joinLocalSeminarCall(inputRoomId, actor, payload);
   }
@@ -299,7 +299,7 @@ export async function joinSeminarRoomCall(inputRoomId: string, payload: JoinCall
 }
 
 export async function syncSeminarRoomCall(inputRoomId: string, payload: SyncCallInput) {
-  if (shouldUseSeminarLocalStore()) {
+  if (await shouldUseSeminarLocalStore()) {
     const actor = await getCurrentSeminarLocalActor(true);
     return syncLocalSeminarCallPresence(inputRoomId, actor, payload);
   }
@@ -346,7 +346,7 @@ export async function syncSeminarRoomCall(inputRoomId: string, payload: SyncCall
 }
 
 export async function sendSeminarRoomCallSignal(inputRoomId: string, payload: SendSignalInput) {
-  if (shouldUseSeminarLocalStore()) {
+  if (await shouldUseSeminarLocalStore()) {
     const actor = await getCurrentSeminarLocalActor(true);
     await createLocalSeminarCallSignal(inputRoomId, actor, payload);
     return;
@@ -417,7 +417,7 @@ export async function sendSeminarRoomCallSignal(inputRoomId: string, payload: Se
 }
 
 export async function leaveSeminarRoomCall(inputRoomId: string, sessionId: string) {
-  if (shouldUseSeminarLocalStore()) {
+  if (await shouldUseSeminarLocalStore()) {
     const actor = await getCurrentSeminarLocalActor(true);
     await leaveLocalSeminarCall(inputRoomId, actor, sessionId);
     return;

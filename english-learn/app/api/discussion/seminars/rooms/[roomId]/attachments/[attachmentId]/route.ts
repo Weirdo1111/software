@@ -22,7 +22,7 @@ export async function GET(
   try {
     const { roomId, attachmentId } = await params;
 
-    if (shouldUseSeminarLocalStore()) {
+    if (await shouldUseSeminarLocalStore()) {
       const currentUser = await getCurrentSeminarLocalActor(false);
       const attachment = await getLocalSeminarAttachment(roomId, attachmentId, currentUser?.id);
       const bytes = await readSeminarAttachment(attachment);

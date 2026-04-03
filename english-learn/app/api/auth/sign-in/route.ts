@@ -81,13 +81,15 @@ export async function POST(request: Request) {
       updatedUser.authUserId ||
       (typeof updatedUser.id === "bigint" ? updatedUser.id.toString() : updatedUser.id);
 
+    const usesDatabaseStorage = typeof updatedUser.id === "bigint";
+
     const response = NextResponse.json({
       user: toPublicUser(updatedUser),
       user_id: typeof updatedUser.id === "bigint" ? updatedUser.id.toString() : updatedUser.id,
       auth_provider: authProvider,
       auth_user_id: authUserId,
       session: Boolean(session),
-      storage: isDatabaseAuthConfigured() ? "database" : "local-file",
+      storage: usesDatabaseStorage ? "database" : "local-file",
     });
 
     if (session) {

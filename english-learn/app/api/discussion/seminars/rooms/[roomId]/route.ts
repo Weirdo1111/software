@@ -68,7 +68,7 @@ export async function GET(
   try {
     const { roomId } = await params;
 
-    if (shouldUseSeminarLocalStore()) {
+    if (await shouldUseSeminarLocalStore()) {
       const currentUser = await getCurrentSeminarLocalActor(false);
       const detail = await getLocalSeminarRoomDetail(roomId, currentUser?.id);
       return NextResponse.json(detail, { status: detail.hasAccess ? 200 : 403 });
@@ -142,7 +142,7 @@ export async function PATCH(
   try {
     const { roomId } = await params;
 
-    if (shouldUseSeminarLocalStore()) {
+    if (await shouldUseSeminarLocalStore()) {
       const currentUser = await getCurrentSeminarLocalActor(true);
       const rawBody = await request.json();
       const payload = seminarRoomUpdateSchema.parse(rawBody);
@@ -292,7 +292,7 @@ export async function DELETE(
   try {
     const { roomId } = await params;
 
-    if (shouldUseSeminarLocalStore()) {
+    if (await shouldUseSeminarLocalStore()) {
       const currentUser = await getCurrentSeminarLocalActor(true);
       const attachments = await deleteLocalSeminarRoom(roomId, currentUser);
 
