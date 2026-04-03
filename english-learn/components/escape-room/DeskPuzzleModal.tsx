@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { CheckCircle2, FileText, KeyRound, ScanSearch } from "lucide-react";
 
-import { ModalShell } from "@/components/escape-room/ModalShell";
+import { ModalShell, ROOM_RETURN_LABEL } from "@/components/escape-room/ModalShell";
 import type { DeskPuzzle, DeskRecord, InventoryItem, QuizOption } from "@/components/escape-room/types";
 import { cn } from "@/lib/utils";
 
@@ -172,7 +172,7 @@ export function DeskPuzzleModal({
             onClick={onClose}
             className="rounded-full border border-[#ddd7ca] bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
           >
-            Close
+            {ROOM_RETURN_LABEL}
           </button>
 
           <button

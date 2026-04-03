@@ -1,15 +1,19 @@
 import type { ReactNode } from "react";
 import { X } from "lucide-react";
 
+export const ROOM_RETURN_LABEL = "Go back room";
+
 export function ModalShell({
   title,
   subtitle,
   onClose,
+  closeLabel = ROOM_RETURN_LABEL,
   children,
 }: {
   title: string;
   subtitle: string;
   onClose: () => void;
+  closeLabel?: string;
   children: ReactNode;
 }) {
   return (
@@ -34,7 +38,7 @@ export function ModalShell({
                 type="button"
                 onClick={onClose}
                 className="inline-flex size-11 items-center justify-center rounded-2xl border border-[#d9d7cf] bg-white/92 text-slate-700 transition hover:scale-[1.03] hover:bg-white"
-                aria-label="Close modal"
+                aria-label={closeLabel}
               >
                 <X className="size-4" />
               </button>

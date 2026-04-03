@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Delete, DoorClosed, RotateCcw } from "lucide-react";
 
-import { ModalShell } from "@/components/escape-room/ModalShell";
+import { ModalShell, ROOM_RETURN_LABEL } from "@/components/escape-room/ModalShell";
 import type { InventoryItem } from "@/components/escape-room/types";
 
 const keypadButtons = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "clear", "0", "delete"] as const;
@@ -213,6 +213,16 @@ export function KeypadModal({
             {feedback}
           </div>
         ) : null}
+
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-[#ddd7ca] bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            {ROOM_RETURN_LABEL}
+          </button>
+        </div>
       </div>
     </ModalShell>
   );

@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { CheckCircle2, Headphones, ListChecks, RotateCcw, Volume2 } from "lucide-react";
 
-import { ModalShell } from "@/components/escape-room/ModalShell";
+import { ModalShell, ROOM_RETURN_LABEL } from "@/components/escape-room/ModalShell";
 import type { AudioPuzzle } from "@/components/escape-room/types";
 
 export function AudioPuzzleModal({
@@ -155,6 +155,16 @@ export function AudioPuzzleModal({
             ) : null}
           </div>
         ) : null}
+
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-[#ddd7ca] bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            {ROOM_RETURN_LABEL}
+          </button>
+        </div>
       </div>
     </ModalShell>
   );

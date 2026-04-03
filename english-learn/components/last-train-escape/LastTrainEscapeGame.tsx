@@ -126,7 +126,7 @@ export function LastTrainEscapeGame({ locale }: { locale: Locale }) {
   });
 
   const copy = {
-    back: "Back",
+    back: "Game Center",
     stage: "Last Train",
     fullscreen: "Full screen",
     exitFullscreen: "Exit full screen",

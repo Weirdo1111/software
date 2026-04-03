@@ -53,7 +53,7 @@ export function GameResultScreen({
       failureReason === "attempts"
         ? (failAttemptsBody ?? "You exceeded the allowed number of wrong keypad attempts. Reset the run and regroup your library clues.")
         : (failTimerBody ?? "You ran out of time before clearing the library. Restart the stage and try a cleaner route."),
-    back: "Back to stages",
+    back: "Game Center",
     retry: "Retry Run",
     cleared: "Stage Result",
     failed: "Run Failed",

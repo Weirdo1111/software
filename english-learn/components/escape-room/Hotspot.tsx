@@ -36,6 +36,7 @@ export function Hotspot({
   const Icon = iconMap[iconKey];
   const completed = state === "cleared";
   const locked = state === "locked";
+  const highlighted = state === "available" && !disabled;
   const showLeadBadge = roomObject.id === "return-cart" || roomObject.id === "floor-map";
   const statusIcon = completed ? CheckCircle2 : locked ? LockKeyhole : showLeadBadge ? ClipboardList : null;
   const StatusIcon = statusIcon;
@@ -48,9 +49,12 @@ export function Hotspot({
       onClick={() => onClick(roomObject.id)}
       title={roomObject.description}
       className={clsx(
-        "hotspot-panel group absolute z-20 -translate-x-1/2 -translate-y-1/2 overflow-hidden border text-left backdrop-blur-md transition duration-200",
+        "hotspot-panel group absolute z-20 -translate-x-1/2 -translate-y-1/2 border text-left backdrop-blur-md transition duration-200",
+        highlighted ? "overflow-visible" : "overflow-hidden",
         fullscreen ? "rounded-full px-3 py-2" : "rounded-full px-2.5 py-1.5",
-        completed
+        highlighted
+          ? "border-cyan-200/80 bg-slate-950/64 shadow-[0_0_0_1px_rgba(125,211,252,0.22),0_0_28px_rgba(34,211,238,0.34),0_22px_72px_rgba(7,16,29,0.46)] hover:scale-[1.06] hover:border-cyan-100 hover:shadow-[0_0_0_1px_rgba(186,230,253,0.28),0_0_38px_rgba(34,211,238,0.44),0_26px_84px_rgba(7,16,29,0.52)]"
+          : completed
           ? "border-emerald-300/50 bg-emerald-500/18 shadow-[0_18px_42px_rgba(16,185,129,0.18)]"
           : locked
             ? "border-white/12 bg-slate-950/38 opacity-72 shadow-[0_14px_40px_rgba(7,16,29,0.28)]"
@@ -60,17 +64,30 @@ export function Hotspot({
       style={{ left: roomObject.hotspot.left, top: roomObject.hotspot.top }}
       aria-label={roomObject.name}
     >
+      {highlighted ? (
+        <>
+          <span className="pointer-events-none absolute inset-[-8px] rounded-[inherit] border border-cyan-200/65 shadow-[0_0_18px_rgba(103,232,249,0.45)]" />
+          <span className="pointer-events-none absolute inset-[-14px] rounded-[inherit] border border-cyan-200/40 animate-[pulse_1.7s_ease-in-out_infinite]" />
+        </>
+      ) : null}
       {!completed && !locked ? <span className="hotspot-ring pointer-events-none absolute inset-[-8px] rounded-[inherit] border border-cyan-300/28" /> : null}
       <span
         className={clsx(
           "pointer-events-none absolute inset-0 rounded-[inherit]",
-          !completed && !locked && "animate-[pulse_2.4s_ease-in-out_infinite] bg-sky-300/14",
+          !completed && !locked && (highlighted ? "animate-[pulse_1.4s_ease-in-out_infinite] bg-cyan-300/18" : "animate-[pulse_2.4s_ease-in-out_infinite] bg-sky-300/14"),
         )}
       />
       {!completed && !locked ? <span className="hotspot-scan-line pointer-events-none absolute inset-x-2 top-0 h-8 bg-[linear-gradient(180deg,transparent,rgba(125,211,252,0.22),transparent)] blur-sm" /> : null}
 
       <div className="relative flex items-center gap-2.5">
-        <span className={clsx("relative inline-flex shrink-0 items-center justify-center rounded-full text-white", roomObject.accent, fullscreen ? "size-8" : "size-7")}>
+        <span
+          className={clsx(
+            "relative inline-flex shrink-0 items-center justify-center rounded-full text-white",
+            roomObject.accent,
+            highlighted && "ring-2 ring-cyan-100/85 ring-offset-2 ring-offset-slate-950/40",
+            fullscreen ? "size-8" : "size-7",
+          )}
+        >
           <Icon className={clsx(fullscreen ? "size-4" : "size-3.5")} />
         </span>
 
