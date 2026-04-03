@@ -92,7 +92,7 @@ export function WordGameLanding({ locale }: { locale: Locale }) {
             <button id="toSelect" className="btn-main" type="button" onClick={() => router.push(`/games/word-game/select?lang=${locale}`)}>
               Single Mode
             </button>
-            <button id="toDuoSelect" className="btn-main btn-duo-main" type="button" onClick={() => router.push(`/games/word-game/select?lang=${locale}&mode=duo`)}>
+            <button id="toDuoSelect" className="btn-main btn-duo-main" type="button" onClick={() => router.push(`/games/word-game/multiplayer?lang=${locale}`)}>
               Versus Mode
             </button>
             <button id="openRules" className="btn-ghost" type="button" onClick={() => setShowRules(true)}>
