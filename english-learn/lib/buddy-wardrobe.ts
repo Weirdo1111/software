@@ -1,3 +1,5 @@
+import { type BuddyVariant } from "@/components/home/buddy-companion";
+
 export type BuddyHat = "none" | "sunhat" | "strawhat" | "cap" | "magichat" | "chefhat" | "catears" | "beret";
 export type BuddyClothing = "none" | "shorts" | "jeans" | "bloomers" | "jk" | "pleated" | "petal";
 export type BuddyGlasses = "none" | "star" | "heart" | "square" | "sunglasses" | "round" | "goggles";
@@ -11,6 +13,7 @@ export type BuddyOutfit = {
 };
 
 const STORAGE_KEY = "english-learn:buddy-outfit";
+const VARIANT_STORAGE_KEY = "english-learn:buddy-variant";
 
 export const DEFAULT_BUDDY_OUTFIT: BuddyOutfit = {
   hat: "none",
@@ -18,6 +21,7 @@ export const DEFAULT_BUDDY_OUTFIT: BuddyOutfit = {
   glasses: "none",
   heldItem: "none",
 };
+export const DEFAULT_BUDDY_VARIANT: BuddyVariant = "bear";
 
 function isHat(value: unknown): value is BuddyHat {
   return value === "none" || value === "sunhat" || value === "strawhat" || value === "cap" || value === "magichat" || value === "chefhat" || value === "catears" || value === "beret";
@@ -33,6 +37,10 @@ function isGlasses(value: unknown): value is BuddyGlasses {
 
 function isHeldItem(value: unknown): value is BuddyHeldItem {
   return value === "none" || value === "flower" || value === "tea" || value === "starwand" || value === "notebook" || value === "paintbrush" || value === "moonwand";
+}
+
+function isBuddyVariant(value: unknown): value is BuddyVariant {
+  return value === "classic" || value === "bear" || value === "bunny" || value === "cat";
 }
 
 export function loadBuddyOutfitFromStorage(): BuddyOutfit {
@@ -61,15 +69,31 @@ export function saveBuddyOutfitToStorage(outfit: BuddyOutfit) {
   return outfit;
 }
 
+export function loadBuddyVariantFromStorage(fallback: BuddyVariant = DEFAULT_BUDDY_VARIANT): BuddyVariant {
+  if (typeof window === "undefined") return fallback;
+
+  const raw = window.localStorage.getItem(VARIANT_STORAGE_KEY);
+  return isBuddyVariant(raw) ? raw : fallback;
+}
+
+export function saveBuddyVariantToStorage(variant: BuddyVariant) {
+  if (typeof window === "undefined") return variant;
+  window.localStorage.setItem(VARIANT_STORAGE_KEY, variant);
+  window.dispatchEvent(new CustomEvent("buddy-variant-changed"));
+  return variant;
+}
+
 export function subscribeBuddyOutfit(callback: () => void) {
   if (typeof window === "undefined") return () => {};
 
   const handleChange = () => callback();
   window.addEventListener("storage", handleChange);
   window.addEventListener("buddy-outfit-changed", handleChange as EventListener);
+  window.addEventListener("buddy-variant-changed", handleChange as EventListener);
 
   return () => {
     window.removeEventListener("storage", handleChange);
     window.removeEventListener("buddy-outfit-changed", handleChange as EventListener);
+    window.removeEventListener("buddy-variant-changed", handleChange as EventListener);
   };
 }

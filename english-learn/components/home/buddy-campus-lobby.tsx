@@ -35,7 +35,6 @@ import {
 } from "@/components/home/buddy-companion";
 import { type BuddyOutfit } from "@/lib/buddy-wardrobe";
 import { type Locale } from "@/lib/i18n/dictionaries";
-import { type ScheduleGoal } from "@/lib/schedule";
 import { cn } from "@/lib/utils";
 
 type LobbyVector = {
@@ -87,18 +86,16 @@ export function BuddyCampusLobby({
   nextQuestHref,
   buddyStage,
   buddyFocus,
+  buddyVariant,
   buddyOutfit,
-  selectedGoal,
-  onSelectGoal,
 }: {
   locale: Locale;
   levelPrefix: string;
   nextQuestHref: string;
   buddyStage: BuddyStage;
   buddyFocus: BuddyFocus;
+  buddyVariant?: BuddyVariant;
   buddyOutfit: BuddyOutfit;
-  selectedGoal?: ScheduleGoal;
-  onSelectGoal?: (goal: ScheduleGoal) => void;
 }) {
   const router = useRouter();
   const arenaRef = useRef<HTMLDivElement>(null);
@@ -232,7 +229,7 @@ export function BuddyCampusLobby({
     ],
     [levelPrefix, locale, nextQuestHref],
   );
-  const primaryBuddyVariant = getBuddyVariantFromFocus(buddyFocus);
+  const primaryBuddyVariant = buddyVariant ?? getBuddyVariantFromFocus(buddyFocus);
   const buddyCrew = useMemo<
     Array<{
       id: string;

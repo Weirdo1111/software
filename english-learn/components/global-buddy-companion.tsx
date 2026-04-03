@@ -20,8 +20,10 @@ import {
 } from "@/lib/buddy-xp";
 import { subscribeBuddyXpEvents } from "@/lib/buddy-xp-events";
 import {
+  DEFAULT_BUDDY_VARIANT,
   DEFAULT_BUDDY_OUTFIT,
   loadBuddyOutfitFromStorage,
+  loadBuddyVariantFromStorage,
   subscribeBuddyOutfit,
   type BuddyOutfit,
 } from "@/lib/buddy-wardrobe";
@@ -77,6 +79,12 @@ function getBuddyVariant(focus: BuddyFocus): BuddyVariant {
   if (focus === "research") return "bunny";
   if (focus === "seminar") return "cat";
   return "bear";
+}
+
+function getBuddyFocusFromVariant(variant: BuddyVariant): BuddyFocus {
+  if (variant === "bunny") return "research";
+  if (variant === "cat") return "seminar";
+  return "coursework";
 }
 
 const MOODS: BuddyMood[] = ["happy", "proud", "calm", "happy"];
@@ -157,7 +165,6 @@ export function GlobalBuddyCompanion() {
   const searchParams = useSearchParams();
   const [snapshot, setSnapshot] = useState(() => createEmptyLearningTrackerSnapshot());
   const [xpSummary, setXpSummary] = useState(() => createEmptyBuddyXpSummary());
-  const [focus, setFocus] = useState<BuddyFocus>("coursework");
   const [face, setFace] = useState<BuddyFace>("happy");
   const [reactionBubble, setReactionBubble] = useState<BuddyReactionBubble>(null);
   const [moodIndex, setMoodIndex] = useState(0);
@@ -166,6 +173,7 @@ export function GlobalBuddyCompanion() {
   const [reaction, setReaction] = useState<BuddyReaction>("idle");
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [outfit, setOutfit] = useState<BuddyOutfit>(DEFAULT_BUDDY_OUTFIT);
+  const [variant, setVariant] = useState<BuddyVariant>(DEFAULT_BUDDY_VARIANT);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [assistantQuery, setAssistantQuery] = useState("");
   const [assistantLoading, setAssistantLoading] = useState(false);
@@ -200,9 +208,10 @@ export function GlobalBuddyCompanion() {
 
   useEffect(() => {
     const refresh = () => {
+      const nextFocus = getBuddyFocus();
       setSnapshot(loadLearningTrackerSnapshotFromStorage());
       setXpSummary(getBuddyXpSummaryFromStorage());
-      setFocus(getBuddyFocus());
+      setVariant(loadBuddyVariantFromStorage(getBuddyVariant(nextFocus)));
       setOutfit(loadBuddyOutfitFromStorage());
       setStoredLocale(resolveLocale(null, window.localStorage.getItem("english-learn:locale")));
       setSoundEnabled(isBuddySoundEnabled());
@@ -321,7 +330,7 @@ export function GlobalBuddyCompanion() {
 
   const stage = getBuddyStage(xp);
   const mood = MOODS[moodIndex];
-  const variant = getBuddyVariant(focus);
+  const renderFocus = getBuddyFocusFromVariant(variant);
   const activeBubbleText = reactionBubble?.text ?? greeting;
   const isPlainBubble = Boolean(reactionBubble?.plain);
   const displayedAssistantAnswer = assistantResponse?.answer ?? currentPageGuide.answer;
@@ -708,7 +717,7 @@ export function GlobalBuddyCompanion() {
           <span className="global-buddy-figure">
             <BuddyCompanion
               stage={stage}
-              focus={focus}
+              focus={renderFocus}
               variant={variant}
               mood={mood}
               face={face}

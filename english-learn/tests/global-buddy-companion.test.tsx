@@ -74,17 +74,19 @@ vi.mock("@/lib/buddy-xp-events", () => ({
 }));
 
 vi.mock("@/lib/buddy-wardrobe", () => ({
+  DEFAULT_BUDDY_VARIANT: "bear",
   DEFAULT_BUDDY_OUTFIT: {
     hat: "none",
-    accessory: "none",
-    top: "none",
-    bottom: "none",
+    clothing: "none",
+    glasses: "none",
+    heldItem: "none",
   },
+  loadBuddyVariantFromStorage: () => "bear",
   loadBuddyOutfitFromStorage: () => ({
     hat: "none",
-    accessory: "none",
-    top: "none",
-    bottom: "none",
+    clothing: "none",
+    glasses: "none",
+    heldItem: "none",
   }),
   subscribeBuddyOutfit: () => () => {},
 }));

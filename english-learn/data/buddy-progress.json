@@ -195,7 +195,7 @@
       "username": "bob",
       "email": "1111@11.com",
       "counts": {
-        "listeningCompletions": 5,
+        "listeningCompletions": 6,
         "speakingCompletions": 1,
         "readingCompletions": 0,
         "writingCompletions": 0,
@@ -205,10 +205,10 @@
         "dormLockoutClears": 0,
         "lastTrainClears": 0
       },
-      "totalXp": 120,
-      "totalCompletedSources": 7,
+      "totalXp": 135,
+      "totalCompletedSources": 8,
       "createdAt": "2026-04-02T08:23:00.216Z",
-      "updatedAt": "2026-04-02T11:33:04.414Z"
+      "updatedAt": "2026-04-03T08:41:18.862Z"
     }
   ]
 }
