@@ -90,7 +90,10 @@ export function WordGameLanding({ locale }: { locale: Locale }) {
           </h1>
           <div className="hero-actions">
             <button id="toSelect" className="btn-main" type="button" onClick={() => router.push(`/games/word-game/select?lang=${locale}`)}>
-              Start Game
+              Single Mode
+            </button>
+            <button id="toDuoSelect" className="btn-main btn-duo-main" type="button" onClick={() => router.push(`/games/word-game/select?lang=${locale}&mode=duo`)}>
+              Versus Mode
             </button>
             <button id="openRules" className="btn-ghost" type="button" onClick={() => setShowRules(true)}>
               View Rules
@@ -558,9 +561,11 @@ export function WordGameLanding({ locale }: { locale: Locale }) {
         }
 
         .hero-actions {
-          display: flex;
-          gap: 22px;
-          margin-top: 32px;
+          margin-top: 27px;
+          width: min(780px, calc(100vw - 90px));
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 12px;
         }
 
         .btn-main,
@@ -571,12 +576,13 @@ export function WordGameLanding({ locale }: { locale: Locale }) {
           cursor: pointer;
           font: inherit;
           font-weight: 900;
-          font-size: 1.5rem;
+          font-size: 1.1rem;
           letter-spacing: 0.08em;
           text-transform: uppercase;
           border-radius: 999px;
-          min-width: 240px;
-          padding: 22px 36px;
+          min-width: 0;
+          width: 100%;
+          padding: 15px 20px;
           overflow: hidden;
           transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
@@ -611,6 +617,12 @@ export function WordGameLanding({ locale }: { locale: Locale }) {
           color: var(--white);
           border: 3px solid #6f2d1e;
           box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.18), inset 0 -5px 0 rgba(109, 41, 25, 0.36), 0 6px 0 rgba(109, 41, 25, 0.38);
+        }
+
+        .btn-duo-main {
+          background: linear-gradient(180deg, #6f83f7, #4f5fd0);
+          border: 3px solid #333e96;
+          box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.2), inset 0 -5px 0 rgba(39, 49, 125, 0.36), 0 6px 0 rgba(34, 45, 117, 0.38);
         }
 
         .btn-ghost {
@@ -794,6 +806,10 @@ export function WordGameLanding({ locale }: { locale: Locale }) {
             top: 48%;
           }
 
+          .hero-actions {
+            width: min(740px, calc(100vw - 64px));
+          }
+
           .tower-block {
             transform: scale(0.78);
             transform-origin: bottom left;
@@ -820,8 +836,15 @@ export function WordGameLanding({ locale }: { locale: Locale }) {
           }
 
           .hero-actions {
-            flex-direction: column;
-            max-width: 360px;
+            width: 100%;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-top: 18px;
+          }
+
+          .btn-main {
+            font-size: 1rem;
+            padding: 13px 18px;
           }
 
           .landing-return-btn {
