@@ -115,7 +115,7 @@ export function EscapeRoomGame({ locale }: { locale: Locale }) {
   });
 
   const copy = {
-    back: "Back",
+    back: "Game Center",
     stage: "Midnight Library",
     fullscreen: "Full screen",
     exitFullscreen: "Exit full screen",

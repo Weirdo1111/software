@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { BookMarked, CheckCircle2, Search, Sparkles } from "lucide-react";
 
-import { ModalShell } from "@/components/escape-room/ModalShell";
+import { ModalShell, ROOM_RETURN_LABEL } from "@/components/escape-room/ModalShell";
 import type { ClueModalContent, InvestigationTarget, QuizOption } from "@/components/escape-room/types";
 import { cn } from "@/lib/utils";
 
@@ -185,7 +185,7 @@ export function ClueModal({
             onClick={onClose}
             className="rounded-full border border-[#ddd7ca] bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
           >
-            Close
+            {ROOM_RETURN_LABEL}
           </button>
 
           <button

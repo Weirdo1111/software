@@ -126,7 +126,7 @@ export function DormLockoutGame({ locale }: { locale: Locale }) {
   });
 
   const copy = {
-    back: "Back",
+    back: "Game Center",
     stage: "Dorm Lounge",
     fullscreen: "Full screen",
     exitFullscreen: "Exit full screen",

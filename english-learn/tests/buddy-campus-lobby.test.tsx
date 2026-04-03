@@ -2,6 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { BuddyCampusLobby } from "@/components/home/buddy-campus-lobby";
+import { DEFAULT_BUDDY_OUTFIT } from "@/lib/buddy-wardrobe";
 
 vi.mock("next/link", () => ({
   default: ({
@@ -34,13 +35,14 @@ describe("BuddyCampusLobby", () => {
         nextQuestHref="/schedule?lang=en"
         buddyStage="fresh"
         buddyFocus="coursework"
+        buddyOutfit={DEFAULT_BUDDY_OUTFIT}
       />,
     );
 
     const lobby = screen.getByRole("region", { name: /learning lobby/i });
 
     expect(screen.getAllByRole("button", { name: /game center/i }).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/escape room arcade/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/escape room \+ word game/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/left learning wing/i)).toBeInTheDocument();
     expect(screen.queryByText(/current zone/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/directional pad/i)).not.toBeInTheDocument();
