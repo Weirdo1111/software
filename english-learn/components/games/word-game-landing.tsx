@@ -110,6 +110,17 @@ export function WordGameLanding({ locale }: { locale: Locale }) {
           <h3 className="modal-title">Game Rules</h3>
           <div className="rule-block">
             <div className="rule-title">
+              <span className="rule-icon" aria-hidden="true">🎮</span>
+              <span>Game Modes</span>
+            </div>
+            <p className="rule-desc">
+              <span className="rule-key">Single Mode</span>: protect your tower and clear all waves before the core falls.
+              <br />
+              <span className="rule-key">Versus Mode</span>: race another player; win by clearing waves first or when your opponent is defeated first.
+            </p>
+          </div>
+          <div className="rule-block">
+            <div className="rule-title">
               <span className="rule-icon" aria-hidden="true">🎯</span>
               <span>Core Objective</span>
             </div>
@@ -545,7 +556,7 @@ export function WordGameLanding({ locale }: { locale: Locale }) {
         }
 
         .hero-title {
-          margin: 0;
+          margin: -10px 0 0;
           font-size: clamp(3.8rem, 8vw, 7.8rem);
           line-height: 0.9;
           font-weight: 900;
@@ -561,7 +572,7 @@ export function WordGameLanding({ locale }: { locale: Locale }) {
         }
 
         .hero-actions {
-          margin-top: 27px;
+          margin-top: 47px;
           width: min(780px, calc(100vw - 90px));
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -694,7 +705,7 @@ export function WordGameLanding({ locale }: { locale: Locale }) {
 
         .modal-content {
           position: relative;
-          width: min(560px, calc(100vw - 40px));
+          width: min(884px, calc(100vw - 40px));
           padding: 34px 32px 28px;
           border-radius: 24px;
           background: radial-gradient(circle at 26% 14%, rgba(136, 104, 206, 0.24), rgba(136, 104, 206, 0) 36%),
@@ -839,7 +850,7 @@ export function WordGameLanding({ locale }: { locale: Locale }) {
             width: 100%;
             grid-template-columns: 1fr;
             gap: 10px;
-            margin-top: 18px;
+            margin-top: 30px;
           }
 
           .btn-main {
