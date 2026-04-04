@@ -21,6 +21,9 @@
   - `npm run prisma:generate` passed
   - `npm run typecheck` passed
   - `npm run build` passed
+- Version-control checkpoint:
+  - Branch: `db-audit-fix-20260404`
+  - Commit: `517fc0f feat(db): add buddy and writing persistence with db-first fallback`
 - Pending:
   - Run migration against deployment database environment
   - Produce structured A/B/C/D/E audit report for PO delivery
