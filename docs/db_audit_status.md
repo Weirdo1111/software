@@ -21,6 +21,7 @@
   - `npm run prisma:generate` passed
   - `npm run typecheck` passed
   - `npm run build` passed
+  - `npm run test` passed (28 files, 89 tests)
   - `npm test -- --run tests/global-buddy-companion.test.tsx tests/writing-prompts.test.ts` passed
   - `npm test -- --run tests/schedule-import.test.ts` passed
 - Version-control checkpoint:
@@ -28,5 +29,16 @@
   - Commit: `517fc0f feat(db): add buddy and writing persistence with db-first fallback`
   - Commit: `9a2b593 docs: update db audit task checkpoint status`
 - Pending:
-  - Run migration against deployment database environment
   - Produce structured A/B/C/D/E audit report for PO delivery
+
+## 2026-04-04 Server Migration Execution
+- Target server: `43.139.248.220`
+- Target app directory: `/var/www/software/english-learn`
+- Uploaded files:
+  - `prisma/schema.prisma`
+  - `prisma/migrations/20260404_add_buddy_progress_and_writing_language_tables/migration.sql`
+- Executed command:
+  - `npx prisma migrate deploy --schema prisma/schema.prisma`
+- Result:
+  - Migration `20260404_add_buddy_progress_and_writing_language_tables` applied successfully.
+  - Verification `npx prisma migrate status --schema prisma/schema.prisma` returned `Database schema is up to date!`.
