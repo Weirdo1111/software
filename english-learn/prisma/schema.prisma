@@ -29,6 +29,8 @@ model User {
   aiFeedbackRecords          AIFeedbackRecord[]
   dailyPlans                 DailyPlan[]
   scheduleProfile            ScheduleProfile?
+  buddyProgress              BuddyProgress?
+  writingLanguageMasteries   WritingLanguageMastery[]
   contextComments            ContextComment[]
   contextCommentLikes        ContextCommentLike[]
   subscriptions              Subscription[]
@@ -49,6 +51,28 @@ model User {
 
   @@unique([authProvider, authUserId])
   @@map("users")
+}
+model BuddyProgress {
+  id                    BigInt   @id @default(autoincrement())
+  userId                BigInt   @unique
+  totalXp               Int      @default(0)
+  totalCompletedSources Int      @default(0)
+  listeningCompletions  Int      @default(0)
+  speakingCompletions   Int      @default(0)
+  readingCompletions    Int      @default(0)
+  writingCompletions    Int      @default(0)
+  reviewSessions        Int      @default(0)
+  wordGameClears        Int      @default(0)
+  escapeRoomClears      Int      @default(0)
+  dormLockoutClears     Int      @default(0)
+  lastTrainClears       Int      @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([totalXp])
+  @@map("buddy_progress")
 }
 
 model AuthSession {
@@ -225,6 +249,38 @@ model ScheduleProfile {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("schedule_profiles")
+}
+model WritingLanguageItem {
+  id         String   @id @default(uuid()) @db.Char(36)
+  itemKey    String   @unique @db.VarChar(191)
+  kind       String   @db.VarChar(20)
+  discipline String   @db.VarChar(30)
+  level      String   @db.VarChar(12)
+  title      String   @db.VarChar(191)
+  content    String   @db.Text
+  detail     String   @db.Text
+  createdAt  DateTime @default(now())
+
+  masteries WritingLanguageMastery[]
+
+  @@index([discipline, level, kind])
+  @@map("writing_language_items")
+}
+
+model WritingLanguageMastery {
+  id         String   @id @default(uuid()) @db.Char(36)
+  userId     BigInt
+  itemId     String   @db.Char(36)
+  masteredAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  user User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item WritingLanguageItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, itemId])
+  @@index([userId, masteredAt])
+  @@index([itemId])
+  @@map("writing_language_masteries")
 }
 
 model ContextCommentThread {

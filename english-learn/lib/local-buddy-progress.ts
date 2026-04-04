@@ -2,6 +2,8 @@ import { promises as fs } from "node:fs";
 import { join } from "node:path";
 
 import { type BuddyXpAwardSource, getBuddyXpForSource } from "@/lib/buddy-xp-config";
+import { isDatabaseAuthConfigured } from "@/lib/local-auth";
+import { prisma } from "@/lib/prisma";
 
 const dataDirPath = join(process.cwd(), "data");
 const buddyProgressDbPath = join(dataDirPath, "buddy-progress.json");
@@ -210,6 +212,338 @@ function buildRecordWithCounts(record: BuddyProgressRecord, counts: BuddyProgres
   };
 }
 
+function toSafeInt(value: number | null | undefined) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return 0;
+  return Math.max(0, Math.floor(value));
+}
+
+function toCountsFromDbRow(row: {
+  listeningCompletions: number;
+  speakingCompletions: number;
+  readingCompletions: number;
+  writingCompletions: number;
+  reviewSessions: number;
+  wordGameClears: number;
+  escapeRoomClears: number;
+  dormLockoutClears: number;
+  lastTrainClears: number;
+}): BuddyProgressCounts {
+  return cloneCounts({
+    listeningCompletions: row.listeningCompletions,
+    speakingCompletions: row.speakingCompletions,
+    readingCompletions: row.readingCompletions,
+    writingCompletions: row.writingCompletions,
+    reviewSessions: row.reviewSessions,
+    wordGameClears: row.wordGameClears,
+    escapeRoomClears: row.escapeRoomClears,
+    dormLockoutClears: row.dormLockoutClears,
+    lastTrainClears: row.lastTrainClears,
+  });
+}
+
+function mapDbRecordToBuddyProgress(input: {
+  authProvider: string;
+  authUserId: string;
+  username: string;
+  email?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  totalXp: number;
+  totalCompletedSources: number;
+  counts: BuddyProgressCounts;
+}): BuddyProgressRecord {
+  return {
+    authProvider: input.authProvider,
+    authUserId: input.authUserId,
+    username: input.username,
+    email: input.email,
+    createdAt: input.createdAt.toISOString(),
+    updatedAt: input.updatedAt.toISOString(),
+    totalXp: toSafeInt(input.totalXp),
+    totalCompletedSources: toSafeInt(input.totalCompletedSources),
+    counts: cloneCounts(input.counts),
+  };
+}
+
+async function resolveDatabaseUser(input: {
+  authProvider: string;
+  authUserId: string;
+  username: string;
+  email?: string;
+}) {
+  if (!isDatabaseAuthConfigured()) {
+    return null;
+  }
+
+  try {
+    const byIdentity = await prisma.user.findUnique({
+      where: {
+        authProvider_authUserId: {
+          authProvider: input.authProvider,
+          authUserId: input.authUserId,
+        },
+      },
+      select: {
+        id: true,
+        authProvider: true,
+        authUserId: true,
+        username: true,
+        email: true,
+      },
+    });
+
+    if (byIdentity) {
+      return byIdentity;
+    }
+
+    if (/^\d+$/.test(input.authUserId)) {
+      const byId = await prisma.user.findUnique({
+        where: {
+          id: BigInt(input.authUserId),
+        },
+        select: {
+          id: true,
+          authProvider: true,
+          authUserId: true,
+          username: true,
+          email: true,
+        },
+      });
+
+      if (byId) {
+        return byId;
+      }
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function ensureDatabaseBuddyProgress(userId: bigint) {
+  return prisma.buddyProgress.upsert({
+    where: { userId },
+    update: {},
+    create: {
+      userId,
+      totalXp: 0,
+      totalCompletedSources: 0,
+      listeningCompletions: 0,
+      speakingCompletions: 0,
+      readingCompletions: 0,
+      writingCompletions: 0,
+      reviewSessions: 0,
+      wordGameClears: 0,
+      escapeRoomClears: 0,
+      dormLockoutClears: 0,
+      lastTrainClears: 0,
+    },
+  });
+}
+
+async function getBuddyProgressFromDatabase(input: {
+  authProvider: string;
+  authUserId: string;
+  username: string;
+  email?: string;
+}) {
+  const user = await resolveDatabaseUser(input);
+  if (!user) {
+    return null;
+  }
+
+  const row = await ensureDatabaseBuddyProgress(user.id);
+  const counts = toCountsFromDbRow(row);
+  return mapDbRecordToBuddyProgress({
+    authProvider: user.authProvider,
+    authUserId: user.authUserId,
+    username: user.username,
+    email: user.email ?? undefined,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    totalXp: row.totalXp,
+    totalCompletedSources: row.totalCompletedSources,
+    counts,
+  });
+}
+
+async function awardBuddyProgressInDatabase(
+  input: {
+    authProvider: string;
+    authUserId: string;
+    username: string;
+    email?: string;
+  },
+  source: BuddyXpAwardSource,
+) {
+  const user = await resolveDatabaseUser(input);
+  if (!user) {
+    return null;
+  }
+
+  const current = await ensureDatabaseBuddyProgress(user.id);
+  const currentCounts = toCountsFromDbRow(current);
+  const nextCounts = applyAwardToCounts(currentCounts, source);
+  const nextTotalXp = sumTotalXp(nextCounts);
+  const nextCompleted = sumCompletedSources(nextCounts);
+
+  const updated = await prisma.buddyProgress.update({
+    where: { userId: user.id },
+    data: {
+      totalXp: nextTotalXp,
+      totalCompletedSources: nextCompleted,
+      listeningCompletions: nextCounts.listeningCompletions,
+      speakingCompletions: nextCounts.speakingCompletions,
+      readingCompletions: nextCounts.readingCompletions,
+      writingCompletions: nextCounts.writingCompletions,
+      reviewSessions: nextCounts.reviewSessions,
+      wordGameClears: nextCounts.wordGameClears,
+      escapeRoomClears: nextCounts.escapeRoomClears,
+      dormLockoutClears: nextCounts.dormLockoutClears,
+      lastTrainClears: nextCounts.lastTrainClears,
+    },
+  });
+
+  return mapDbRecordToBuddyProgress({
+    authProvider: user.authProvider,
+    authUserId: user.authUserId,
+    username: user.username,
+    email: user.email ?? undefined,
+    createdAt: updated.createdAt,
+    updatedAt: updated.updatedAt,
+    totalXp: updated.totalXp,
+    totalCompletedSources: updated.totalCompletedSources,
+    counts: nextCounts,
+  });
+}
+
+async function hydrateBuddyProgressInDatabase(
+  input: {
+    authProvider: string;
+    authUserId: string;
+    username: string;
+    email?: string;
+  },
+  counts: Partial<BuddyProgressCounts>,
+) {
+  const user = await resolveDatabaseUser(input);
+  if (!user) {
+    return null;
+  }
+
+  const current = await ensureDatabaseBuddyProgress(user.id);
+  const currentCounts = toCountsFromDbRow(current);
+
+  if (current.totalXp > 0 || current.totalCompletedSources > 0) {
+    return {
+      record: mapDbRecordToBuddyProgress({
+        authProvider: user.authProvider,
+        authUserId: user.authUserId,
+        username: user.username,
+        email: user.email ?? undefined,
+        createdAt: current.createdAt,
+        updatedAt: current.updatedAt,
+        totalXp: current.totalXp,
+        totalCompletedSources: current.totalCompletedSources,
+        counts: currentCounts,
+      }),
+      hydrated: false,
+    };
+  }
+
+  const nextCounts = cloneCounts(counts);
+  const nextTotalXp = sumTotalXp(nextCounts);
+  const nextCompleted = sumCompletedSources(nextCounts);
+
+  const updated = await prisma.buddyProgress.update({
+    where: { userId: user.id },
+    data: {
+      totalXp: nextTotalXp,
+      totalCompletedSources: nextCompleted,
+      listeningCompletions: nextCounts.listeningCompletions,
+      speakingCompletions: nextCounts.speakingCompletions,
+      readingCompletions: nextCounts.readingCompletions,
+      writingCompletions: nextCounts.writingCompletions,
+      reviewSessions: nextCounts.reviewSessions,
+      wordGameClears: nextCounts.wordGameClears,
+      escapeRoomClears: nextCounts.escapeRoomClears,
+      dormLockoutClears: nextCounts.dormLockoutClears,
+      lastTrainClears: nextCounts.lastTrainClears,
+    },
+  });
+
+  return {
+    record: mapDbRecordToBuddyProgress({
+      authProvider: user.authProvider,
+      authUserId: user.authUserId,
+      username: user.username,
+      email: user.email ?? undefined,
+      createdAt: updated.createdAt,
+      updatedAt: updated.updatedAt,
+      totalXp: updated.totalXp,
+      totalCompletedSources: updated.totalCompletedSources,
+      counts: nextCounts,
+    }),
+    hydrated: true,
+  };
+}
+
+async function resetBuddyProgressInDatabase(input: {
+  authProvider: string;
+  authUserId: string;
+  username: string;
+  email?: string;
+}) {
+  const user = await resolveDatabaseUser(input);
+  if (!user) {
+    return null;
+  }
+
+  const updated = await prisma.buddyProgress.upsert({
+    where: { userId: user.id },
+    update: {
+      totalXp: 0,
+      totalCompletedSources: 0,
+      listeningCompletions: 0,
+      speakingCompletions: 0,
+      readingCompletions: 0,
+      writingCompletions: 0,
+      reviewSessions: 0,
+      wordGameClears: 0,
+      escapeRoomClears: 0,
+      dormLockoutClears: 0,
+      lastTrainClears: 0,
+    },
+    create: {
+      userId: user.id,
+      totalXp: 0,
+      totalCompletedSources: 0,
+      listeningCompletions: 0,
+      speakingCompletions: 0,
+      readingCompletions: 0,
+      writingCompletions: 0,
+      reviewSessions: 0,
+      wordGameClears: 0,
+      escapeRoomClears: 0,
+      dormLockoutClears: 0,
+      lastTrainClears: 0,
+    },
+  });
+
+  return mapDbRecordToBuddyProgress({
+    authProvider: user.authProvider,
+    authUserId: user.authUserId,
+    username: user.username,
+    email: user.email ?? undefined,
+    createdAt: updated.createdAt,
+    updatedAt: updated.updatedAt,
+    totalXp: updated.totalXp,
+    totalCompletedSources: updated.totalCompletedSources,
+    counts: toCountsFromDbRow(updated),
+  });
+}
+
 export async function reconcileLocalBuddyProgressWithAuthUsers() {
   const [db, authUsers] = await Promise.all([readBuddyProgressDb(), readLocalAuthUsers()]);
 
@@ -261,6 +595,11 @@ export async function getLocalBuddyProgress(input: {
   username: string;
   email?: string;
 }) {
+  const fromDb = await getBuddyProgressFromDatabase(input);
+  if (fromDb) {
+    return fromDb;
+  }
+
   await reconcileLocalBuddyProgressWithAuthUsers();
   const db = await readBuddyProgressDb();
   const existing = db.records.find((record) => {
@@ -306,6 +645,11 @@ export async function awardLocalBuddyXp(
   },
   source: BuddyXpAwardSource
 ) {
+  const fromDb = await awardBuddyProgressInDatabase(input, source);
+  if (fromDb) {
+    return fromDb;
+  }
+
   await reconcileLocalBuddyProgressWithAuthUsers();
   const db = await readBuddyProgressDb();
   const existingIndex = db.records.findIndex((record) => {
@@ -343,6 +687,11 @@ export async function hydrateLocalBuddyProgress(
   },
   counts: Partial<BuddyProgressCounts>
 ) {
+  const fromDb = await hydrateBuddyProgressInDatabase(input, counts);
+  if (fromDb) {
+    return fromDb;
+  }
+
   await reconcileLocalBuddyProgressWithAuthUsers();
   const db = await readBuddyProgressDb();
   const existingIndex = db.records.findIndex((record) => {
@@ -387,6 +736,11 @@ export async function resetLocalBuddyProgress(input: {
   username: string;
   email?: string;
 }) {
+  const fromDb = await resetBuddyProgressInDatabase(input);
+  if (fromDb) {
+    return fromDb;
+  }
+
   await reconcileLocalBuddyProgressWithAuthUsers();
   const db = await readBuddyProgressDb();
   const existingIndex = db.records.findIndex((record) => {
