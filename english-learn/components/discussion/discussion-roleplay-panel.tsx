@@ -98,8 +98,8 @@ export function DiscussionRoleplayPanel({ locale }: { locale: Locale }) {
   const bridgeUrl =
     process.env.NEXT_PUBLIC_ROLEPLAY_BRIDGE_URL ||
     (typeof window !== "undefined"
-      ? `ws://${window.location.hostname || "127.0.0.1"}:8876`
-      : "ws://127.0.0.1:8876");
+      ? `ws://${window.location.hostname || "127.0.0.1"}:8877`
+      : "ws://127.0.0.1:8877");
   const realtime = useRealtimeRoleplay(bridgeUrl);
   const visual = CHARACTER_VISUALS[selectedCharacterId];
   const CharacterIcon = visual.icon;

@@ -1,17 +1,20 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import {
-  Heart,
-  MessageCircle,
-  Pin,
   Clock3,
-  TrendingUp,
+  Heart,
   LayoutList,
-  Search,
+  MessageCircle,
+  Mic,
+  Pin,
   Plus,
+  Search,
+  TrendingUp,
 } from "lucide-react";
+
 import type { DiscussionPost } from "@/app/discussion/page";
+import { formatRecordingTime } from "@/components/forms/speaking/formatters";
 
 type Locale = "zh" | "en";
 type ViewMode = "all" | "hot" | "latest";
@@ -40,21 +43,24 @@ export function DiscussionBoard({
       all: "全部",
       latest: "最新",
       hot: "热门",
-      searchPlaceholder: "搜索帖子标题或内容...",
+      searchPlaceholder: "搜索标题、内容、分类或评论...",
       comments: "评论",
       addComment: "发表评论",
-      commentPlaceholder: "写下你的想法...",
+      commentPlaceholder: "写下你的回复...",
       empty: "当前还没有帖子，试着发布第一条讨论。",
       noResult: "没有匹配的帖子。",
       pinned: "置顶",
       noComments: "还没有评论，来发表第一条回复吧。",
-      threads: "篇帖子",
+      threads: "条帖子",
+      voiceNote: "语音",
+      voiceAttached: "附带语音内容",
+      createPost: "发帖",
     },
     en: {
       all: "All",
       latest: "Latest",
       hot: "Hot",
-      searchPlaceholder: "Search threads...",
+      searchPlaceholder: "Search title, content, tag, or comments...",
       comments: "Comments",
       addComment: "Add comment",
       commentPlaceholder: "Write your reply...",
@@ -63,21 +69,24 @@ export function DiscussionBoard({
       pinned: "Pinned",
       noComments: "No comments yet. Start the conversation.",
       threads: "threads",
+      voiceNote: "Voice",
+      voiceAttached: "Voice note attached",
+      createPost: "Create post",
     },
   }[locale];
 
   const filteredAndSortedPosts = useMemo(() => {
     const keyword = search.trim().toLowerCase();
-    let arr = [...posts];
+    let items = [...posts];
 
     if (keyword) {
-      arr = arr.filter((post) => {
+      items = items.filter((post) => {
         const haystack = [
           post.title,
           post.content,
           post.author,
           post.tag,
-          ...post.comments.map((c) => c.content),
+          ...post.comments.map((comment) => comment.content),
         ]
           .join(" ")
           .toLowerCase();
@@ -87,21 +96,21 @@ export function DiscussionBoard({
     }
 
     if (view === "hot") {
-      arr.sort((a, b) => b.likes - a.likes);
-      return arr;
+      items.sort((left, right) => right.likes - left.likes);
+      return items;
     }
 
     if (view === "latest") {
-      arr.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-      return arr;
+      items.sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+      return items;
     }
 
-    arr.sort((a, b) => {
-      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
-      return b.createdAt.localeCompare(a.createdAt);
+    items.sort((left, right) => {
+      if (left.pinned !== right.pinned) return left.pinned ? -1 : 1;
+      return right.createdAt.localeCompare(left.createdAt);
     });
 
-    return arr;
+    return items;
   }, [posts, search, view]);
 
   const handleSubmitComment = (postId: string) => {
@@ -109,7 +118,7 @@ export function DiscussionBoard({
     if (!draft) return;
 
     onAddComment(postId, draft);
-    setCommentDrafts((prev) => ({ ...prev, [postId]: "" }));
+    setCommentDrafts((current) => ({ ...current, [postId]: "" }));
   };
 
   const showEmpty = posts.length === 0;
@@ -166,7 +175,7 @@ export function DiscussionBoard({
             type="button"
             onClick={onOpenComposer}
             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[1.1rem] bg-[var(--navy)] text-[#f7efe3] shadow-[0_10px_24px_rgba(23,32,51,0.14)] transition hover:opacity-95"
-            aria-label={locale === "zh" ? "发帖" : "Create post"}
+            aria-label={text.createPost}
           >
             <Plus className="size-4.5" />
           </button>
@@ -177,7 +186,7 @@ export function DiscussionBoard({
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(event) => setSearch(event.target.value)}
             placeholder={text.searchPlaceholder}
             className="h-10 w-full rounded-[1.1rem] border border-[rgba(20,50,75,0.12)] bg-white/85 pl-10 pr-4 text-sm text-[var(--ink)] outline-none transition placeholder:text-[var(--ink-soft)] focus:border-[var(--navy)]"
           />
@@ -208,25 +217,49 @@ export function DiscussionBoard({
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
               <div className="mb-2 flex flex-wrap items-center gap-2">
-                {post.pinned && (
+                {post.pinned ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-[var(--navy)] px-2.5 py-1 text-[11px] font-semibold text-[#f7efe3]">
                     <Pin className="size-3.5" />
                     {text.pinned}
                   </span>
-                )}
+                ) : null}
 
                 <span className="rounded-full border border-[rgba(20,50,75,0.1)] bg-[rgba(255,251,246,0.88)] px-2.5 py-1 text-[11px] font-medium text-[var(--ink-soft)]">
                   {post.tag}
                 </span>
+
+                {post.voiceNote ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[rgba(42,105,88,0.1)] px-2.5 py-1 text-[11px] font-semibold text-[#2a6958]">
+                    <Mic className="size-3.5" />
+                    {text.voiceNote}
+                  </span>
+                ) : null}
               </div>
 
               <h3 className="text-lg font-semibold tracking-tight text-[var(--ink)] sm:text-[1.28rem]">
                 {post.title}
               </h3>
 
-              <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
-                {post.content}
-              </p>
+              {post.content ? (
+                <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
+                  {post.content}
+                </p>
+              ) : null}
+
+              {post.voiceNote ? (
+                <div className="mt-4 rounded-[1rem] border border-[rgba(42,105,88,0.14)] bg-[rgba(244,250,247,0.95)] p-3.5">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="inline-flex items-center gap-2 text-sm font-medium text-[#2a6958]">
+                      <Mic className="size-4" />
+                      {text.voiceAttached}
+                    </div>
+                    <span className="text-xs text-[var(--ink-soft)]">
+                      {formatRecordingTime(post.voiceNote.durationMs)}
+                    </span>
+                  </div>
+                  <audio controls src={post.voiceNote.dataUrl} className="mt-3 w-full" />
+                </div>
+              ) : null}
             </div>
 
             <div className="shrink-0 text-right text-xs text-[var(--ink-soft)]">
@@ -285,10 +318,10 @@ export function DiscussionBoard({
           <div className="mt-4 flex gap-2.5">
             <input
               value={commentDrafts[post.id] || ""}
-              onChange={(e) =>
-                setCommentDrafts((prev) => ({
-                  ...prev,
-                  [post.id]: e.target.value,
+              onChange={(event) =>
+                setCommentDrafts((current) => ({
+                  ...current,
+                  [post.id]: event.target.value,
                 }))
               }
               placeholder={text.commentPlaceholder}

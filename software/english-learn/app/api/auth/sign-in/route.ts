@@ -6,7 +6,7 @@ import { jsonError } from "@/lib/api";
 import { findLocalUserByLogin, toPublicUser, verifyPassword } from "@/lib/local-auth";
 
 const schema = z.object({
-  email: z.string().email().optional(),
+  email: z.string().optional(),
   identifier: z.string().min(1).optional(),
   password: z.string().min(6),
 });
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const payload = schema.parse(body);
-    const loginIdentifier = payload.email ?? payload.identifier;
+    const loginIdentifier = payload.identifier?.trim() || payload.email?.trim() || "";
 
     if (!loginIdentifier) {
       return jsonError("Email or account is required", 422);
@@ -44,8 +44,16 @@ export async function POST(request: Request) {
       });
     }
 
+    const supabaseEmail =
+      payload.email?.trim() ||
+      (loginIdentifier.includes("@") ? loginIdentifier : "");
+
+    if (!supabaseEmail) {
+      return jsonError("Email is required for this sign-in method", 422);
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
-      email: loginIdentifier,
+      email: supabaseEmail,
       password: payload.password,
     });
 

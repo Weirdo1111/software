@@ -14,6 +14,7 @@ import type {
 } from "@/components/discussion/seminar-types";
 import type { DiscussionCategory } from "@/components/discussion/types";
 import { getCurrentAuthIdentity } from "@/lib/current-user";
+import { prisma } from "@/lib/prisma";
 import {
   SEMINAR_CALL_SIGNAL_RETENTION_MS,
   SEMINAR_CALL_STALE_AFTER_MS,
@@ -23,6 +24,13 @@ import { hashPassword, verifyPassword } from "@/lib/local-auth";
 
 const SEMINAR_LOCAL_DB_PATH = join(process.cwd(), "data", "seminar-rooms.json");
 let localDbOperation = Promise.resolve<void>(undefined);
+let seminarStoreDecision:
+  | {
+      expiresAt: number;
+      useLocalStore: boolean;
+    }
+  | null = null;
+let seminarStoreDecisionPromise: Promise<boolean> | null = null;
 
 type LocalSeminarVisibility = "PUBLIC" | "PROTECTED";
 type LocalSeminarStatus = "ACTIVE" | "ARCHIVED" | "CLOSED";
@@ -486,8 +494,68 @@ function mapDetail(
   };
 }
 
-export function shouldUseSeminarLocalStore() {
-  return !process.env.DATABASE_URL && process.env.NODE_ENV !== "test";
+export async function shouldUseSeminarLocalStore() {
+  if (process.env.NODE_ENV === "test") {
+    return false;
+  }
+
+  if (!process.env.DATABASE_URL?.trim()) {
+    return true;
+  }
+
+  const now = Date.now();
+  if (seminarStoreDecision && seminarStoreDecision.expiresAt > now) {
+    return seminarStoreDecision.useLocalStore;
+  }
+
+  if (!seminarStoreDecisionPromise) {
+    seminarStoreDecisionPromise = (async () => {
+      const prismaWithSeminarModels = prisma as typeof prisma & {
+        seminarRoom?: unknown;
+        seminarRoomMember?: unknown;
+        seminarRoomMessage?: unknown;
+        seminarRoomAttachment?: unknown;
+        seminarRoomCallParticipant?: unknown;
+        seminarRoomCallSignal?: unknown;
+      };
+
+      const hasSeminarModels = Boolean(
+        prismaWithSeminarModels.seminarRoom &&
+          prismaWithSeminarModels.seminarRoomMember &&
+          prismaWithSeminarModels.seminarRoomMessage &&
+          prismaWithSeminarModels.seminarRoomAttachment &&
+          prismaWithSeminarModels.seminarRoomCallParticipant &&
+          prismaWithSeminarModels.seminarRoomCallSignal,
+      );
+
+      if (!hasSeminarModels) {
+        seminarStoreDecision = {
+          expiresAt: now + 15_000,
+          useLocalStore: true,
+        };
+        return true;
+      }
+
+      try {
+        await prisma.$queryRawUnsafe("SELECT 1");
+        seminarStoreDecision = {
+          expiresAt: now + 15_000,
+          useLocalStore: false,
+        };
+        return false;
+      } catch {
+        seminarStoreDecision = {
+          expiresAt: now + 15_000,
+          useLocalStore: true,
+        };
+        return true;
+      }
+    })().finally(() => {
+      seminarStoreDecisionPromise = null;
+    });
+  }
+
+  return seminarStoreDecisionPromise;
 }
 
 export async function getCurrentSeminarLocalActor(required: true): Promise<LocalSeminarUser>;

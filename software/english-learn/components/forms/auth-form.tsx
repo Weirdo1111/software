@@ -14,7 +14,7 @@ const modeCopy = {
     title: "Return to your learner workspace",
     button: "Sign in",
     statusReady: "Signed in. Your dashboard is ready.",
-    helper: "Use the same email you used for placement, progress tracking, and AI feedback.",
+    helper: "Use the same email or account you used for placement, progress tracking, and AI feedback.",
     altLabel: "Need a new account?",
     altHref: "/auth/sign-up",
     altCta: "Create one",
@@ -33,6 +33,7 @@ const modeCopy = {
 export function AuthForm({ mode, locale }: { mode: AuthMode; locale: Locale }) {
   const copy = modeCopy[mode];
   const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [status, setStatus] = useState("");
@@ -40,7 +41,9 @@ export function AuthForm({ mode, locale }: { mode: AuthMode; locale: Locale }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const canSubmit = useMemo(() => {
-    if (!email || !password) {
+    const hasLogin = mode === "sign-in" ? Boolean(identifier) : Boolean(email);
+
+    if (!hasLogin || !password) {
       return false;
     }
 
@@ -49,7 +52,7 @@ export function AuthForm({ mode, locale }: { mode: AuthMode; locale: Locale }) {
     }
 
     return true;
-  }, [confirmPassword, email, mode, password]);
+  }, [confirmPassword, email, identifier, mode, password]);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -67,13 +70,28 @@ export function AuthForm({ mode, locale }: { mode: AuthMode; locale: Locale }) {
       const response = await fetch(`/api/auth/${mode}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(
+          mode === "sign-in"
+            ? { identifier, password }
+            : { email, password }
+        ),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.error || "Authentication failed.");
+      }
+
+      if (mode === "sign-in") {
+        const loginName =
+          data.user?.username || data.user?.email || identifier.trim();
+
+        localStorage.setItem("demo_logged_in", "true");
+        localStorage.setItem("demo_user", loginName);
+        window.dispatchEvent(new Event("demo-auth-changed"));
+        window.location.href = `/dashboard?lang=${locale}`;
+        return;
       }
 
       setStatus(data.message || copy.statusReady);
@@ -95,13 +113,19 @@ export function AuthForm({ mode, locale }: { mode: AuthMode; locale: Locale }) {
 
       <div className="grid gap-4">
         <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-          Email
+          {mode === "sign-in" ? "Email or account" : "Email"}
           <input
-            name="email"
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@university.edu"
+            name={mode === "sign-in" ? "identifier" : "email"}
+            type={mode === "sign-in" ? "text" : "email"}
+            value={mode === "sign-in" ? identifier : email}
+            onChange={(event) =>
+              mode === "sign-in"
+                ? setIdentifier(event.target.value)
+                : setEmail(event.target.value)
+            }
+            placeholder={
+              mode === "sign-in" ? "admin or you@university.edu" : "you@university.edu"
+            }
             className="rounded-[1.1rem] border border-[rgba(20,50,75,0.16)] bg-white/75 px-4 py-3 text-sm outline-none transition focus:border-[var(--navy)] focus:ring-2 focus:ring-[rgba(20,50,75,0.08)]"
           />
         </label>
