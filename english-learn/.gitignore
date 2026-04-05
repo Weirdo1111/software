@@ -25,6 +25,7 @@
 *.pem
 /data/seminar-rooms.json
 /data/seminar-room-attachments/
+/data/word-game-versus-rooms.json
 
 # debug
 npm-debug.log*
