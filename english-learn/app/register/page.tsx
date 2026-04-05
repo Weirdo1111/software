@@ -21,9 +21,6 @@ export default function RegisterPage() {
       langLabel: "网站语言",
       badge: "DIICSU FRESHMAN ENGLISH HUB",
       title: "创建你的 DIICSU 新生学习账号。",
-      subtitle: "从这里进入一个面向 coursework、seminar 和四项技能成长的专属学习空间。",
-      highlights: ["Listening", "Writing", "Seminar", "Buddy growth"],
-      heroCaption: "创建账号后，你的桌宠成长、学习进度和反馈记录都会跟这个 DIICSU 学习空间绑定。",
       panelKicker: "CREATE DIICSU ACCOUNT",
       panelTitle: "创建账号。",
       panelDesc: "填写基础信息，开启你的 DIICSU 新生英语学习路径。",
@@ -45,9 +42,6 @@ export default function RegisterPage() {
       langLabel: "Language",
       badge: "DIICSU FRESHMAN ENGLISH HUB",
       title: "Create your DIICSU freshman account.",
-      subtitle: "Open one learner space for coursework support, seminar practice, and four-skill growth.",
-      highlights: ["Listening", "Writing", "Seminar", "Buddy growth"],
-      heroCaption: "After account creation, your buddy growth, study progress, and feedback records all stay tied to the same DIICSU learner space.",
       panelKicker: "CREATE DIICSU ACCOUNT",
       panelTitle: "Sign up.",
       panelDesc: "Enter your details and begin a DIICSU-first study route.",
@@ -178,38 +172,35 @@ export default function RegisterPage() {
             </div>
           </header>
 
-          <section className="grid min-h-[calc(100vh-118px)] grid-cols-1 gap-6 lg:grid-cols-[1.12fr_0.88fr]">
-            <div className="relative overflow-hidden rounded-[36px] border-2 border-white/80 bg-[linear-gradient(165deg,rgba(255,255,255,0.96),rgba(236,246,255,0.92),rgba(255,243,249,0.86))] p-7 shadow-[0_14px_0_rgba(143,196,255,0.18),0_22px_48px_rgba(90,123,255,0.12)] lg:p-10">
+          <section className="grid min-h-[calc(100vh-118px)] items-stretch grid-cols-1 gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+            <div className="relative flex h-full overflow-hidden rounded-[36px] border-2 border-white/80 bg-[linear-gradient(165deg,rgba(255,255,255,0.96),rgba(236,246,255,0.92),rgba(255,243,249,0.86))] p-7 shadow-[0_14px_0_rgba(143,196,255,0.18),0_22px_48px_rgba(90,123,255,0.12)] lg:p-10">
               <div className="absolute right-[-60px] top-[-60px] h-52 w-52 rounded-full bg-[#dff2ff]/80 blur-2xl" />
               <div className="absolute bottom-[-70px] left-[-40px] h-56 w-56 rounded-full bg-[#ffe8f2]/65 blur-2xl" />
 
               <AuthLandingHero
                 badge={copy.badge}
                 title={copy.title}
-                subtitle={copy.subtitle}
-                highlights={copy.highlights}
-                caption={copy.heroCaption}
               />
             </div>
 
-            <div className="rounded-[36px] border-2 border-white/75 bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(239,247,255,0.92)_48%,rgba(248,243,255,0.9)_100%)] p-7 text-[#22314d] shadow-[0_14px_0_rgba(143,196,255,0.18),0_24px_55px_rgba(90,123,255,0.14)] backdrop-blur lg:p-8">
-              <div className="mb-8">
+            <div className="flex h-full flex-col rounded-[36px] border-2 border-white/75 bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(239,247,255,0.92)_48%,rgba(248,243,255,0.9)_100%)] p-6 text-[#22314d] shadow-[0_14px_0_rgba(143,196,255,0.18),0_24px_55px_rgba(90,123,255,0.14)] backdrop-blur lg:p-7">
+              <div className="mb-6">
                 <div className="text-[11px] font-semibold tracking-[0.24em] text-[#6f7fa5]">
                   {copy.panelKicker}
                 </div>
 
                 <h2
-                  className="font-display mt-5 text-[40px] leading-none tracking-[-0.03em] text-[#22314d] md:text-[52px]"
+                  className="font-display mt-4 text-[36px] leading-none tracking-[-0.03em] text-[#22314d] md:text-[46px]"
                 >
                   {copy.panelTitle}
                 </h2>
 
-                <p className="mt-4 max-w-[460px] text-base leading-8 text-slate-500">
+                <p className="mt-3 max-w-[420px] text-[15px] leading-7 text-slate-500">
                   {copy.panelDesc}
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-3">
                 <Field
                   label={copy.username}
                   type="text"
@@ -244,7 +235,7 @@ export default function RegisterPage() {
                   </div>
                 ) : null}
 
-                <div className="pt-2">
+                <div className="pt-1">
                   <button
                     type="submit"
                     disabled={loading}
@@ -255,26 +246,28 @@ export default function RegisterPage() {
 
                   <Link
                     href="/login"
-                    className="mt-4 flex h-14 w-full items-center justify-center rounded-[22px] border-2 border-[rgba(90,123,255,0.16)] bg-white/82 text-base font-semibold text-[#22314d] transition hover:bg-white"
+                    className="mt-3 flex h-14 w-full items-center justify-center rounded-[22px] border-2 border-[rgba(90,123,255,0.16)] bg-white/82 text-base font-semibold text-[#22314d] transition hover:bg-white"
                   >
                     {copy.toLogin}
                   </Link>
                 </div>
               </form>
 
-              <div className="mt-8 rounded-[28px] border-2 border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.9),rgba(239,247,255,0.82))] p-5 shadow-[0_10px_0_rgba(143,196,255,0.14)]">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <div className="text-lg font-semibold text-[#22314d]">
-                    {copy.accountCardTitle}
+              <div className="mt-auto pt-6">
+                <div className="rounded-[26px] border-2 border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.9),rgba(239,247,255,0.82))] p-4 shadow-[0_10px_0_rgba(143,196,255,0.14)]">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div className="text-lg font-semibold text-[#22314d]">
+                      {copy.accountCardTitle}
+                    </div>
+                    <span className="rounded-full border border-[#ffd98a] bg-[#fff7da] px-3 py-1 text-[11px] font-semibold tracking-[0.2em] text-[#8c6810]">
+                      DIICSU
+                    </span>
                   </div>
-                  <span className="rounded-full border border-[#ffd98a] bg-[#fff7da] px-3 py-1 text-[11px] font-semibold tracking-[0.2em] text-[#8c6810]">
-                    DIICSU
-                  </span>
-                </div>
 
-                <p className="text-[15px] leading-7 text-slate-500">
-                  {copy.accountCardText}
-                </p>
+                  <p className="text-[15px] leading-7 text-slate-500">
+                    {copy.accountCardText}
+                  </p>
+                </div>
               </div>
             </div>
           </section>
@@ -296,8 +289,8 @@ function Field({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="rounded-[24px] border-2 border-white/80 bg-white/82 p-4 shadow-[0_8px_0_rgba(143,196,255,0.12)] backdrop-blur-sm">
-      <label className="mb-2 block text-sm font-medium text-[#5f6f90]">
+    <div className="rounded-[22px] border-2 border-white/80 bg-white/82 p-3.5 shadow-[0_8px_0_rgba(143,196,255,0.12)] backdrop-blur-sm">
+      <label className="mb-1.5 block text-sm font-medium text-[#5f6f90]">
         {label}
       </label>
       <input
@@ -305,7 +298,7 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={label}
-        className="h-11 w-full bg-transparent text-base text-[#22314d] outline-none placeholder:text-slate-400"
+        className="h-10.5 w-full bg-transparent text-base text-[#22314d] outline-none placeholder:text-slate-400"
       />
     </div>
   );
