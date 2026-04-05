@@ -1,9 +1,13 @@
 "use client";
 
 type BuddySoundKind = "click" | "bounce" | "wave" | "easter" | "step";
+type BuddyBgmVariant = "classic" | "bear" | "bunny" | "cat";
 
 let audioContextRef: AudioContext | null = null;
 let walkLoopTimerRef: number | null = null;
+let bgmGainRef: GainNode | null = null;
+let bgmLoopTimerRef: number | null = null;
+let bgmVariantRef: BuddyBgmVariant = "classic";
 
 function getAudioContext() {
   const AudioContextClass =
@@ -77,12 +81,124 @@ export function isBuddySoundEnabled() {
 export function setBuddySoundEnabled(enabled: boolean) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem("english-learn:buddy-sound", enabled ? "on" : "off");
+  if (!enabled) {
+    stopBuddyBgmLoop();
+  }
 }
 
 export function stopBuddyWalkLoop() {
   if (walkLoopTimerRef !== null) {
     window.clearInterval(walkLoopTimerRef);
     walkLoopTimerRef = null;
+  }
+}
+
+function scheduleBuddyBgmLoop(context: AudioContext, gainNode: GainNode, variant: BuddyBgmVariant) {
+  const bgmProfiles: Record<BuddyBgmVariant, { melody: number[]; bass: number[] }> = {
+    classic: {
+      melody: [659.25, 783.99, 880, 783.99, 698.46, 783.99],
+      bass: [220, 261.63, 293.66],
+    },
+    bear: {
+      melody: [523.25, 659.25, 698.46, 659.25, 587.33, 659.25],
+      bass: [196, 220, 261.63],
+    },
+    bunny: {
+      melody: [783.99, 880, 987.77, 880, 830.61, 880],
+      bass: [261.63, 293.66, 329.63],
+    },
+    cat: {
+      melody: [698.46, 880, 987.77, 880, 783.99, 932.33],
+      bass: [246.94, 293.66, 329.63],
+    },
+  };
+
+  const profile = bgmProfiles[variant];
+  const startAt = context.currentTime + 0.02;
+
+  profile.melody.forEach((frequency, index) => {
+    const oscillator = context.createOscillator();
+    const noteGain = context.createGain();
+    const noteTime = startAt + index * 0.22;
+    oscillator.type = "triangle";
+    oscillator.frequency.setValueAtTime(frequency, noteTime);
+    noteGain.gain.setValueAtTime(0.0001, noteTime);
+    noteGain.gain.linearRampToValueAtTime(0.11, noteTime + 0.04);
+    noteGain.gain.exponentialRampToValueAtTime(0.0001, noteTime + 0.2);
+    oscillator.connect(noteGain);
+    noteGain.connect(gainNode);
+    oscillator.start(noteTime);
+    oscillator.stop(noteTime + 0.22);
+  });
+
+  profile.bass.forEach((frequency, index) => {
+    const oscillator = context.createOscillator();
+    const noteGain = context.createGain();
+    const noteTime = startAt + index * 0.44;
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(frequency, noteTime);
+    noteGain.gain.setValueAtTime(0.0001, noteTime);
+    noteGain.gain.linearRampToValueAtTime(0.055, noteTime + 0.05);
+    noteGain.gain.exponentialRampToValueAtTime(0.0001, noteTime + 0.38);
+    oscillator.connect(noteGain);
+    noteGain.connect(gainNode);
+    oscillator.start(noteTime);
+    oscillator.stop(noteTime + 0.4);
+  });
+
+  bgmLoopTimerRef = window.setTimeout(() => {
+    if (!bgmGainRef || !isBuddySoundEnabled()) {
+      stopBuddyBgmLoop();
+      return;
+    }
+    scheduleBuddyBgmLoop(context, gainNode, bgmVariantRef);
+  }, 1320);
+}
+
+export function stopBuddyBgmLoop() {
+  if (typeof window === "undefined") return;
+  if (bgmLoopTimerRef !== null) {
+    window.clearTimeout(bgmLoopTimerRef);
+    bgmLoopTimerRef = null;
+  }
+  if (!bgmGainRef) return;
+
+  const gainNode = bgmGainRef;
+  const context = gainNode.context;
+  const now = context.currentTime;
+  gainNode.gain.cancelScheduledValues(now);
+  gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+  gainNode.gain.linearRampToValueAtTime(0.0001, now + 0.24);
+  window.setTimeout(() => {
+    gainNode.disconnect();
+  }, 280);
+  bgmGainRef = null;
+}
+
+export async function startBuddyBgmLoop(variant: BuddyBgmVariant = bgmVariantRef) {
+  if (typeof window === "undefined") return;
+  if (!isBuddySoundEnabled()) return;
+
+  const unlocked = await unlockBuddySound();
+  if (!unlocked) return;
+
+  const context = getAudioContext();
+  if (!context) return;
+
+  bgmVariantRef = variant;
+
+  if (!bgmGainRef) {
+    const gainNode = context.createGain();
+    gainNode.gain.setValueAtTime(0.0001, context.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.12, context.currentTime + 0.3);
+    gainNode.connect(context.destination);
+    bgmGainRef = gainNode;
+    scheduleBuddyBgmLoop(context, gainNode, bgmVariantRef);
+    return;
+  }
+
+  if (bgmLoopTimerRef === null) {
+    scheduleBuddyBgmLoop(context, bgmGainRef, bgmVariantRef);
   }
 }
 

@@ -451,6 +451,11 @@ const buddyVariantCopy: Record<BuddyVariant, { zh: string; en: string; noteZh: s
 const selectableBuddyVariants: BuddyVariant[] = ["bear", "bunny", "cat"];
 const HOME_BUDDY_SPEECH_MOTIONS = ["hop", "wave", "shimmy"] as const;
 type HomeBuddySpeechMotion = (typeof HOME_BUDDY_SPEECH_MOTIONS)[number];
+type HomeBuddyIntroPhase = "hidden" | "welcome" | "shrinking" | "done";
+type HomeBuddyWelcomeCopy = {
+  headline: string;
+  detail: string;
+};
 
 function getHomeBuddyIdleLines(variant: BuddyVariant, locale: Locale) {
   const copy = {
@@ -513,6 +518,54 @@ function getHomeBuddyIdleLines(variant: BuddyVariant, locale: Locale) {
   } satisfies Record<BuddyVariant, { zh: string[]; en: string[] }>;
 
   return copy[variant][locale];
+}
+
+function getHomeBuddyWelcomeCopy(variant: BuddyVariant, locale: Locale, displayName: string): HomeBuddyWelcomeCopy {
+  const shortName = displayName.trim() || (locale === "zh" ? "同学" : "friend");
+  const copy = {
+    classic:
+      locale === "zh"
+        ? {
+            headline: `欢迎光临，${shortName}。这里是邓迪国际学院 DIICSU 的英语冒险校园。`,
+            detail: "今天先让我替你把迎新气氛点亮：听力、表达、任务板和学伴成长，都已经准备好开场了。",
+          }
+        : {
+            headline: `Welcome in, ${shortName}. This is the English adventure campus of Dundee International Institute, DIICSU.`,
+            detail: "Let me light up the welcome vibe first: listening, expression, mission boards, and buddy growth are all ready to open the day.",
+          },
+    bear:
+      locale === "zh"
+        ? {
+            headline: `欢迎光临，${shortName}。这里是邓迪国际学院 DIICSU，指南熊先替你把主线任务排好。`,
+            detail: "今天从首页出发，我们会像真正的新生导览一样，稳稳走过任务台、学习楼和成长看板。",
+          }
+        : {
+            headline: `Welcome in, ${shortName}. You are at DIICSU, and your Compass Bear has already lined up the main route.`,
+            detail: "Starting from home, we'll move like a real freshman campus tour through missions, study halls, and growth boards.",
+          },
+    bunny:
+      locale === "zh"
+        ? {
+            headline: `欢迎光临，${shortName}。邓迪国际学院 DIICSU 的探索信号已经亮起，云朵兔先来迎接你。`,
+            detail: "今天我们不只做题，还会在这个校园里找资料、听讲座、读内容，把好奇心也一起带进学习节奏。",
+          }
+        : {
+            headline: `Welcome in, ${shortName}. The DIICSU exploration signal is live, and Cloud Bun is here to greet you first.`,
+            detail: "Today we are not just answering tasks - we are exploring lectures, reading trails, and research curiosity across campus.",
+          },
+    cat:
+      locale === "zh"
+        ? {
+            headline: `欢迎光临，${shortName}。这里是邓迪国际学院 DIICSU，星闪猫先替你把舞台灯光打开。`,
+            detail: "欢迎来到更会表达的校园首页：等会儿我们要去开口、去互动、去把今天的存在感和学习状态一起拉满。",
+          }
+        : {
+            headline: `Welcome in, ${shortName}. This is DIICSU, and Spark Cat has already switched on the stage lights for you.`,
+            detail: "Welcome to a more expressive campus home: next we'll speak up, interact, and turn today's presence into momentum.",
+          },
+  } satisfies Record<BuddyVariant, HomeBuddyWelcomeCopy>;
+
+  return copy[variant];
 }
 
 function renderWardrobePreviewIcon(
@@ -608,8 +661,15 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   const [homeBuddySpeechMotion, setHomeBuddySpeechMotion] = useState<HomeBuddySpeechMotion>("hop");
   const [homeBuddyBubbleVisible, setHomeBuddyBubbleVisible] = useState(true);
   const [homeBuddyTilt, setHomeBuddyTilt] = useState({ x: 0, y: 0 });
+  const [homeHasHydrated, setHomeHasHydrated] = useState(false);
+  const [homeBuddyIntroPhase, setHomeBuddyIntroPhase] = useState<HomeBuddyIntroPhase>("hidden");
+  const [homeBuddyIntroTarget, setHomeBuddyIntroTarget] = useState<{ x: number; y: number; scale: number } | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const [homeBuddyAudioReady, setHomeBuddyAudioReady] = useState(false);
+  const guestBuddyAnchorRef = useRef<HTMLDivElement | null>(null);
+  const mainBuddyAnchorRef = useRef<HTMLDivElement | null>(null);
+  const homeBuddyIntroShrinkTimerRef = useRef<number | null>(null);
+  const homeBuddyIntroFinishTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const refresh = () => {
@@ -622,6 +682,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       setBuddyOutfit(loadBuddyOutfitFromStorage());
       setBuddyVariant(loadBuddyVariantFromStorage(getGoalVariant(storedPreferences.goal)));
       setXpSummary(getBuddyXpSummaryFromStorage());
+      setHomeHasHydrated(true);
     };
 
     refresh();
@@ -700,10 +761,21 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   const nextBuddyIdentity = getNextBuddyIdentity(buddyLevel, locale);
   const buddyFocus = getBuddyFocusFromVariant(buddyVariant);
   const homeBuddyIdleLines = useMemo(() => getHomeBuddyIdleLines(buddyVariant, locale), [buddyVariant, locale]);
+  const homeBuddyWelcomeCopy = useMemo(
+    () => getHomeBuddyWelcomeCopy(buddyVariant, locale, displayName),
+    [buddyVariant, displayName, locale],
+  );
   const activeHomeBuddyLine = homeBuddyIdleLines[homeBuddyLineIndex % homeBuddyIdleLines.length] ?? buddyStage.note;
+  const homeBuddyLoadingActive = !homeHasHydrated;
+  const homeBuddyIntroActive = homeBuddyIntroPhase !== "hidden" && homeBuddyIntroPhase !== "done";
   const homeBuddyTiltStyle = {
     "--home-buddy-tilt-x": `${homeBuddyTilt.x.toFixed(2)}deg`,
     "--home-buddy-tilt-y": `${homeBuddyTilt.y.toFixed(2)}deg`,
+  } as CSSProperties;
+  const homeBuddyIntroStyle = {
+    "--home-buddy-intro-x": `${homeBuddyIntroTarget?.x ?? 0}px`,
+    "--home-buddy-intro-y": `${homeBuddyIntroTarget?.y ?? 0}px`,
+    "--home-buddy-intro-scale": String(homeBuddyIntroTarget?.scale ?? 1),
   } as CSSProperties;
   const unlockedWardrobeSet = useMemo(() => createUnlockedWardrobeSet(buddyLevel), [buddyLevel]);
   const effectiveBuddyOutfit = useMemo(
@@ -722,6 +794,36 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   const updatePrefs = (partial: Partial<typeof preferences>) => {
     const updated = saveSchedulePreferencesToStorage({ ...preferences, ...partial });
     setPreferences(updated);
+  };
+
+  const clearHomeBuddyIntroTimers = () => {
+    if (homeBuddyIntroShrinkTimerRef.current !== null) {
+      window.clearTimeout(homeBuddyIntroShrinkTimerRef.current);
+      homeBuddyIntroShrinkTimerRef.current = null;
+    }
+    if (homeBuddyIntroFinishTimerRef.current !== null) {
+      window.clearTimeout(homeBuddyIntroFinishTimerRef.current);
+      homeBuddyIntroFinishTimerRef.current = null;
+    }
+  };
+
+  const syncHomeBuddyIntroTarget = () => {
+    if (typeof window === "undefined") return;
+    const activeAnchor = isLoggedIn ? mainBuddyAnchorRef.current : guestBuddyAnchorRef.current;
+    if (!activeAnchor) return;
+
+    const rect = activeAnchor.getBoundingClientRect();
+    const viewportCenterX = window.innerWidth / 2;
+    const viewportCenterY = window.innerHeight / 2;
+    const targetCenterX = rect.left + rect.width / 2;
+    const targetCenterY = rect.top + rect.height / 2;
+    const introBaseWidth = 336;
+
+    setHomeBuddyIntroTarget({
+      x: targetCenterX - viewportCenterX,
+      y: targetCenterY - viewportCenterY,
+      scale: Math.max(0.42, Math.min(0.88, rect.width / introBaseWidth)),
+    });
   };
 
   const ensureHomeBuddyAudio = () => {
@@ -773,10 +875,52 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     });
   };
 
+  const finishHomeBuddyIntro = () => {
+    clearHomeBuddyIntroTimers();
+
+    if (homeBuddyIntroPhase === "done" || homeBuddyIntroPhase === "hidden") return;
+
+    if (homeBuddyIntroPhase !== "shrinking") {
+      syncHomeBuddyIntroTarget();
+      setHomeBuddyIntroPhase("shrinking");
+      setHomeBuddyBubbleVisible(false);
+      setHomeBuddyFace("happy");
+    }
+
+    homeBuddyIntroFinishTimerRef.current = window.setTimeout(() => {
+      setHomeBuddyIntroPhase("done");
+      setHomeBuddyBubbleVisible(true);
+      homeBuddyIntroFinishTimerRef.current = null;
+    }, 1220);
+  };
+
   useEffect(() => {
     setHomeBuddyLineIndex(0);
     setHomeBuddyBubbleVisible(true);
   }, [homeBuddyIdleLines]);
+
+  useEffect(() => {
+    if (!homeHasHydrated) return;
+
+    setHomeBuddyIntroPhase("welcome");
+    setHomeBuddyBubbleVisible(false);
+    setHomeBuddyFace("open");
+    setHomeBuddySpeechMotion("wave");
+
+    return () => {
+      clearHomeBuddyIntroTimers();
+    };
+  }, [homeHasHydrated]);
+
+  useEffect(() => {
+    if (!homeBuddyIntroActive) return;
+
+    syncHomeBuddyIntroTarget();
+    const handleResize = () => syncHomeBuddyIntroTarget();
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, [homeBuddyIntroActive, isLoggedIn]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -799,7 +943,14 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (!homeBuddyIntroActive) return;
+
+    setHomeBuddySpeechTick((current) => current + 1);
+    playHomeBuddyVoice(buddyVariant);
+  }, [buddyVariant, homeBuddyAudioReady, homeBuddyIntroActive]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || homeBuddyIntroActive) return;
 
     let blinkTimer = 0;
     let reopenTimer = 0;
@@ -867,7 +1018,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   }, [homeBuddyIdleLines]);
 
   useEffect(() => {
-    if (typeof window === "undefined" || !homeBuddyBubbleVisible) return;
+    if (typeof window === "undefined" || homeBuddyIntroActive || !homeBuddyBubbleVisible) return;
 
     setHomeBuddySpeechTick((current) => current + 1);
     setHomeBuddyFace("open");
@@ -879,7 +1030,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     }, 820);
 
     return () => window.clearTimeout(settleTimer);
-  }, [buddyVariant, homeBuddyAudioReady, homeBuddyBubbleVisible, homeBuddyLineIndex]);
+  }, [buddyVariant, homeBuddyAudioReady, homeBuddyBubbleVisible, homeBuddyIntroActive, homeBuddyLineIndex]);
 
   useEffect(() => {
     return () => {
@@ -1087,9 +1238,67 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     locale === "zh" ? `Last Train Escape 通关 +${BUDDY_XP_RULES.lastTrainClear} XP` : `Last Train Escape clear +${BUDDY_XP_RULES.lastTrainClear} XP`,
   ];
 
+  const homeBuddyLoadingOverlay = homeBuddyLoadingActive ? (
+    <div className="home-buddy-loading-overlay" aria-live="polite" aria-label={locale === "zh" ? "首页桌宠加载中" : "Homepage buddy loading"}>
+      <div className="home-buddy-loading-card">
+        <div className="home-buddy-loading-orbit">
+          <span className="home-buddy-loading-dot home-buddy-loading-dot-one" />
+          <span className="home-buddy-loading-dot home-buddy-loading-dot-two" />
+          <span className="home-buddy-loading-dot home-buddy-loading-dot-three" />
+        </div>
+        <p className="mt-5 text-sm font-semibold tracking-[0.08em] text-[var(--ink)]">
+          {locale === "zh" ? "Buddy 正在换上今天的出场造型..." : "Buddy is putting on today's entrance look..."}
+        </p>
+      </div>
+    </div>
+  ) : null;
+
+  const homeBuddyIntroOverlay = homeBuddyIntroActive ? (
+    <div
+      className="home-buddy-intro-overlay"
+      aria-live="polite"
+      aria-label={locale === "zh" ? "首页桌宠欢迎动画" : "Homepage buddy welcome animation"}
+      onPointerDown={finishHomeBuddyIntro}
+    >
+      <div
+        className={`home-buddy-intro-stage${homeBuddyIntroPhase === "shrinking" ? " home-buddy-intro-stage-shrinking" : ""}`}
+        style={homeBuddyIntroStyle}
+      >
+        <div className="buddy-bubble home-buddy-intro-bubble p-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--ink-soft)]">
+            {locale === "zh" ? "Dundee International Institute · DIICSU" : "Dundee International Institute · DIICSU"}
+          </p>
+          <p className="mt-3 text-base font-semibold leading-7 text-[var(--ink)] sm:text-lg">{homeBuddyWelcomeCopy.headline}</p>
+          <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)] sm:text-[0.96rem]">{homeBuddyWelcomeCopy.detail}</p>
+        </div>
+        <div className="home-buddy-intro-shell">
+          <div className="home-buddy-intro-look">
+            <div className="home-hero-buddy-idle" data-speech-motion={homeBuddySpeechMotion}>
+              <BuddyCompanion
+                stage={isLoggedIn ? buddyStage.id : "fresh"}
+                focus={buddyFocus}
+                variant={buddyVariant}
+                mood={isLoggedIn ? buddyStage.mood : "happy"}
+                face={homeBuddyFace}
+                outfit={effectiveBuddyOutfit}
+                className="mx-auto home-buddy-intro-companion"
+              />
+            </div>
+          </div>
+        </div>
+        <p className="home-buddy-intro-hint">
+          {locale === "zh" ? "点击任意区域进入学习" : "Click anywhere to start learning"}
+        </p>
+      </div>
+    </div>
+  ) : null;
+
   if (!isLoggedIn) {
     return (
-      <section className="mt-6 grid gap-5 reveal-up">
+      <>
+        {homeBuddyLoadingOverlay}
+        {homeBuddyIntroOverlay}
+        <section className={`mt-6 grid gap-5 reveal-up${homeBuddyLoadingActive ? " home-buddy-page-preload" : ""}${homeBuddyIntroActive ? " home-buddy-page-locked" : ""}`}>
         <article className="sky-panel rounded-[2.5rem] px-6 pb-7 pt-4 sm:px-8 sm:pb-9 sm:pt-5">
           <span className="party-floater right-8 top-10 h-12 w-12">
             <Trophy className="size-5" />
@@ -1165,6 +1374,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                   <div className="pet-spotlight" />
                   <div
                     className="home-hero-buddy-shell"
+                    ref={guestBuddyAnchorRef}
                     style={homeBuddyTiltStyle}
                     onPointerMove={handleHomeBuddyPointerMove}
                     onPointerLeave={resetHomeBuddyTilt}
@@ -1232,12 +1442,16 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
             </article>
           ))}
         </div>
-      </section>
+        </section>
+      </>
     );
   }
 
   return (
-    <section className="mt-6 grid gap-5 reveal-up">
+    <>
+      {homeBuddyLoadingOverlay}
+      {homeBuddyIntroOverlay}
+      <section className={`mt-6 grid gap-5 reveal-up${homeBuddyLoadingActive ? " home-buddy-page-preload" : ""}${homeBuddyIntroActive ? " home-buddy-page-locked" : ""}`}>
       <article className="sky-panel rounded-[2.5rem] px-6 pb-7 pt-4 sm:px-8 sm:pb-8 sm:pt-5">
         <span className="party-floater right-10 top-11 h-12 w-12">
           <Trophy className="size-5" />
@@ -1362,7 +1576,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                   }`}
                   aria-label={locale === "zh" ? "打开桌宠换装" : "Open buddy wardrobe"}
                 >
-                  <div className="home-hero-buddy-shell" style={homeBuddyTiltStyle}>
+                  <div className="home-hero-buddy-shell" ref={mainBuddyAnchorRef} style={homeBuddyTiltStyle}>
                     <div className="home-hero-buddy-look">
                       <div
                         key={`home-buddy-motion-main-${homeBuddySpeechTick}`}
@@ -2034,6 +2248,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
         </div>
       </div>
 
-    </section>
+      </section>
+    </>
   );
 }

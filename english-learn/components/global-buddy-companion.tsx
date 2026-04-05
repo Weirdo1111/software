@@ -34,7 +34,14 @@ import {
   loadLearningTrackerSnapshotFromStorage,
   subscribeLearningTracker,
 } from "@/lib/learning-tracker";
-import { isBuddySoundEnabled, playBuddySound, setBuddySoundEnabled, unlockBuddySound } from "@/lib/buddy-sound";
+import {
+  isBuddySoundEnabled,
+  playBuddySound,
+  setBuddySoundEnabled,
+  startBuddyBgmLoop,
+  stopBuddyBgmLoop,
+  unlockBuddySound,
+} from "@/lib/buddy-sound";
 import {
   getBuddyCurrentPageGuide,
   getBuddyDefaultQuestions,
@@ -255,6 +262,34 @@ export function GlobalBuddyCompanion() {
       window.removeEventListener("demo-placement-changed", refresh as EventListener);
     };
   }, []);
+
+  useEffect(() => {
+    if (!soundEnabled) {
+      stopBuddyBgmLoop();
+      return;
+    }
+
+    void startBuddyBgmLoop(variant);
+  }, [soundEnabled, variant]);
+
+  useEffect(() => {
+    const syncAudioFromInteraction = () => {
+      if (!isBuddySoundEnabled()) return;
+      void unlockBuddySound().then((unlocked) => {
+        if (!unlocked) return;
+        void startBuddyBgmLoop(variant);
+      });
+    };
+
+    window.addEventListener("pointerdown", syncAudioFromInteraction, { passive: true });
+    window.addEventListener("keydown", syncAudioFromInteraction);
+
+    return () => {
+      window.removeEventListener("pointerdown", syncAudioFromInteraction);
+      window.removeEventListener("keydown", syncAudioFromInteraction);
+      stopBuddyBgmLoop();
+    };
+  }, [variant]);
 
   useEffect(() => {
     reactionRef.current = reaction;
@@ -807,7 +842,13 @@ export function GlobalBuddyCompanion() {
             setSoundEnabled(nextEnabled);
             setBuddySoundEnabled(nextEnabled);
             if (nextEnabled) {
-              void unlockBuddySound().then(() => playBuddySound("wave"));
+              void unlockBuddySound().then((unlocked) => {
+                if (!unlocked) return;
+                void startBuddyBgmLoop(variant);
+                playBuddySound("wave");
+              });
+            } else {
+              stopBuddyBgmLoop();
             }
           }}
           aria-label={soundEnabled ? (locale === "zh" ? "\u5173\u95ed\u684c\u5ba0\u97f3\u6548" : "Turn buddy sound off") : (locale === "zh" ? "\u5f00\u542f\u684c\u5ba0\u97f3\u6548" : "Turn buddy sound on")}
