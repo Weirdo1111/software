@@ -815,6 +815,17 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
         : `Lv ${tier.minLevel}-${tier.maxLevel}`,
     title: locale === "zh" ? tier.zh : tier.en,
   }));
+  const xpSourceRows = [
+    locale === "zh" ? `Listening 完成 +${BUDDY_XP_RULES.listeningCompletion} XP` : `Listening completion +${BUDDY_XP_RULES.listeningCompletion} XP`,
+    locale === "zh" ? `Speaking 完成 +${BUDDY_XP_RULES.speakingCompletion} XP` : `Speaking completion +${BUDDY_XP_RULES.speakingCompletion} XP`,
+    locale === "zh" ? `Reading 完成 +${BUDDY_XP_RULES.readingCompletion} XP` : `Reading completion +${BUDDY_XP_RULES.readingCompletion} XP`,
+    locale === "zh" ? `Writing 完成 +${BUDDY_XP_RULES.writingCompletion} XP` : `Writing completion +${BUDDY_XP_RULES.writingCompletion} XP`,
+    locale === "zh" ? `Review 完成 +${BUDDY_XP_RULES.reviewSession} XP` : `Review completion +${BUDDY_XP_RULES.reviewSession} XP`,
+    locale === "zh" ? `Word Game 通关 +${BUDDY_XP_RULES.wordGameClear} XP` : `Word game clear +${BUDDY_XP_RULES.wordGameClear} XP`,
+    locale === "zh" ? `Quest Arcade 通关 +${BUDDY_XP_RULES.escapeRoomClear} XP` : `Quest Arcade clear +${BUDDY_XP_RULES.escapeRoomClear} XP`,
+    locale === "zh" ? `Dorm Lockout 通关 +${BUDDY_XP_RULES.dormLockoutClear} XP` : `Dorm Lockout clear +${BUDDY_XP_RULES.dormLockoutClear} XP`,
+    locale === "zh" ? `Last Train Escape 通关 +${BUDDY_XP_RULES.lastTrainClear} XP` : `Last Train Escape clear +${BUDDY_XP_RULES.lastTrainClear} XP`,
+  ];
 
   if (!isLoggedIn) {
     return (
@@ -1153,90 +1164,90 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
         </div>
       </article>
 
-      {showLevelRules ? (
-        <div className="fixed inset-0 z-[70] bg-transparent" onClick={() => setShowLevelRules(false)}>
-          <div
-            className="absolute right-[max(1.25rem,calc(50%-35rem))] top-[17.5rem] w-[min(24rem,calc(100vw-2rem))] rounded-[1.7rem] border-2 border-white/90 bg-[linear-gradient(165deg,rgba(255,255,255,0.99),rgba(241,247,255,0.97),rgba(255,246,250,0.94))] p-4 shadow-[0_14px_0_rgba(255,201,225,0.18),0_24px_40px_rgba(90,123,255,0.14)] sm:p-5"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="section-label">
-                  <PawPrint className="size-3.5" />
-                  {locale === "zh" ? "宠物升级规则" : "Buddy level rules"}
-                </p>
-                <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">
-                  {locale === "zh"
-                    ? `第 1 次升级需要 ${LEVEL_XP_BASE} XP，之后每升一级固定多 ${LEVEL_XP_STEP} XP。`
-                    : `The first level-up needs ${LEVEL_XP_BASE} XP, and each later level needs ${LEVEL_XP_STEP} more XP than the one before.`}
-                </p>
-                <p className="mt-1 text-sm leading-7 text-[var(--ink-soft)]">
-                  {locale === "zh"
-                    ? "每 5 级解锁一个新身份称号，直到 25 级达到最高门槛。"
-                    : "Every 5 levels unlock a new identity title, until the top milestone at level 25."}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowLevelRules(false)}
-                className="rounded-full border-2 border-white/90 bg-white/88 px-3 py-1.5 text-sm font-semibold text-[var(--ink)] shadow-[0_8px_0_rgba(143,196,255,0.14)]"
+      {showLevelRules && typeof document !== "undefined"
+        ? createPortal(
+            <div className="buddy-wardrobe-overlay" role="dialog" aria-modal="true" onClick={() => setShowLevelRules(false)}>
+              <div
+                className="buddy-wardrobe-panel max-h-[calc(100vh-2.5rem)] overflow-y-auto"
+                onClick={(event) => event.stopPropagation()}
               >
-                {locale === "zh" ? "关闭" : "Close"}
-              </button>
-            </div>
-
-            <div className="mt-4 grid gap-2.5">
-              {levelRuleRows.map((rule) => (
-                <div
-                  key={rule.level}
-                  className="rounded-[1.2rem] border-2 border-white/90 bg-[rgba(255,255,255,0.84)] px-4 py-3 shadow-[0_8px_0_rgba(143,196,255,0.12),0_14px_20px_rgba(90,123,255,0.07)]"
+                <button
+                  type="button"
+                  onClick={() => setShowLevelRules(false)}
+                  className="buddy-wardrobe-close"
+                  aria-label={locale === "zh" ? "关闭升级规则" : "Close level rules"}
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-[var(--ink)]">
-                      {locale === "zh"
-                        ? `例：等级 ${rule.level} -> ${rule.nextLevel}`
-                        : `Example: Level ${rule.level} -> ${rule.nextLevel}`}
+                  ×
+                </button>
+
+                <div className="relative z-10 mt-6 grid gap-4 lg:grid-cols-[minmax(0,1.02fr)_minmax(18rem,0.98fr)]">
+                  <div className="buddy-wardrobe-page buddy-wardrobe-page-left">
+                    <p className="section-label">
+                      <PawPrint className="size-3.5" />
+                      {locale === "zh" ? "宠物升级规则" : "Buddy level rules"}
                     </p>
-                    <span className="buddy-chip !px-3 !py-1">{rule.neededXp} XP</span>
+                    <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
+                      {locale === "zh" ? "查看 Buddy 的升级与身份门槛" : "See buddy growth and identity milestones"}
+                    </h3>
+                    <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">
+                      {locale === "zh"
+                        ? `第 1 次升级需要 ${LEVEL_XP_BASE} XP，之后每升一级固定多 ${LEVEL_XP_STEP} XP。每 5 级会解锁一个新的身份称号，直到 25 级达到最高门槛。`
+                        : `The first level-up needs ${LEVEL_XP_BASE} XP, and each later level needs ${LEVEL_XP_STEP} more XP than the one before. Every 5 levels unlock a new identity title, until the top milestone at level 25.`}
+                    </p>
+
+                    <div className="mt-6 grid gap-2.5">
+                      {levelRuleRows.map((rule) => (
+                        <div
+                          key={rule.level}
+                          className="rounded-[1.2rem] border-2 border-white/90 bg-[rgba(255,255,255,0.84)] px-4 py-3 shadow-[0_8px_0_rgba(143,196,255,0.12),0_14px_20px_rgba(90,123,255,0.07)]"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-sm font-semibold text-[var(--ink)]">
+                              {locale === "zh"
+                                ? `例：等级 ${rule.level} -> ${rule.nextLevel}`
+                                : `Example: Level ${rule.level} -> ${rule.nextLevel}`}
+                            </p>
+                            <span className="buddy-chip !px-3 !py-1">{rule.neededXp} XP</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="buddy-wardrobe-page rounded-[1.8rem] border border-white/80 bg-[linear-gradient(180deg,rgba(247,251,255,0.98),rgba(236,245,255,0.92))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.68),0_16px_30px_rgba(90,123,255,0.09)]">
+                    <div className="rounded-[1.2rem] border-2 border-white/90 bg-[rgba(255,255,255,0.84)] px-4 py-3 shadow-[0_8px_0_rgba(143,196,255,0.12),0_14px_20px_rgba(90,123,255,0.07)]">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+                        {locale === "zh" ? "身份门槛" : "Identity milestones"}
+                      </p>
+                      <div className="mt-3 grid gap-2 text-sm text-[var(--ink)]">
+                        {identityRuleRows.map((row) => (
+                          <div key={row.key} className="flex items-center justify-between gap-3 rounded-[1rem] bg-white/72 px-3 py-2">
+                            <span className="font-semibold text-[var(--ink)]">{row.title}</span>
+                            <span className="buddy-chip !px-3 !py-1">{row.levelLabel}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="mt-4 rounded-[1.2rem] border-2 border-white/90 bg-[rgba(255,255,255,0.84)] px-4 py-3 shadow-[0_8px_0_rgba(143,196,255,0.12),0_14px_20px_rgba(90,123,255,0.07)]">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+                        {locale === "zh" ? "固定 XP 来源" : "Fixed XP sources"}
+                      </p>
+                      <div className="mt-3 grid gap-2 text-sm text-[var(--ink)] sm:grid-cols-2">
+                        {xpSourceRows.map((row) => (
+                          <p key={row} className="rounded-[0.95rem] bg-white/72 px-3 py-2 font-medium">
+                            {row}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-
-            <div className="mt-4 rounded-[1.2rem] border-2 border-white/90 bg-[rgba(255,255,255,0.84)] px-4 py-3 shadow-[0_8px_0_rgba(143,196,255,0.12),0_14px_20px_rgba(90,123,255,0.07)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
-                {locale === "zh" ? "身份门槛" : "Identity milestones"}
-              </p>
-              <div className="mt-3 grid gap-2 text-sm text-[var(--ink)]">
-                {identityRuleRows.map((row) => (
-                  <div key={row.key} className="flex items-center justify-between gap-3 rounded-[1rem] bg-white/72 px-3 py-2">
-                    <span className="font-semibold text-[var(--ink)]">{row.title}</span>
-                    <span className="buddy-chip !px-3 !py-1">{row.levelLabel}</span>
-                  </div>
-                ))}
               </div>
-            </div>
-
-            <div className="mt-4 rounded-[1.2rem] border-2 border-white/90 bg-[rgba(255,255,255,0.84)] px-4 py-3 shadow-[0_8px_0_rgba(143,196,255,0.12),0_14px_20px_rgba(90,123,255,0.07)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
-                {locale === "zh" ? "固定 XP 来源" : "Fixed XP sources"}
-              </p>
-              <div className="mt-3 grid gap-2 text-sm text-[var(--ink)]">
-                <p>{locale === "zh" ? `Listening 完成 +${BUDDY_XP_RULES.listeningCompletion} XP` : `Listening completion +${BUDDY_XP_RULES.listeningCompletion} XP`}</p>
-                <p>{locale === "zh" ? `Speaking 完成 +${BUDDY_XP_RULES.speakingCompletion} XP` : `Speaking completion +${BUDDY_XP_RULES.speakingCompletion} XP`}</p>
-                <p>{locale === "zh" ? `Reading 完成 +${BUDDY_XP_RULES.readingCompletion} XP` : `Reading completion +${BUDDY_XP_RULES.readingCompletion} XP`}</p>
-                <p>{locale === "zh" ? `Writing 完成 +${BUDDY_XP_RULES.writingCompletion} XP` : `Writing completion +${BUDDY_XP_RULES.writingCompletion} XP`}</p>
-                <p>{locale === "zh" ? `Review 完成 +${BUDDY_XP_RULES.reviewSession} XP` : `Review completion +${BUDDY_XP_RULES.reviewSession} XP`}</p>
-                <p>{locale === "zh" ? `Word Game 通关 +${BUDDY_XP_RULES.wordGameClear} XP` : `Word game clear +${BUDDY_XP_RULES.wordGameClear} XP`}</p>
-                <p>{locale === "zh" ? `Quest Arcade 通关 +${BUDDY_XP_RULES.escapeRoomClear} XP` : `Quest Arcade clear +${BUDDY_XP_RULES.escapeRoomClear} XP`}</p>
-                <p>{locale === "zh" ? `Dorm Lockout 通关 +${BUDDY_XP_RULES.dormLockoutClear} XP` : `Dorm Lockout clear +${BUDDY_XP_RULES.dormLockoutClear} XP`}</p>
-                <p>{locale === "zh" ? `Last Train Escape 通关 +${BUDDY_XP_RULES.lastTrainClear} XP` : `Last Train Escape clear +${BUDDY_XP_RULES.lastTrainClear} XP`}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
+            </div>,
+            document.body,
+          )
+        : null}
 
       {wardrobeOpen && typeof document !== "undefined"
         ? createPortal(
