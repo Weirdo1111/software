@@ -3,16 +3,16 @@ import { getLocale } from "@/lib/i18n/get-locale";
 
 type VersusSearchParams = {
   lang?: string;
-  bank?: string;
   room?: string;
+  player?: string;
 };
 
 export default async function WordGameVersusPage({ searchParams }: { searchParams: Promise<VersusSearchParams> }) {
   const locale = await getLocale(searchParams);
   const params = await searchParams;
 
-  const bank = params.bank ?? "general";
   const room = params.room ?? "TEST01";
+  const playerId = params.player ?? "";
 
-  return <WordGameVersusBattle locale={locale} bank={bank} room={room} />;
+  return <WordGameVersusBattle locale={locale} room={room} playerId={playerId} />;
 }

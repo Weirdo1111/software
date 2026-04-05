@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import type { VersusRoomState } from "@/lib/games/word-game-versus-types";
 import type { Locale } from "@/lib/i18n/dictionaries";
 
 type Bank = {
@@ -19,6 +20,8 @@ const BANKS: Bank[] = [
   { id: "transport", name: "Transportation Engineering" },
 ];
 
+const PLAYER_STORAGE_KEY = "word_game_versus_player_v1";
+
 function createRoomCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
@@ -28,26 +31,128 @@ function createRoomCode() {
   return code;
 }
 
+const normalizeRoomCode = (value: string) => value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+
+const createFallbackPlayer = () => {
+  const fallbackId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  return {
+    id:
+      typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : fallbackId,
+    name: `Player-${Math.floor(Math.random() * 900 + 100)}`,
+  };
+};
+
+async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(url, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+  });
+
+  const payload = (await response.json().catch(() => ({}))) as { error?: string };
+  if (!response.ok) {
+    throw new Error(payload.error || "Request failed");
+  }
+
+  return payload as T;
+}
+
 export function WordGameMultiplayer({ locale }: { locale: Locale }) {
   const router = useRouter();
   const [selectedBank, setSelectedBank] = useState<string>("general");
-  const [roomCode, setRoomCode] = useState<string>(() => createRoomCode());
-  const [matchRoomCode, setMatchRoomCode] = useState<string>("");
+  const [draftRoomCode, setDraftRoomCode] = useState<string>(() => createRoomCode());
   const [joinCodeInput, setJoinCodeInput] = useState<string>("");
-  const [joinError, setJoinError] = useState<string>("");
-  const [playerReady, setPlayerReady] = useState(false);
-  const [opponentReady, setOpponentReady] = useState(false);
+  const [errorText, setErrorText] = useState<string>("");
+  const [playerId, setPlayerId] = useState<string>("");
+  const [playerName, setPlayerName] = useState<string>("");
+  const [roomState, setRoomState] = useState<VersusRoomState | null>(null);
+  const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const activeRoomCode = matchRoomCode || roomCode;
-  const normalizedJoinCode = useMemo(() => joinCodeInput.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6), [joinCodeInput]);
-  const readyCount = (playerReady ? 1 : 0) + (opponentReady ? 1 : 0);
-  const readyPercent = useMemo(() => (readyCount / 2) * 100, [readyCount]);
-  const canEnterMatch = readyCount === 2;
+  const activeRoomCode = roomState?.roomCode ?? "";
+  const normalizedJoinCode = useMemo(() => normalizeRoomCode(joinCodeInput), [joinCodeInput]);
+  const selfPlayer = useMemo(
+    () => roomState?.players.find((player) => player.isSelf) ?? null,
+    [roomState],
+  );
+  const opponentPlayer = useMemo(
+    () => roomState?.players.find((player) => !player.isSelf) ?? null,
+    [roomState],
+  );
+  const readyCount = useMemo(
+    () => roomState?.players.filter((player) => player.ready).length ?? 0,
+    [roomState],
+  );
+  const readyPercent = useMemo(
+    () => (readyCount / 2) * 100,
+    [readyCount],
+  );
+  const canEnterMatch = roomState?.status === "active";
+  const canToggleReady = Boolean(roomState && selfPlayer && roomState.status === "lobby");
+  const canStartMatch = Boolean(roomState?.canStart && selfPlayer?.isHost);
 
-  const openVersusBattle = (forceTest = false) => {
-    const testFlag = forceTest ? "&test=1" : "";
-    router.push(`/games/word-game/versus?lang=${locale}&bank=${selectedBank}&room=${activeRoomCode}${testFlag}`);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = window.localStorage.getItem(PLAYER_STORAGE_KEY);
+
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw) as { id?: string; name?: string };
+        if (parsed.id && parsed.name) {
+          setPlayerId(parsed.id);
+          setPlayerName(parsed.name);
+          return;
+        }
+      } catch {
+        // ignore corrupted local data and regenerate
+      }
+    }
+
+    const next = createFallbackPlayer();
+    setPlayerId(next.id);
+    setPlayerName(next.name);
+    window.localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify(next));
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!playerId || !playerName.trim()) return;
+    window.localStorage.setItem(
+      PLAYER_STORAGE_KEY,
+      JSON.stringify({ id: playerId, name: playerName.trim() }),
+    );
+  }, [playerId, playerName]);
+
+  useEffect(() => {
+    if (!playerId || !activeRoomCode) return;
+
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        const state = await requestJson<VersusRoomState>(`/api/games/word-game/versus/rooms/${activeRoomCode}?playerId=${encodeURIComponent(playerId)}`);
+        if (!cancelled) {
+          setRoomState(state);
+          setSelectedBank(state.bank);
+        }
+      } catch {
+        // polling failures can happen during hot-reload; keep UI usable
+      }
+    };
+
+    const pollId = window.setInterval(tick, 1000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(pollId);
+    };
+  }, [activeRoomCode, playerId]);
+
+  const openVersusBattle = () => {
+    if (!activeRoomCode || !playerId) return;
+    router.push(`/games/word-game/versus?lang=${locale}&room=${activeRoomCode}&player=${encodeURIComponent(playerId)}`);
   };
 
   const handleCopy = async () => {
@@ -56,7 +161,7 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
     }
 
     try {
-      await navigator.clipboard.writeText(roomCode);
+      await navigator.clipboard.writeText(activeRoomCode || draftRoomCode);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1300);
     } catch {
@@ -64,17 +169,107 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
     }
   };
 
-  const handleJoinRoom = () => {
-    if (normalizedJoinCode.length !== 6) {
-      setJoinError("Please enter a valid 6-character room code.");
+  const handleCreateRoom = async () => {
+    if (!playerId) return;
+    if (!playerName.trim()) {
+      setErrorText("Please set your player name first.");
       return;
     }
 
-    setMatchRoomCode(normalizedJoinCode);
-    setJoinCodeInput(normalizedJoinCode);
-    setJoinError("");
-    setPlayerReady(false);
-    setOpponentReady(false);
+    setBusy(true);
+    setErrorText("");
+    try {
+      const state = await requestJson<VersusRoomState>("/api/games/word-game/versus/rooms", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "create",
+          roomCode: draftRoomCode,
+          playerId,
+          playerName: playerName.trim(),
+          bank: selectedBank,
+        }),
+      });
+      setRoomState(state);
+      setJoinCodeInput(state.roomCode);
+    } catch (error) {
+      setErrorText(error instanceof Error ? error.message : "Failed to create room.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleJoinRoom = async () => {
+    if (!playerId) return;
+    if (normalizedJoinCode.length !== 6) {
+      setErrorText("Please enter a valid 6-character room code.");
+      return;
+    }
+    if (!playerName.trim()) {
+      setErrorText("Please set your player name first.");
+      return;
+    }
+
+    setBusy(true);
+    setErrorText("");
+    try {
+      const state = await requestJson<VersusRoomState>("/api/games/word-game/versus/rooms", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "join",
+          roomCode: normalizedJoinCode,
+          playerId,
+          playerName: playerName.trim(),
+        }),
+      });
+      setRoomState(state);
+      setSelectedBank(state.bank);
+      setJoinCodeInput(state.roomCode);
+    } catch (error) {
+      setErrorText(error instanceof Error ? error.message : "Failed to join room.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleToggleReady = async () => {
+    if (!roomState || !selfPlayer) return;
+    setBusy(true);
+    setErrorText("");
+    try {
+      const state = await requestJson<VersusRoomState>(`/api/games/word-game/versus/rooms/${roomState.roomCode}/actions`, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "set-ready",
+          playerId,
+          ready: !selfPlayer.ready,
+        }),
+      });
+      setRoomState(state);
+    } catch (error) {
+      setErrorText(error instanceof Error ? error.message : "Failed to update readiness.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleStartMatch = async () => {
+    if (!roomState) return;
+    setBusy(true);
+    setErrorText("");
+    try {
+      const state = await requestJson<VersusRoomState>(`/api/games/word-game/versus/rooms/${roomState.roomCode}/actions`, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "start-match",
+          playerId,
+        }),
+      });
+      setRoomState(state);
+    } catch (error) {
+      setErrorText(error instanceof Error ? error.message : "Failed to start match.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -91,36 +286,46 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
                 <p className="sub-copy">Create or join a room, lock your sector, and start when both players are ready.</p>
               </div>
               <div className="room-pill" aria-live="polite">
-                ACTIVE ROOM #{activeRoomCode}
+                {activeRoomCode ? `ACTIVE ROOM #${activeRoomCode}` : "NO ACTIVE ROOM"}
               </div>
             </header>
 
             <section className="multi-grid">
               <article className="panel panel-control">
                 <h2>Match Control</h2>
+                <div className="field">
+                  <span className="label">Player Name</span>
+                  <input
+                    className="join-input"
+                    type="text"
+                    value={playerName}
+                    onChange={(event) => setPlayerName(event.target.value)}
+                    placeholder="Your nickname"
+                    maxLength={20}
+                    aria-label="Your player name"
+                  />
+                </div>
 
                 <div className="field">
                   <span className="label">Create Room</span>
-                  <div className="room-box">{roomCode}</div>
+                  <div className="room-box">{activeRoomCode || draftRoomCode}</div>
                   <div className="tiny-actions">
                     <button type="button" className="tiny-btn" onClick={handleCopy}>
-                      {copied ? "Copied" : "Copy Code"}
+                      {copied ? "Copied" : "Copy Room Code"}
                     </button>
                     <button
                       type="button"
                       className="tiny-btn"
                       onClick={() => {
-                        const newCode = createRoomCode();
-                        setRoomCode(newCode);
-                        setMatchRoomCode(newCode);
-                        setJoinCodeInput(newCode);
-                        setJoinError("");
+                        setDraftRoomCode(createRoomCode());
+                        setErrorText("");
                       }}
+                      disabled={busy}
                     >
                       Regenerate
                     </button>
-                    <button type="button" className="tiny-btn" onClick={() => setMatchRoomCode(roomCode)}>
-                      Use This Room
+                    <button type="button" className="tiny-btn" onClick={handleCreateRoom} disabled={busy || !playerId}>
+                      Create
                     </button>
                   </div>
                 </div>
@@ -134,24 +339,28 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
                       value={joinCodeInput}
                       onChange={(event) => {
                         setJoinCodeInput(event.target.value.toUpperCase());
-                        if (joinError) {
-                          setJoinError("");
+                        if (errorText) {
+                          setErrorText("");
                         }
                       }}
                       placeholder="Enter 6-character code"
                       maxLength={6}
                       aria-label="Enter room code"
                     />
-                    <button type="button" className="tiny-btn join-btn" onClick={handleJoinRoom} disabled={normalizedJoinCode.length !== 6}>
+                    <button type="button" className="tiny-btn join-btn" onClick={handleJoinRoom} disabled={normalizedJoinCode.length !== 6 || busy || !playerId}>
                       Join
                     </button>
                   </div>
-                  {joinError ? <p className="join-help error">{joinError}</p> : null}
                 </div>
 
                 <div className="field">
                   <span className="label">Sector Bank</span>
-                  <select className="bank-select" value={selectedBank} onChange={(event) => setSelectedBank(event.target.value)}>
+                  <select
+                    className="bank-select"
+                    value={selectedBank}
+                    onChange={(event) => setSelectedBank(event.target.value)}
+                    disabled={roomState?.status === "active"}
+                  >
                     {BANKS.map((bank) => (
                       <option key={bank.id} value={bank.id}>
                         {bank.name}
@@ -164,15 +373,17 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
               <article className="panel panel-status">
                 <h2>Duel Status</h2>
                 <div className="fighter-grid">
-                  <div className={`fighter-card${playerReady ? " ready" : ""}`}>
+                  <div className={`fighter-card${selfPlayer?.ready ? " ready" : ""}`}>
                     <span className="fighter-tag">You</span>
-                    <strong>Player A</strong>
-                    <span>{playerReady ? "Ready" : "Not Ready"}</span>
+                    <strong>{selfPlayer?.name ?? "Not in room"}</strong>
+                    <span>
+                      {selfPlayer ? (selfPlayer.ready ? "Ready" : "Not Ready") : "Create or join room first"}
+                    </span>
                   </div>
-                  <div className={`fighter-card${opponentReady ? " ready" : ""}`}>
+                  <div className={`fighter-card${opponentPlayer?.ready ? " ready" : ""}`}>
                     <span className="fighter-tag">Opponent</span>
-                    <strong>Player B</strong>
-                    <span>{opponentReady ? "Ready" : "Waiting"}</span>
+                    <strong>{opponentPlayer?.name ?? "Waiting..."}</strong>
+                    <span>{opponentPlayer ? (opponentPlayer.ready ? "Ready" : "Not Ready") : "No opponent yet"}</span>
                   </div>
                 </div>
 
@@ -183,9 +394,15 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
                   </div>
                 </div>
 
-                <button type="button" className="sim-btn" onClick={() => setOpponentReady((value) => !value)}>
-                  {opponentReady ? "Set Opponent Waiting (Demo)" : "Set Opponent Ready (Demo)"}
-                </button>
+                <p className="join-help">
+                  {roomState?.lastEvent ?? "No room activity yet."}
+                </p>
+                {roomState?.status === "finished" ? (
+                  <p className="join-help">
+                    Result: {roomState.winnerLabel ?? "Draw"} ({roomState.resultReason ?? "match"})
+                  </p>
+                ) : null}
+                {errorText ? <p className="join-help error">{errorText}</p> : null}
               </article>
             </section>
 
@@ -196,11 +413,11 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
               <button type="button" className="action-btn secondary" onClick={() => router.push(`/games/word-game/select?lang=${locale}`)}>
                 Single Practice
               </button>
-              <button type="button" className="action-btn ghost" onClick={() => setPlayerReady((value) => !value)}>
-                {playerReady ? "Cancel Ready" : "Ready Up"}
+              <button type="button" className="action-btn ghost" onClick={handleToggleReady} disabled={!canToggleReady || busy}>
+                {selfPlayer?.ready ? "Cancel Ready" : "Ready Up"}
               </button>
-              <button type="button" className="action-btn test" onClick={() => openVersusBattle(true)}>
-                Direct Test Battle
+              <button type="button" className="action-btn test" onClick={handleStartMatch} disabled={!canStartMatch || busy}>
+                {busy ? "Working..." : "Start Match"}
               </button>
               <button
                 type="button"

@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
+import type { VersusRoomState } from "@/lib/games/word-game-versus-types";
 import type { Locale } from "@/lib/i18n/dictionaries";
 
+const PLAYER_STORAGE_KEY = "word_game_versus_player_v1";
 const MAX_HP = 5;
-const TOTAL_WAVES = 8;
 
 const BANK_LABELS: Record<string, string> = {
   general: "General Academic",
@@ -17,48 +18,168 @@ const BANK_LABELS: Record<string, string> = {
   transport: "Transportation Engineering",
 };
 
-const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+const normalizeRoomCode = (value: string) => value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+
+const createFallbackPlayer = () => {
+  const fallbackId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  return {
+    id:
+      typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : fallbackId,
+  };
+};
+
+async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(url, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+  });
+
+  const payload = (await response.json().catch(() => ({}))) as { error?: string };
+  if (!response.ok) {
+    throw new Error(payload.error || "Request failed");
+  }
+  return payload as T;
+}
 
 export function WordGameVersusBattle({
   locale,
-  bank,
   room,
+  playerId,
 }: {
   locale: Locale;
-  bank: string;
   room: string;
+  playerId: string;
 }) {
   const router = useRouter();
-  const [wave] = useState(1);
-  const [timer, setTimer] = useState(90);
-  const [youHp] = useState(MAX_HP);
-  const [rivalHp] = useState(MAX_HP);
-  const [youScore] = useState(0);
-  const [rivalScore] = useState(0);
+  const [resolvedPlayerId, setResolvedPlayerId] = useState(playerId.trim());
+  const [roomState, setRoomState] = useState<VersusRoomState | null>(null);
+  const [answer, setAnswer] = useState("");
+  const [feedback, setFeedback] = useState("Syncing match state...");
+  const [errorText, setErrorText] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const normalizedRoom = useMemo(() => normalizeRoomCode(room), [room]);
+  const selfPlayer = useMemo(
+    () => roomState?.players.find((player) => player.isSelf) ?? null,
+    [roomState],
+  );
+  const rivalPlayer = useMemo(
+    () => roomState?.players.find((player) => !player.isSelf) ?? null,
+    [roomState],
+  );
+  const bankLabel = BANK_LABELS[roomState?.bank ?? "general"] ?? BANK_LABELS.general;
+  const yourHpPercent = ((selfPlayer?.hp ?? MAX_HP) / MAX_HP) * 100;
+  const rivalHpPercent = ((rivalPlayer?.hp ?? MAX_HP) / MAX_HP) * 100;
+  const duelProgress = useMemo(() => {
+    if (!roomState) return 0;
+    return Math.min(100, (roomState.waveNumber / roomState.totalWaves) * 100);
+  }, [roomState]);
+
+  const battleActive = roomState?.status === "active";
 
   useEffect(() => {
-    if (timer <= 0) return;
-    const id = window.setInterval(() => {
-      setTimer((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => window.clearInterval(id);
-  }, [timer]);
+    if (resolvedPlayerId) return;
+    if (typeof window === "undefined") return;
 
-  const bankLabel = BANK_LABELS[bank] ?? BANK_LABELS.general;
-  const yourHpPercent = (youHp / MAX_HP) * 100;
-  const rivalHpPercent = (rivalHp / MAX_HP) * 100;
-  const duelProgress = clamp((youScore + rivalScore) / 100, 0, 100);
+    const raw = window.localStorage.getItem(PLAYER_STORAGE_KEY);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw) as { id?: string };
+        if (parsed.id) {
+          setResolvedPlayerId(parsed.id);
+          return;
+        }
+      } catch {
+        // fallback generation below
+      }
+    }
+
+    const fallback = createFallbackPlayer();
+    setResolvedPlayerId(fallback.id);
+    window.localStorage.setItem(
+      PLAYER_STORAGE_KEY,
+      JSON.stringify({
+        id: fallback.id,
+        name: "Player",
+      }),
+    );
+  }, [resolvedPlayerId]);
+
+  const syncRoomState = useCallback(async () => {
+    if (!resolvedPlayerId || normalizedRoom.length !== 6) return;
+
+    try {
+      const state = await requestJson<VersusRoomState>(
+        `/api/games/word-game/versus/rooms/${normalizedRoom}?playerId=${encodeURIComponent(resolvedPlayerId)}`,
+      );
+      setRoomState(state);
+      setFeedback(state.lastEvent || "State synced.");
+      setErrorText("");
+    } catch (error) {
+      setErrorText(error instanceof Error ? error.message : "Failed to sync room state.");
+    }
+  }, [normalizedRoom, resolvedPlayerId]);
+
+  useEffect(() => {
+    if (!resolvedPlayerId || normalizedRoom.length !== 6) return;
+    syncRoomState();
+
+    const pollId = window.setInterval(syncRoomState, 800);
+    return () => {
+      window.clearInterval(pollId);
+    };
+  }, [normalizedRoom, resolvedPlayerId, syncRoomState]);
+
+  const submitAnswer = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (!battleActive || !roomState || !answer.trim()) return;
+
+      setSubmitting(true);
+      setErrorText("");
+      try {
+        const state = await requestJson<VersusRoomState>(
+          `/api/games/word-game/versus/rooms/${roomState.roomCode}/actions`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              action: "submit-answer",
+              playerId: resolvedPlayerId,
+              answer: answer.trim(),
+            }),
+          },
+        );
+        setRoomState(state);
+        setFeedback(state.lastEvent || "Answer submitted.");
+        setAnswer("");
+      } catch (error) {
+        setErrorText(error instanceof Error ? error.message : "Failed to submit answer.");
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [answer, battleActive, resolvedPlayerId, roomState],
+  );
 
   return (
     <div className="word-versus-root" data-page="versus-battle">
       <main className="versus-shell">
         <section className="top-row">
-          <button className="return-btn" type="button" onClick={() => router.push(`/games/word-game/multiplayer?lang=${locale}`)}>
+          <button
+            className="return-btn"
+            type="button"
+            onClick={() => router.push(`/games/word-game/multiplayer?lang=${locale}`)}
+          >
             Return To Lobby
           </button>
           <div className="meta-card">
             <span>Room</span>
-            <strong>{room}</strong>
+            <strong>{normalizedRoom || "------"}</strong>
           </div>
           <div className="meta-card">
             <span>Sector</span>
@@ -67,12 +188,12 @@ export function WordGameVersusBattle({
           <div className="meta-card">
             <span>Wave</span>
             <strong>
-              {Math.min(wave, TOTAL_WAVES)}/{TOTAL_WAVES}
+              {roomState ? `${Math.min(roomState.waveNumber, roomState.totalWaves)}/${roomState.totalWaves}` : "--/--"}
             </strong>
           </div>
           <div className="meta-card">
             <span>Timer</span>
-            <strong>{timer}s</strong>
+            <strong>{roomState ? `${roomState.secondsLeft}s` : "--"}</strong>
           </div>
         </section>
 
@@ -80,14 +201,14 @@ export function WordGameVersusBattle({
           <article className="player-card you">
             <div className="name-row">
               <span className="tag">You</span>
-              <strong>Player A</strong>
+              <strong>{selfPlayer?.name ?? "Not joined"}</strong>
             </div>
             <div className="hp-track">
               <div className="hp-fill you-fill" style={{ width: `${yourHpPercent}%` }} />
             </div>
             <div className="stats-row">
-              <span>HP {youHp}/5</span>
-              <span>Score {youScore}</span>
+              <span>HP {selfPlayer?.hp ?? MAX_HP}/5</span>
+              <span>Score {selfPlayer?.score ?? 0}</span>
             </div>
           </article>
 
@@ -96,14 +217,14 @@ export function WordGameVersusBattle({
           <article className="player-card rival">
             <div className="name-row">
               <span className="tag">Opponent</span>
-              <strong>Player B</strong>
+              <strong>{rivalPlayer?.name ?? "Waiting..."}</strong>
             </div>
             <div className="hp-track">
               <div className="hp-fill rival-fill" style={{ width: `${rivalHpPercent}%` }} />
             </div>
             <div className="stats-row">
-              <span>HP {rivalHp}/5</span>
-              <span>Score {rivalScore}</span>
+              <span>HP {rivalPlayer?.hp ?? MAX_HP}/5</span>
+              <span>Score {rivalPlayer?.score ?? 0}</span>
             </div>
           </article>
         </section>
@@ -117,16 +238,22 @@ export function WordGameVersusBattle({
             <div className="tower left-tower">
               <span className="tower-label">Your Core</span>
             </div>
+
             <div className="question-banner">
-              <span className="mode-chip">VERSUS SPELLING</span>
-              <h2>Algorithm</h2>
-              <p>Type the full word faster than your opponent to deal damage.</p>
+              <span className="mode-chip">
+                {roomState?.question?.type === "meaning" ? "VERSUS MEANING" : "VERSUS SPELLING"}
+              </span>
+              <h2>{roomState?.question?.wordDisplay ?? "Waiting for match start..."}</h2>
+              <p>{roomState?.question?.hint ?? "Host starts the match after both players are ready."}</p>
               <div className="option-grid">
-                <span>1. Algorithm</span>
-                <span>2. Interface</span>
-                <span>3. Recursion</span>
+                {roomState?.question?.type === "meaning"
+                  ? roomState.question.options.map((option, index) => (
+                      <span key={`${option}-${index}`}>{index + 1}. {option}</span>
+                    ))
+                  : null}
               </div>
             </div>
+
             <div className="tower right-tower">
               <span className="tower-label">Rival Core</span>
             </div>
@@ -143,10 +270,29 @@ export function WordGameVersusBattle({
         <section className="bottom-row">
           <article className="command-panel">
             <h3>Your Answer Panel</h3>
-            <div className="input-shell">Type answer here...</div>
-            <button type="button" className="attack-btn">
-              Attack
-            </button>
+            <form className="answer-form" onSubmit={submitAnswer}>
+              <input
+                className="input-shell"
+                value={answer}
+                onChange={(event) => setAnswer(event.target.value)}
+                placeholder={
+                  roomState?.question?.type === "meaning"
+                    ? "Type 1-3"
+                    : "Type the complete word"
+                }
+                disabled={!battleActive || submitting}
+              />
+              <button type="submit" className="attack-btn" disabled={!battleActive || submitting || !answer.trim()}>
+                {submitting ? "Sending..." : "Attack"}
+              </button>
+            </form>
+            <p className="live-feedback">{feedback}</p>
+            {errorText ? <p className="live-feedback error">{errorText}</p> : null}
+            {roomState?.status === "finished" ? (
+              <p className="live-feedback result">
+                Match finished: {roomState.winnerLabel ?? "Draw"} ({roomState.resultReason ?? "result"})
+              </p>
+            ) : null}
           </article>
         </section>
       </main>
@@ -457,7 +603,7 @@ export function WordGameVersusBattle({
         .option-grid {
           margin-top: 12px;
           display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-columns: 1fr;
           gap: 8px;
         }
 
@@ -466,10 +612,11 @@ export function WordGameVersusBattle({
           border: 1px solid rgba(255, 248, 235, 0.22);
           background: rgba(255, 248, 235, 0.08);
           color: #fff6e2;
-          font-size: 0.82rem;
+          font-size: 0.86rem;
           font-weight: 700;
-          padding: 6px 10px;
-          text-align: center;
+          padding: 8px 12px;
+          text-align: left;
+          line-height: 1.3;
         }
 
         .duel-progress {
@@ -517,7 +664,7 @@ export function WordGameVersusBattle({
           background: linear-gradient(180deg, rgba(91, 65, 146, 0.98), rgba(61, 39, 103, 1));
           box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.14), inset 0 -5px 0 rgba(28, 17, 52, 0.3);
           padding: 12px 14px;
-          min-height: 140px;
+          min-height: 156px;
         }
 
         .command-panel h3 {
@@ -526,6 +673,13 @@ export function WordGameVersusBattle({
           letter-spacing: 0.08em;
           text-transform: uppercase;
           color: #bdefff;
+        }
+
+        .answer-form {
+          display: grid;
+          grid-template-columns: 1fr 160px;
+          gap: 10px;
+          align-items: center;
         }
 
         .input-shell {
@@ -539,10 +693,10 @@ export function WordGameVersusBattle({
           padding: 0 12px;
           font-size: 0.95rem;
           font-weight: 700;
+          font: inherit;
         }
 
         .attack-btn {
-          margin-top: 10px;
           width: 100%;
           min-height: 44px;
           border-radius: 12px;
@@ -555,6 +709,29 @@ export function WordGameVersusBattle({
           letter-spacing: 0.06em;
           text-transform: uppercase;
           box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.18), inset 0 -5px 0 rgba(109, 41, 25, 0.36);
+          cursor: pointer;
+        }
+
+        .attack-btn:disabled,
+        .input-shell:disabled {
+          opacity: 0.55;
+          cursor: not-allowed;
+        }
+
+        .live-feedback {
+          margin: 10px 0 0;
+          color: rgba(255, 248, 235, 0.9);
+          font-size: 0.92rem;
+          font-weight: 700;
+          line-height: 1.4;
+        }
+
+        .live-feedback.error {
+          color: #ffd6cc;
+        }
+
+        .live-feedback.result {
+          color: #b8f4bd;
         }
 
         @media (max-width: 1060px) {
@@ -579,11 +756,7 @@ export function WordGameVersusBattle({
             height: 74px;
           }
 
-          .option-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .bottom-row {
+          .answer-form {
             grid-template-columns: 1fr;
           }
         }
