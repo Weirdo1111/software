@@ -7,18 +7,18 @@ import { getLocale } from "@/lib/i18n/get-locale";
 const signUpFlow = [
   {
     step: "01",
-    title: "Create account",
-    detail: "Set up the workspace that will hold placement results, plans, and feedback history.",
+    title: "Create freshman access",
+    detail: "Open one DIICSU learner space that will hold placement results, buddy progress, and feedback records.",
   },
   {
     step: "02",
-    title: "Complete onboarding",
-    detail: "Define the learner objective and daily study load before the first recommended tasks are seeded.",
+    title: "Set your weekly rhythm",
+    detail: "Start with a realistic study pattern for lectures, coursework writing, and seminar preparation.",
   },
   {
     step: "03",
-    title: "Take placement and begin",
-    detail: "Route into the correct band and open the four-skill academic learning loop.",
+    title: "Enter the four-skill hub",
+    detail: "Move into listening, reading, speaking, and writing practice built for English-medium university study.",
   },
 ] as const;
 
@@ -28,8 +28,8 @@ export default async function SignUpPage({ searchParams }: { searchParams: Promi
   return (
     <PageFrame
       locale={locale}
-      title="Create an academic learner account"
-      description="The sign-up experience now explains what the account is for: it stores the learner's setup, band placement, and skill evidence over time."
+      title="Create your DIICSU freshman English account"
+      description="Open one newcomer workspace for EMI study, coursework support, seminar preparation, and visible progress tracking."
     >
       <div className="grid gap-5 xl:grid-cols-[1.02fr_0.98fr]">
         <AuthForm mode="sign-up" locale={locale} />
@@ -38,7 +38,7 @@ export default async function SignUpPage({ searchParams }: { searchParams: Promi
           <p className="section-label">
             <UserRoundPlus className="size-3.5" /> Setup flow
           </p>
-          <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">What happens after account creation.</h2>
+          <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">What your DIICSU account sets up.</h2>
           <div className="mt-6 grid gap-3">
             {signUpFlow.map((item) => (
               <article key={item.step} className="grid gap-3 rounded-[1.4rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.74)] p-4 sm:grid-cols-[auto_1fr] sm:items-start">
@@ -55,13 +55,13 @@ export default async function SignUpPage({ searchParams }: { searchParams: Promi
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
             <div className="rounded-[1.3rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.74)] p-4">
               <LibraryBig className="size-4 text-[var(--navy)]" />
-              <p className="mt-3 text-sm font-semibold text-[var(--ink)]">Academic modules</p>
-              <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">Content is organized around reading, listening, writing, and speaking for university contexts.</p>
+              <p className="mt-3 text-sm font-semibold text-[var(--ink)]">EMI support</p>
+              <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">Content is framed around lectures, coursework, seminar speaking, and academic progression.</p>
             </div>
             <div className="rounded-[1.3rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.74)] p-4">
               <CheckCircle2 className="size-4 text-[var(--navy)]" />
               <p className="mt-3 text-sm font-semibold text-[var(--ink)]">Trackable growth</p>
-              <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">The platform keeps enough evidence to justify reassessment later.</p>
+              <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">The platform keeps enough study evidence, buddy progress, and review history to show real development over time.</p>
             </div>
           </div>
         </aside>

@@ -11,22 +11,34 @@ type AuthMode = "sign-in" | "sign-up";
 
 const modeCopy = {
   "sign-in": {
-    title: "Return to your learner workspace",
-    button: "Sign in",
+    section: "DIICSU freshman access",
+    title: "Return to the DIICSU freshman hub",
+    button: "Enter hub",
     statusReady: "Signed in. Your dashboard is ready.",
-    helper: "Use the same account or email linked to your placement, progress tracking, and AI feedback.",
-    altLabel: "Need a new account?",
+    helper: "Use the same account linked to your coursework preparation, seminar practice, buddy growth, and AI feedback.",
+    altLabel: "Need a DIICSU account?",
     altHref: "/auth/sign-up",
     altCta: "Create one",
+    accountLabel: "Email / Username",
+    accountPlaceholder: "admin or you@diicsu.edu.cn",
+    chips: ["EMI study", "Coursework", "Seminar", "Buddy growth"],
+    unlockTitle: "What stays with this account",
+    unlockDetail: "Placement history, buddy progress, AI feedback, and your four-skill DIICSU study route stay linked to this account.",
   },
   "sign-up": {
-    title: "Create your learner account",
+    section: "DIICSU freshman access",
+    title: "Create your DIICSU freshman account",
     button: "Create account",
     statusReady: "Account created. Continue to onboarding.",
-    helper: "Your account stores placement results, daily plans, and reassessment history.",
+    helper: "One account keeps your onboarding, listening practice, writing drafts, seminar preparation, and progress evidence together.",
     altLabel: "Already have an account?",
     altHref: "/auth/sign-in",
     altCta: "Sign in",
+    accountLabel: "Email",
+    accountPlaceholder: "you@diicsu.edu.cn",
+    chips: ["Listening", "Writing", "Seminar", "Progress"],
+    unlockTitle: "What this account opens",
+    unlockDetail: "Your DIICSU account stores placement results, buddy progress, AI feedback records, and your academic learning plan over time.",
   },
 } as const;
 
@@ -109,20 +121,30 @@ export function AuthForm({ mode, locale }: { mode: AuthMode; locale: Locale }) {
   return (
     <form onSubmit={onSubmit} className="surface-panel grid gap-5 rounded-[2rem] p-6 sm:p-7">
       <div>
-        <p className="section-label">Account access</p>
+        <p className="section-label">{copy.section}</p>
         <h2 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">{copy.title}</h2>
         <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">{copy.helper}</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {copy.chips.map((chip) => (
+            <span
+              key={chip}
+              className="rounded-full border border-[rgba(20,50,75,0.12)] bg-white/76 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]"
+            >
+              {chip}
+            </span>
+          ))}
+        </div>
       </div>
 
       <div className="grid gap-4">
         <label className="grid gap-2 text-sm font-medium text-[var(--ink)]">
-          {mode === "sign-in" ? "Email / Account" : "Email"}
+          {copy.accountLabel}
           <input
             name={mode === "sign-in" ? "identifier" : "email"}
             type={mode === "sign-in" ? "text" : "email"}
             value={account}
             onChange={(event) => setAccount(event.target.value)}
-            placeholder={mode === "sign-in" ? "admin or you@university.edu" : "you@university.edu"}
+            placeholder={copy.accountPlaceholder}
             className="rounded-[1.1rem] border border-[rgba(20,50,75,0.16)] bg-white/75 px-4 py-3 text-sm outline-none transition focus:border-[var(--navy)] focus:ring-2 focus:ring-[rgba(20,50,75,0.08)]"
           />
         </label>
@@ -162,9 +184,9 @@ export function AuthForm({ mode, locale }: { mode: AuthMode; locale: Locale }) {
       <div className="grid gap-3 rounded-[1.4rem] border border-[rgba(20,50,75,0.12)] bg-[rgba(255,255,255,0.74)] p-4 text-sm text-[var(--ink-soft)]">
         <div className="flex items-center gap-3 text-[var(--ink)]">
           <ShieldCheck className="size-4" />
-          <p className="font-semibold">What this unlocks</p>
+          <p className="font-semibold">{copy.unlockTitle}</p>
         </div>
-        <p>Placement history, dashboard metrics, AI feedback records, and your academic learning plan stay linked to this account.</p>
+        <p>{copy.unlockDetail}</p>
       </div>
 
       {error ? <p className="rounded-[1rem] bg-[rgba(255,244,240,0.9)] px-4 py-3 text-sm font-medium text-[var(--coral)]">{error}</p> : null}

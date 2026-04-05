@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 
+import { AuthLandingHero } from "@/components/forms/auth-landing-hero";
+
 export default function RegisterPage() {
   const [lang, setLang] = useState<"zh" | "en">("en");
   const [username, setUsername] = useState("");
@@ -14,53 +16,49 @@ export default function RegisterPage() {
 
   const copy = {
     zh: {
-      brand: "English Learn",
+      brand: "DIICSU English Hub",
+      brandSub: "DUNDEE INTERNATIONAL INSTITUTE OF CENTRAL SOUTH UNIVERSITY",
       langLabel: "网站语言",
-      badge: "ENGLISH LEARN",
-      title: "创建你的学习账号。",
-      subtitle: "从这里开始，进入更清晰的英语学习路径。",
-      panelKicker: "CREATE ACCOUNT",
-      panelTitle: "注册。",
-      panelDesc: "填写基础信息，开始你的学习节奏。",
+      badge: "DIICSU FRESHMAN ENGLISH HUB",
+      title: "创建你的 DIICSU 新生学习账号。",
+      subtitle: "从这里进入一个面向 coursework、seminar 和四项技能成长的专属学习空间。",
+      highlights: ["Listening", "Writing", "Seminar", "Buddy growth"],
+      heroCaption: "创建账号后，你的桌宠成长、学习进度和反馈记录都会跟这个 DIICSU 学习空间绑定。",
+      panelKicker: "CREATE DIICSU ACCOUNT",
+      panelTitle: "创建账号。",
+      panelDesc: "填写基础信息，开启你的 DIICSU 新生英语学习路径。",
       username: "账号",
       email: "邮箱",
       password: "密码",
       confirmPassword: "确认密码",
       register: "注册",
       toLogin: "已有账号？去登录",
-      feature1Title: "Clear entry",
-      feature1Text: "从注册开始，建立你的专属学习入口。",
-      feature2Title: "Personal route",
-      feature2Text: "根据能力与目标进入更适合你的路径。",
-      feature3Title: "Steady growth",
-      feature3Text: "保持稳定、清晰、可持续的学习体验。",
-      footerNote: "Quiet design. Clear route.",
+      accountCardTitle: "Freshman account",
+      accountCardText: "以后用同一个账号登录，就能继续保留学习进度、桌宠成长和反馈记录。",
       passwordMismatch: "两次输入的密码不一致",
       registerLoading: "注册中...",
       registerFailed: "注册失败，请稍后再试",
     },
     en: {
-      brand: "English Learn",
+      brand: "DIICSU English Hub",
+      brandSub: "DUNDEE INTERNATIONAL INSTITUTE OF CENTRAL SOUTH UNIVERSITY",
       langLabel: "Language",
-      badge: "ENGLISH LEARN",
-      title: "Create your learner account.",
-      subtitle: "Start here, then move into a clearer English learning route.",
-      panelKicker: "CREATE ACCOUNT",
+      badge: "DIICSU FRESHMAN ENGLISH HUB",
+      title: "Create your DIICSU freshman account.",
+      subtitle: "Open one learner space for coursework support, seminar practice, and four-skill growth.",
+      highlights: ["Listening", "Writing", "Seminar", "Buddy growth"],
+      heroCaption: "After account creation, your buddy growth, study progress, and feedback records all stay tied to the same DIICSU learner space.",
+      panelKicker: "CREATE DIICSU ACCOUNT",
       panelTitle: "Sign up.",
-      panelDesc: "Enter your details and begin your learning rhythm.",
+      panelDesc: "Enter your details and begin a DIICSU-first study route.",
       username: "Username",
       email: "Email",
       password: "Password",
       confirmPassword: "Confirm Password",
       register: "Create account",
       toLogin: "Already have an account? Log in",
-      feature1Title: "Clear entry",
-      feature1Text: "Start with a simple account foundation.",
-      feature2Title: "Personal route",
-      feature2Text: "Move into a path that fits your level and goals.",
-      feature3Title: "Steady growth",
-      feature3Text: "A calmer structure for consistent learning.",
-      footerNote: "Quiet design. Clear route.",
+      accountCardTitle: "Freshman account",
+      accountCardText: "Use the same account next time to keep your study progress, buddy growth, and feedback records together.",
       passwordMismatch: "Passwords do not match",
       registerLoading: "Creating account...",
       registerFailed: "Unable to create account. Please try again.",
@@ -145,9 +143,10 @@ export default function RegisterPage() {
                 <span className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-[#f6fbff] bg-[#ffd774]" />
               </div>
 
-              <span className="text-[24px] font-semibold tracking-tight text-[#22314d]">
-                {copy.brand}
-              </span>
+              <div>
+                <div className="text-[24px] font-semibold tracking-tight text-[#22314d]">{copy.brand}</div>
+                <div className="hidden text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:block">{copy.brandSub}</div>
+              </div>
             </div>
 
             <div className="flex items-center gap-3 text-sm text-slate-500">
@@ -184,67 +183,13 @@ export default function RegisterPage() {
               <div className="absolute right-[-60px] top-[-60px] h-52 w-52 rounded-full bg-[#dff2ff]/80 blur-2xl" />
               <div className="absolute bottom-[-70px] left-[-40px] h-56 w-56 rounded-full bg-[#ffe8f2]/65 blur-2xl" />
 
-              <div className="relative z-10 max-w-[760px]">
-                <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-white/85 bg-white/88 px-4 py-2 text-[11px] font-semibold tracking-[0.24em] text-slate-500 shadow-[0_8px_18px_rgba(90,123,255,0.08)]">
-                  <span className="inline-block h-2 w-2 rounded-full bg-[#5a7bff]" />
-                  {copy.badge}
-                </div>
-
-                <div className="mb-8 flex items-center gap-4">
-                  <div className="relative flex h-16 w-16 items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,#5a7bff,#4ad2ff)] text-white shadow-[0_10px_0_rgba(143,196,255,0.24)]">
-                    <span className="text-lg font-semibold tracking-[0.22em]">
-                      EL
-                    </span>
-                    <span className="absolute -bottom-1.5 -right-1.5 h-4 w-4 rounded-full border-2 border-[#f6fbff] bg-[#ffd774]" />
-                  </div>
-
-                  <div className="text-sm leading-6 text-slate-500">
-                    <div className="font-medium text-[#22314d]">English Learn</div>
-                    <div>{copy.footerNote}</div>
-                  </div>
-                </div>
-
-                <h1
-                  className="font-display max-w-[760px] text-[46px] leading-[1.05] tracking-[-0.035em] text-[#1f2b43] md:text-[62px] lg:text-[74px]"
-                >
-                  {copy.title}
-                </h1>
-
-                <p className="mt-5 max-w-[560px] text-lg leading-8 text-slate-500">
-                  {copy.subtitle}
-                </p>
-
-                <div className="mt-12 grid grid-cols-1 gap-4 md:grid-cols-3">
-                  <FeatureCard
-                    title={copy.feature1Title}
-                    text={copy.feature1Text}
-                  />
-                  <FeatureCard
-                    title={copy.feature2Title}
-                    text={copy.feature2Text}
-                  />
-                  <FeatureCard
-                    title={copy.feature3Title}
-                    text={copy.feature3Text}
-                  />
-                </div>
-
-                <div className="mt-10 flex flex-wrap gap-4">
-                  <Link
-                    href="/login"
-                    className="rounded-full bg-[linear-gradient(135deg,#5a7bff,#4ad2ff)] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_10px_0_rgba(143,196,255,0.24)] transition hover:translate-y-[-1px]"
-                  >
-                    {lang === "zh" ? "返回登录" : "Back to login"}
-                  </Link>
-
-                  <button
-                    type="button"
-                    className="rounded-full border-2 border-white/85 bg-white/84 px-6 py-3.5 text-sm font-semibold text-[#22314d] transition hover:bg-white"
-                  >
-                    {lang === "zh" ? "查看模块" : "View modules"}
-                  </button>
-                </div>
-              </div>
+              <AuthLandingHero
+                badge={copy.badge}
+                title={copy.title}
+                subtitle={copy.subtitle}
+                highlights={copy.highlights}
+                caption={copy.heroCaption}
+              />
             </div>
 
             <div className="rounded-[36px] border-2 border-white/75 bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(239,247,255,0.92)_48%,rgba(248,243,255,0.9)_100%)] p-7 text-[#22314d] shadow-[0_14px_0_rgba(143,196,255,0.18),0_24px_55px_rgba(90,123,255,0.14)] backdrop-blur lg:p-8">
@@ -320,17 +265,15 @@ export default function RegisterPage() {
               <div className="mt-8 rounded-[28px] border-2 border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.9),rgba(239,247,255,0.82))] p-5 shadow-[0_10px_0_rgba(143,196,255,0.14)]">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div className="text-lg font-semibold text-[#22314d]">
-                    {lang === "zh" ? "New learner" : "New learner"}
+                    {copy.accountCardTitle}
                   </div>
                   <span className="rounded-full border border-[#ffd98a] bg-[#fff7da] px-3 py-1 text-[11px] font-semibold tracking-[0.2em] text-[#8c6810]">
-                    MVP
+                    DIICSU
                   </span>
                 </div>
 
                 <p className="text-[15px] leading-7 text-slate-500">
-                  {lang === "zh"
-                    ? "从创建账号开始，进入属于你的学习路径。"
-                    : "Create an account, then move into your own learning route."}
+                  {copy.accountCardText}
                 </p>
               </div>
             </div>
@@ -338,23 +281,6 @@ export default function RegisterPage() {
         </div>
       </div>
     </main>
-  );
-}
-
-function FeatureCard({
-  title,
-  text,
-}: {
-  title: string;
-  text: string;
-}) {
-  return (
-    <div className="rounded-[28px] border-2 border-white/85 bg-[linear-gradient(165deg,rgba(255,255,255,0.96),rgba(239,247,255,0.9),rgba(255,245,250,0.84))] p-5 shadow-[0_10px_0_rgba(143,196,255,0.14),0_18px_28px_rgba(90,123,255,0.08)]">
-      <div className="mb-3 text-[11px] font-semibold tracking-[0.24em] text-[#6f7fa5]">
-        {title.toUpperCase()}
-      </div>
-      <p className="text-[15px] leading-7 text-slate-600">{text}</p>
-    </div>
   );
 }
 
