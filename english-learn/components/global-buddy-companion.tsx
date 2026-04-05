@@ -628,7 +628,7 @@ export function GlobalBuddyCompanion() {
             onClick={openFreshmanGuide}
           >
             <BookOpenText className="size-4" />
-            <span>{locale === "zh" ? "Freshman Guide" : "Freshman Guide"}</span>
+            <span>{locale === "zh" ? "新生指南" : "Freshman Guide"}</span>
           </button>
         </div>
 
@@ -712,14 +712,14 @@ export function GlobalBuddyCompanion() {
                   className="buddy-wardrobe-close"
                   aria-label={locale === "zh" ? "关闭新生指南" : "Close freshman guide"}
                 >
-                  ×
+                  x
                 </button>
 
                 <div className="relative z-10 mt-6 grid gap-4">
                   <div className="buddy-wardrobe-page rounded-[1.8rem] border border-white/80 bg-[linear-gradient(180deg,rgba(255,252,246,0.98),rgba(247,251,255,0.94))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.68),0_16px_30px_rgba(90,123,255,0.09)]">
                     <p className="section-label">
                       <BookOpenText className="size-3.5" />
-                      {locale === "zh" ? "Freshman Guide" : "Freshman Guide"}
+                      {locale === "zh" ? "新生指南" : "Freshman Guide"}
                     </p>
                     <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
                       {locale === "zh"
@@ -771,9 +771,9 @@ export function GlobalBuddyCompanion() {
         ) : null}
         {isPlainBubble ? (
           <>
-            <span className="global-buddy-star global-buddy-star-one">✦</span>
-            <span className="global-buddy-star global-buddy-star-two">✦</span>
-            <span className="global-buddy-star global-buddy-star-three">✦</span>
+            <span className="global-buddy-star global-buddy-star-one">*</span>
+            <span className="global-buddy-star global-buddy-star-two">*</span>
+            <span className="global-buddy-star global-buddy-star-three">*</span>
           </>
         ) : null}
         <button

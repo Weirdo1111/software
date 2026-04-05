@@ -209,6 +209,27 @@
       "totalCompletedSources": 8,
       "createdAt": "2026-04-02T08:23:00.216Z",
       "updatedAt": "2026-04-03T08:41:18.862Z"
+    },
+    {
+      "authProvider": "local-file",
+      "authUserId": "f5cef4fc-2773-4f13-871b-fe1ad0011c7a",
+      "username": "111",
+      "email": "1@1.com",
+      "totalXp": 0,
+      "totalCompletedSources": 0,
+      "counts": {
+        "listeningCompletions": 0,
+        "speakingCompletions": 0,
+        "readingCompletions": 0,
+        "writingCompletions": 0,
+        "reviewSessions": 0,
+        "wordGameClears": 0,
+        "escapeRoomClears": 0,
+        "dormLockoutClears": 0,
+        "lastTrainClears": 0
+      },
+      "createdAt": "2026-04-05T12:12:04.085Z",
+      "updatedAt": "2026-04-05T12:12:04.085Z"
     }
   ]
 }
