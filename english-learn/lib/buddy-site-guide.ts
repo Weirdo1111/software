@@ -45,6 +45,11 @@ export type BuddyGuideAction = {
   requiresLogin: boolean;
 };
 
+export type BuddyGuideSection = {
+  title: string;
+  items: string[];
+};
+
 export type BuddyGuideRuleResponse = {
   mode: "faq" | "guide";
   answer: string;
@@ -539,6 +544,101 @@ export function getBuddyCurrentPageGuide(locale: GuideLocale, pathname?: string 
         ? `你当前在${currentPage.title.zh}页面。${currentPage.summary.zh}`
         : `You are on the ${currentPage.title.en} page. ${currentPage.summary.en}`,
     actions: buildBuddyGuideActions(getBuddyRelatedPageIds(currentPage.id), { locale, levelPrefix }),
+  };
+}
+
+export function getBuddyFreshmanGuide(
+  locale: GuideLocale,
+  options?: { levelPrefix?: string; isLoggedIn?: boolean },
+) {
+  const actions = options?.isLoggedIn
+    ? buildBuddyGuideActions(["schedule", "listening", "progress"], {
+        locale,
+        levelPrefix: options?.levelPrefix,
+      })
+    : buildBuddyGuideActions(["sign-in", "schedule", "listening"], {
+        locale,
+        levelPrefix: options?.levelPrefix,
+      });
+
+  const quickReplies =
+    locale === "zh"
+      ? ["我怎么登录", "经验值怎么看", "我想开始听力"]
+      : ["How do I sign in", "Where do I see XP", "I want to start listening"];
+
+  const sections: BuddyGuideSection[] =
+    locale === "zh"
+      ? [
+          {
+            title: "先做什么",
+            items: [
+              "先登录或注册，再完成分级与基础设置。",
+              "先去 Schedule 看本周安排，再进入听说读写模块。",
+            ],
+          },
+          {
+            title: "推荐起步顺序",
+            items: [
+              "可以先从 Listening 和 Writing 开始，一个负责输入，一个帮助你尽早输出。",
+              "如果刚开始压力大，就先完成一小段听力或一段短写作，不必一次做很多。",
+            ],
+          },
+          {
+            title: "Buddy 成长怎么配合",
+            items: [
+              "完成学习任务和部分游戏会获得 XP，推动桌宠升级。",
+              "每 5 级会解锁一个新的身份门槛。",
+            ],
+          },
+          {
+            title: "给 DIICSU 新生的建议",
+            items: [
+              "不要一开始就追求把所有功能都用完，先建立每周节奏最重要。",
+              "如果某个模块看不懂，可以先回到输入型任务，不必硬做输出。",
+              "也可以多去 Games 里玩一玩，用更轻松的方式熟悉网站并顺便拿 XP。",
+            ],
+          },
+        ]
+      : [
+          {
+            title: "Start here",
+            items: [
+              "Sign in first, then finish placement and the basic setup.",
+              "Check Schedule for the weekly plan before moving into the skill pages.",
+            ],
+          },
+          {
+            title: "Recommended route",
+            items: [
+              "A good starting pair is Listening and Writing: one builds input, and the other helps you produce output early.",
+              "If the site feels new, begin with one short listening task or one short writing task rather than trying everything at once.",
+            ],
+          },
+          {
+            title: "How buddy growth fits in",
+            items: [
+              "Completing study tasks and some games gives XP and helps your buddy level up.",
+              "Every 5 levels unlock a new identity milestone.",
+            ],
+          },
+          {
+            title: "DIICSU freshman tips",
+            items: [
+              "Do not try to use every feature at once. Building a weekly rhythm matters more.",
+              "If a task feels too hard, step back to an input-focused page before pushing output.",
+              "Spend time in Games as well. They are a lighter way to learn the system and pick up extra XP.",
+            ],
+          },
+        ];
+
+  return {
+    answer:
+      locale === "zh"
+        ? "这是给 DIICSU 新生准备的一版简洁入门指南，先帮你搞清楚从哪里开始，以及 Buddy 成长怎么和学习任务结合。"
+        : "This is a concise freshman guide for DIICSU students, showing where to begin and how buddy growth connects to study tasks.",
+    actions,
+    quickReplies,
+    sections,
   };
 }
 

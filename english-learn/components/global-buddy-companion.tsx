@@ -1,8 +1,9 @@
 "use client";
 
-import { ArrowRight, LoaderCircle, X } from "lucide-react";
+import { ArrowRight, BookOpenText, LoaderCircle, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
 import {
   BuddyCompanion,
@@ -36,6 +37,7 @@ import { isBuddySoundEnabled, playBuddySound, setBuddySoundEnabled, unlockBuddyS
 import {
   getBuddyCurrentPageGuide,
   getBuddyDefaultQuestions,
+  getBuddyFreshmanGuide,
   type BuddyGuideAction,
 } from "@/lib/buddy-site-guide";
 import { loadSchedulePreferencesFromStorage, subscribeSchedulePreferences } from "@/lib/schedule";
@@ -179,6 +181,7 @@ export function GlobalBuddyCompanion() {
   const [assistantLoading, setAssistantLoading] = useState(false);
   const [assistantError, setAssistantError] = useState("");
   const [assistantResponse, setAssistantResponse] = useState<BuddyAssistantResponse | null>(null);
+  const [freshmanGuideOpen, setFreshmanGuideOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [levelPrefix, setLevelPrefix] = useState("A2");
   const greetingTimerRef = useRef<number | null>(null);
@@ -204,6 +207,10 @@ export function GlobalBuddyCompanion() {
   const defaultQuestions = useMemo(
     () => getBuddyDefaultQuestions(locale, pathname).slice(0, 4),
     [locale, pathname],
+  );
+  const freshmanGuide = useMemo(
+    () => getBuddyFreshmanGuide(locale, { levelPrefix, isLoggedIn }),
+    [isLoggedIn, levelPrefix, locale],
   );
 
   useEffect(() => {
@@ -344,12 +351,28 @@ export function GlobalBuddyCompanion() {
     void playBuddySound(kind);
   };
 
+  const resetAssistantPanel = useCallback(() => {
+    setAssistantError("");
+    setAssistantQuery("");
+    setAssistantResponse(null);
+  }, []);
+
+  const closeAssistantPanel = useCallback(() => {
+    setAssistantOpen(false);
+    resetAssistantPanel();
+  }, [resetAssistantPanel]);
+
+  const closeFreshmanGuide = useCallback(() => {
+    setFreshmanGuideOpen(false);
+  }, []);
+
   const navigateFromAssistant = (action: BuddyGuideAction) => {
     const targetHref =
       action.requiresLogin && !isLoggedIn
         ? `/auth/sign-in?lang=${locale}`
         : action.href;
 
+    setFreshmanGuideOpen(false);
     router.push(targetHref);
     setAssistantOpen(false);
     setAssistantError("");
@@ -421,6 +444,13 @@ export function GlobalBuddyCompanion() {
     }
   };
 
+  const openFreshmanGuide = () => {
+    closeAssistantPanel();
+    setFreshmanGuideOpen(true);
+    triggerReaction("wave", locale === "zh" ? "新生看这里" : "Freshman guide", "open", 760);
+    playSoundIfEnabled("wave");
+  };
+
   const triggerReaction = (
     nextReaction: BuddyReaction,
     bubbleText: string | null,
@@ -489,16 +519,35 @@ export function GlobalBuddyCompanion() {
   }, []);
 
   useEffect(() => {
-    if (!assistantOpen) return;
+    if (!assistantOpen && !freshmanGuideOpen) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
-      setAssistantOpen(false);
+      if (freshmanGuideOpen) {
+        closeFreshmanGuide();
+        return;
+      }
+      closeAssistantPanel();
     };
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [assistantOpen]);
+  }, [assistantOpen, closeAssistantPanel, closeFreshmanGuide, freshmanGuideOpen]);
+
+  useEffect(() => {
+    if (!freshmanGuideOpen) return;
+
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, [freshmanGuideOpen]);
 
   useEffect(() => {
     const onSubmit = () => {
@@ -561,7 +610,7 @@ export function GlobalBuddyCompanion() {
           <button
             type="button"
             className="global-buddy-assistant-close"
-            onClick={() => setAssistantOpen(false)}
+            onClick={closeAssistantPanel}
             aria-label={locale === "zh" ? "关闭助手面板" : "Close buddy guide"}
           >
             <X className="size-4" />
@@ -571,6 +620,17 @@ export function GlobalBuddyCompanion() {
         <p className="global-buddy-assistant-answer" lang={locale === "zh" ? "zh-CN" : "en"}>
           {displayedAssistantAnswer}
         </p>
+
+        <div className="global-buddy-assistant-tools">
+          <button
+            type="button"
+            className="global-buddy-assistant-featured"
+            onClick={openFreshmanGuide}
+          >
+            <BookOpenText className="size-4" />
+            <span>{locale === "zh" ? "Freshman Guide" : "Freshman Guide"}</span>
+          </button>
+        </div>
 
         <div className="global-buddy-assistant-actions">
           {displayedAssistantActions.map((action) => (
@@ -638,6 +698,66 @@ export function GlobalBuddyCompanion() {
           </p>
         ) : null}
       </section>
+
+      {freshmanGuideOpen && typeof document !== "undefined"
+        ? createPortal(
+            <div className="buddy-wardrobe-overlay" role="dialog" aria-modal="true" onClick={closeFreshmanGuide}>
+              <div
+                className="buddy-wardrobe-panel max-h-[calc(100vh-2.5rem)] overflow-y-auto overscroll-contain"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  onClick={closeFreshmanGuide}
+                  className="buddy-wardrobe-close"
+                  aria-label={locale === "zh" ? "关闭新生指南" : "Close freshman guide"}
+                >
+                  ×
+                </button>
+
+                <div className="relative z-10 mt-6 grid gap-4">
+                  <div className="buddy-wardrobe-page rounded-[1.8rem] border border-white/80 bg-[linear-gradient(180deg,rgba(255,252,246,0.98),rgba(247,251,255,0.94))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.68),0_16px_30px_rgba(90,123,255,0.09)]">
+                    <p className="section-label">
+                      <BookOpenText className="size-3.5" />
+                      {locale === "zh" ? "Freshman Guide" : "Freshman Guide"}
+                    </p>
+                    <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
+                      {locale === "zh"
+                        ? "给 DIICSU 新生的快速上手指南"
+                        : "A quick-start guide for DIICSU freshmen"}
+                    </h3>
+                    <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">
+                      {freshmanGuide.answer}
+                    </p>
+                  </div>
+
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    {freshmanGuide.sections.map((section) => (
+                      <div
+                        key={section.title}
+                        className="buddy-wardrobe-page h-full rounded-[1.8rem] border border-white/80 bg-[linear-gradient(180deg,rgba(247,251,255,0.98),rgba(236,245,255,0.92))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.68),0_16px_30px_rgba(90,123,255,0.09)]"
+                      >
+                        <div className="rounded-[1.2rem] border-2 border-white/90 bg-[rgba(255,255,255,0.84)] px-4 py-3 shadow-[0_8px_0_rgba(143,196,255,0.12),0_14px_20px_rgba(90,123,255,0.07)]">
+                          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+                            {section.title}
+                          </p>
+                          <div className="mt-3 grid gap-2 text-sm leading-7 text-[var(--ink)]">
+                            {section.items.map((item) => (
+                              <p key={item} className="rounded-[0.95rem] bg-white/70 px-3 py-2">
+                                {item}
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
 
       <div className={`global-buddy-card${reaction !== "idle" ? ` global-buddy-card-${reaction}` : ""}`}>
         <span className="global-buddy-shadow" />
