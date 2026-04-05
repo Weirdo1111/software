@@ -45,6 +45,11 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
   const readyPercent = useMemo(() => (readyCount / 2) * 100, [readyCount]);
   const canEnterMatch = readyCount === 2;
 
+  const openVersusBattle = (forceTest = false) => {
+    const testFlag = forceTest ? "&test=1" : "";
+    router.push(`/games/word-game/versus?lang=${locale}&bank=${selectedBank}&room=${activeRoomCode}${testFlag}`);
+  };
+
   const handleCopy = async () => {
     if (!navigator?.clipboard) {
       return;
@@ -194,11 +199,14 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
               <button type="button" className="action-btn ghost" onClick={() => setPlayerReady((value) => !value)}>
                 {playerReady ? "Cancel Ready" : "Ready Up"}
               </button>
+              <button type="button" className="action-btn test" onClick={() => openVersusBattle(true)}>
+                Direct Test Battle
+              </button>
               <button
                 type="button"
                 className="action-btn primary"
                 disabled={!canEnterMatch}
-                onClick={() => router.push(`/games/word-game/battle?lang=${locale}&bank=${selectedBank}&mode=versus&room=${activeRoomCode}`)}
+                onClick={() => openVersusBattle()}
               >
                 Enter Versus Match
               </button>
@@ -550,7 +558,7 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
         .action-bar {
           margin-top: 18px;
           display: grid;
-          grid-template-columns: 0.8fr 1fr 1fr 1.2fr;
+          grid-template-columns: 0.8fr 1fr 1fr 1fr 1.2fr;
           gap: 10px;
         }
 
@@ -583,6 +591,13 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
           color: var(--white);
           background: linear-gradient(180deg, #6f83f7, #4f5fd0);
           box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.2), inset 0 -5px 0 rgba(39, 49, 125, 0.36), 0 6px 0 rgba(34, 45, 117, 0.38);
+        }
+
+        .action-btn.test {
+          border: 3px solid #0d5a78;
+          color: var(--white);
+          background: linear-gradient(180deg, #4fb9e8, #2789b8);
+          box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.24), inset 0 -5px 0 rgba(15, 89, 119, 0.36), 0 6px 0 rgba(11, 74, 98, 0.38);
         }
 
         .action-btn.primary {
