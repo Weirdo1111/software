@@ -23,6 +23,7 @@ import { useSearchParams } from "next/navigation";
 import { AIAnalysisState } from "@/components/forms/ai-analysis-state";
 import { ContextDock } from "@/components/context-comments/context-dock";
 import { SaveToDeckButton } from "@/components/forms/save-to-deck-button";
+import { emitBuddyPageEvent } from "@/lib/buddy-page-events";
 import {
   listeningMajors,
   listeningMaterials,
@@ -287,6 +288,18 @@ export function ListeningFeedbackForm({
   };
   function handleMaterialSelect(groupId: string) {
     setSelectedMaterialGroupId(groupId);
+    const selectedMaterial = getMaterialByGroupId(tedCatalog, groupId);
+    if (!selectedMaterial) return;
+
+    emitBuddyPageEvent({
+      text: {
+        zh: `\u5207\u5230\u65b0\u542c\u529b\u6750\u6599\u4e86\uff0c${selectedMaterial.title}`,
+        en: `Queued a new listening talk: ${selectedMaterial.title}`,
+      },
+      reaction: "wave",
+      face: "happy",
+      sound: "wave",
+    });
   }
 
   function handleAnswerChange(questionId: string, value: string) {
@@ -312,6 +325,20 @@ export function ListeningFeedbackForm({
         correct: nextResult.passed,
         durationSec,
         markCompleted: true,
+      });
+      emitBuddyPageEvent({
+        text: nextResult.passed
+          ? {
+              zh: `\u542c\u529b\u68c0\u67e5 ${nextResult.overallScore}/10\uff0c\u8fd9\u6bb5\u542c\u5f97\u5f88\u7a33`,
+              en: `Listening check ${nextResult.overallScore}/10. That was a steady run.`,
+            }
+          : {
+              zh: `\u542c\u529b\u68c0\u67e5 ${nextResult.overallScore}/10\uff0c\u6211\u4eec\u53ef\u4ee5\u518d\u5bf9\u4e00\u904d\u7ed3\u6784\u4fe1\u53f7`,
+              en: `Listening check ${nextResult.overallScore}/10. We can review the signposts once more.`,
+            },
+        reaction: nextResult.passed ? "bounce" : "blink",
+        face: nextResult.passed ? "open" : "happy",
+        sound: nextResult.passed ? "bounce" : "click",
       });
 
       fetch("/api/attempts", {
@@ -373,6 +400,15 @@ export function ListeningFeedbackForm({
       }
 
       setAiFeedback(data as ListeningAIFeedback);
+      emitBuddyPageEvent({
+        text: {
+          zh: "\u542c\u529b AI \u53cd\u9988\u5230\u4e86\uff0c\u6211\u5df2\u7ecf\u5e2e\u4f60\u62ff\u5230\u6559\u7ec3\u7b14\u8bb0",
+          en: "AI listening feedback is ready. I brought back the coach notes.",
+        },
+        reaction: "wave",
+        face: "open",
+        sound: "wave",
+      });
     } catch (nextError) {
       const message = nextError instanceof Error ? nextError.message : "AI feedback failed.";
       setAiStatus(message);
@@ -526,7 +562,26 @@ export function ListeningFeedbackForm({
           {activeMaterial.embedUrl ? (
             <button
               type="button"
-              onClick={() => setShowTedEmbed((current) => !current)}
+              onClick={() =>
+                setShowTedEmbed((current) => {
+                  const nextValue = !current;
+                  emitBuddyPageEvent({
+                    text: nextValue
+                      ? {
+                          zh: "\u9884\u89c8\u5df2\u6253\u5f00\uff0c\u8fb9\u542c\u8fb9\u8bb0\u8981\u70b9\u5427",
+                          en: "Preview opened. Let's listen and take notes together.",
+                        }
+                      : {
+                          zh: "\u9884\u89c8\u5148\u6536\u8d77\u6765\uff0c\u56de\u5230\u7b54\u9898\u533a\u5427",
+                          en: "Preview tucked away. Back to the answer sheet.",
+                        },
+                    reaction: nextValue ? "wave" : "blink",
+                    face: nextValue ? "open" : "happy",
+                    sound: nextValue ? "wave" : "click",
+                  });
+                  return nextValue;
+                })
+              }
               className="inline-flex items-center gap-2 rounded-full bg-[var(--navy)] px-5 py-3 text-sm font-semibold text-[#f7efe3]"
             >
               <PlayCircle className="size-4" />

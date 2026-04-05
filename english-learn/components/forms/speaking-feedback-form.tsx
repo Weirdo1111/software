@@ -16,6 +16,7 @@ import { SpeakingScorePanel } from "@/components/forms/speaking/score-panel";
 import { SpeakingShadowingPanel } from "@/components/forms/speaking/shadowing-panel";
 import type { PartnerMessage, SpeakingModuleId, SpeakingScenarioFilter } from "@/components/forms/speaking/types";
 import { useAudioRecorder } from "@/components/forms/speaking/use-audio-recorder";
+import { emitBuddyPageEvent } from "@/lib/buddy-page-events";
 import { useSpeakingAttemptHistory } from "@/components/forms/speaking/use-speaking-attempt-history";
 import { type Locale } from "@/lib/i18n/dictionaries";
 import { appendSpeakingAttemptInStorage } from "@/lib/speaking-attempts";
@@ -101,6 +102,15 @@ export function SpeakingFeedbackForm({
     setStatus("");
     setTranscribeStatus("");
     await recorder.resetRecording();
+    emitBuddyPageEvent({
+      text: {
+        zh: `\u53e3\u8bed\u573a\u666f\u5207\u6362\u4e3a ${nextPrompt.title}\uff0c\u51c6\u5907\u5f00\u53e3\u5427`,
+        en: `Speaking prompt switched to ${nextPrompt.title}. Ready when you are.`,
+      },
+      reaction: "wave",
+      face: "happy",
+      sound: "wave",
+    });
   }
 
   function handleTargetLevelChange(nextLevel: SpeakingDifficulty) {
@@ -221,6 +231,20 @@ export function SpeakingFeedbackForm({
         durationSec,
         markCompleted: true,
       });
+      emitBuddyPageEvent({
+        text: passed
+          ? {
+              zh: `\u53e3\u8bed\u5f97\u5206 ${feedback.overall_score}\uff0c\u8fd9\u6b21\u56de\u7b54\u5f88\u6709\u6c14\u8d28`,
+              en: `Speaking score ${feedback.overall_score}. That answer had real presence.`,
+            }
+          : {
+              zh: `\u53e3\u8bed\u5f97\u5206 ${feedback.overall_score}\uff0c\u4e0b\u4e00\u8f6e\u6211\u4eec\u5148\u7ec3\u6d41\u7545\u5ea6`,
+              en: `Speaking score ${feedback.overall_score}. Next round, let's build fluency first.`,
+            },
+        reaction: passed ? "bounce" : "blink",
+        face: passed ? "open" : "happy",
+        sound: passed ? "bounce" : "click",
+      });
 
       fetch("/api/attempts", {
         method: "POST",
@@ -275,6 +299,15 @@ export function SpeakingFeedbackForm({
 
       setTranscript(data.transcript);
       setTranscribeStatus("The latest recording has been transcribed into the draft field.");
+      emitBuddyPageEvent({
+        text: {
+          zh: "\u6700\u65b0\u5f55\u97f3\u5df2\u8f6c\u6210\u6587\u5b57\uff0c\u53ef\u4ee5\u76f4\u63a5\u6539\u7a3f\u4e86",
+          en: "The latest take is transcribed. You can revise straight from the draft now.",
+        },
+        reaction: "blink",
+        face: "open",
+        sound: "click",
+      });
     } catch (nextError) {
       const message = nextError instanceof Error ? nextError.message : "Failed to transcribe the latest take.";
       setTranscribeStatus(message);
@@ -328,6 +361,15 @@ export function SpeakingFeedbackForm({
         { role: "assistant", content: assistantContent },
       ]);
       setPartnerNote(partnerReply.coaching_note);
+      emitBuddyPageEvent({
+        text: {
+          zh: "\u5bf9\u7ec3\u642d\u6863\u56de\u8bdd\u4e86\uff0c\u53ef\u4ee5\u8ffd\u95ee\u6216\u7ee7\u7eed\u5f80\u4e0b\u8bf4",
+          en: "Your speaking partner replied. You can follow up or push the idea further.",
+        },
+        reaction: "wave",
+        face: "happy",
+        sound: "wave",
+      });
     } catch (nextError) {
       const message = nextError instanceof Error ? nextError.message : "Failed to continue speaking practice.";
       setPartnerStatus(message);
@@ -389,11 +431,55 @@ export function SpeakingFeedbackForm({
                 isSupported={recorder.isSupported}
                 isTranscribing={isTranscribing}
                 transcribeStatus={transcribeStatus}
-                onStart={() => void recorder.startRecording()}
+                onStart={() => {
+                  emitBuddyPageEvent({
+                    text: {
+                      zh: "\u5f55\u97f3\u5f00\u59cb\u4e86\uff0c\u6211\u5728\u8fd9\u91cc\u966a\u4f60",
+                      en: "Recording started. I'm right here with you.",
+                    },
+                    reaction: "wave",
+                    face: "open",
+                    sound: "wave",
+                  });
+                  void recorder.startRecording();
+                }}
                 onPause={recorder.pauseRecording}
-                onResume={() => void recorder.resumeRecording()}
-                onStop={recorder.stopRecording}
-                onReset={() => void recorder.resetRecording()}
+                onResume={() => {
+                  emitBuddyPageEvent({
+                    text: {
+                      zh: "\u7ee7\u7eed\u5f55\u5427\uff0c\u8fd9\u6b21\u6211\u4eec\u987a\u4e00\u70b9",
+                      en: "Back in. Let's make this take smoother.",
+                    },
+                    reaction: "blink",
+                    face: "happy",
+                    sound: "click",
+                  });
+                  void recorder.resumeRecording();
+                }}
+                onStop={() => {
+                  emitBuddyPageEvent({
+                    text: {
+                      zh: "\u8fd9\u6761\u5f55\u97f3\u5df2\u6536\u597d\uff0c\u53ef\u4ee5\u542c\u56de\u653e\u6216\u8f6c\u5199",
+                      en: "That take is saved. You can replay it or transcribe it now.",
+                    },
+                    reaction: "bounce",
+                    face: "open",
+                    sound: "bounce",
+                  });
+                  recorder.stopRecording();
+                }}
+                onReset={() => {
+                  emitBuddyPageEvent({
+                    text: {
+                      zh: "\u8fd9\u6761\u5f55\u97f3\u5df2\u6e05\u7a7a\uff0c\u6211\u4eec\u91cd\u65b0\u6765\u4e00\u904d",
+                      en: "The take is cleared. Fresh start.",
+                    },
+                    reaction: "puff",
+                    face: "blush",
+                    sound: "click",
+                  });
+                  void recorder.resetRecording();
+                }}
                 onTranscribe={() => void handleTranscribeLatestTake()}
               />
 

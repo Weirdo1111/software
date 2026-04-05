@@ -2,6 +2,8 @@
 
 import { Eye, LoaderCircle, RotateCcw, Trophy } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+
+import { emitBuddyPageEvent } from "@/lib/buddy-page-events";
 import { recordReviewSessionCompletionInStorage } from "@/lib/review-progress";
 
 interface ReviewCard {
@@ -101,6 +103,15 @@ export function ReviewSession() {
 
     setSubmitting(false);
     setReviewed((prev) => prev + 1);
+    emitBuddyPageEvent({
+      text: {
+        zh: `\u590d\u4e60\u5361\u5df2\u8bc4\u5206\uff0c${card.front}`,
+        en: `Card rated: ${card.front}`,
+      },
+      reaction: rating >= 3 ? "bounce" : "blink",
+      face: rating >= 3 ? "open" : "happy",
+      sound: rating >= 3 ? "bounce" : "click",
+    });
 
     if (currentIndex + 1 < cards.length) {
       setCurrentIndex((prev) => prev + 1);
@@ -108,6 +119,15 @@ export function ReviewSession() {
     } else {
       recordReviewSessionCompletionInStorage();
       setSessionDone(true);
+      emitBuddyPageEvent({
+        text: {
+          zh: `\u590d\u4e60 session \u5b8c\u6210\uff0c\u4eca\u5929\u5171\u5237\u4e86 ${reviewed + 1} \u5f20`,
+          en: `Review session complete. You cleared ${reviewed + 1} card${reviewed ? "s" : ""} today.`,
+        },
+        reaction: "bounce",
+        face: "open",
+        sound: "bounce",
+      });
     }
   }
 

@@ -3,6 +3,8 @@
 import { BookPlus, CheckCircle2, LoaderCircle } from "lucide-react";
 import { useState } from "react";
 
+import { emitBuddyPageEvent } from "@/lib/buddy-page-events";
+
 export function SaveToDeckButton({
   items,
   tag,
@@ -34,7 +36,19 @@ export function SaveToDeckButton({
         return;
       }
       const body = await res.json().catch(() => ({}));
-      setStatus(body.persisted === false ? "no-db" : "done");
+      const nextStatus = body.persisted === false ? "no-db" : "done";
+      setStatus(nextStatus);
+      if (nextStatus === "done") {
+        emitBuddyPageEvent({
+          text: {
+            zh: `\u5df2\u5e2e\u4f60\u6536\u8fdb ${items.length} \u6761\u590d\u4e60\u5361`,
+            en: `Saved ${items.length} item${items.length > 1 ? "s" : ""} to the review deck`,
+          },
+          reaction: "bounce",
+          face: "open",
+          sound: "bounce",
+        });
+      }
     } catch {
       setStatus("idle");
     }

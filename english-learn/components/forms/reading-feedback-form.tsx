@@ -12,6 +12,7 @@ import {
   getLevelForDifficulty,
   type DifficultyLabel,
 } from "@/lib/level-labels";
+import { emitBuddyPageEvent } from "@/lib/buddy-page-events";
 import { recordSkillAttemptInStorage } from "@/lib/learning-tracker";
 import { getPassageForLevel, type ReadingPracticePassage } from "@/lib/reading-passages";
 import type { ReadingFeedback } from "@/types/learning";
@@ -141,6 +142,15 @@ export function ReadingFeedbackForm({
     setStatus("");
     setVocabSaved(false);
     setStartedAt(Date.now());
+    emitBuddyPageEvent({
+      text: {
+        zh: `\u9605\u8bfb\u5207\u6362\u5230 ${nextDifficulty}\uff0c\u6211\u5e2e\u4f60\u91cd\u65b0\u70ed\u8eab`,
+        en: `Reading switched to ${nextDifficulty}. I reset the warm-up for you.`,
+      },
+      reaction: "wave",
+      face: "happy",
+      sound: "wave",
+    });
   }
 
   function toggleVocab(word: string) {
@@ -193,6 +203,20 @@ export function ReadingFeedbackForm({
         durationSec,
         markCompleted: true,
       });
+      emitBuddyPageEvent({
+        text: passed
+          ? {
+              zh: `\u8fd9\u6b21\u9605\u8bfb\u5f97\u5206 ${normalizedResult.comprehension_score}\uff0c\u5173\u952e\u53e5\u6293\u5f97\u5f88\u7a33`,
+              en: `Reading score ${normalizedResult.comprehension_score}. You tracked the key sentence well.`,
+            }
+          : {
+              zh: `\u9605\u8bfb\u5f97\u5206 ${normalizedResult.comprehension_score}\uff0c\u56de\u5934\u518d\u5bf9\u4e00\u904d claim \u548c evidence`,
+              en: `Reading score ${normalizedResult.comprehension_score}. Let's revisit the claim and evidence.`,
+            },
+        reaction: passed ? "bounce" : "blink",
+        face: passed ? "open" : "happy",
+        sound: passed ? "bounce" : "click",
+      });
 
       fetch("/api/attempts", {
         method: "POST",
@@ -227,7 +251,18 @@ export function ReadingFeedbackForm({
           .then(async (saveResponse) => {
             if (saveResponse.ok) {
               const body = await saveResponse.json().catch(() => ({}));
-              if (body.persisted) setVocabSaved(true);
+              if (body.persisted) {
+                setVocabSaved(true);
+                emitBuddyPageEvent({
+                  text: {
+                    zh: `\u9605\u8bfb\u751f\u8bcd\u5df2\u6536\u8fdb\u5361\u7ec4\uff0c\u540e\u9762\u53ef\u4ee5\u590d\u4e60 ${selectedVocab.length} \u4e2a`,
+                    en: `Reading vocabulary saved. ${selectedVocab.length} item${selectedVocab.length > 1 ? "s" : ""} ready for review.`,
+                  },
+                  reaction: "bounce",
+                  face: "open",
+                  sound: "bounce",
+                });
+              }
             }
           })
           .catch(() => {});

@@ -109,11 +109,13 @@ export function BuddyCampusLobby({
   });
   const positionRef = useRef(START_POSITION);
   const movingRef = useRef(false);
+  const facingRef = useRef<"left" | "right">("right");
 
   const [position, setPosition] = useState(START_POSITION);
   const [arenaSize, setArenaSize] = useState({ width: 0, height: 0 });
   const [keyboardEnabled, setKeyboardEnabled] = useState(false);
   const [isMoving, setIsMoving] = useState(false);
+  const [facing, setFacing] = useState<"left" | "right">("right");
 
   const clearDirections = useEffectEvent(() => {
     keysRef.current.up = false;
@@ -364,6 +366,11 @@ export function BuddyCampusLobby({
       }
 
       if (next.x !== current.x || next.y !== current.y) {
+        const nextFacing = next.x < current.x ? "left" : next.x > current.x ? "right" : facingRef.current;
+        if (nextFacing !== facingRef.current) {
+          facingRef.current = nextFacing;
+          setFacing(nextFacing);
+        }
         positionRef.current = next;
         setPosition(next);
       }
@@ -621,18 +628,21 @@ export function BuddyCampusLobby({
               top: `${position.y * 100}%`,
             }}
             data-moving={isMoving ? "true" : "false"}
+            data-facing={facing}
           >
             <span className="campus-lobby-pet-shadow" />
             <span className="campus-lobby-pet-ring" />
-            <BuddyCompanion
-              stage={buddyStage}
-              focus={buddyFocus}
-              mood={activeZone ? "proud" : "happy"}
-              variant={primaryBuddyVariant}
-              outfit={buddyOutfit}
-              float={false}
-              className="relative z-10 w-[4.8rem] max-w-[4.8rem] drop-shadow-[0_18px_22px_rgba(63,85,129,0.16)]"
-            />
+            <span className="campus-lobby-pet-body">
+              <BuddyCompanion
+                stage={buddyStage}
+                focus={buddyFocus}
+                mood={activeZone ? "proud" : "happy"}
+                variant={primaryBuddyVariant}
+                outfit={buddyOutfit}
+                float={false}
+                className="relative z-10 w-[4.8rem] max-w-[4.8rem] drop-shadow-[0_18px_22px_rgba(63,85,129,0.16)]"
+              />
+            </span>
           </div>
         </div>
 

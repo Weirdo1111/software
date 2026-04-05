@@ -19,6 +19,7 @@ import {
   getBuddyXpSummaryFromStorage,
   subscribeBuddyXpSources,
 } from "@/lib/buddy-xp";
+import { subscribeBuddyPageEvents } from "@/lib/buddy-page-events";
 import { subscribeBuddyXpEvents } from "@/lib/buddy-xp-events";
 import {
   DEFAULT_BUDDY_VARIANT,
@@ -589,6 +590,28 @@ export function GlobalBuddyCompanion() {
       }
     };
   }, [soundEnabled]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeBuddyPageEvents((detail) => {
+      const bubbleText = locale === "zh" ? detail.text.zh : detail.text.en;
+
+      triggerReaction(
+        detail.reaction ?? "blink",
+        bubbleText,
+        detail.face ?? "open",
+        detail.durationMs ?? 1400,
+        detail.plain ?? false,
+      );
+
+      if (detail.sound) {
+        playSoundIfEnabled(detail.sound);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [locale, soundEnabled]);
 
   if (pathname.startsWith("/games/word-game")) return null;
 

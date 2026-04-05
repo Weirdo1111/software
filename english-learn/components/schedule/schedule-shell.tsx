@@ -20,6 +20,7 @@ import {
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { emitBuddyPageEvent } from "@/lib/buddy-page-events";
 import { type Locale } from "@/lib/i18n/dictionaries";
 import {
   createEmptyLearningTrackerSnapshot,
@@ -718,6 +719,20 @@ export function ScheduleShell({
 
     setClassDraft(createEmptyClassDraft(classDraft.day, classDraft.slot));
     setIsClassEditorOpen(false);
+    emitBuddyPageEvent({
+      text: classDraft.id
+        ? {
+            zh: `\u8bfe\u7a0b\u5df2\u66f4\u65b0\uff0c${title}`,
+            en: `Class updated: ${title}`,
+          }
+        : {
+            zh: `\u8bfe\u7a0b\u5df2\u52a0\u5165\uff0c${title}`,
+            en: `Class added: ${title}`,
+          },
+      reaction: "wave",
+      face: "happy",
+      sound: "wave",
+    });
   }
 
   function removeClass(id: string) {
@@ -767,6 +782,15 @@ export function ScheduleShell({
       ],
     });
     setDeadlineDraft(createEmptyDeadlineDraft());
+    emitBuddyPageEvent({
+      text: {
+        zh: `\u622a\u6b62\u65e5\u5df2\u8bb0\u4e0b\uff0c${title}`,
+        en: `Deadline saved: ${title}`,
+      },
+      reaction: "blink",
+      face: "open",
+      sound: "click",
+    });
   }
 
   function beginCreateBlock(day: number) {
@@ -825,6 +849,20 @@ export function ScheduleShell({
 
     saveDayPlanBlocks(daySchedule.day, nextBlocks);
     setBlockDraft(createEmptyBlockDraft(daySchedule.day));
+    emitBuddyPageEvent({
+      text: blockDraft.id
+        ? {
+            zh: `\u5f53\u5929\u8ba1\u5212\u5df2\u66f4\u65b0\uff0c${title}`,
+            en: `Day plan updated: ${title}`,
+          }
+        : {
+            zh: `\u65b0\u7684\u5b66\u4e60\u4efb\u52a1\u5df2\u52a0\u5165\uff0c${title}`,
+            en: `Added a new study block: ${title}`,
+          },
+      reaction: "bounce",
+      face: "open",
+      sound: "bounce",
+    });
   }
 
   function removeDayBlock(daySchedule: (typeof weeklySchedule.days)[number], blockId: string) {
@@ -850,6 +888,15 @@ export function ScheduleShell({
     setIsPlannerOpen(true);
     setGeneratedSchedule(suggestedWeeklySchedule);
     setGeneratedExpandedDay(suggestedWeeklySchedule.days.find((day) => day.isToday)?.day ?? 0);
+    emitBuddyPageEvent({
+      text: {
+        zh: "\u672c\u5468\u81ea\u52a8\u8ba1\u5212\u5df2\u751f\u6210\uff0c\u6211\u5148\u5e2e\u4f60\u9884\u89c8\u4e00\u904d",
+        en: "This week's auto plan is ready. I opened the preview for you.",
+      },
+      reaction: "wave",
+      face: "happy",
+      sound: "wave",
+    });
   }
 
   function applyGeneratedPlan() {
@@ -866,6 +913,15 @@ export function ScheduleShell({
         })),
     });
     setExpandedDay(generatedSchedule.days.find((day) => day.isToday)?.day ?? 0);
+    emitBuddyPageEvent({
+      text: {
+        zh: "\u81ea\u52a8\u8ba1\u5212\u5df2\u5e94\u7528\uff0c\u8fd9\u5468\u6211\u4eec\u6309\u8fd9\u4e2a\u8def\u7ebf\u8d70",
+        en: "Auto plan applied. We have a route for the week now.",
+      },
+      reaction: "bounce",
+      face: "open",
+      sound: "bounce",
+    });
   }
 
   function clearWeekPlan() {
@@ -932,6 +988,15 @@ export function ScheduleShell({
       );
       const first = payload.classes[0];
       setClassDraft(createEmptyClassDraft(first.day, first.slot));
+      emitBuddyPageEvent({
+        text: {
+          zh: `\u8bfe\u8868\u5bfc\u5165\u6210\u529f\uff0c\u4e00\u5171 ${payload.classes.length} \u95e8\u8bfe`,
+          en: `Timetable imported successfully. ${payload.classes.length} class${payload.classes.length > 1 ? "es" : ""} loaded.`,
+        },
+        reaction: "bounce",
+        face: "open",
+        sound: "bounce",
+      });
     } catch {
       setImportState(buildImportState("error", copy.importFailed));
     } finally {

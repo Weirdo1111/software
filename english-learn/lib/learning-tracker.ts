@@ -1,4 +1,5 @@
 import { awardBuddyXpInStorage } from "@/lib/buddy-xp";
+import { emitBuddyPageEvent } from "@/lib/buddy-page-events";
 
 export type TrackedSkill = "listening" | "speaking" | "reading" | "writing";
 
@@ -123,6 +124,7 @@ export function recordSkillAttemptInStorage(skill: TrackedSkill, input: SkillAtt
   saveLearningTrackerSnapshotToStorage(nextSnapshot);
   emitLearningTrackerChange();
   if (input.markCompleted) {
+    emitCompletionBuddyEvent(skill, input.correct);
     if (skill === "listening") void awardBuddyXpInStorage("listeningCompletion").catch(() => undefined);
     if (skill === "speaking") void awardBuddyXpInStorage("speakingCompletion").catch(() => undefined);
     if (skill === "reading") void awardBuddyXpInStorage("readingCompletion").catch(() => undefined);
@@ -158,4 +160,51 @@ export function subscribeLearningTracker(callback: () => void) {
     window.removeEventListener("storage", onStorage);
     window.removeEventListener(LEARNING_TRACKER_EVENT, onChanged);
   };
+}
+
+function emitCompletionBuddyEvent(skill: TrackedSkill, correct: boolean) {
+  if (skill === "listening") {
+    emitBuddyPageEvent({
+      text: correct
+        ? { zh: "\u542c\u529b\u5b8c\u6210\uff0c\u6211\u542c\u89c1\u8fdb\u6b65\u4e86", en: "Listening done. I can hear the progress." }
+        : { zh: "\u542c\u5b8c\u4e00\u8f6e\u4e86\uff0c\u6211\u4eec\u518d\u7ec3\u4e00\u6b21", en: "One listening round down. We can try again." },
+      reaction: correct ? "bounce" : "blink",
+      face: correct ? "open" : "blink",
+      sound: correct ? "bounce" : "click",
+    });
+    return;
+  }
+
+  if (skill === "speaking") {
+    emitBuddyPageEvent({
+      text: correct
+        ? { zh: "\u53e3\u8bed\u63d0\u4ea4\u6210\u529f\uff0c\u8fd9\u6b21\u5f88\u6562\u5f00\u53e3", en: "Speaking submitted. That was a brave turn." }
+        : { zh: "\u53e3\u8bed\u7ec3\u4e86\u4e00\u8f6e\uff0c\u518d\u4fee\u4e00\u4e0b\u4f1a\u66f4\u7a33", en: "A speaking round is in. One revision will make it steadier." },
+      reaction: correct ? "wave" : "blink",
+      face: correct ? "open" : "happy",
+      sound: correct ? "wave" : "click",
+    });
+    return;
+  }
+
+  if (skill === "reading") {
+    emitBuddyPageEvent({
+      text: correct
+        ? { zh: "\u9605\u8bfb\u7406\u89e3\u8fc7\u5173\uff0c\u5173\u952e\u4fe1\u606f\u6293\u4f4f\u4e86", en: "Reading check cleared. You caught the key points." }
+        : { zh: "\u9605\u8bfb\u9898\u5df2\u5b8c\u6210\uff0c\u56de\u5934\u518d\u5bf9\u4e00\u904d\u8bc1\u636e", en: "Reading done. Let's revisit the evidence once more." },
+      reaction: correct ? "bounce" : "blink",
+      face: correct ? "open" : "happy",
+      sound: correct ? "bounce" : "click",
+    });
+    return;
+  }
+
+  emitBuddyPageEvent({
+    text: correct
+      ? { zh: "\u5199\u4f5c\u53cd\u9988\u5230\u624b\uff0c\u8fd9\u6bb5\u8d8a\u6765\u8d8a\u50cf\u6837\u4e86", en: "Writing feedback is in. This draft is taking shape." }
+      : { zh: "\u5199\u4f5c\u8349\u7a3f\u5df2\u63d0\u4ea4\uff0c\u6211\u4eec\u4e00\u8d77\u6253\u78e8\u4e0b\u4e00\u7248", en: "Draft submitted. We can polish the next version together." },
+    reaction: correct ? "wave" : "blink",
+    face: correct ? "happy" : "blink",
+    sound: correct ? "wave" : "click",
+  });
 }

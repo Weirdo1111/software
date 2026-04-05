@@ -10,6 +10,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { AIAnalysisState } from "@/components/forms/ai-analysis-state";
 import { ContextDock } from "@/components/context-comments/context-dock";
 import { SaveToDeckButton } from "@/components/forms/save-to-deck-button";
+import { emitBuddyPageEvent } from "@/lib/buddy-page-events";
 import {
   difficultyOptions,
   getDifficultyLabel,
@@ -161,6 +162,15 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: CE
     setResult(null);
     setStatus("");
     setStartedAt(Date.now());
+    emitBuddyPageEvent({
+      text: {
+        zh: `\u65b0\u5199\u4f5c\u573a\u666f\u5df2\u6253\u5f00\uff0c${nextPrompt.title}`,
+        en: `A new writing scenario is ready: ${nextPrompt.title}`,
+      },
+      reaction: "wave",
+      face: "happy",
+      sound: "wave",
+    });
   }
 
   function handleTargetDifficultyChange(nextDifficulty: DifficultyLabel) {
@@ -215,6 +225,20 @@ export function WritingFeedbackForm({ defaultLevel = "B1" }: { defaultLevel?: CE
         correct: passed,
         durationSec,
         markCompleted: true,
+      });
+      emitBuddyPageEvent({
+        text: passed
+          ? {
+              zh: `\u5199\u4f5c\u603b\u5206 ${data.overall_score}\uff0c\u8fd9\u6bb5\u903b\u8f91\u5df2\u7ecf\u7ad9\u4f4f\u4e86`,
+              en: `Writing score ${data.overall_score}. This paragraph is holding together well.`,
+            }
+          : {
+              zh: `\u5199\u4f5c\u603b\u5206 ${data.overall_score}\uff0c\u6211\u4eec\u53ef\u4ee5\u5148\u4fee thesis \u548c examples`,
+              en: `Writing score ${data.overall_score}. Let's tune the thesis and examples first.`,
+            },
+        reaction: passed ? "wave" : "blink",
+        face: passed ? "happy" : "blink",
+        sound: passed ? "wave" : "click",
       });
     } catch (nextError) {
       const message = nextError instanceof Error ? nextError.message : "Failed to generate writing feedback.";
