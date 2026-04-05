@@ -19,9 +19,6 @@ export default function LoginPage() {
       langLabel: "网站语言",
       badge: "DIICSU FRESHMAN ENGLISH HUB",
       title: "欢迎进入 DIICSU 新生英语学习入口。",
-      subtitle: "围绕 English-medium coursework、seminar 和 visible progression，继续你的四项技能学习。",
-      highlights: ["EMI study", "Coursework", "Seminar", "Progress"],
-      heroCaption: "先完成登录，再继续 listening、writing 和 seminar 训练，桌宠成长与反馈记录都会保留。",
       panelKicker: "DIICSU SIGN IN",
       panelTitle: "欢迎回来。",
       panelDesc: "登录后继续你的 DIICSU 学习路径和个人进度。",
@@ -40,9 +37,6 @@ export default function LoginPage() {
       langLabel: "Language",
       badge: "DIICSU FRESHMAN ENGLISH HUB",
       title: "Welcome to the DIICSU freshman English hub.",
-      subtitle: "Return to the same place for English-medium coursework, seminar preparation, and visible academic progress.",
-      highlights: ["EMI study", "Coursework", "Seminar", "Progress"],
-      heroCaption: "Sign in once, then keep moving through listening, writing, and seminar practice with buddy growth and feedback records saved.",
       panelKicker: "DIICSU SIGN IN",
       panelTitle: "Welcome back.",
       panelDesc: "Sign in to continue your DIICSU study route and personal progress.",
@@ -166,21 +160,18 @@ export default function LoginPage() {
             </div>
           </header>
 
-          <section className="grid min-h-[calc(100vh-118px)] grid-cols-1 gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-            <div className="relative overflow-hidden rounded-[36px] border-2 border-white/80 bg-[linear-gradient(165deg,rgba(255,255,255,0.96),rgba(236,246,255,0.92),rgba(255,243,249,0.86))] p-7 shadow-[0_14px_0_rgba(143,196,255,0.18),0_22px_48px_rgba(90,123,255,0.12)] lg:p-10">
+          <section className="grid min-h-[calc(100vh-118px)] items-stretch grid-cols-1 gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+            <div className="relative flex h-full overflow-hidden rounded-[36px] border-2 border-white/80 bg-[linear-gradient(165deg,rgba(255,255,255,0.96),rgba(236,246,255,0.92),rgba(255,243,249,0.86))] p-7 shadow-[0_14px_0_rgba(143,196,255,0.18),0_22px_48px_rgba(90,123,255,0.12)] lg:p-10">
               <div className="absolute right-[-60px] top-[-60px] h-52 w-52 rounded-full bg-[#dff2ff]/80 blur-2xl" />
               <div className="absolute bottom-[-70px] left-[-40px] h-56 w-56 rounded-full bg-[#ffe8f2]/65 blur-2xl" />
 
               <AuthLandingHero
                 badge={copy.badge}
                 title={copy.title}
-                subtitle={copy.subtitle}
-                highlights={copy.highlights}
-                caption={copy.heroCaption}
               />
             </div>
 
-            <div className="rounded-[36px] border-2 border-white/75 bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(239,247,255,0.92)_48%,rgba(248,243,255,0.9)_100%)] p-7 text-[#22314d] shadow-[0_14px_0_rgba(143,196,255,0.18),0_24px_55px_rgba(90,123,255,0.14)] backdrop-blur lg:p-8">
+            <div className="flex h-full flex-col rounded-[36px] border-2 border-white/75 bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(239,247,255,0.92)_48%,rgba(248,243,255,0.9)_100%)] p-7 text-[#22314d] shadow-[0_14px_0_rgba(143,196,255,0.18),0_24px_55px_rgba(90,123,255,0.14)] backdrop-blur lg:p-8">
               <div className="mb-8">
                 <div className="text-[11px] font-semibold tracking-[0.24em] text-[#6f7fa5]">
                   {copy.panelKicker}
@@ -236,19 +227,21 @@ export default function LoginPage() {
                 </div>
               </form>
 
-              <div className="mt-8 rounded-[28px] border-2 border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.9),rgba(239,247,255,0.82))] p-5 shadow-[0_10px_0_rgba(143,196,255,0.14)]">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <div className="text-lg font-semibold text-[#22314d]">
-                    {copy.accessTitle}
+              <div className="mt-auto pt-8">
+                <div className="rounded-[28px] border-2 border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.9),rgba(239,247,255,0.82))] p-5 shadow-[0_10px_0_rgba(143,196,255,0.14)]">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div className="text-lg font-semibold text-[#22314d]">
+                      {copy.accessTitle}
+                    </div>
+                    <span className="rounded-full border border-[#ffd98a] bg-[#fff7da] px-3 py-1 text-[11px] font-semibold tracking-[0.2em] text-[#8c6810]">
+                      DIICSU
+                    </span>
                   </div>
-                  <span className="rounded-full border border-[#ffd98a] bg-[#fff7da] px-3 py-1 text-[11px] font-semibold tracking-[0.2em] text-[#8c6810]">
-                    DIICSU
-                  </span>
-                </div>
 
-                <p className="text-[15px] leading-7 text-slate-500">
-                  {copy.accessText}
-                </p>
+                  <p className="text-[15px] leading-7 text-slate-500">
+                    {copy.accessText}
+                  </p>
+                </div>
               </div>
             </div>
           </section>
