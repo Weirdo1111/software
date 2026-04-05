@@ -97,6 +97,44 @@ function getAccuracy(correct: number, attempts: number) {
 
 const LEVEL_XP_BASE = 100;
 const LEVEL_XP_STEP = 40;
+const BUDDY_IDENTITY_TIERS = [
+  {
+    minLevel: 1,
+    maxLevel: 4,
+    zh: "初学者",
+    en: "Beginner",
+  },
+  {
+    minLevel: 5,
+    maxLevel: 9,
+    zh: "进阶学伴",
+    en: "Intermediate Buddy",
+  },
+  {
+    minLevel: 10,
+    maxLevel: 14,
+    zh: "校园探索者",
+    en: "Campus Explorer",
+  },
+  {
+    minLevel: 15,
+    maxLevel: 19,
+    zh: "研讨参与者",
+    en: "Seminar Contributor",
+  },
+  {
+    minLevel: 20,
+    maxLevel: 24,
+    zh: "研究伙伴",
+    en: "Research Partner",
+  },
+  {
+    minLevel: 25,
+    maxLevel: Number.POSITIVE_INFINITY,
+    zh: "DIICSU 学院之星",
+    en: "DIICSU Star",
+  },
+] as const;
 
 function getXpForLevel(level: number) {
   if (level <= 1) return 0;
@@ -118,6 +156,28 @@ function getBuddyLevel(xp: number) {
 
 function getXpNeededForNextLevel(level: number) {
   return LEVEL_XP_BASE + (level - 1) * LEVEL_XP_STEP;
+}
+
+function getBuddyIdentity(level: number, locale: Locale) {
+  const matchedTier =
+    BUDDY_IDENTITY_TIERS.find((tier) => level >= tier.minLevel && level <= tier.maxLevel) ??
+    BUDDY_IDENTITY_TIERS[BUDDY_IDENTITY_TIERS.length - 1];
+
+  return {
+    title: locale === "zh" ? matchedTier.zh : matchedTier.en,
+    minLevel: matchedTier.minLevel,
+    maxLevel: matchedTier.maxLevel,
+  };
+}
+
+function getNextBuddyIdentity(level: number, locale: Locale) {
+  const nextTier = BUDDY_IDENTITY_TIERS.find((tier) => tier.minLevel > level);
+  if (!nextTier) return null;
+
+  return {
+    title: locale === "zh" ? nextTier.zh : nextTier.en,
+    unlockLevel: nextTier.minLevel,
+  };
 }
 
 function getBuddyStage(xp: number, locale: Locale) {
@@ -563,6 +623,8 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   const currentLevelProgress = clampPercent((levelXpProgress / levelXpSpan) * 100);
   const totalCompletedForBuddy = xpSummary.totalCompletedSources;
   const buddyStage = getBuddyStage(xp, locale);
+  const buddyIdentity = getBuddyIdentity(buddyLevel, locale);
+  const nextBuddyIdentity = getNextBuddyIdentity(buddyLevel, locale);
   const buddyFocus = getBuddyFocusFromVariant(buddyVariant);
   const unlockedWardrobeSet = useMemo(() => createUnlockedWardrobeSet(buddyLevel), [buddyLevel]);
   const effectiveBuddyOutfit = useMemo(
@@ -744,6 +806,14 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     level: index + 1,
     nextLevel: index + 2,
     neededXp: getXpNeededForNextLevel(index + 1),
+  }));
+  const identityRuleRows = BUDDY_IDENTITY_TIERS.map((tier) => ({
+    key: `${tier.minLevel}-${tier.maxLevel}`,
+    levelLabel:
+      tier.maxLevel === Number.POSITIVE_INFINITY
+        ? `Lv ${tier.minLevel}`
+        : `Lv ${tier.minLevel}-${tier.maxLevel}`,
+    title: locale === "zh" ? tier.zh : tier.en,
   }));
 
   if (!isLoggedIn) {
@@ -1019,6 +1089,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                     {locale === "zh" ? "等级" : "Level"}
                   </p>
                   <p className="mt-2 text-2xl font-semibold text-[var(--ink)]">{buddyLevel}</p>
+                  <p className="mt-2 text-xs font-semibold text-[#2a4f90]">{buddyIdentity.title}</p>
                 </div>
                 <div className="rounded-[1.45rem] border-2 border-white/90 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(239,255,248,0.92))] p-3 shadow-[0_8px_0_rgba(143,240,211,0.2),0_16px_24px_rgba(90,123,255,0.08)]">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">XP</p>
@@ -1050,6 +1121,20 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                   </span>
                   <span>
                     {locale === "zh" ? `下一级 ${buddyLevel + 1}` : `Next level ${buddyLevel + 1}`}
+                  </span>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[11px] text-[var(--ink-soft)]">
+                  <span>
+                    {locale === "zh" ? `当前身份：${buddyIdentity.title}` : `Current title: ${buddyIdentity.title}`}
+                  </span>
+                  <span>
+                    {nextBuddyIdentity
+                      ? locale === "zh"
+                        ? `Lv ${nextBuddyIdentity.unlockLevel} 解锁 ${nextBuddyIdentity.title}`
+                        : `Lv ${nextBuddyIdentity.unlockLevel} unlocks ${nextBuddyIdentity.title}`
+                      : locale === "zh"
+                        ? "已达到最高身份"
+                        : "Top title unlocked"}
                   </span>
                 </div>
                 <div className="mt-3 flex justify-end">
@@ -1085,6 +1170,11 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                     ? `第 1 次升级需要 ${LEVEL_XP_BASE} XP，之后每升一级固定多 ${LEVEL_XP_STEP} XP。`
                     : `The first level-up needs ${LEVEL_XP_BASE} XP, and each later level needs ${LEVEL_XP_STEP} more XP than the one before.`}
                 </p>
+                <p className="mt-1 text-sm leading-7 text-[var(--ink-soft)]">
+                  {locale === "zh"
+                    ? "每 5 级解锁一个新身份称号，直到 25 级达到最高门槛。"
+                    : "Every 5 levels unlock a new identity title, until the top milestone at level 25."}
+                </p>
               </div>
 
               <button
@@ -1112,6 +1202,20 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                   </div>
                 </div>
               ))}
+            </div>
+
+            <div className="mt-4 rounded-[1.2rem] border-2 border-white/90 bg-[rgba(255,255,255,0.84)] px-4 py-3 shadow-[0_8px_0_rgba(143,196,255,0.12),0_14px_20px_rgba(90,123,255,0.07)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+                {locale === "zh" ? "身份门槛" : "Identity milestones"}
+              </p>
+              <div className="mt-3 grid gap-2 text-sm text-[var(--ink)]">
+                {identityRuleRows.map((row) => (
+                  <div key={row.key} className="flex items-center justify-between gap-3 rounded-[1rem] bg-white/72 px-3 py-2">
+                    <span className="font-semibold text-[var(--ink)]">{row.title}</span>
+                    <span className="buddy-chip !px-3 !py-1">{row.levelLabel}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="mt-4 rounded-[1.2rem] border-2 border-white/90 bg-[rgba(255,255,255,0.84)] px-4 py-3 shadow-[0_8px_0_rgba(143,196,255,0.12),0_14px_20px_rgba(90,123,255,0.07)]">
