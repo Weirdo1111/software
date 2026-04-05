@@ -6,16 +6,16 @@ import { getLocale } from "@/lib/i18n/get-locale";
 
 const signInSignals = [
   {
-    title: "Resume assessment history",
-    detail: "Learners return to their Low / Medium / High recommendation and prior band evidence.",
+    title: "Resume coursework preparation",
+    detail: "Reopen the same freshman workspace for guided writing, topic banks, and review evidence.",
   },
   {
-    title: "Continue four-skill study",
-    detail: "Listening, speaking, reading, and writing progress stays tied to the same workspace.",
+    title: "Re-enter four-skill study",
+    detail: "Listening, speaking, reading, and writing progress remains linked to the same DIICSU account.",
   },
   {
-    title: "Keep AI feedback records",
-    detail: "Writing and speaking reviews remain available as improvement evidence before reassessment.",
+    title: "Keep buddy growth and feedback",
+    detail: "Buddy XP, level identity, and AI review history stay available as visible progress evidence.",
   },
 ] as const;
 
@@ -25,15 +25,15 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
   return (
     <PageFrame
       locale={locale}
-      title="Sign in to the academic English workspace"
-      description="Account access is positioned as the doorway back to assessment history, skill modules, and progress evidence rather than a generic login screen."
+      title="Sign in to the DIICSU freshman English hub"
+      description="Return to one DIICSU workspace for listening, writing, seminar practice, buddy growth, and feedback evidence."
     >
       <div className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
         <AuthForm mode="sign-in" locale={locale} />
 
         <aside className="surface-ink ambient-card reveal-up rounded-[2rem] p-6 sm:p-7">
-          <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#f2d9ae]">Why sign in</p>
-          <h2 className="font-display mt-4 text-3xl tracking-tight">Pick up the same learning path where you left it.</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#f2d9ae]">DIICSU sign in</p>
+          <h2 className="font-display mt-4 text-3xl tracking-tight">Pick up the same freshman route where you left it.</h2>
           <div className="mt-6 grid gap-3">
             {signInSignals.map((item) => (
               <article key={item.title} className="rounded-[1.4rem] border border-white/12 bg-white/6 p-4">
@@ -45,15 +45,15 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
             <div className="rounded-[1.2rem] border border-white/12 bg-white/6 p-4">
               <FileCheck2 className="size-4 text-[#f2d9ae]" />
-              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-[#f2d9ae]">Assessment</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-[#f2d9ae]">Coursework</p>
             </div>
             <div className="rounded-[1.2rem] border border-white/12 bg-white/6 p-4">
               <Compass className="size-4 text-[#f2d9ae]" />
-              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-[#f2d9ae]">Modules</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-[#f2d9ae]">Lectures</p>
             </div>
             <div className="rounded-[1.2rem] border border-white/12 bg-white/6 p-4">
               <Sparkles className="size-4 text-[#f2d9ae]" />
-              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-[#f2d9ae]">Feedback</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-[#f2d9ae]">Seminars</p>
             </div>
           </div>
         </aside>

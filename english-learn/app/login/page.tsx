@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 
+import { AuthLandingHero } from "@/components/forms/auth-landing-hero";
+
 export default function LoginPage() {
   const [lang, setLang] = useState<"zh" | "en">("en");
   const [email, setEmail] = useState("");
@@ -12,56 +14,46 @@ export default function LoginPage() {
 
   const copy = {
     zh: {
-      brand: "English Learn",
+      brand: "DIICSU English Hub",
+      brandSub: "DUNDEE INTERNATIONAL INSTITUTE OF CENTRAL SOUTH UNIVERSITY",
       langLabel: "网站语言",
-      badge: "ENGLISH LEARN",
-      title: "更清晰地学英语。",
-      subtitle: "先评估，再稳步进步。",
-      panelKicker: "REGISTRATION AND LOGIN",
+      badge: "DIICSU FRESHMAN ENGLISH HUB",
+      title: "欢迎进入 DIICSU 新生英语学习入口。",
+      subtitle: "围绕 English-medium coursework、seminar 和 visible progression，继续你的四项技能学习。",
+      highlights: ["EMI study", "Coursework", "Seminar", "Progress"],
+      heroCaption: "先完成登录，再继续 listening、writing 和 seminar 训练，桌宠成长与反馈记录都会保留。",
+      panelKicker: "DIICSU SIGN IN",
       panelTitle: "欢迎回来。",
-      panelDesc: "登录后继续你的学习路径与每日任务。",
+      panelDesc: "登录后继续你的 DIICSU 学习路径和个人进度。",
       email: "账号 / 邮箱",
       password: "密码",
       login: "登录",
       loginLoading: "登录中...",
       register: "注册",
-      forgot: "忘记密码？",
-      feature1Title: "Assessment-first",
-      feature1Text: "从评估开始，进入更适合你的学习路线。",
-      feature2Title: "Four skills",
-      feature2Text: "围绕听、说、读、写建立持续提升。",
-      feature3Title: "Steady progress",
-      feature3Text: "用更清晰的节奏与反馈保持成长。",
-      footerNote: "Quiet design. Clear route.",
       invalid: "账号或密码错误",
-      accessTitle: "Learner access",
-      accessText: "从登录开始，进入属于你的学习节奏。",
+      accessTitle: "Freshman access",
+      accessText: "同一个账号会保存你的学习进度、桌宠等级、反馈记录和 DIICSU 学习路线。",
     },
     en: {
-      brand: "English Learn",
+      brand: "DIICSU English Hub",
+      brandSub: "DUNDEE INTERNATIONAL INSTITUTE OF CENTRAL SOUTH UNIVERSITY",
       langLabel: "Language",
-      badge: "ENGLISH LEARN",
-      title: "Learn with clarity.",
-      subtitle: "Assessment first. Then steady progress.",
-      panelKicker: "REGISTRATION AND LOGIN",
+      badge: "DIICSU FRESHMAN ENGLISH HUB",
+      title: "Welcome to the DIICSU freshman English hub.",
+      subtitle: "Return to the same place for English-medium coursework, seminar preparation, and visible academic progress.",
+      highlights: ["EMI study", "Coursework", "Seminar", "Progress"],
+      heroCaption: "Sign in once, then keep moving through listening, writing, and seminar practice with buddy growth and feedback records saved.",
+      panelKicker: "DIICSU SIGN IN",
       panelTitle: "Welcome back.",
-      panelDesc: "Sign in to continue your learner route and daily study flow.",
+      panelDesc: "Sign in to continue your DIICSU study route and personal progress.",
       email: "Email / Account",
       password: "Password",
       login: "Log in",
       loginLoading: "Signing in...",
       register: "Sign up",
-      forgot: "Forgot password?",
-      feature1Title: "Assessment-first",
-      feature1Text: "Start with evaluation, then move into the right route.",
-      feature2Title: "Four skills",
-      feature2Text: "Build across listening, speaking, reading, and writing.",
-      feature3Title: "Steady progress",
-      feature3Text: "A calmer structure for consistent improvement.",
-      footerNote: "Quiet design. Clear route.",
       invalid: "Invalid account or password",
-      accessTitle: "Learner access",
-      accessText: "Start here, then move into your own learning rhythm.",
+      accessTitle: "Freshman access",
+      accessText: "The same account keeps your study progress, buddy levels, feedback records, and DIICSU route together.",
     },
   }[lang];
 
@@ -138,9 +130,10 @@ export default function LoginPage() {
               </div>
 
               <div className="flex items-baseline gap-2">
-                <span className="text-[24px] font-semibold tracking-tight text-[#22314d]">
-                  {copy.brand}
-                </span>
+                <div>
+                  <div className="text-[24px] font-semibold tracking-tight text-[#22314d]">{copy.brand}</div>
+                  <div className="hidden text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 md:block">{copy.brandSub}</div>
+                </div>
               </div>
             </div>
 
@@ -178,54 +171,13 @@ export default function LoginPage() {
               <div className="absolute right-[-60px] top-[-60px] h-52 w-52 rounded-full bg-[#dff2ff]/80 blur-2xl" />
               <div className="absolute bottom-[-70px] left-[-40px] h-56 w-56 rounded-full bg-[#ffe8f2]/65 blur-2xl" />
 
-              <div className="relative z-10 flex h-full max-w-[840px] flex-col">
-                <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-white/85 bg-white/88 px-4 py-2 text-[11px] font-semibold tracking-[0.24em] text-slate-500 shadow-[0_8px_18px_rgba(90,123,255,0.08)]">
-                  <span className="inline-block h-2 w-2 rounded-full bg-[#5a7bff]" />
-                  {copy.badge}
-                </div>
-
-                <div className="mb-8 flex items-center gap-4">
-                  <div className="relative flex h-16 w-16 items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,#5a7bff,#4ad2ff)] text-white shadow-[0_10px_0_rgba(143,196,255,0.24)]">
-                    <span className="text-lg font-semibold tracking-[0.22em]">
-                      EL
-                    </span>
-                    <span className="absolute -bottom-1.5 -right-1.5 h-4 w-4 rounded-full border-2 border-[#f6fbff] bg-[#ffd774]" />
-                  </div>
-
-                  <div className="text-sm leading-6 text-slate-500">
-                    <div className="font-medium text-[#22314d]">
-                      English Learn
-                    </div>
-                    <div>{copy.footerNote}</div>
-                  </div>
-                </div>
-
-                <h1
-                  className="font-display max-w-[820px] text-[52px] leading-[1.02] tracking-[-0.04em] text-[#1f2b43] md:text-[68px] lg:text-[86px]"
-                >
-                  {copy.title}
-                </h1>
-
-                <p className="mt-6 max-w-[660px] text-[19px] leading-9 text-slate-500">
-                  {copy.subtitle}
-                </p>
-
-                <div className="mt-auto grid grid-cols-1 gap-5 pt-14 md:grid-cols-3">
-                  <FeatureCard
-                    title={copy.feature1Title}
-                    text={copy.feature1Text}
-                  />
-                  <FeatureCard
-                    title={copy.feature2Title}
-                    text={copy.feature2Text}
-                  />
-                  <FeatureCard
-                    title={copy.feature3Title}
-                    text={copy.feature3Text}
-                  />
-                </div>
-
-              </div>
+              <AuthLandingHero
+                badge={copy.badge}
+                title={copy.title}
+                subtitle={copy.subtitle}
+                highlights={copy.highlights}
+                caption={copy.heroCaption}
+              />
             </div>
 
             <div className="rounded-[36px] border-2 border-white/75 bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(239,247,255,0.92)_48%,rgba(248,243,255,0.9)_100%)] p-7 text-[#22314d] shadow-[0_14px_0_rgba(143,196,255,0.18),0_24px_55px_rgba(90,123,255,0.14)] backdrop-blur lg:p-8">
@@ -282,15 +234,6 @@ export default function LoginPage() {
                     {copy.register}
                   </Link>
                 </div>
-
-                <div className="pt-1 text-center">
-                  <button
-                    type="button"
-                    className="text-sm text-slate-500 transition hover:text-[#22314d]"
-                  >
-                    {copy.forgot}
-                  </button>
-                </div>
               </form>
 
               <div className="mt-8 rounded-[28px] border-2 border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.9),rgba(239,247,255,0.82))] p-5 shadow-[0_10px_0_rgba(143,196,255,0.14)]">
@@ -299,7 +242,7 @@ export default function LoginPage() {
                     {copy.accessTitle}
                   </div>
                   <span className="rounded-full border border-[#ffd98a] bg-[#fff7da] px-3 py-1 text-[11px] font-semibold tracking-[0.2em] text-[#8c6810]">
-                    MVP
+                    DIICSU
                   </span>
                 </div>
 
@@ -312,23 +255,6 @@ export default function LoginPage() {
         </div>
       </div>
     </main>
-  );
-}
-
-function FeatureCard({
-  title,
-  text,
-}: {
-  title: string;
-  text: string;
-}) {
-  return (
-    <div className="rounded-[30px] border-2 border-white/85 bg-[linear-gradient(165deg,rgba(255,255,255,0.96),rgba(239,247,255,0.9),rgba(255,245,250,0.84))] p-6 shadow-[0_10px_0_rgba(143,196,255,0.14),0_18px_28px_rgba(90,123,255,0.08)]">
-      <div className="mb-3 text-[11px] font-semibold tracking-[0.24em] text-[#6f7fa5]">
-        {title.toUpperCase()}
-      </div>
-      <p className="text-[16px] leading-8 text-slate-600">{text}</p>
-    </div>
   );
 }
 
