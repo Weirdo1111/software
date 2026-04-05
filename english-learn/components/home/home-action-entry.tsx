@@ -28,10 +28,10 @@ import {
   Trophy,
   WandSparkles,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from "react";
 
 import { BuddyCampusLobby } from "@/components/home/buddy-campus-lobby";
-import { BuddyCompanion, type BuddyVariant } from "@/components/home/buddy-companion";
+import { BuddyCompanion, type BuddyFace, type BuddyVariant } from "@/components/home/buddy-companion";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { BUDDY_XP_RULES } from "@/lib/buddy-xp-config";
 import { type Locale } from "@/lib/i18n/dictionaries";
@@ -449,6 +449,71 @@ const buddyVariantCopy: Record<BuddyVariant, { zh: string; en: string; noteZh: s
 };
 
 const selectableBuddyVariants: BuddyVariant[] = ["bear", "bunny", "cat"];
+const HOME_BUDDY_SPEECH_MOTIONS = ["hop", "wave", "shimmy"] as const;
+type HomeBuddySpeechMotion = (typeof HOME_BUDDY_SPEECH_MOTIONS)[number];
+
+function getHomeBuddyIdleLines(variant: BuddyVariant, locale: Locale) {
+  const copy = {
+    classic: {
+      zh: [
+        "今天先从一个小任务开局，我会陪你把节奏带起来。",
+        "别担心页面多，我们一项一项来，稳稳推进就好。",
+        "我已经把状态调到待命模式了，点一个入口我们就出发。",
+        "你负责开始，我负责在旁边盯住今天的学习气氛。",
+      ],
+      en: [
+        "Let's open with one small quest and build momentum from there.",
+        "No rush. We can move through the pages one clear step at a time.",
+        "I'm already on standby, so pick a route and I'll keep the energy up.",
+        "You start the session and I'll keep watch over today's study rhythm.",
+      ],
+    },
+    bear: {
+      zh: [
+        "任务板我已经看过啦，先拿下最关键的那一项。",
+        "今天适合稳扎稳打，我会盯着你的主线任务进度。",
+        "如果你想冲效率，就从首页直接发车，我们别空转。",
+        "我这种指南熊最擅长的，就是把大目标拆成能完成的小步。",
+      ],
+      en: [
+        "I've checked the mission board. Let's knock out the most important one first.",
+        "Today feels like a steady-progress day, and I'll track the main quest with you.",
+        "If we want real momentum, let's launch straight from home instead of hovering.",
+        "Compass Bears are great at breaking big goals into steps you can actually finish.",
+      ],
+    },
+    bunny: {
+      zh: [
+        "我闻到一点研究气息了，今天适合多挖几个细节。",
+        "先别急着冲数量，跟我一起把一项内容学得更透一点。",
+        "如果你点进阅读或听力，我会默认这是一次探索任务。",
+        "云朵兔已经把好奇心充满电了，今天想发现点什么？",
+      ],
+      en: [
+        "I can already sense a research mood today. Let's dig into the details.",
+        "No need to rush volume. We can make one task feel deeper and smarter.",
+        "If you open reading or listening, I'm treating it like an exploration run.",
+        "Cloud Bun curiosity is fully charged. What are we discovering today?",
+      ],
+    },
+    cat: {
+      zh: [
+        "今天的主页灯光不错，很适合练表达和把想法说出来。",
+        "如果你准备开口，我会先替你把气氛撑起来。",
+        "星闪猫建议你别只看不动，点进去说一句、写一句都算开场。",
+        "我已经朝着下一个互动点看过去了，我们去把存在感拉满吧。",
+      ],
+      en: [
+        "The home stage feels good today. Perfect for speaking up and expressing ideas.",
+        "If you're ready to talk, I'll help carry the atmosphere for the first step.",
+        "Spark Cats don't just watch. One sentence spoken or written is already a strong opening.",
+        "I'm already looking toward the next interaction point. Let's make our presence felt.",
+      ],
+    },
+  } satisfies Record<BuddyVariant, { zh: string[]; en: string[] }>;
+
+  return copy[variant][locale];
+}
 
 function renderWardrobePreviewIcon(
   category: "hat" | "clothing" | "glasses" | "heldItem",
@@ -537,6 +602,14 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   const [showLevelRules, setShowLevelRules] = useState(false);
   const [levelUpNotice, setLevelUpNotice] = useState<{ level: number; stageTitle: string } | null>(null);
   const levelUpNoticeTimerRef = useRef<number | null>(null);
+  const [homeBuddyFace, setHomeBuddyFace] = useState<BuddyFace>("happy");
+  const [homeBuddyLineIndex, setHomeBuddyLineIndex] = useState(0);
+  const [homeBuddySpeechTick, setHomeBuddySpeechTick] = useState(0);
+  const [homeBuddySpeechMotion, setHomeBuddySpeechMotion] = useState<HomeBuddySpeechMotion>("hop");
+  const [homeBuddyBubbleVisible, setHomeBuddyBubbleVisible] = useState(true);
+  const [homeBuddyTilt, setHomeBuddyTilt] = useState({ x: 0, y: 0 });
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const [homeBuddyAudioReady, setHomeBuddyAudioReady] = useState(false);
 
   useEffect(() => {
     const refresh = () => {
@@ -626,6 +699,12 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   const buddyIdentity = getBuddyIdentity(buddyLevel, locale);
   const nextBuddyIdentity = getNextBuddyIdentity(buddyLevel, locale);
   const buddyFocus = getBuddyFocusFromVariant(buddyVariant);
+  const homeBuddyIdleLines = useMemo(() => getHomeBuddyIdleLines(buddyVariant, locale), [buddyVariant, locale]);
+  const activeHomeBuddyLine = homeBuddyIdleLines[homeBuddyLineIndex % homeBuddyIdleLines.length] ?? buddyStage.note;
+  const homeBuddyTiltStyle = {
+    "--home-buddy-tilt-x": `${homeBuddyTilt.x.toFixed(2)}deg`,
+    "--home-buddy-tilt-y": `${homeBuddyTilt.y.toFixed(2)}deg`,
+  } as CSSProperties;
   const unlockedWardrobeSet = useMemo(() => createUnlockedWardrobeSet(buddyLevel), [buddyLevel]);
   const effectiveBuddyOutfit = useMemo(
     () => sanitizeBuddyOutfitForLevel(buddyOutfit, unlockedWardrobeSet),
@@ -643,6 +722,187 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   const updatePrefs = (partial: Partial<typeof preferences>) => {
     const updated = saveSchedulePreferencesToStorage({ ...preferences, ...partial });
     setPreferences(updated);
+  };
+
+  const ensureHomeBuddyAudio = () => {
+    if (typeof window === "undefined") return null;
+    const AudioCtor = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtor) return null;
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioCtor();
+    }
+    const context = audioContextRef.current;
+    if (context.state === "suspended") {
+      void context.resume();
+    }
+    return context;
+  };
+
+  const playHomeBuddyVoice = (variant: BuddyVariant) => {
+    const context = ensureHomeBuddyAudio();
+    if (!context || !homeBuddyAudioReady) return;
+
+    const now = context.currentTime;
+    const voiceProfiles: Record<BuddyVariant, { root: number; accent: number; type: OscillatorType; gain: number }> = {
+      classic: { root: 610, accent: 760, type: "sine", gain: 0.02 },
+      bear: { root: 460, accent: 560, type: "triangle", gain: 0.026 },
+      bunny: { root: 720, accent: 910, type: "sine", gain: 0.018 },
+      cat: { root: 660, accent: 980, type: "square", gain: 0.015 },
+    };
+
+    const profile = voiceProfiles[variant];
+    const notes = [
+      profile.root,
+      profile.accent,
+      profile.root * 1.08,
+    ];
+
+    notes.forEach((frequency, index) => {
+      const oscillator = context.createOscillator();
+      const gainNode = context.createGain();
+      oscillator.type = profile.type;
+      oscillator.frequency.setValueAtTime(frequency, now + index * 0.065);
+      oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.96, now + index * 0.065 + 0.09);
+      gainNode.gain.setValueAtTime(0.0001, now + index * 0.065);
+      gainNode.gain.exponentialRampToValueAtTime(profile.gain, now + index * 0.065 + 0.018);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + index * 0.065 + 0.11);
+      oscillator.connect(gainNode);
+      gainNode.connect(context.destination);
+      oscillator.start(now + index * 0.065);
+      oscillator.stop(now + index * 0.065 + 0.12);
+    });
+  };
+
+  useEffect(() => {
+    setHomeBuddyLineIndex(0);
+    setHomeBuddyBubbleVisible(true);
+  }, [homeBuddyIdleLines]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const activateAudio = () => {
+      const context = ensureHomeBuddyAudio();
+      if (!context) return;
+      setHomeBuddyAudioReady(true);
+      window.removeEventListener("pointerdown", activateAudio);
+      window.removeEventListener("keydown", activateAudio);
+    };
+
+    window.addEventListener("pointerdown", activateAudio, { passive: true });
+    window.addEventListener("keydown", activateAudio);
+
+    return () => {
+      window.removeEventListener("pointerdown", activateAudio);
+      window.removeEventListener("keydown", activateAudio);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    let blinkTimer = 0;
+    let reopenTimer = 0;
+    let secondBlinkTimer = 0;
+
+    const queueBlink = () => {
+      const delay = 2600 + Math.random() * 2200;
+      blinkTimer = window.setTimeout(() => {
+        setHomeBuddyFace("blink");
+        reopenTimer = window.setTimeout(() => {
+          setHomeBuddyFace("happy");
+          if (Math.random() > 0.72) {
+            secondBlinkTimer = window.setTimeout(() => {
+              setHomeBuddyFace("blink");
+              reopenTimer = window.setTimeout(() => {
+                setHomeBuddyFace("happy");
+                queueBlink();
+              }, 140);
+            }, 120);
+            return;
+          }
+          queueBlink();
+        }, 150);
+      }, delay);
+    };
+
+    queueBlink();
+
+    return () => {
+      window.clearTimeout(blinkTimer);
+      window.clearTimeout(reopenTimer);
+      window.clearTimeout(secondBlinkTimer);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    let hideTimer = 0;
+    let nextLineTimer = 0;
+
+    const showDuration = 6400;
+    const quietDuration = 3400;
+
+    const queueCycle = () => {
+      hideTimer = window.setTimeout(() => {
+        setHomeBuddyBubbleVisible(false);
+        if (homeBuddyIdleLines.length <= 1) return;
+
+        nextLineTimer = window.setTimeout(() => {
+          setHomeBuddyLineIndex((current) => (current + 1) % homeBuddyIdleLines.length);
+          setHomeBuddyBubbleVisible(true);
+          queueCycle();
+        }, quietDuration);
+      }, showDuration);
+    };
+
+    setHomeBuddyBubbleVisible(true);
+    queueCycle();
+
+    return () => {
+      window.clearTimeout(hideTimer);
+      window.clearTimeout(nextLineTimer);
+    };
+  }, [homeBuddyIdleLines]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !homeBuddyBubbleVisible) return;
+
+    setHomeBuddySpeechTick((current) => current + 1);
+    setHomeBuddyFace("open");
+    setHomeBuddySpeechMotion(HOME_BUDDY_SPEECH_MOTIONS[homeBuddyLineIndex % HOME_BUDDY_SPEECH_MOTIONS.length]);
+    playHomeBuddyVoice(buddyVariant);
+
+    const settleTimer = window.setTimeout(() => {
+      setHomeBuddyFace("happy");
+    }, 820);
+
+    return () => window.clearTimeout(settleTimer);
+  }, [buddyVariant, homeBuddyAudioReady, homeBuddyBubbleVisible, homeBuddyLineIndex]);
+
+  useEffect(() => {
+    return () => {
+      if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+        void audioContextRef.current.close();
+      }
+    };
+  }, []);
+
+  const handleHomeBuddyPointerMove = (event: PointerEvent<HTMLElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const relativeX = (event.clientX - rect.left) / rect.width - 0.5;
+    const relativeY = (event.clientY - rect.top) / rect.height - 0.5;
+    const clampedX = Math.max(-1, Math.min(1, relativeX * 2));
+    const clampedY = Math.max(-1, Math.min(1, relativeY * 2));
+    setHomeBuddyTilt({
+      x: clampedX * 10,
+      y: clampedY * -8,
+    });
+  };
+
+  const resetHomeBuddyTilt = () => {
+    setHomeBuddyTilt({ x: 0, y: 0 });
   };
 
   useEffect(() => {
@@ -893,24 +1153,40 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
             </div>
 
             <div className="relative z-10">
-              <div className="mx-auto max-w-[24rem] rounded-[2.2rem] border-2 border-white/90 bg-[rgba(255,255,255,0.72)] p-4 shadow-[0_16px_0_rgba(255,201,225,0.26),0_28px_56px_rgba(90,123,255,0.14)] backdrop-blur-xl">
-                <div className="buddy-bubble p-4">
-                  <p className="text-sm font-semibold text-[var(--ink)]">
-                    {locale === "zh"
-                      ? "Hi, I am your DIICSU Buddy. Finish quests and I will grow with you."
-                      : "Hi, I am your DIICSU Buddy. Finish quests and I will grow with you."}
-                  </p>
+              <div className="relative mx-auto max-w-[24rem] overflow-visible rounded-[2.2rem] border-2 border-white/90 bg-[rgba(255,255,255,0.72)] p-4 shadow-[0_16px_0_rgba(255,201,225,0.26),0_28px_56px_rgba(90,123,255,0.14)] backdrop-blur-xl">
+                <div
+                  key={`home-buddy-bubble-guest-${homeBuddySpeechTick}`}
+                  className={`buddy-bubble home-hero-buddy-bubble p-4${homeBuddyBubbleVisible ? " home-hero-buddy-bubble-visible" : " home-hero-buddy-bubble-hidden"}`}
+                  aria-hidden={!homeBuddyBubbleVisible}
+                >
+                  <p className="text-sm font-semibold text-[var(--ink)]">{activeHomeBuddyLine}</p>
                 </div>
                 <div className="party-stage mt-4 px-5 pb-5 pt-3">
                   <div className="pet-spotlight" />
-                  <BuddyCompanion
-                    stage="fresh"
-                    focus={buddyFocus}
-                    variant={buddyVariant}
-                    mood="happy"
-                    outfit={buddyOutfit}
-                    className="mx-auto"
-                  />
+                  <div
+                    className="home-hero-buddy-shell"
+                    style={homeBuddyTiltStyle}
+                    onPointerMove={handleHomeBuddyPointerMove}
+                    onPointerLeave={resetHomeBuddyTilt}
+                  >
+                    <div className="home-hero-buddy-look">
+                      <div
+                        key={`home-buddy-motion-guest-${homeBuddySpeechTick}`}
+                        className="home-hero-buddy-idle"
+                        data-speech-motion={homeBuddySpeechMotion}
+                      >
+                        <BuddyCompanion
+                          stage="fresh"
+                          focus={buddyFocus}
+                          variant={buddyVariant}
+                          mood="happy"
+                          face={homeBuddyFace}
+                          outfit={buddyOutfit}
+                          className="mx-auto home-hero-buddy-companion"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1058,9 +1334,13 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                 </div>
               </div>
             ) : null}
-            <div className="mx-auto max-w-[26rem] rounded-[2.2rem] border-2 border-white/90 bg-[rgba(255,255,255,0.72)] p-4 shadow-[0_16px_0_rgba(255,201,225,0.26),0_28px_56px_rgba(90,123,255,0.14)] backdrop-blur-xl">
-              <div className="buddy-bubble p-4">
-                <p className="text-sm font-semibold text-[var(--ink)]">{buddyStage.note}</p>
+            <div className="relative mx-auto max-w-[26rem] overflow-visible rounded-[2.2rem] border-2 border-white/90 bg-[rgba(255,255,255,0.72)] p-4 shadow-[0_16px_0_rgba(255,201,225,0.26),0_28px_56px_rgba(90,123,255,0.14)] backdrop-blur-xl">
+              <div
+                key={`home-buddy-bubble-main-${homeBuddySpeechTick}`}
+                className={`buddy-bubble home-hero-buddy-bubble p-4${homeBuddyBubbleVisible ? " home-hero-buddy-bubble-visible" : " home-hero-buddy-bubble-hidden"}`}
+                aria-hidden={!homeBuddyBubbleVisible}
+              >
+                <p className="text-sm font-semibold text-[var(--ink)]">{activeHomeBuddyLine}</p>
               </div>
 
               <div className="party-stage mt-4 px-5 pb-5 pt-3">
@@ -1074,20 +1354,33 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                 ) : null}
                 <button
                   type="button"
-                    onClick={() => setWardrobeOpen(true)}
+                  onClick={() => setWardrobeOpen(true)}
+                  onPointerMove={handleHomeBuddyPointerMove}
+                  onPointerLeave={resetHomeBuddyTilt}
                   className={`buddy-dressup-trigger mx-auto block rounded-[1.8rem] border-0 bg-transparent p-0${
                     levelUpNotice ? " animate-[globalBuddyBounceHit_1s_ease-in-out_5]" : ""
                   }`}
                   aria-label={locale === "zh" ? "打开桌宠换装" : "Open buddy wardrobe"}
                 >
-                  <BuddyCompanion
-                    stage={buddyStage.id}
-                    focus={buddyFocus}
-                    variant={buddyVariant}
-                    mood={buddyStage.mood}
-                    outfit={effectiveBuddyOutfit}
-                    className="mx-auto"
-                  />
+                  <div className="home-hero-buddy-shell" style={homeBuddyTiltStyle}>
+                    <div className="home-hero-buddy-look">
+                      <div
+                        key={`home-buddy-motion-main-${homeBuddySpeechTick}`}
+                        className="home-hero-buddy-idle"
+                        data-speech-motion={homeBuddySpeechMotion}
+                      >
+                        <BuddyCompanion
+                          stage={buddyStage.id}
+                          focus={buddyFocus}
+                          variant={buddyVariant}
+                          mood={buddyStage.mood}
+                          face={homeBuddyFace}
+                          outfit={effectiveBuddyOutfit}
+                          className="mx-auto home-hero-buddy-companion"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </button>
                 <p className="mt-3 text-center text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
                   {locale === "zh" ? "点击桌宠换装" : "Tap buddy to dress up"}

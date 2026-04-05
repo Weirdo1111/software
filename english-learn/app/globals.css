@@ -414,6 +414,115 @@ body::after {
   filter: saturate(1.04);
 }
 
+.home-hero-buddy-shell {
+  position: relative;
+  display: block;
+  width: fit-content;
+  margin: 0 auto;
+}
+
+.home-hero-buddy-shell::before {
+  content: "";
+  position: absolute;
+  inset: 12% 10% 4%;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.28) 42%, transparent 72%),
+    radial-gradient(circle at 50% 70%, rgba(120, 210, 255, 0.3), transparent 66%);
+  filter: blur(18px);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.home-hero-buddy-look {
+  position: relative;
+  display: block;
+  transform:
+    perspective(1000px)
+    rotateX(var(--home-buddy-tilt-y, 0deg))
+    rotateY(var(--home-buddy-tilt-x, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 120ms ease-out;
+  will-change: transform;
+}
+
+.home-hero-buddy-idle {
+  position: relative;
+  display: block;
+  transform-origin: center bottom;
+  animation: homeHeroBuddyIdle 5.6s ease-in-out infinite;
+}
+
+.home-hero-buddy-idle[data-speech-motion="hop"] {
+  animation:
+    homeHeroBuddyIdle 5.6s ease-in-out infinite,
+    homeHeroBuddySpeechHop 0.82s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.home-hero-buddy-idle[data-speech-motion="wave"] {
+  animation:
+    homeHeroBuddyIdle 5.6s ease-in-out infinite,
+    homeHeroBuddySpeechWave 0.86s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.home-hero-buddy-idle[data-speech-motion="shimmy"] {
+  animation:
+    homeHeroBuddyIdle 5.6s ease-in-out infinite,
+    homeHeroBuddySpeechShimmy 0.88s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.home-hero-buddy-idle::after {
+  content: "";
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: -0.6rem;
+  height: 1rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(90, 123, 255, 0.18), transparent 72%);
+  filter: blur(10px);
+  opacity: 0.72;
+  animation: homeHeroBuddyShadowPulse 5.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.home-hero-buddy-companion {
+  transform-origin: center bottom;
+}
+
+.home-hero-buddy-bubble {
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  top: 1rem;
+  z-index: 12;
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease,
+    filter 220ms ease;
+  animation: homeHeroBuddyBubbleTalk 0.78s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.home-hero-buddy-bubble-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+  pointer-events: none;
+}
+
+.home-hero-buddy-bubble-hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px) scale(0.985);
+  filter: blur(3px);
+  pointer-events: none;
+}
+
+.home-hero-buddy-bubble-hidden::after {
+  opacity: 0;
+}
+
 .buddy-wardrobe-overlay {
   position: fixed;
   inset: 0;
@@ -2996,6 +3105,100 @@ body::after {
   }
 }
 
+@keyframes homeHeroBuddyIdle {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2.2deg) scale(1);
+  }
+  24% {
+    transform: translateY(-4px) rotate(1.8deg) scale(1.015, 0.99);
+  }
+  52% {
+    transform: translateY(-7px) rotate(3.2deg) scale(0.99, 1.02);
+  }
+  76% {
+    transform: translateY(-2px) rotate(-1.6deg) scale(1.012, 0.995);
+  }
+}
+
+@keyframes homeHeroBuddyShadowPulse {
+  0%,
+  100% {
+    opacity: 0.58;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 0.84;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes homeHeroBuddyBubbleTalk {
+  0% {
+    opacity: 0.4;
+    transform: translateY(10px) scale(0.96);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes homeHeroBuddySpeechHop {
+  0% {
+    transform: translateY(0) rotate(-2deg) scale(1);
+  }
+  28% {
+    transform: translateY(-12px) rotate(1.8deg) scale(1.04, 0.97);
+  }
+  55% {
+    transform: translateY(-2px) rotate(4deg) scale(0.99, 1.03);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+}
+
+@keyframes homeHeroBuddySpeechWave {
+  0% {
+    transform: translateY(0) rotate(-2deg) scale(1);
+  }
+  20% {
+    transform: translateY(-3px) rotate(6deg) scale(1.01);
+  }
+  42% {
+    transform: translateY(-5px) rotate(-7deg) scale(1.02, 0.99);
+  }
+  66% {
+    transform: translateY(-2px) rotate(5deg) scale(1.01);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+}
+
+@keyframes homeHeroBuddySpeechShimmy {
+  0% {
+    transform: translateX(0) rotate(0deg) scale(1);
+  }
+  18% {
+    transform: translateX(-6px) rotate(-6deg) scale(1.02);
+  }
+  38% {
+    transform: translateX(7px) rotate(7deg) scale(1.03, 0.98);
+  }
+  58% {
+    transform: translateX(-4px) rotate(-4deg) scale(0.99, 1.02);
+  }
+  100% {
+    transform: translateX(0) rotate(0deg) scale(1);
+  }
+}
+
 @keyframes floaterBob {
   0%,
   100% {
@@ -3601,6 +3804,9 @@ body::after {
   .ambient-card,
   .signal-pill,
   .buddy-float,
+  .home-hero-buddy-idle,
+  .home-hero-buddy-idle::after,
+  .home-hero-buddy-bubble,
   .buddy-progress-fill,
   .party-floater,
   .campus-lobby-cloud,
