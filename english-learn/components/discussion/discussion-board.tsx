@@ -87,7 +87,7 @@ function getCategoryLabel(tag: DiscussionCategory, locale: Locale) {
     reading: { zh: "阅读", en: "Reading" },
     writing: { zh: "写作", en: "Writing" },
     speaking: { zh: "口语", en: "Speaking" },
-    assessment: { zh: "测评", en: "Assessment" },
+    assessment: { zh: "测评1", en: "Assessment" },
     experience: { zh: "经验分享", en: "Experience" },
   };
 
