@@ -3,18 +3,18 @@
 // AI-assisted authorship note: this interactive lobby layout and movement flow
 // were initially drafted with AI assistance and then adjusted by the team.
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ArrowRight,
   Compass,
   Gamepad2,
+  Glasses,
   Headphones,
+  LibraryBig,
   MessageSquareMore,
   Mic,
+  PenLine,
   Sparkles,
   Target,
-  Trophy,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -127,164 +127,156 @@ export function BuddyCampusLobby({
   const zones = useMemo<LobbyZone[]>(
     () => [
       {
-        id: "quest-desk",
-        title: locale === "zh" ? "任务总站" : "Quest Desk",
-        note:
-          locale === "zh"
-            ? "先接收今天最重要的主线任务，再决定学习路线。"
-            : "Pick up today's main quest before you branch into study routes.",
-        hint: locale === "zh" ? "今日任务" : "Today's quest",
-        href: nextQuestHref,
-        x: 0.05,
-        y: 0.21,
-        width: 0.23,
-        height: 0.22,
-        entry: { x: 0.17, y: 0.47 },
+        id: "challenge-zone",
+        title: locale === "zh" ? "闯关区" : "Challenge",
+        note: locale === "zh" ? "进入剧情关卡与挑战线路。" : "Enter story-based challenge routes.",
+        hint: locale === "zh" ? "剧情冒险" : "Story route",
+        href: `/quests/escape-room?lang=${locale}`,
+        x: 0.03,
+        y: 0.18,
+        width: 0.17,
+        height: 0.17,
+        entry: { x: 0.115, y: 0.37 },
         gradient: ["#ffb88a", "#ff8ea0"],
+        Icon: Compass,
+      },
+      {
+        id: "task-hub",
+        title: locale === "zh" ? "任务站" : "Task Hub",
+        note: locale === "zh" ? "查看每日任务与学习计划。" : "Open daily tasks and your study plan.",
+        hint: locale === "zh" ? "今日任务" : "Daily tasks",
+        href: nextQuestHref,
+        x: 0.22,
+        y: 0.18,
+        width: 0.17,
+        height: 0.17,
+        entry: { x: 0.305, y: 0.37 },
+        gradient: ["#ffc892", "#ffd4a8"],
         Icon: Target,
       },
       {
         id: "listening-hall",
-        title: locale === "zh" ? "听力资源馆" : "Listening Hall",
-        note:
-          locale === "zh"
-            ? "TED、公开讲座、访谈与播客都从这里进入。"
-            : "Jump into TED talks, public lectures, interviews, and podcasts here.",
-        hint: locale === "zh" ? "TED + Real Talk" : "TED + Real Talk",
+        title: locale === "zh" ? "听力馆" : "Listening",
+        note: locale === "zh" ? "TED、公开讲座与课堂听力入口。" : "TED talks, lectures, and listening practice.",
+        hint: locale === "zh" ? "TED + 讲座" : "TED + lectures",
         href: `/listening?lang=${locale}`,
-        x: 0.33,
-        y: 0.14,
-        width: 0.28,
-        height: 0.23,
-        entry: { x: 0.47, y: 0.39 },
+        x: 0.41,
+        y: 0.16,
+        width: 0.18,
+        height: 0.19,
+        entry: { x: 0.5, y: 0.37 },
         gradient: ["#69c8ff", "#78e5d0"],
         Icon: Headphones,
       },
       {
         id: "speaking-lab",
-        title: locale === "zh" ? "口语演练舱" : "Speaking Lab",
-        note:
-          locale === "zh"
-            ? "做课堂回答、汇报和研讨发言的场景训练。"
-            : "Practice seminar turns, presentations, and class responses.",
-        hint: locale === "zh" ? "AI 口语场景" : "AI speaking scenes",
+        title: locale === "zh" ? "口语舱" : "Speaking",
+        note: locale === "zh" ? "课堂回答与场景口语训练。" : "Practice speaking for class and seminar scenes.",
+        hint: locale === "zh" ? "课堂表达" : "Class speaking",
         href: `/lesson/${levelPrefix}-speaking-starter?lang=${locale}`,
-        x: 0.72,
-        y: 0.21,
-        width: 0.2,
-        height: 0.21,
-        entry: { x: 0.82, y: 0.47 },
+        x: 0.61,
+        y: 0.18,
+        width: 0.17,
+        height: 0.17,
+        entry: { x: 0.695, y: 0.37 },
         gradient: ["#ffc77d", "#ff9db0"],
         Icon: Mic,
       },
       {
-        id: "buddy-square",
-        title: locale === "zh" ? "学伴广场" : "Buddy Square",
-        note:
-          locale === "zh"
-            ? "去论坛交流问题、分享资源和准备协作玩法。"
-            : "Use the forum to swap resources, ask questions, and prepare for collaboration.",
-        hint: locale === "zh" ? "论坛互动" : "Forum and socials",
+        id: "reading-island",
+        title: locale === "zh" ? "阅读岛" : "Reading",
+        note: locale === "zh" ? "进行学术阅读与理解训练。" : "Train academic reading and comprehension.",
+        hint: locale === "zh" ? "文献精读" : "Text analysis",
+        href: `/reading?lang=${locale}`,
+        x: 0.8,
+        y: 0.18,
+        width: 0.17,
+        height: 0.17,
+        entry: { x: 0.885, y: 0.37 },
+        gradient: ["#a8df9a", "#7ec7ff"],
+        Icon: LibraryBig,
+      },
+      {
+        id: "writing-studio",
+        title: locale === "zh" ? "写作坊" : "Writing",
+        note: locale === "zh" ? "进入写作任务与段落训练。" : "Open writing tasks and paragraph training.",
+        hint: locale === "zh" ? "段落训练" : "Paragraph work",
+        href: `/lesson/${levelPrefix}-writing-starter?lang=${locale}`,
+        x: 0.03,
+        y: 0.62,
+        width: 0.17,
+        height: 0.17,
+        entry: { x: 0.115, y: 0.78 },
+        gradient: ["#ffe2a8", "#ffb8a1"],
+        Icon: PenLine,
+      },
+      {
+        id: "ai-coach",
+        title: locale === "zh" ? "AI陪练" : "AI Coach",
+        note: locale === "zh" ? "与 AI 角色对话并获取即时反馈。" : "Roleplay with AI and get instant feedback.",
+        hint: locale === "zh" ? "角色对话" : "Roleplay chat",
+        href: `/discussion/roleplay?lang=${locale}`,
+        x: 0.22,
+        y: 0.62,
+        width: 0.17,
+        height: 0.17,
+        entry: { x: 0.305, y: 0.78 },
+        gradient: ["#e3d6ff", "#bfe6ff"],
+        Icon: Sparkles,
+      },
+      {
+        id: "seminar-room",
+        title: locale === "zh" ? "研讨室" : "Seminars",
+        note: locale === "zh" ? "加入主题研讨与协作互动。" : "Join topic seminars and collaboration rooms.",
+        hint: locale === "zh" ? "主题研讨" : "Topic rooms",
+        href: `/discussion/seminars?lang=${locale}`,
+        x: 0.41,
+        y: 0.62,
+        width: 0.18,
+        height: 0.17,
+        entry: { x: 0.5, y: 0.78 },
+        gradient: ["#b9d7ff", "#eadcff"],
+        Icon: Glasses,
+      },
+      {
+        id: "discussion-zone",
+        title: locale === "zh" ? "讨论区" : "Discussion",
+        note: locale === "zh" ? "提问、交流、分享学习资源。" : "Ask, share, and discuss with peers.",
+        hint: locale === "zh" ? "交流互助" : "Peer exchange",
         href: `/discussion?lang=${locale}`,
-        x: 0.05,
-        y: 0.61,
-        width: 0.25,
-        height: 0.16,
-        entry: { x: 0.18, y: 0.74 },
+        x: 0.61,
+        y: 0.62,
+        width: 0.17,
+        height: 0.17,
+        entry: { x: 0.695, y: 0.78 },
         gradient: ["#9fd76f", "#69d4c1"],
         Icon: MessageSquareMore,
       },
       {
         id: "game-center",
-        title: locale === "zh" ? "游戏中心" : "Game Center",
-        note:
-          locale === "zh"
-            ? "直接进入游戏中心，可选择密室逃脱和 Word Game 两种模式，无需依赖导航栏。"
-            : "Enter the Game Center to choose between Escape Room and Word Game without relying on the nav bar.",
-        hint: locale === "zh" ? "密室逃脱 + Word Game" : "Escape Room + Word Game",
+        title: locale === "zh" ? "游戏区" : "Games",
+        note: locale === "zh" ? "通过小游戏巩固词汇与表达。" : "Practice vocabulary and expression in games.",
+        hint: locale === "zh" ? "闯关小游戏" : "Mini games",
         href: `/games?lang=${locale}`,
-        x: 0.4,
-        y: 0.68,
-        width: 0.21,
-        height: 0.15,
-        entry: { x: 0.5, y: 0.78 },
+        x: 0.8,
+        y: 0.62,
+        width: 0.17,
+        height: 0.17,
+        entry: { x: 0.885, y: 0.78 },
         gradient: ["#ffd36f", "#ff9c8f"],
         Icon: Gamepad2,
-      },
-      {
-        id: "reward-port",
-        title: locale === "zh" ? "成长奖励港" : "Rewards Port",
-        note:
-          locale === "zh"
-            ? "查看 XP、成长曲线和新的解锁奖励。"
-            : "See your XP, growth curve, and newly unlocked rewards.",
-        hint: locale === "zh" ? "成长与奖励" : "Growth and rewards",
-        href: `/progress?lang=${locale}`,
-        x: 0.7,
-        y: 0.61,
-        width: 0.22,
-        height: 0.16,
-        entry: { x: 0.81, y: 0.74 },
-        gradient: ["#ffd75d", "#ffb18d"],
-        Icon: Trophy,
       },
     ],
     [levelPrefix, locale, nextQuestHref],
   );
   const primaryBuddyVariant = buddyVariant ?? getBuddyVariantFromFocus(buddyFocus);
-  const buddyCrew = useMemo<
-    Array<{
-      id: string;
-      title: string;
-      note: string;
-      stage: BuddyStage;
-      focus: BuddyFocus;
-      variant: BuddyVariant;
-    }>
-  >(
-    () => [
-      {
-        id: "cloud-bun",
-        title: locale === "zh" ? "云朵兔" : "Cloud Bun",
-        note: locale === "zh" ? "偏研究型陪练" : "Research buddy",
-        stage: "fresh",
-        focus: "research",
-        variant: "bunny",
-      },
-      {
-        id: "spark-cat",
-        title: locale === "zh" ? "星闪猫" : "Spark Cat",
-        note: locale === "zh" ? "偏表达与对话" : "Speaking buddy",
-        stage: "growing",
-        focus: "seminar",
-        variant: "cat",
-      },
-      {
-        id: "compass-bear",
-        title: locale === "zh" ? "指南熊" : "Compass Bear",
-        note: locale === "zh" ? "偏任务与节奏" : "Quest buddy",
-        stage: "explorer",
-        focus: "coursework",
-        variant: "bear",
-      },
-    ],
-    [locale],
-  );
-  const leftWingZones = useMemo(
-    () => zones.filter((zone) => ["quest-desk", "listening-hall", "buddy-square"].includes(zone.id)),
-    [zones],
-  );
-  const rightWingZones = useMemo(
-    () => zones.filter((zone) => ["speaking-lab", "game-center", "reward-port"].includes(zone.id)),
-    [zones],
-  );
 
   const activeZone = useMemo(() => {
     if (arenaSize.width <= 0 || arenaSize.height <= 0) return null;
 
     const petX = position.x * arenaSize.width;
     const petY = position.y * arenaSize.height;
-    const activationDistance = Math.max(72, Math.min(120, Math.min(arenaSize.width, arenaSize.height) * 0.14));
+    const activationDistance = Math.max(48, Math.min(110, Math.min(arenaSize.width, arenaSize.height) * 0.1));
 
     let nearest: { zone: LobbyZone; distance: number } | null = null;
 
@@ -477,19 +469,6 @@ export function BuddyCampusLobby({
     });
   };
 
-  const lobbyStatus = activeZone
-    ? locale === "zh"
-      ? `已靠近 ${activeZone.title}`
-      : `Ready to enter ${activeZone.title}`
-    : keyboardEnabled
-      ? locale === "zh"
-        ? "继续移动 Buddy，靠近入口即可进入。"
-        : "Keep moving your buddy toward a building to enter it."
-      : locale === "zh"
-        ? "点击大厅后可用 WASD / 方向键移动。"
-        : "Click the lobby, then use WASD or arrow keys to move.";
-  const suggestedZone = zones[1] ?? zones[0] ?? null;
-
   return (
     <article className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.99),rgba(245,249,255,0.95),rgba(255,244,250,0.92))] p-6">
       <div>
@@ -499,54 +478,17 @@ export function BuddyCampusLobby({
             {locale === "zh" ? "互动大厅" : "Interactive Lobby"}
           </p>
           <h3 className="font-display mt-4 text-3xl tracking-tight text-[var(--ink)]">
-            {locale === "zh" ? "像进入校园大厅一样进入每个学习板块。" : "Enter each study area the way you would enter a campus hall."}
+            {locale === "zh" ? "学习广场" : "Study Plaza"}
           </h3>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-[var(--ink-soft)]">
             {locale === "zh"
-              ? "现在首页不只是入口列表，而是一个可以控制 Buddy 移动的大厅。走到听力、口语、论坛、游戏中心和奖励区附近，就能直接进入对应模块。"
-              : "Home is no longer just a list of links. Move your buddy across the lobby and step near listening, speaking, forum, game-center, and reward spaces to open them."}
+              ? "学习广场地图已扩展为 10 个功能分区。移动桌宠靠近任意分区建筑，就能直接进入对应模块。"
+              : "The study map now has 10 functional zones. Move your buddy near any zone building to enter that module."}
           </p>
         </div>
       </div>
 
       <div className="mt-6">
-        <div className="campus-lobby-topbar">
-          <div className="campus-lobby-topbar-chips">
-            <span className="buddy-chip">
-              <Sparkles className="size-4 text-[var(--coral)]" />
-              {locale === "zh" ? "WASD / 方向键" : "WASD / arrows"}
-            </span>
-            <span className="buddy-chip">
-              <Compass className="size-4 text-[var(--teal)]" />
-              {locale === "zh" ? "点击地面自动走" : "Tap floor to walk"}
-            </span>
-          </div>
-
-          <div className="campus-lobby-crew-board">
-            <p className="campus-lobby-crew-label">
-              {locale === "zh" ? "桌宠小队" : "Buddy crew"}
-            </p>
-            <div className="campus-lobby-crew-inline">
-              {buddyCrew.map((buddy) => (
-                <div key={buddy.id} className="campus-lobby-crew-pill">
-                  <BuddyCompanion
-                    stage={buddy.stage}
-                    focus={buddy.focus}
-                    variant={buddy.variant}
-                    mood="happy"
-                    float={false}
-                    className="w-[2.5rem] max-w-[2.5rem]"
-                  />
-                  <div>
-                    <p className="text-xs font-semibold text-[var(--ink)]">{buddy.title}</p>
-                    <p className="text-[11px] leading-4 text-[var(--ink-soft)]">{buddy.note}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
         <div
           ref={arenaRef}
           tabIndex={0}
@@ -615,8 +557,8 @@ export function BuddyCampusLobby({
                 <span className="campus-lobby-zone-icon">
                   <zone.Icon className="size-5" />
                 </span>
-                <span className="text-sm font-semibold text-[var(--ink)]">{zone.title}</span>
-                <span className="mt-1 text-xs leading-5 text-[var(--ink-soft)]">{zone.hint}</span>
+                <span className="campus-lobby-zone-title text-sm font-semibold text-[var(--ink)]">{zone.title}</span>
+                <span className="campus-lobby-zone-hint mt-1 text-xs leading-5 text-[var(--ink-soft)]">{zone.hint}</span>
               </button>
             );
           })}
@@ -643,131 +585,6 @@ export function BuddyCampusLobby({
                 className="relative z-10 w-[4.8rem] max-w-[4.8rem] drop-shadow-[0_18px_22px_rgba(63,85,129,0.16)]"
               />
             </span>
-          </div>
-        </div>
-
-        <div className="campus-lobby-support">
-          <div className="campus-lobby-wing">
-            <p className="campus-lobby-wing-label">
-              {locale === "zh" ? "左侧学习区" : "Left learning wing"}
-            </p>
-            <p className="campus-lobby-wing-note">
-              {locale === "zh"
-                ? "任务、听力和论坛入口都收进学习广场外侧控制区。"
-                : "Quest, listening, and forum routes now sit beside the plaza instead of on top of it."}
-            </p>
-            <div className="campus-lobby-wing-grid">
-              {leftWingZones.map((zone) => {
-                const isActive = activeZone?.id === zone.id;
-
-                return (
-                  <button
-                    key={zone.id}
-                    type="button"
-                    onClick={() => moveTo(zone.entry)}
-                    className={cn("campus-lobby-wing-button", isActive && "campus-lobby-wing-button-active")}
-                  >
-                    <span className="campus-lobby-wing-icon">
-                      <zone.Icon className="size-4" />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-semibold">{zone.title}</span>
-                      <span className="campus-lobby-wing-button-hint">{zone.hint}</span>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="campus-lobby-control-deck">
-            <div className="campus-lobby-status">
-              <span className="campus-lobby-status-dot" />
-              <span>{lobbyStatus}</span>
-            </div>
-
-            <div className="campus-lobby-active-card">
-              <p className="campus-lobby-active-label">
-                {activeZone
-                  ? locale === "zh"
-                    ? "可进入区域"
-                    : "Ready to enter"
-                  : locale === "zh"
-                    ? "移动提示"
-                    : "Movement tip"}
-              </p>
-              <p className="mt-2 text-xl font-semibold text-[var(--ink)]">
-                {activeZone?.title ?? (locale === "zh" ? "先走近一个学习建筑" : "Walk closer to a study building")}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
-                {activeZone?.note ??
-                  (locale === "zh"
-                    ? "点击学习广场后，用 WASD / 方向键移动，或者直接点建筑让桌宠自动走过去。"
-                    : "Click the plaza first, then use WASD or arrow keys, or tap a building to auto-walk your buddy there.")}
-              </p>
-              {activeZone ? (
-                <Link href={activeZone.href} className="campus-lobby-enter-button">
-                  {locale === "zh" ? "进入" : "Enter"}
-                  <ArrowRight className="size-4" />
-                </Link>
-              ) : suggestedZone ? (
-                <button type="button" onClick={() => moveTo(suggestedZone.entry)} className="campus-lobby-enter-button">
-                  {locale === "zh" ? "前往学习区" : "Walk to a zone"}
-                  <ArrowRight className="size-4" />
-                </button>
-              ) : null}
-            </div>
-
-            <div className="campus-lobby-paths">
-              {zones.map((zone) => {
-                const isActive = activeZone?.id === zone.id;
-
-                return (
-                  <button
-                    key={zone.id}
-                    type="button"
-                    onClick={() => moveTo(zone.entry)}
-                    className={cn("campus-lobby-path-pill", isActive && "campus-lobby-path-pill-active")}
-                  >
-                    <zone.Icon className="size-4" />
-                    {zone.title}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="campus-lobby-wing">
-            <p className="campus-lobby-wing-label">
-              {locale === "zh" ? "右侧学习区" : "Right learning wing"}
-            </p>
-            <p className="campus-lobby-wing-note">
-              {locale === "zh"
-                ? "口语、游戏和成长奖励也放到了广场外侧。"
-                : "Speaking, games, and rewards also live outside the plaza now."}
-            </p>
-            <div className="campus-lobby-wing-grid">
-              {rightWingZones.map((zone) => {
-                const isActive = activeZone?.id === zone.id;
-
-                return (
-                  <button
-                    key={zone.id}
-                    type="button"
-                    onClick={() => moveTo(zone.entry)}
-                    className={cn("campus-lobby-wing-button", isActive && "campus-lobby-wing-button-active")}
-                  >
-                    <span className="campus-lobby-wing-icon">
-                      <zone.Icon className="size-4" />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-semibold">{zone.title}</span>
-                      <span className="campus-lobby-wing-button-hint">{zone.hint}</span>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
           </div>
         </div>
       </div>
