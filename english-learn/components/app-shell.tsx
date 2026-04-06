@@ -139,7 +139,13 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
   const isHomeActive = pathname === "/";
 
   const isPrimaryActive = (id: FunctionZoneId) => {
-    if (id === "challenge") return pathname?.startsWith("/listening/test");
+    if (id === "challenge") {
+      return (
+        pathname?.startsWith("/challenge") ||
+        pathname?.startsWith("/listening/test") ||
+        pathname?.startsWith("/speaking/test")
+      );
+    }
     if (id === "tasks") return pathname?.startsWith("/schedule");
     if (id === "listening") return pathname?.startsWith("/listening") && !pathname?.startsWith("/listening/test");
     if (id === "speaking") return pathname?.includes("/lesson/") && pathname?.includes("speaking");

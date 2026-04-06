@@ -1,4 +1,5 @@
 import type { CEFRLevel, SpeakingDifficulty, SpeakingPrompt, WritingPrompt } from "@/types/learning";
+import type { SpeakingTestAnswerInput, SpeakingTestQuestionSet } from "@/lib/speaking-test";
 
 type RoleplayTurn = {
   role: "user" | "assistant";
@@ -76,6 +77,55 @@ ${historyText}
 
 Learner's latest turn:
 ${learnerTurn}`;
+}
+
+export function speakingTestFeedbackPrompt(
+  questionSet: SpeakingTestQuestionSet,
+  answers: SpeakingTestAnswerInput[],
+) {
+  const answerText = answers
+    .map(
+      (answer, index) =>
+        `Question ${index + 1}: ${answer.prompt}\nDuration: ${answer.duration_sec} seconds\nTranscript: ${answer.transcript}`,
+    )
+    .join("\n\n");
+
+  return `You are a professional oral-English examiner for first-year university students.
+Evaluate the full speaking test objectively and in detail.
+The candidate answered 3 fixed questions from one randomly assigned test set.
+Return strict JSON with these keys only:
+- overall_score
+- fluency_score
+- pronunciation_score
+- intonation_score
+- vocabulary_score
+- grammar_score
+- overall_comment
+- fluency_feedback
+- pronunciation_feedback
+- intonation_feedback
+- vocabulary_feedback
+- grammar_feedback
+- transcript_overview
+- strengths
+- priorities
+
+Scoring rules:
+- fluency_score, pronunciation_score, intonation_score, vocabulary_score, grammar_score must each be integers from 0 to 20.
+- overall_score must be an integer from 0 to 100 and should equal the sum of the 5 category scores.
+- overall_comment and each *_feedback field should be 2-4 sentences, detailed, professional, and specific.
+- transcript_overview should be 1-2 sentences summarizing how fully the candidate addressed the test.
+- strengths must be an array of exactly 3 short professional strings.
+- priorities must be an array of exactly 3 short professional improvement priorities.
+- Stay objective. Do not flatter. Do not use markdown.
+
+Speaking test set:
+- Title: ${questionSet.title}
+- Theme: ${questionSet.theme}
+- Examiner brief: ${questionSet.examinerBrief}
+
+Candidate answers:
+${answerText}`;
 }
 
 export function roleplayConversationPrompt(

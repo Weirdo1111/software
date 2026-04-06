@@ -50,12 +50,12 @@ export function getFunctionZoneLinks({
 
   if (locale === "zh") {
     return [
-      { id: "challenge", label: "闯关", href: withLocale("/listening/test", locale), Icon: Compass },
+      { id: "challenge", label: "挑战", href: withLocale("/challenge", locale), Icon: Compass },
       { id: "tasks", label: "任务", href: withLocale("/schedule", locale), Icon: Target },
-      { id: "listening", label: "听", href: withLocale("/listening", locale), Icon: Headphones },
-      { id: "speaking", label: "说", href: speakingHref, Icon: Mic },
-      { id: "reading", label: "读", href: withLocale("/reading", locale), Icon: LibraryBig },
-      { id: "writing", label: "写", href: writingHref, Icon: PenLine },
+      { id: "listening", label: "听力", href: withLocale("/listening", locale), Icon: Headphones },
+      { id: "speaking", label: "口语", href: speakingHref, Icon: Mic },
+      { id: "reading", label: "阅读", href: withLocale("/reading", locale), Icon: LibraryBig },
+      { id: "writing", label: "写作", href: writingHref, Icon: PenLine },
       { id: "ai-coach", label: "AI陪练", href: withLocale("/discussion/roleplay", locale), Icon: Sparkles },
       { id: "seminars", label: "研讨室", href: withLocale("/discussion/seminars", locale), Icon: Glasses },
       { id: "discussion", label: "讨论区", href: withLocale("/discussion", locale), Icon: MessageSquareMore },
@@ -64,7 +64,7 @@ export function getFunctionZoneLinks({
   }
 
   return [
-    { id: "challenge", label: "Challenge", href: withLocale("/listening/test", locale), Icon: Compass },
+    { id: "challenge", label: "Challenge", href: withLocale("/challenge", locale), Icon: Compass },
     { id: "tasks", label: "Tasks", href: withLocale("/schedule", locale), Icon: Target },
     { id: "listening", label: "Listening", href: withLocale("/listening", locale), Icon: Headphones },
     { id: "speaking", label: "Speaking", href: speakingHref, Icon: Mic },

@@ -19,7 +19,7 @@ import { useRealtimeRoleplay } from "@/components/discussion/use-realtime-rolepl
 import {
   getRoleplayCharacter,
   listRoleplayCharacters,
-  type RoleplayCharacterId,
+  type PublicRoleplayCharacterId,
 } from "@/lib/roleplay";
 
 type CharacterVisual = {
@@ -29,7 +29,7 @@ type CharacterVisual = {
   bubbleClassName: string;
 };
 
-const CHARACTER_VISUALS: Record<RoleplayCharacterId, CharacterVisual> = {
+const CHARACTER_VISUALS: Record<PublicRoleplayCharacterId, CharacterVisual> = {
   wizard_boy: {
     icon: WandSparkles,
     iconWrapClassName:
@@ -90,7 +90,7 @@ function getLogToneClass(tone: "neutral" | "success" | "warn" | "error") {
 
 export function DiscussionRoleplayPanel({ locale }: { locale: Locale }) {
   const [selectedCharacterId, setSelectedCharacterId] =
-    useState<RoleplayCharacterId>("wizard_boy");
+    useState<PublicRoleplayCharacterId>("wizard_boy");
   const [textTurn, setTextTurn] = useState("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const character = getRoleplayCharacter(selectedCharacterId);
@@ -167,7 +167,7 @@ export function DiscussionRoleplayPanel({ locale }: { locale: Locale }) {
     setTextTurn("");
   }
 
-  async function handleCharacterChange(nextCharacterId: RoleplayCharacterId) {
+  async function handleCharacterChange(nextCharacterId: PublicRoleplayCharacterId) {
     if (nextCharacterId === selectedCharacterId) return;
     await realtime.disconnectSession();
     realtime.clearLogs();
