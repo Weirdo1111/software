@@ -48,7 +48,7 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
   const isLoggedIn = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const [levelPrefix, setLevelPrefix] = useState("A2");
 
-  const accountLabel = locale === "zh" ? "个人主页1" : "Profile";
+  const accountLabel = locale === "zh" ? "个人主页" : "Profile";
   const loginLabel = locale === "zh" ? "登录" : "Log in";
   const logoutLabel = locale === "zh" ? "退出" : "Log out";
   const homeLabel = locale === "zh" ? "首页" : "Home";
