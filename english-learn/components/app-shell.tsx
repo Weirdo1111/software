@@ -3,57 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Compass,
-  Gamepad2,
-  LibraryBig,
   LogIn,
   LogOut,
-  MessageSquareMore,
   Sparkles,
-  Trophy,
   User,
-  WandSparkles,
 } from "lucide-react";
-import { useEffect, useSyncExternalStore, useState } from "react";
+import { useEffect, useMemo, useSyncExternalStore, useState } from "react";
 
 import { InstitutionBrand } from "@/components/institution-brand";
 import { ProtectedAction } from "@/components/protected-action";
+import { getFunctionZoneLinks, type FunctionZoneId } from "@/lib/function-zones";
 import { type Locale } from "@/lib/i18n/dictionaries";
 import { cn } from "@/lib/utils";
-
-const primaryNav = [
-  {
-    id: "quests",
-    label: { zh: "任务地图", en: "Quests" },
-    Icon: Compass,
-  },
-  {
-    id: "library",
-    label: { zh: "资源库", en: "Library" },
-    Icon: LibraryBig,
-  },
-  {
-    id: "scenes",
-    label: { zh: "场景口语", en: "Scenes" },
-    Icon: WandSparkles,
-  },
-  {
-    id: "square",
-    label: { zh: "学伴广场", en: "Buddy Square" },
-    Icon: MessageSquareMore,
-  },
-  {
-    id: "rewards",
-    label: { zh: "成长奖励", en: "Rewards" },
-    Icon: Trophy,
-  },
-  {
-    id: "games",
-    label: { zh: "游戏中心", en: "Games" },
-    Icon: Gamepad2,
-    protected: false,
-  },
-] as const;
 
 const allowedLevels = new Set(["A1", "A2", "B1", "B2", "C1", "C2"]);
 
@@ -91,6 +52,14 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
   const logoutLabel = locale === "zh" ? "退出" : "Log out";
   const homeLabel = locale === "zh" ? "首页" : "Home";
   const buddyLabel = locale === "zh" ? "DIICSU Buddy Campus" : "DIICSU Buddy Campus";
+  const primaryNav = useMemo(
+    () =>
+      getFunctionZoneLinks({
+        locale,
+        levelPrefix,
+      }),
+    [levelPrefix, locale],
+  );
 
   useEffect(() => {
     const refreshLevel = () => {
@@ -167,26 +136,29 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
     window.location.href = "/";
   };
 
-  const speakingHref = `/lesson/${levelPrefix}-speaking-starter?lang=${locale}`;
-
-  const resolveHref = (id: (typeof primaryNav)[number]["id"]) => {
-    if (id === "quests") return `/schedule?lang=${locale}`;
-    if (id === "library") return `/listening?lang=${locale}`;
-    if (id === "scenes") return speakingHref;
-    if (id === "square") return `/discussion?lang=${locale}`;
-    if (id === "games") return `/games?lang=${locale}`;
-    return `/progress?lang=${locale}`;
-  };
-
   const isHomeActive = pathname === "/";
 
-  const isPrimaryActive = (id: (typeof primaryNav)[number]["id"]) => {
-    if (id === "quests") return pathname?.startsWith("/schedule");
-    if (id === "library") return pathname?.startsWith("/listening");
-    if (id === "scenes") return pathname?.includes("/lesson/") && pathname?.includes("speaking");
-    if (id === "square") return pathname?.startsWith("/discussion");
-    if (id === "games") return pathname?.startsWith("/games");
-    return pathname?.startsWith("/progress");
+  const isPrimaryActive = (id: FunctionZoneId) => {
+    if (id === "challenge") return pathname?.startsWith("/quests");
+    if (id === "tasks") return pathname?.startsWith("/schedule");
+    if (id === "listening") return pathname?.startsWith("/listening");
+    if (id === "speaking") return pathname?.includes("/lesson/") && pathname?.includes("speaking");
+    if (id === "reading") return pathname?.startsWith("/reading");
+    if (id === "writing") {
+      return pathname?.startsWith("/writing") || (pathname?.includes("/lesson/") && pathname?.includes("writing"));
+    }
+    if (id === "ai-coach") return pathname?.startsWith("/discussion/roleplay");
+    if (id === "seminars") {
+      return pathname?.startsWith("/discussion/seminars") || pathname?.startsWith("/forum/seminars");
+    }
+    if (id === "discussion") {
+      const inDiscussion = pathname?.startsWith("/discussion");
+      const inSeminar = pathname?.startsWith("/discussion/seminars") || pathname?.startsWith("/forum/seminars");
+      const inRoleplay = pathname?.startsWith("/discussion/roleplay");
+      if (inDiscussion && !inSeminar && !inRoleplay) return true;
+      return pathname?.startsWith("/posts") || pathname?.startsWith("/activity");
+    }
+    return pathname?.startsWith("/games");
   };
 
   return (
@@ -221,11 +193,11 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
               const active = isPrimaryActive(item.id);
               const className = `party-tab ${active ? "party-tab-active" : ""}`;
 
-              if ("protected" in item && item.protected === false) {
+              if (item.protected === false) {
                 return (
-                  <Link key={item.id} href={resolveHref(item.id)} className={className}>
+                  <Link key={item.id} href={item.href} className={className}>
                     <item.Icon className="size-4" />
-                    {item.label[locale]}
+                    {item.label}
                   </Link>
                 );
               }
@@ -233,13 +205,13 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
               return (
                 <ProtectedAction
                   key={item.id}
-                  href={resolveHref(item.id)}
+                  href={item.href}
                   locale={locale}
                   isLoggedIn={isLoggedIn}
                   className={className}
                 >
                   <item.Icon className="size-4" />
-                  {item.label[locale]}
+                  {item.label}
                 </ProtectedAction>
               );
             })}
