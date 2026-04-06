@@ -23,6 +23,14 @@ import {
 import { hashPassword, verifyPassword } from "@/lib/local-auth";
 
 const SEMINAR_LOCAL_DB_PATH = join(process.cwd(), "data", "seminar-rooms.json");
+const REQUIRED_SEMINAR_TABLES = [
+  "seminar_rooms",
+  "seminar_room_members",
+  "seminar_room_messages",
+  "seminar_room_attachments",
+  "seminar_room_call_participants",
+  "seminar_room_call_signals",
+] as const;
 let localDbOperation = Promise.resolve<void>(undefined);
 let seminarStoreDecision:
   | {
@@ -200,6 +208,23 @@ async function writeLocalDb(db: LocalSeminarDb) {
   const tempPath = `${SEMINAR_LOCAL_DB_PATH}.tmp`;
   await fs.writeFile(tempPath, JSON.stringify(db, null, 2), "utf8");
   await fs.rename(tempPath, SEMINAR_LOCAL_DB_PATH);
+}
+
+async function getMissingSeminarTables() {
+  const rows = await prisma.$queryRawUnsafe<Array<{ table_name?: string; TABLE_NAME?: string }>>(
+    `SELECT table_name
+     FROM information_schema.tables
+     WHERE table_schema = DATABASE()
+       AND table_name IN (${REQUIRED_SEMINAR_TABLES.map((table) => `'${table}'`).join(", ")})`,
+  );
+
+  const existing = new Set(
+    rows
+      .map((row) => row.table_name ?? row.TABLE_NAME ?? "")
+      .filter(Boolean),
+  );
+
+  return REQUIRED_SEMINAR_TABLES.filter((table) => !existing.has(table));
 }
 
 function sortRooms(left: LocalSeminarRoom, right: LocalSeminarRoom) {
@@ -537,13 +562,37 @@ export async function shouldUseSeminarLocalStore() {
       }
 
       try {
-        await prisma.$queryRawUnsafe("SELECT 1");
+        const missingTables = await getMissingSeminarTables();
+
+        if (missingTables.length > 0) {
+          console.warn(
+            `seminar feature tables are missing (${missingTables.join(", ")}); falling back to local seminar store. Run Prisma migrations on this deployment before using seminar rooms in production.`,
+          );
+          seminarStoreDecision = {
+            expiresAt: now + 15_000,
+            useLocalStore: true,
+          };
+          return true;
+        }
+
         seminarStoreDecision = {
           expiresAt: now + 15_000,
           useLocalStore: false,
         };
         return false;
-      } catch {
+      } catch (error) {
+        if (process.env.NODE_ENV === "production") {
+          console.error(
+            "seminar database check failed in production; keeping the database-backed path so the deployment surfaces the real database error instead of silently falling back to node-local seminar storage.",
+            error,
+          );
+          seminarStoreDecision = {
+            expiresAt: now + 15_000,
+            useLocalStore: false,
+          };
+          return false;
+        }
+
         seminarStoreDecision = {
           expiresAt: now + 15_000,
           useLocalStore: true,

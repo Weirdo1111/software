@@ -16,13 +16,49 @@ import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } fro
 import type { SeminarRoomCallParticipant, SeminarRoomCallSignal, SeminarRoomCallState } from "@/components/discussion/seminar-types";
 import type { Locale } from "@/components/discussion/types";
 
-const rtcConfig: RTCConfiguration = {
-  iceServers: [
-    {
-      urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"],
-    },
-  ],
-};
+const defaultIceServers: RTCIceServer[] = [
+  {
+    urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"],
+  },
+];
+
+function isRtcIceServer(value: unknown): value is RTCIceServer {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Partial<RTCIceServer>;
+  return typeof candidate.urls === "string" || Array.isArray(candidate.urls);
+}
+
+function createRtcConfig(): RTCConfiguration {
+  const rawValue = process.env.NEXT_PUBLIC_SEMINAR_ICE_SERVERS?.trim();
+
+  if (!rawValue) {
+    return {
+      iceServers: defaultIceServers,
+    };
+  }
+
+  try {
+    const parsed = JSON.parse(rawValue) as unknown;
+    const configured = Array.isArray(parsed) ? parsed.filter(isRtcIceServer) : [];
+
+    if (configured.length > 0) {
+      return {
+        iceServers: configured,
+      };
+    }
+  } catch (error) {
+    console.warn("Failed to parse NEXT_PUBLIC_SEMINAR_ICE_SERVERS. Falling back to the default STUN list.", error);
+  }
+
+  return {
+    iceServers: defaultIceServers,
+  };
+}
+
+const rtcConfig = createRtcConfig();
 
 type RemoteTile = SeminarRoomCallParticipant & {
   stream: MediaStream | null;
