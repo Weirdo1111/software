@@ -116,6 +116,8 @@ vi.mock("@/lib/learning-tracker", () => ({
 vi.mock("@/lib/buddy-sound", () => ({
   isBuddySoundEnabled: () => true,
   playBuddySound: vi.fn().mockResolvedValue(undefined),
+  startBuddyBgmLoop: vi.fn().mockResolvedValue(undefined),
+  stopBuddyBgmLoop: vi.fn(),
   setBuddySoundEnabled: vi.fn(),
   unlockBuddySound: vi.fn().mockResolvedValue(undefined),
 }));
