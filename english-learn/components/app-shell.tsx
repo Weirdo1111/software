@@ -51,7 +51,7 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
   const accountLabel = locale === "zh" ? "个人主页" : "Profile";
   const loginLabel = locale === "zh" ? "登录" : "Log in";
   const logoutLabel = locale === "zh" ? "退出" : "Log out";
-  const homeLabel = locale === "zh" ? "首页" : "Home";
+  const homeLabel = locale === "zh" ? "首页1" : "Home";
   const buddyLabel = locale === "zh" ? "DIICSU Buddy Campus" : "DIICSU Buddy Campus";
   const primaryNav = useMemo(
     () =>
