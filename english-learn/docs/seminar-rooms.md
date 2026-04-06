@@ -92,15 +92,34 @@ This keeps the feature near real time without adding a separate websocket backen
 
 ## Environment
 
-Optional env var:
+Optional env vars:
 
 ```bash
 SUPABASE_STORAGE_BUCKET_SEMINARS=
+NEXT_PUBLIC_SEMINAR_ICE_SERVERS=
 ```
 
 If omitted, the feature still works with local file storage.
 
-No extra conference-specific environment variables are required. Browser clients currently use the public Google STUN endpoints bundled in the seminar call panel.
+`NEXT_PUBLIC_SEMINAR_ICE_SERVERS` accepts a JSON array of `RTCIceServer` entries. When it is omitted, browser clients fall back to the bundled Google STUN endpoints.
+
+Recommended production pattern:
+
+- provide a reachable TURN service in the same region as the deployment or users
+- set `NEXT_PUBLIC_SEMINAR_ICE_SERVERS` to a JSON array such as `[{"urls":["stun:stun.example.com:3478"]},{"urls":"turn:turn.example.com:3478?transport=udp","username":"turn-user","credential":"turn-password"}]`
+- for Tencent Cloud / mainland-China traffic, do not rely on Google-only STUN discovery in production
+
+## Deployment Checklist
+
+Before enabling seminar rooms on a cloud deployment:
+
+- run `npx prisma migrate deploy` so both seminar migrations are applied
+- verify the database contains the seminar tables from `20260331_add_seminar_rooms` and `20260331_add_seminar_room_calls`
+- configure `NEXT_PUBLIC_SEMINAR_ICE_SERVERS` with region-reachable STUN/TURN endpoints for live calls
+- prefer private object storage for attachments instead of local disk fallback
+- if the site is behind Nginx or another reverse proxy, raise the request body limit above the largest allowed attachment size, for example `client_max_body_size 30m;`
+
+If seminar-specific tables are missing, the current code now falls back to the local seminar store instead of hard failing. That is acceptable for development, but it should not be treated as the production path because room state and call state become node-local.
 
 ## Attachment Rules
 

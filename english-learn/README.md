@@ -138,6 +138,14 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ```
 
+### Seminar Call Networking
+
+```bash
+NEXT_PUBLIC_SEMINAR_ICE_SERVERS=
+```
+
+Use a JSON array of ICE server entries when deploying seminar video calls outside local development, especially for Tencent Cloud or mainland-China traffic.
+
 ### AI Provider
 
 ```bash

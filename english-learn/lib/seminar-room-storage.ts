@@ -40,6 +40,14 @@ export async function saveSeminarAttachment(input: {
         storagePath: relativePath,
       };
     }
+
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(`Failed to upload seminar attachment to Supabase storage: ${error.message}`);
+    }
+
+    console.warn(
+      `seminar attachment upload to Supabase failed (${error.message}); falling back to local disk storage for this non-production environment.`,
+    );
   }
 
   const absolutePath = join(LOCAL_STORAGE_ROOT, relativePath);
