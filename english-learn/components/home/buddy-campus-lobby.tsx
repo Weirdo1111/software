@@ -129,9 +129,9 @@ export function BuddyCampusLobby({
       {
         id: "challenge-zone",
         title: locale === "zh" ? "闯关区" : "Challenge",
-        note: locale === "zh" ? "进入剧情关卡与挑战线路。" : "Enter story-based challenge routes.",
-        hint: locale === "zh" ? "剧情冒险" : "Story route",
-        href: `/quests/escape-room?lang=${locale}`,
+        note: locale === "zh" ? "进入随机听力测试与挑战模式。" : "Enter the listening test challenge.",
+        hint: locale === "zh" ? "随机测试" : "Listening test",
+        href: `/listening/test?lang=${locale}`,
         x: 0.03,
         y: 0.18,
         width: 0.17,

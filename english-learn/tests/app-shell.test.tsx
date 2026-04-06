@@ -45,9 +45,9 @@ describe("AppShell", () => {
     render(<AppShell locale="en" />);
 
     expect(screen.getByRole("link", { name: /games/i })).toHaveAttribute("href", "/games?lang=en");
-    expect(screen.getByRole("button", { name: /quests/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /challenge/i })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /quests/i }));
+    await user.click(screen.getByRole("button", { name: /challenge/i }));
 
     expect(screen.getByRole("heading", { name: /log in required/i })).toBeInTheDocument();
   });
@@ -59,8 +59,8 @@ describe("AppShell", () => {
 
     render(<AppShell locale="en" />);
 
-    await user.click(screen.getByRole("button", { name: /quests/i }));
+    await user.click(screen.getByRole("button", { name: /challenge/i }));
 
-    expect(pushSpy).toHaveBeenCalledWith("/schedule?lang=en");
+    expect(pushSpy).toHaveBeenCalledWith("/listening/test?lang=en");
   });
 });

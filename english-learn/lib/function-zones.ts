@@ -50,7 +50,7 @@ export function getFunctionZoneLinks({
 
   if (locale === "zh") {
     return [
-      { id: "challenge", label: "闯关", href: withLocale("/quests/escape-room", locale), Icon: Compass },
+      { id: "challenge", label: "闯关", href: withLocale("/listening/test", locale), Icon: Compass },
       { id: "tasks", label: "任务", href: withLocale("/schedule", locale), Icon: Target },
       { id: "listening", label: "听", href: withLocale("/listening", locale), Icon: Headphones },
       { id: "speaking", label: "说", href: speakingHref, Icon: Mic },
@@ -64,7 +64,7 @@ export function getFunctionZoneLinks({
   }
 
   return [
-    { id: "challenge", label: "Challenge", href: withLocale("/quests/escape-room", locale), Icon: Compass },
+    { id: "challenge", label: "Challenge", href: withLocale("/listening/test", locale), Icon: Compass },
     { id: "tasks", label: "Tasks", href: withLocale("/schedule", locale), Icon: Target },
     { id: "listening", label: "Listening", href: withLocale("/listening", locale), Icon: Headphones },
     { id: "speaking", label: "Speaking", href: speakingHref, Icon: Mic },
