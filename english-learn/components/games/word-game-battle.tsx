@@ -374,6 +374,28 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
     }
   }, []);
 
+  const resetBattleSession = useCallback(() => {
+    victoryXpAwardedRef.current = false;
+    setAnswer("");
+    setHp(MAX_HP);
+    setScore(0);
+    setWavePoolScore(WAVE_BASE_SCORE);
+    setCompletedWaves(0);
+    setEnemyProgress(0);
+    setFeedbackTone("warn");
+    setFeedback(initialIdle);
+    setShowPause(false);
+    setShowCritical(false);
+    setShowRecovery(false);
+    setIsResolving(false);
+    setWrongWords([]);
+    setRecoverySource("critical");
+    setRecoveryQueue([]);
+    setRecoveryIndex(0);
+    setRecoveryDone(false);
+    setQuestion(buildQuestionForWave(wordPool, 0));
+  }, [initialIdle, wordPool]);
+
   const closeRecoveryModal = useCallback(async () => {
     setShowRecovery(false);
     if (recoverySource === "victory") {
@@ -388,11 +410,10 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
     setEnemyProgress(0);
   }, [awardVictoryXpOnce, locale, recoverySource, router, t.reviewDone]);
 
-  const playVictoryAgain = useCallback(async () => {
-    setShowRecovery(false);
-    await awardVictoryXpOnce();
-    router.push(`/games/word-game/battle?lang=${locale}&bank=${bank}`);
-  }, [awardVictoryXpOnce, bank, locale, router]);
+  const playVictoryAgain = useCallback(() => {
+    void awardVictoryXpOnce();
+    resetBattleSession();
+  }, [awardVictoryXpOnce, resetBattleSession]);
 
   const speak = useCallback((text: string, lang: string) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
