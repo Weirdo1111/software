@@ -1,12 +1,15 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { awardBuddyXpInStorage } from "@/lib/buddy-xp";
+import { getWordGamePool } from "@/lib/games/word-game-lexicon";
 import type { RecoveryWord } from "@/lib/games/word-game-recovery";
 import type { Locale } from "@/lib/i18n/dictionaries";
 
 type EnemyType = "spell" | "meaning";
+type RecoverySource = "critical" | "victory";
 
 type WordEntry = RecoveryWord;
 
@@ -18,9 +21,14 @@ type BattleQuestion = {
   correctOptionIndex: number;
 };
 
-const TOTAL_WAVES = 6;
+const TOTAL_WAVES = 8;
 const MAX_HP = 5;
-const RECOVER_HP = 3;
+const CRITICAL_REVIEW_WORDS = MAX_HP;
+const VICTORY_REVIEW_WORDS = 3;
+const WAVE_BASE_SCORE = 100;
+const WAVE_MIN_SCORE = 20;
+const WAVE_DAMAGE_PENALTY = 20;
+const MAX_SPEED_BONUS = 40;
 
 const BANK_LABELS: Record<string, string> = {
   general: "General Academic",
@@ -30,17 +38,6 @@ const BANK_LABELS: Record<string, string> = {
   mechanical: "Mechanical Engineering",
   transport: "Transportation Engineering",
 };
-
-const WORD_POOL: WordEntry[] = [
-  { word: "algorithm", meaningEn: "A step-by-step method.", meaningZh: "步骤化求解方法。", examples: [{ en: "This algorithm is fast.", zh: "这个算法很快。" }], uk: "UK /ˈælɡərɪðəm/", us: "US /ˈælɡərɪðəm/" },
-  { word: "dataset", meaningEn: "A structured data collection.", meaningZh: "结构化数据集合。", examples: [{ en: "The dataset is clean.", zh: "这个数据集很干净。" }], uk: "UK /ˈdeɪtəset/", us: "US /ˈdeɪtəset/" },
-  { word: "protocol", meaningEn: "A formal communication rule.", meaningZh: "正式通信规则。", examples: [{ en: "HTTPS is a protocol.", zh: "HTTPS 是一种协议。" }], uk: "UK /ˈprəʊtəkɒl/", us: "US /ˈproʊtəkɔːl/" },
-  { word: "optimize", meaningEn: "Make as effective as possible.", meaningZh: "使其尽可能高效。", examples: [{ en: "Optimize this query.", zh: "优化这个查询。" }], uk: "UK /ˈɒptɪmaɪz/", us: "US /ˈɑːptəmaɪz/" },
-  { word: "resilient", meaningEn: "Able to recover quickly.", meaningZh: "能快速恢复。", examples: [{ en: "A resilient design helps.", zh: "有韧性的设计很有帮助。" }], uk: "UK /rɪˈzɪliənt/", us: "US /rɪˈzɪliənt/" },
-  { word: "simulate", meaningEn: "Imitate system behavior.", meaningZh: "模拟系统行为。", examples: [{ en: "Simulate user traffic.", zh: "模拟用户流量。" }], uk: "UK /ˈsɪmjʊleɪt/", us: "US /ˈsɪmjəleɪt/" },
-  { word: "robust", meaningEn: "Strong and reliable.", meaningZh: "强健且可靠。", examples: [{ en: "Need a robust service.", zh: "需要稳健的服务。" }], uk: "UK /rəʊˈbʌst/", us: "US /roʊˈbʌst/" },
-  { word: "inference", meaningEn: "A conclusion from evidence.", meaningZh: "依据证据得出的推断。", examples: [{ en: "The inference is correct.", zh: "这个推断是正确的。" }], uk: "UK /ˈɪnfərəns/", us: "US /ˈɪnfərəns/" },
-];
 
 const shuffle = <T,>(list: T[]) => {
   const copy = [...list];
@@ -62,11 +59,17 @@ const maskWord = (word: string) => {
     .join("");
 };
 
-const buildQuestions = (): BattleQuestion[] =>
-  shuffle(WORD_POOL)
+const buildOptionSet = (entry: WordEntry, pool: WordEntry[]) => {
+  const distractors = shuffle(pool.filter((word) => word.word !== entry.word)).slice(0, 2);
+  const options = shuffle([entry, ...distractors]);
+  return options.length >= 3 ? options : [entry, ...shuffle(pool).slice(0, 2)];
+};
+
+const buildQuestions = (pool: WordEntry[]): BattleQuestion[] =>
+  shuffle(pool)
     .slice(0, TOTAL_WAVES)
     .map((entry, index) => {
-      const options = shuffle([entry, ...shuffle(WORD_POOL.filter((w) => w.word !== entry.word)).slice(0, 3)]);
+      const options = buildOptionSet(entry, pool);
       return {
         type: index % 2 === 0 ? "spell" : "meaning",
         entry,
@@ -76,25 +79,64 @@ const buildQuestions = (): BattleQuestion[] =>
       };
     });
 
+const buildQuestionForWave = (pool: WordEntry[], waveIndex: number, excludeWord?: string): BattleQuestion => {
+  const entryPool = pool.filter((entry) => entry.word !== excludeWord);
+  const selectedPool = entryPool.length > 0 ? entryPool : pool;
+  const entry = shuffle(selectedPool)[0] ?? pool[0];
+  const options = buildOptionSet(entry, pool);
+
+  return {
+    type: waveIndex % 2 === 0 ? "spell" : "meaning",
+    entry,
+    maskedWord: maskWord(entry.word),
+    options,
+    correctOptionIndex: options.findIndex((option) => option.word === entry.word),
+  };
+};
+
+const buildRecoveryExamples = (entry: WordEntry) => {
+  const rows = entry.examples
+    .map((example) => ({ en: (example.en || "").trim(), zh: (example.zh || "").trim() }))
+    .filter((example) => example.en.length > 0 || example.zh.length > 0)
+    .map((example) => ({
+      en: example.en || `The term "${entry.word}" appears in many academic contexts.`,
+      zh: example.zh || `"${entry.word}" 在学术语境中较常见。`,
+    }));
+
+  if (rows.length > 0) return rows;
+  return [{ en: `The term "${entry.word}" appears in many academic contexts.`, zh: `"${entry.word}" 在学术语境中较常见。` }];
+};
+
 export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string }) {
   const router = useRouter();
-  const questions = useMemo(() => buildQuestions(), []);
+  const wordPool = useMemo(() => {
+    const selected = getWordGamePool(bank);
+    if (selected.length >= 3) return selected;
+    return getWordGamePool("general");
+  }, [bank]);
+  const questions = useMemo(() => buildQuestions(wordPool), [wordPool]);
   const initialIdle = locale === "zh" ? "按 Enter 提交答案。" : "Press Enter to submit.";
   const [answer, setAnswer] = useState("");
   const [hp, setHp] = useState(MAX_HP);
   const [score, setScore] = useState(0);
+  const [wavePoolScore, setWavePoolScore] = useState(WAVE_BASE_SCORE);
   const [completedWaves, setCompletedWaves] = useState(0);
   const [enemyProgress, setEnemyProgress] = useState(0);
   const [feedback, setFeedback] = useState(initialIdle);
   const [feedbackTone, setFeedbackTone] = useState<"ok" | "bad" | "warn">("warn");
   const [showPause, setShowPause] = useState(false);
   const [showCritical, setShowCritical] = useState(false);
+  const [showRecovery, setShowRecovery] = useState(false);
   const [isResolving, setIsResolving] = useState(false);
   const [wrongWords, setWrongWords] = useState<WordEntry[]>([]);
+  const [recoverySource, setRecoverySource] = useState<RecoverySource>("critical");
+  const [recoveryQueue, setRecoveryQueue] = useState<WordEntry[]>([]);
+  const [recoveryIndex, setRecoveryIndex] = useState(0);
+  const [recoveryDone, setRecoveryDone] = useState(false);
+  const victoryXpAwardedRef = useRef(false);
+  const answerInputRef = useRef<HTMLInputElement | null>(null);
+  const [question, setQuestion] = useState<BattleQuestion>(() => buildQuestionForWave(wordPool, 0));
 
-<<<<<<< Updated upstream
-  const question = questions[Math.min(completedWaves, TOTAL_WAVES - 1)];
-=======
   const recoveryWord = recoveryQueue[Math.min(recoveryIndex, Math.max(recoveryQueue.length - 1, 0))];
   const recoveryExamples = useMemo(() => (recoveryWord ? buildRecoveryExamples(recoveryWord) : []), [recoveryWord]);
   const recoveryMeaning = useMemo(() => (recoveryWord ? recoveryWord.meaningZh.trim() || recoveryWord.meaningEn.trim() : ""), [recoveryWord]);
@@ -112,82 +154,146 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
         return { pos: "", text: line };
       });
   }, [recoveryMeaning]);
->>>>>>> Stashed changes
 
   const t = useMemo(
     () =>
       locale === "zh"
         ? {
             discipline: "学科", hp: "生命值", score: "分数", wave: "波次", pause: "暂停", exit: "退出",
-            core: "Knowledge Core", adv: "敌人推进中", answerArea: "作答区", enter: "按 Enter 提交", attack: "攻击",
+            core: "Knowledge Core", adv: "敌人推进中", answerArea: "作答区", enter: "按 Enter 提交", wavePool: "波次积分池", attack: "攻击",
             placeholderSpell: "输入完整单词...", placeholderMeaning: "输入选项编号（例如 2）...",
-            spellMode: "拼写模式", meaningMode: "释义模式", spellHint: "输入完整单词来击败怪物。", meaningHint: "输入正确选项编号（1-4）。",
+            spellMode: "拼写模式", meaningMode: "释义模式", spellHint: "输入完整单词来击败怪物。", meaningHint: "输入正确选项编号（1-3）。",
             idle: "按 Enter 提交答案。", empty: "先输入答案再攻击。", ok: "命中！怪物被击退。", bad: "回答错误，护盾受损。", timeout: "怪物突破防线，护盾受损。",
             pauseTitle: "战斗已暂停", pauseDesc: "战场已冻结，准备好后继续，或返回主页。", resume: "继续", home: "返回主页",
             criticalTitle: "SYSTEM CRITICAL", criticalDesc: "核心受损，需要紧急词汇恢复后再继续战斗。", recovery: "开始恢复",
             reviewTitle: "WORD REVIEW", meaning: "词义", examples: "例句", next: "下一词", back: "返回防守", reviewHint: "复习该词后继续。", reviewDone: "复习完成，核心护盾已恢复。",
-            victoryWord: "VICTORY", victoryHint: "全部波次已完成，防守成功！",
+            victoryWord: "VICTORY", victoryHint: "全部波次已完成，防守成功！", victoryReviewTitle: "VICTORY REVIEW", victoryDoneTitle: "胜利达成", victoryDoneDesc: "你已完成全部波次，知识核心稳定。", victoryScore: "最终分数", victoryWaves: "通关波次", victoryPlayAgain: "再来一局",
           }
         : {
             discipline: "Discipline", hp: "HP", score: "Score", wave: "Wave", pause: "Pause", exit: "Exit",
-            core: "Knowledge Core", adv: "Enemy Advancing", answerArea: "Answer Area", enter: "Press Enter To Submit", attack: "Attack",
+            core: "Knowledge Core", adv: "Enemy Advancing", answerArea: "Answer Area", enter: "Press Enter To Submit", wavePool: "Wave Pool", attack: "Attack",
             placeholderSpell: "Type the full word here...", placeholderMeaning: "Type option number (e.g. 2)...",
-            spellMode: "Spelling Mode", meaningMode: "Meaning Mode", spellHint: "Retype the complete word to defeat the monster.", meaningHint: "Type the correct option number (1-4).",
+            spellMode: "Spelling Mode", meaningMode: "Meaning Mode", spellHint: "Retype the complete word to defeat the monster.", meaningHint: "Type the correct option number (1-3).",
             idle: "Press Enter to submit.", empty: "Type an answer before attacking.", ok: "Direct hit! Enemy eliminated.", bad: "Wrong answer. Shield damaged.", timeout: "Enemy breached the core. Shield damaged.",
             pauseTitle: "Battle Paused", pauseDesc: "The battlefield is frozen. Resume when ready, or return home.", resume: "Resume", home: "Return Home",
             criticalTitle: "SYSTEM CRITICAL", criticalDesc: "Core breached. Emergency review is required.", recovery: "Start Recovery",
             reviewTitle: "WORD REVIEW", meaning: "Meaning", examples: "Examples", next: "Next Word", back: "Return to Defense", reviewHint: "Review this word and continue.", reviewDone: "Review complete. Core shield restored.",
-            victoryWord: "VICTORY", victoryHint: "All waves cleared. Defense successful!",
+            victoryWord: "VICTORY", victoryHint: "All waves cleared. Defense successful!", victoryReviewTitle: "VICTORY REVIEW", victoryDoneTitle: "Victory Complete", victoryDoneDesc: "All waves cleared. The Knowledge Core is fully secured.", victoryScore: "Final Score", victoryWaves: "Waves Cleared", victoryPlayAgain: "Play Again",
           },
     [locale],
   );
   const rememberWrong = useCallback((entry: WordEntry) => {
-    setWrongWords((prev) => (prev.some((item) => item.word === entry.word) ? prev : [...prev, entry].slice(-8)));
+    setWrongWords((prev) => [...prev, entry].slice(-Math.max(TOTAL_WAVES, MAX_HP)));
   }, []);
 
-  const openRecoveryPage = useCallback(
-    (source: "critical" | "victory") => {
-      const sourceQueue = source === "critical" ? [...wrongWords, ...questions.map((q) => q.entry)] : [...wrongWords, ...questions.map((q) => q.entry).slice(0, 2)];
-      const queue = sourceQueue
-        .filter((entry, index, arr) => arr.findIndex((item) => item.word === entry.word) === index)
-        .slice(0, 3);
+  const buildRecoveryQueue = useCallback(
+    (source: RecoverySource) => {
+      if (source === "critical") {
+        const recentMissed = wrongWords.slice(-CRITICAL_REVIEW_WORDS);
+        if (recentMissed.length >= CRITICAL_REVIEW_WORDS) {
+          return recentMissed;
+        }
 
-      const safeQueue = queue.length > 0 ? queue : questions.slice(0, 3).map((q) => q.entry);
-      const encodedQueue = encodeURIComponent(JSON.stringify(safeQueue));
-      router.push(`/games/word-game/recovery?lang=${locale}&bank=${bank}&source=${source}&queue=${encodedQueue}`);
+        const fallback = [...recentMissed];
+        for (const question of questions) {
+          if (fallback.some((entry) => entry.word === question.entry.word)) continue;
+          fallback.push(question.entry);
+          if (fallback.length >= CRITICAL_REVIEW_WORDS) break;
+        }
+        return fallback.slice(0, CRITICAL_REVIEW_WORDS);
+      }
+
+      const requiredCount = VICTORY_REVIEW_WORDS;
+      const sourceQueue = [...wrongWords, ...questions.map((q) => q.entry).slice(0, 2)];
+
+      const queue = sourceQueue.filter(
+        (entry, index, arr) => arr.findIndex((item) => item.word === entry.word) === index,
+      );
+
+      if (queue.length < requiredCount) {
+        for (const candidate of shuffle(wordPool)) {
+          if (queue.some((entry) => entry.word === candidate.word)) continue;
+          queue.push(candidate);
+          if (queue.length >= requiredCount) break;
+        }
+      }
+
+      return queue.slice(0, requiredCount);
     },
-    [bank, locale, questions, router, wrongWords],
+    [questions, wordPool, wrongWords],
+  );
+
+  const openRecoveryModal = useCallback(
+    (source: RecoverySource) => {
+      const queue = buildRecoveryQueue(source);
+      setRecoverySource(source);
+      setRecoveryQueue(queue);
+      setRecoveryIndex(0);
+      setRecoveryDone(false);
+      setShowRecovery(true);
+    },
+    [buildRecoveryQueue],
   );
 
   const advanceWave = useCallback(() => {
-    setCompletedWaves((prev) => {
-      const next = Math.min(prev + 1, TOTAL_WAVES);
-      if (next >= TOTAL_WAVES && prev < TOTAL_WAVES) {
-        window.setTimeout(() => openRecoveryPage("victory"), 520);
-      }
-      return next;
-    });
+    const nextWave = Math.min(completedWaves + 1, TOTAL_WAVES);
+    setCompletedWaves(nextWave);
+    setWavePoolScore(WAVE_BASE_SCORE);
+    if (nextWave >= TOTAL_WAVES) {
+      window.setTimeout(() => openRecoveryModal("victory"), 520);
+    } else {
+      setQuestion(buildQuestionForWave(wordPool, nextWave));
+    }
     setEnemyProgress(0);
     setAnswer("");
-  }, [openRecoveryPage]);
+  }, [completedWaves, openRecoveryModal, wordPool]);
+
+  const refreshQuestionInCurrentWave = useCallback(
+    (excludeWord?: string) => {
+      setQuestion(buildQuestionForWave(wordPool, completedWaves, excludeWord));
+    },
+    [completedWaves, wordPool],
+  );
 
   const applyDamage = useCallback(
-    (msg: string, advanceAfter: boolean) => {
-      setHp((prev) => {
-        const nextHp = Math.max(0, prev - 1);
-        if (nextHp <= 0) setShowCritical(true);
-        if (nextHp > 0 && advanceAfter) advanceWave();
-        return nextHp;
-      });
+    (msg: string, behavior: "advance" | "refresh", failedWord?: string) => {
+      const nextHp = Math.max(0, hp - 1);
+      const survived = nextHp > 0;
+
+      setHp(nextHp);
+      setWavePoolScore((prev) => Math.max(WAVE_MIN_SCORE, prev - WAVE_DAMAGE_PENALTY));
+      if (!survived) {
+        setShowCritical(true);
+      } else if (behavior === "advance") {
+        advanceWave();
+      } else {
+        refreshQuestionInCurrentWave(failedWord);
+      }
+
       setFeedbackTone("bad");
       setFeedback(msg);
       setEnemyProgress(0);
       setAnswer("");
     },
-    [advanceWave],
+    [advanceWave, hp, refreshQuestionInCurrentWave],
   );
 
-  const battleActive = !showPause && !showCritical && !isResolving && hp > 0 && completedWaves < TOTAL_WAVES;
+  const battleActive = !showPause && !showCritical && !showRecovery && !isResolving && hp > 0 && completedWaves < TOTAL_WAVES;
+
+  const focusAnswerInput = useCallback(() => {
+    if (typeof window === "undefined") return;
+    window.requestAnimationFrame(() => {
+      const input = answerInputRef.current;
+      if (!input || input.disabled) return;
+      input.focus({ preventScroll: true });
+      input.setSelectionRange(input.value.length, input.value.length);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!battleActive) return;
+    focusAnswerInput();
+  }, [battleActive, focusAnswerInput, question?.entry.word, question?.type]);
 
   useEffect(() => {
     if (!battleActive) return;
@@ -199,7 +305,7 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
     if (!battleActive || enemyProgress < 100 || !question) return;
     const timer = window.setTimeout(() => {
       rememberWrong(question.entry);
-      applyDamage(t.timeout, true);
+      applyDamage(t.timeout, "refresh", question.entry.word);
     }, 0);
     return () => window.clearTimeout(timer);
   }, [applyDamage, battleActive, enemyProgress, question, rememberWrong, t.timeout]);
@@ -210,6 +316,7 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
     if (!normalized) {
       setFeedbackTone("warn");
       setFeedback(t.empty);
+      focusAnswerInput();
       return;
     }
 
@@ -225,9 +332,11 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
 
     if (correct) {
       setIsResolving(true);
+      const speedBonus = Math.round(Math.max(0, 1 - enemyProgress / 100) * MAX_SPEED_BONUS);
+      const gainedScore = wavePoolScore + speedBonus;
       setFeedbackTone("ok");
-      setFeedback(t.ok);
-      setScore((prev) => prev + 150 + Math.max(0, 5 - Math.floor(enemyProgress / 20)) * 20);
+      setFeedback(`${t.ok} +${gainedScore}`);
+      setScore((prev) => prev + gainedScore);
       window.setTimeout(() => {
         advanceWave();
         setIsResolving(false);
@@ -236,16 +345,66 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
     }
 
     rememberWrong(question.entry);
-    applyDamage(t.bad, false);
-  }, [advanceWave, answer, applyDamage, completedWaves, enemyProgress, question, rememberWrong, t.bad, t.empty, t.ok]);
+    applyDamage(t.bad, "refresh", question.entry.word);
+  }, [advanceWave, answer, applyDamage, completedWaves, enemyProgress, focusAnswerInput, question, rememberWrong, t.bad, t.empty, t.ok, wavePoolScore]);
 
-  const openRecovery = useCallback(() => {
+  const startRecovery = useCallback(() => {
     setShowCritical(false);
-    setHp((prev) => Math.max(prev, RECOVER_HP));
-    openRecoveryPage("critical");
-  }, [openRecoveryPage]);
+    openRecoveryModal("critical");
+  }, [openRecoveryModal]);
+
+  const nextRecoveryWord = useCallback(() => {
+    setRecoveryIndex((prev) => {
+      const next = prev + 1;
+      if (next >= recoveryQueue.length) {
+        setRecoveryDone(true);
+        return prev;
+      }
+      return next;
+    });
+  }, [recoveryQueue.length]);
+
+  const awardVictoryXpOnce = useCallback(async () => {
+    if (victoryXpAwardedRef.current) return;
+    victoryXpAwardedRef.current = true;
+    try {
+      await awardBuddyXpInStorage("wordGameClear");
+    } catch {
+      victoryXpAwardedRef.current = false;
+    }
+  }, []);
+
+  const closeRecoveryModal = useCallback(async () => {
+    setShowRecovery(false);
+    if (recoverySource === "victory") {
+      await awardVictoryXpOnce();
+      router.push(`/games/word-game?lang=${locale}`);
+      return;
+    }
+    setHp(MAX_HP);
+    setWrongWords([]);
+    setFeedbackTone("warn");
+    setFeedback(t.reviewDone);
+    setEnemyProgress(0);
+  }, [awardVictoryXpOnce, locale, recoverySource, router, t.reviewDone]);
+
+  const playVictoryAgain = useCallback(async () => {
+    setShowRecovery(false);
+    await awardVictoryXpOnce();
+    router.push(`/games/word-game/battle?lang=${locale}&bank=${bank}`);
+  }, [awardVictoryXpOnce, bank, locale, router]);
+
+  const speak = useCallback((text: string, lang: string) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  }, []);
 
   const enemyLeft = Math.max(24, 74 - enemyProgress * 0.5);
+  const isVictoryFlow = recoverySource === "victory";
+  const isVictoryDone = isVictoryFlow && recoveryDone;
 
   return (
     <div className="word-battle-root" data-page="battle">
@@ -286,9 +445,12 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
         <section className="console-wrap">
           <div className="answer-board">
             <div className="answer-content">
-              <div className="answer-head"><strong>{t.answerArea}</strong><span>{t.enter}</span></div>
+              <div className="answer-head">
+                <strong>{t.answerArea}</strong>
+                <span>{`${t.wavePool}: ${wavePoolScore} · ${t.enter}`}</span>
+              </div>
               <form className="answer-input-row" onSubmit={(e) => { e.preventDefault(); submit(); }}>
-                <input id="answer" type="text" autoComplete="off" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder={question?.type === "meaning" ? t.placeholderMeaning : t.placeholderSpell} disabled={!battleActive} />
+                <input ref={answerInputRef} autoFocus id="answer" type="text" autoComplete="off" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder={question?.type === "meaning" ? t.placeholderMeaning : t.placeholderSpell} disabled={!battleActive} />
                 <button id="submit" type="submit" disabled={!battleActive}>{t.attack}</button>
               </form>
               <div id="feedback" className={`feedback ${feedbackTone}`}>{feedback}</div>
@@ -297,15 +459,13 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
         </section>
       </main>
       <div id="critical" style={{ display: showCritical ? "flex" : "none" }}>
-        <section className="overlay-card"><div className="eyebrow">Emergency Warning</div><h2>SYSTEM CRITICAL</h2><p>Core breached. Emergency data recovery is required before combat can continue.</p><button id="goRecovery" type="button" onClick={openRecovery}>Start Recovery</button></section>
+        <section className="overlay-card"><div className="eyebrow">Emergency Warning</div><h2>SYSTEM CRITICAL</h2><p>Core breached. Emergency data recovery is required before combat can continue.</p><button id="goRecovery" type="button" onClick={startRecovery}>Start Recovery</button></section>
       </div>
 
       <div id="pauseOverlay" style={{ display: showPause ? "flex" : "none" }}>
         <section className="overlay-card"><div className="eyebrow">Battle Paused</div><h2>{t.pauseTitle}</h2><p>{t.pauseDesc}</p><div className="pause-actions"><button id="resumeBattle" type="button" onClick={() => setShowPause(false)}>{t.resume}</button><button id="leaveBattle" type="button" onClick={() => router.push(`/games/word-game?lang=${locale}`)}>{t.home}</button></div></section>
       </div>
 
-<<<<<<< Updated upstream
-=======
       <div id="recoveryOverlay" style={{ display: showRecovery ? "flex" : "none" }}>
         <section className={`review-modal ${recoveryDone ? "is-done" : ""} ${isVictoryDone ? "is-victory-done" : ""}`}>
           <div className="review-top">
@@ -391,7 +551,6 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
         </section>
       </div>
 
->>>>>>> Stashed changes
       <style jsx global>{`
         .word-battle-root{min-height:100vh;font-family:"Trebuchet MS","Segoe UI",sans-serif;color:#fffef8;background:radial-gradient(circle at 50% 22%,rgba(255,255,255,.58),transparent 20%),linear-gradient(180deg,#7fd7e9 0%,#a6f0e4 58%,#d3ffd6 100%)}
         .word-battle-root *{box-sizing:border-box}.scene{width:min(1380px,calc(100vw - 40px));min-height:min(920px,calc(100vh - 28px));margin:14px auto;padding:14px;border-radius:34px;background:linear-gradient(180deg,rgba(110,94,176,.18),rgba(83,67,142,.08)),rgba(33,24,64,.18);display:grid;grid-template-rows:70px 1fr 186px;gap:24px}
@@ -401,13 +560,10 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
         .battle-lane{position:absolute;left:7%;right:6%;bottom:8%;top:10%}.tower-block{position:absolute;left:6%;bottom:17%;width:220px;height:290px}.tower-core{position:absolute;left:26px;right:26px;bottom:0;height:234px;background:linear-gradient(180deg,#d1c1a1 0%,#968a7a 44%,#786f68 100%);border:4px solid #4f4540;border-radius:28px 28px 22px 22px;clip-path:polygon(12% 0,88% 0,100% 100%,0 100%)}.tower-top{position:absolute;left:18px;right:18px;top:14px;height:82px;background:linear-gradient(180deg,#d7c8ab 0%,#9e8f7f 100%);border:4px solid #4f4540;border-radius:26px}.gate-ring{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);width:74px;height:92px;border-radius:40px 40px 18px 18px;border:5px solid #594b45;background:linear-gradient(180deg,#8a5638,#70402a)}
         .shield-plaque{position:absolute;left:4%;bottom:2%;width:240px;padding:14px 16px;border-radius:24px;background:linear-gradient(180deg,rgba(61,45,112,.94),rgba(47,33,88,.98));border:3px solid #251945}.shield-bar{height:16px;border-radius:999px;overflow:hidden;background:rgba(18,13,38,.55)}#shieldFill{height:100%;background:linear-gradient(90deg,#8cf06a,#59bb42);transition:width .2s ease}
         .enemy{position:absolute;top:23%;width:128px;height:118px;z-index:3;transition:left .15s linear}.enemy-body{position:absolute;inset:0;border:4px solid #2e1b46;border-radius:48% 48% 42% 42%/44% 44% 52% 52%;background:linear-gradient(180deg,#5d3d91,#35205e 72%)}.enemy.meaning .enemy-body{background:linear-gradient(180deg,#6852ad,#3d2a73 72%)}.enemy-face{position:absolute;inset:0}.enemy-eye{position:absolute;top:38px;width:22px;height:18px;background:#e8b6ff;border-radius:60% 60% 50% 50%}.enemy-eye.left{left:28px;transform:rotate(-18deg)}.enemy-eye.right{right:28px;transform:rotate(18deg)}.enemy-mouth{position:absolute;left:50%;top:70px;transform:translateX(-50%);width:54px;height:24px;background:#241233;clip-path:polygon(0 0,100% 0,86% 38%,70% 18%,56% 60%,44% 18%,26% 52%,14% 14%)}
-        .question-banner{position:absolute;left:62px;top:96px;width:330px;min-height:138px;padding:16px 18px 18px;border-radius:24px;background:linear-gradient(180deg,rgba(44,30,80,.96),rgba(28,18,55,.98));border:3px solid #3f2b69;color:#fff7ea}#enemyType{display:inline-flex;align-items:center;height:32px;padding:0 14px;border-radius:999px;background:rgba(240,203,105,.16);color:#f5cd69;font-size:.85rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}#enemyWord{margin-top:12px;font-size:2.15rem;font-weight:900;line-height:1.05}#enemyHint{margin-top:8px;font-size:.96rem;line-height:1.45;color:rgba(244,236,255,.84)}#enemyOptions{margin-top:10px;display:flex;flex-wrap:wrap;gap:8px}.enemy-option{display:inline-flex;align-items:center;min-height:34px;padding:6px 12px;border-radius:999px;background:rgba(255,248,234,.09);border:1px solid rgba(255,248,234,.14);color:#fff6e2;font-size:.86rem;font-weight:800}
+        .question-banner{position:absolute;left:62px;top:96px;width:330px;min-height:138px;padding:16px 18px 18px;border-radius:24px;background:linear-gradient(180deg,rgba(44,30,80,.96),rgba(28,18,55,.98));border:3px solid #3f2b69;color:#fff7ea}#enemyType{display:inline-flex;align-items:center;height:32px;padding:0 14px;border-radius:999px;background:rgba(240,203,105,.16);color:#f5cd69;font-size:.85rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}#enemyWord{margin-top:12px;font-size:2.15rem;font-weight:900;line-height:1.05}#enemyHint{margin-top:8px;font-size:.96rem;line-height:1.45;color:rgba(244,236,255,.84)}#enemyOptions{margin-top:10px;display:flex;flex-direction:column;gap:8px}.enemy-option{display:block;width:100%;min-height:34px;padding:8px 12px;border-radius:999px;background:rgba(255,248,234,.09);border:1px solid rgba(255,248,234,.14);color:#fff6e2;font-size:.86rem;font-weight:800;line-height:1.35;white-space:normal;word-break:break-word}
         .lane-progress{position:absolute;left:28%;right:16%;bottom:3%;z-index:2}.progress-track{height:18px;border-radius:999px;overflow:hidden;background:rgba(27,22,53,.44)}#enemyProg{height:100%;background:linear-gradient(90deg,#ffd573,#ff8b56,#e94c54);transition:width .1s linear}
         .answer-board{height:100%;border-radius:28px;padding:16px 18px 18px;background:linear-gradient(180deg,#f0d9ad 0%,#d7b98d 58%,#b07d53 100%);border:4px solid #6e472f}.answer-content{height:100%;display:grid;grid-template-rows:auto 1fr auto;gap:12px}.answer-head{display:flex;justify-content:space-between;align-items:center;color:#55341f;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.answer-input-row{display:grid;grid-template-columns:1fr 126px;gap:12px;align-items:center}#answer{height:56px;border-radius:14px;border:3px solid rgba(97,61,35,.46);background:linear-gradient(180deg,#fffef9,#f3efe6);color:#2c2017;font-size:1.08rem;font-weight:700;padding:0 18px;outline:none}#submit{height:56px;border-radius:14px;border:3px solid #6f2d1e;background:linear-gradient(180deg,#d97d54,#a84e30);color:#fffef8;font-size:1rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}#submit:disabled,#answer:disabled{opacity:.6;cursor:not-allowed}.feedback{min-height:24px;font-size:.95rem;font-weight:800;display:flex;align-items:center;color:#61452d}.feedback.ok{color:#2d7a28}.feedback.bad{color:#9a2923}.feedback.warn{color:#8f5c14}
         #critical,#pauseOverlay,#recoveryOverlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(8px);z-index:20}#critical{background:rgba(34,12,19,.72)}#pauseOverlay{background:rgba(20,18,36,.58);z-index:19}#recoveryOverlay{background:rgba(18,24,34,.58);z-index:21}.overlay-card{width:min(520px,calc(100vw - 32px));padding:28px 26px 24px;border-radius:28px;background:linear-gradient(180deg,#f3dec0 0%,#d2ae84 100%);border:4px solid #6c4128;box-shadow:inset 0 3px 0 rgba(255,251,232,.6),0 18px 0 rgba(85,54,34,.28);color:#33231a;text-align:center}.overlay-card .eyebrow{font-size:.88rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#9a3b36}.overlay-card h2{margin:12px 0 10px;font-size:2.2rem;line-height:1}.overlay-card p{margin:0 0 20px;color:rgba(51,35,26,.78);line-height:1.6}.pause-actions,.m-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:10px}#goRecovery,#resumeBattle,#mNext,#mReturn,#leaveBattle{height:52px;min-width:190px;border-radius:14px;font:inherit;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}#goRecovery,#resumeBattle,#mNext,#mReturn{border:3px solid #6f2d1e;background:linear-gradient(180deg,#d97d54,#a84e30);color:#fffef8;box-shadow:inset 0 2px 0 rgba(255,255,255,.18),inset 0 -5px 0 rgba(109,41,25,.36),0 6px 0 rgba(109,41,25,.38)}#leaveBattle{border:3px solid #251945;background:linear-gradient(180deg,rgba(61,45,112,.94),rgba(47,33,88,.98));color:#fff1d3}
-<<<<<<< Updated upstream
-        .review-modal{width:min(920px,calc(100vw - 30px));max-height:calc(100vh - 40px);overflow:auto;border-radius:26px;padding:22px;background:#f9f4e8;border:2px solid #e2d7c1;color:#3b2f26}.review-modal.is-done .review-top,.review-modal.is-done #mReviewBody{display:none}.review-top{display:flex;align-items:center;justify-content:space-between;color:#8f9276;font-size:1.02rem}#mWord{margin:8px 0 12px;text-align:center;font-size:clamp(3rem,8vw,5rem);font-weight:900;color:#9aaf2e}#mReviewBody{display:grid;gap:14px}.m-pron-row{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}.m-pron{display:inline-flex;align-items:center;gap:8px;font-size:.88rem;color:#6f695f;background:rgba(255,255,255,.5);border-radius:14px;padding:4px 10px 4px 6px}.m-speak{width:24px;height:24px;border:none;border-radius:50%;background:#9aaf2e;color:#fffef8;cursor:pointer}.m-section h3{margin:0 0 8px;color:#4a4037;font-size:1.2rem;font-weight:900}#mMeaning,#mExamples{border-radius:14px;background:#fff;border:1px solid rgba(140,131,119,.2);padding:14px 16px}#mExamples{display:grid;gap:12px}.m-ex{padding-bottom:10px;border-bottom:1px dashed rgba(150,140,126,.4)}.m-ex:last-child{border-bottom:none;padding-bottom:0}.m-ex-en{margin:0;color:#2f2721}.m-ex-zh{margin:4px 0 0;color:#7a736b}#mFeedback{min-height:22px;text-align:center;color:#7d7468;font-size:.92rem;font-weight:700}
-=======
         .review-modal{width:min(920px,calc(100vw - 30px));max-height:calc(100vh - 40px);overflow:auto;border-radius:26px;padding:22px;background:#f9f4e8;border:2px solid #e2d7c1;color:#3b2f26}.review-modal.is-done .review-top,.review-modal.is-done #mReviewBody{display:none}.review-top{display:flex;align-items:center;justify-content:space-between;color:#8f9276;font-size:1.02rem;letter-spacing:.06em}#mWord{margin:8px 0 12px;text-align:center;font-size:clamp(3rem,8vw,5rem);font-weight:900;color:#9aaf2e;text-transform:lowercase}#mReviewBody{display:grid;gap:14px}.m-pron-row{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}.m-pron{display:inline-flex;align-items:center;gap:8px;font-size:.88rem;color:#6f695f;background:rgba(255,255,255,.5);border:1px solid rgba(140,131,119,.18);border-radius:14px;padding:4px 10px 4px 6px}.m-speak{width:24px;height:24px;border:none;border-radius:50%;background:#9aaf2e;color:#fffef8;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}.m-section h3{margin:0 0 8px;color:#4a4037;font-size:1.55rem;font-weight:900}#mMeaning,#mExamples{border-radius:14px;background:#fff;border:1px solid rgba(140,131,119,.2);padding:14px 16px}#mMeaning{display:grid;gap:8px}.m-meaning-row{margin:0;display:flex;align-items:flex-start;gap:6px}.m-pos{min-width:1.2em;font-style:italic;font-weight:700;color:#8c8378;line-height:1.6}.m-meaning-text{color:#3f332a;font-size:1.15rem;line-height:1.6}#mExamples{display:grid;gap:12px}.m-ex{padding-bottom:10px;border-bottom:1px dashed rgba(150,140,126,.4)}.m-ex:last-child{border-bottom:none;padding-bottom:0}.m-ex-en{margin:0;font-size:1.2rem;line-height:1.55;color:#2f2721}.m-ex-zh{margin:4px 0 0;font-size:1.1rem;line-height:1.55;color:#7a736b}#mFeedback{min-height:22px;text-align:center;color:#7d7468;font-size:.92rem;font-weight:700}#mDone{text-align:center}#mDone p{margin:0 0 14px;color:#726758;line-height:1.6}
         .review-modal.is-done{width:min(700px,calc(100vw - 40px));max-height:none;padding:24px 26px 20px}
         .review-modal.is-done #mWord{font-size:clamp(2.1rem,5.4vw,3.4rem);margin:6px 0 10px}
@@ -423,10 +579,10 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
         .review-modal.is-victory-done .victory-stat{border-radius:14px;border:1px solid rgba(140,131,119,.28);background:rgba(255,255,255,.62);padding:12px 14px}
         .review-modal.is-victory-done .victory-stat span{display:block;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:#8d867b;margin-bottom:4px}
         .review-modal.is-victory-done .victory-stat strong{font-size:1.35rem;color:#42362c}
->>>>>>> Stashed changes
         @media (max-width:1180px){.scene{width:calc(100vw - 24px);min-height:calc(100vh - 24px);grid-template-rows:auto minmax(420px,1fr) 210px}.top-hud{grid-template-columns:repeat(2,minmax(0,1fr));padding-right:0}.system-controls{position:static;grid-column:1 / -1;width:100%}}
-        @media (max-width:860px){.scene{width:calc(100vw - 16px);margin:8px auto;padding:10px;grid-template-rows:auto 560px 224px}.top-hud{grid-template-columns:1fr;gap:8px}.system-controls{position:static;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%}.battle-lane{left:3%;right:3%;top:8%}.tower-block{left:-2%;bottom:20%;transform:scale(.72);transform-origin:bottom left}.question-banner{left:34px;width:240px}.answer-input-row{grid-template-columns:1fr}}
+        @media (max-width:860px){.scene{width:calc(100vw - 16px);margin:8px auto;padding:10px;grid-template-rows:auto 560px 224px}.top-hud{grid-template-columns:1fr;gap:8px}.system-controls{position:static;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%}.battle-lane{left:3%;right:3%;top:8%}.tower-block{left:-2%;bottom:20%;transform:scale(.72);transform-origin:bottom left}.question-banner{left:34px;width:240px}.answer-input-row{grid-template-columns:1fr}.review-modal.is-victory-done .victory-stats{grid-template-columns:1fr}.review-modal.is-victory-done .m-actions{flex-direction:column}.review-modal.is-victory-done #mReturn,.review-modal.is-victory-done #mReplay{width:100%}}
       `}</style>
     </div>
   );
 }
+
