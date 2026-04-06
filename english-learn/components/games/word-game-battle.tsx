@@ -25,6 +25,10 @@ const TOTAL_WAVES = 8;
 const MAX_HP = 5;
 const CRITICAL_REVIEW_WORDS = MAX_HP;
 const VICTORY_REVIEW_WORDS = 3;
+const WAVE_BASE_SCORE = 100;
+const WAVE_MIN_SCORE = 20;
+const WAVE_DAMAGE_PENALTY = 20;
+const MAX_SPEED_BONUS = 40;
 
 const BANK_LABELS: Record<string, string> = {
   general: "General Academic",
@@ -115,6 +119,7 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
   const [answer, setAnswer] = useState("");
   const [hp, setHp] = useState(MAX_HP);
   const [score, setScore] = useState(0);
+  const [wavePoolScore, setWavePoolScore] = useState(WAVE_BASE_SCORE);
   const [completedWaves, setCompletedWaves] = useState(0);
   const [enemyProgress, setEnemyProgress] = useState(0);
   const [feedback, setFeedback] = useState(initialIdle);
@@ -129,6 +134,7 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
   const [recoveryIndex, setRecoveryIndex] = useState(0);
   const [recoveryDone, setRecoveryDone] = useState(false);
   const victoryXpAwardedRef = useRef(false);
+  const answerInputRef = useRef<HTMLInputElement | null>(null);
   const [question, setQuestion] = useState<BattleQuestion>(() => buildQuestionForWave(wordPool, 0));
 
   const recoveryWord = recoveryQueue[Math.min(recoveryIndex, Math.max(recoveryQueue.length - 1, 0))];
@@ -140,7 +146,7 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
       locale === "zh"
         ? {
             discipline: "学科", hp: "生命值", score: "分数", wave: "波次", pause: "暂停", exit: "退出",
-            core: "Knowledge Core", adv: "敌人推进中", answerArea: "作答区", enter: "按 Enter 提交", attack: "攻击",
+            core: "Knowledge Core", adv: "敌人推进中", answerArea: "作答区", enter: "按 Enter 提交", wavePool: "波次积分池", attack: "攻击",
             placeholderSpell: "输入完整单词...", placeholderMeaning: "输入选项编号（例如 2）...",
             spellMode: "拼写模式", meaningMode: "释义模式", spellHint: "输入完整单词来击败怪物。", meaningHint: "输入正确选项编号（1-3）。",
             idle: "按 Enter 提交答案。", empty: "先输入答案再攻击。", ok: "命中！怪物被击退。", bad: "回答错误，护盾受损。", timeout: "怪物突破防线，护盾受损。",
@@ -151,7 +157,7 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
           }
         : {
             discipline: "Discipline", hp: "HP", score: "Score", wave: "Wave", pause: "Pause", exit: "Exit",
-            core: "Knowledge Core", adv: "Enemy Advancing", answerArea: "Answer Area", enter: "Press Enter To Submit", attack: "Attack",
+            core: "Knowledge Core", adv: "Enemy Advancing", answerArea: "Answer Area", enter: "Press Enter To Submit", wavePool: "Wave Pool", attack: "Attack",
             placeholderSpell: "Type the full word here...", placeholderMeaning: "Type option number (e.g. 2)...",
             spellMode: "Spelling Mode", meaningMode: "Meaning Mode", spellHint: "Retype the complete word to defeat the monster.", meaningHint: "Type the correct option number (1-3).",
             idle: "Press Enter to submit.", empty: "Type an answer before attacking.", ok: "Direct hit! Enemy eliminated.", bad: "Wrong answer. Shield damaged.", timeout: "Enemy breached the core. Shield damaged.",
@@ -218,6 +224,7 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
   const advanceWave = useCallback(() => {
     const nextWave = Math.min(completedWaves + 1, TOTAL_WAVES);
     setCompletedWaves(nextWave);
+    setWavePoolScore(WAVE_BASE_SCORE);
     if (nextWave >= TOTAL_WAVES) {
       window.setTimeout(() => openRecoveryModal("victory"), 520);
     } else {
@@ -240,6 +247,7 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
       const survived = nextHp > 0;
 
       setHp(nextHp);
+      setWavePoolScore((prev) => Math.max(WAVE_MIN_SCORE, prev - WAVE_DAMAGE_PENALTY));
       if (!survived) {
         setShowCritical(true);
       } else if (behavior === "advance") {
@@ -257,6 +265,21 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
   );
 
   const battleActive = !showPause && !showCritical && !showRecovery && !isResolving && hp > 0 && completedWaves < TOTAL_WAVES;
+
+  const focusAnswerInput = useCallback(() => {
+    if (typeof window === "undefined") return;
+    window.requestAnimationFrame(() => {
+      const input = answerInputRef.current;
+      if (!input || input.disabled) return;
+      input.focus({ preventScroll: true });
+      input.setSelectionRange(input.value.length, input.value.length);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!battleActive) return;
+    focusAnswerInput();
+  }, [battleActive, focusAnswerInput, question?.entry.word, question?.type]);
 
   useEffect(() => {
     if (!battleActive) return;
@@ -279,6 +302,7 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
     if (!normalized) {
       setFeedbackTone("warn");
       setFeedback(t.empty);
+      focusAnswerInput();
       return;
     }
 
@@ -294,9 +318,11 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
 
     if (correct) {
       setIsResolving(true);
+      const speedBonus = Math.round(Math.max(0, 1 - enemyProgress / 100) * MAX_SPEED_BONUS);
+      const gainedScore = wavePoolScore + speedBonus;
       setFeedbackTone("ok");
-      setFeedback(t.ok);
-      setScore((prev) => prev + 150 + Math.max(0, 5 - Math.floor(enemyProgress / 20)) * 20);
+      setFeedback(`${t.ok} +${gainedScore}`);
+      setScore((prev) => prev + gainedScore);
       window.setTimeout(() => {
         advanceWave();
         setIsResolving(false);
@@ -306,7 +332,7 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
 
     rememberWrong(question.entry);
     applyDamage(t.bad, "refresh", question.entry.word);
-  }, [advanceWave, answer, applyDamage, completedWaves, enemyProgress, question, rememberWrong, t.bad, t.empty, t.ok]);
+  }, [advanceWave, answer, applyDamage, completedWaves, enemyProgress, focusAnswerInput, question, rememberWrong, t.bad, t.empty, t.ok, wavePoolScore]);
 
   const startRecovery = useCallback(() => {
     setShowCritical(false);
@@ -405,9 +431,12 @@ export function WordGameBattle({ locale, bank }: { locale: Locale; bank: string 
         <section className="console-wrap">
           <div className="answer-board">
             <div className="answer-content">
-              <div className="answer-head"><strong>{t.answerArea}</strong><span>{t.enter}</span></div>
+              <div className="answer-head">
+                <strong>{t.answerArea}</strong>
+                <span>{`${t.wavePool}: ${wavePoolScore} · ${t.enter}`}</span>
+              </div>
               <form className="answer-input-row" onSubmit={(e) => { e.preventDefault(); submit(); }}>
-                <input id="answer" type="text" autoComplete="off" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder={question?.type === "meaning" ? t.placeholderMeaning : t.placeholderSpell} disabled={!battleActive} />
+                <input ref={answerInputRef} autoFocus id="answer" type="text" autoComplete="off" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder={question?.type === "meaning" ? t.placeholderMeaning : t.placeholderSpell} disabled={!battleActive} />
                 <button id="submit" type="submit" disabled={!battleActive}>{t.attack}</button>
               </form>
               <div id="feedback" className={`feedback ${feedbackTone}`}>{feedback}</div>
