@@ -193,6 +193,24 @@ npm run audio:listening
 npm run seed:listening
 ```
 
+## Production Deploy (Safe Path)
+
+For Tencent Cloud / PM2 deployments, use the safe script to avoid stale `.next` artifacts that can cause `/_next/static/chunks/*.js` to return `500`.
+
+```bash
+chmod +x scripts/deploy-safe.sh
+./scripts/deploy-safe.sh
+```
+
+What it does:
+
+- `npm ci`
+- `npx prisma migrate deploy`
+- `rm -rf .next`
+- `npm run build`
+- `pm2 restart english-learn --update-env`
+- health checks for home page, auth API, and a critical webpack chunk
+
 ## Testing
 
 The `tests/` directory already covers multiple domains, including:
