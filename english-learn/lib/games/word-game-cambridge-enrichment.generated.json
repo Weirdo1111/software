@@ -1,0 +1,3267 @@
+﻿{
+  "algorithm": {
+    "meaningZh": "（尤指计算机使用的） 算法 ， 计算程序",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（尤指计算机使用的） 算法 ， 计算程序"
+      }
+    ],
+    "examples": [
+      {
+        "en": "Music apps use algorithms to predict the probability that fans of one particular band will like another.",
+        "zh": "音乐应用程序使用算法来预测一个特定乐队的粉丝喜欢另一个乐队的概率。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/algorithm"
+  },
+  "data structure": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/data-structure"
+  },
+  "database": {
+    "meaningZh": "（ 计算机 ） 资料库 ， 数据库",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（ 计算机 ） 资料库 ， 数据库"
+      }
+    ],
+    "examples": [
+      {
+        "en": "We're linked to the online database at our head office .",
+        "zh": "我们与总部的网上数据库联网。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/database"
+  },
+  "api": {
+    "meaningZh": "应用程序编程接口 （Application Programming Interface的缩写）",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "应用程序编程接口 （Application Programming Interface的缩写）"
+      }
+    ],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/api"
+  },
+  "protocol": {
+    "meaningZh": "礼仪 ， 礼节?（正式的国际性） 条约 ， 公约 ， 议定书?规程 ， 协议 （计算机之间交换信息的计算机语言）",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "礼仪 ， 礼节"
+      },
+      {
+        "pos": "noun",
+        "zh": "（正式的国际性） 条约 ， 公约 ， 议定书"
+      },
+      {
+        "pos": "noun",
+        "zh": "规程 ， 协议 （计算机之间交换信息的计算机语言）"
+      }
+    ],
+    "examples": [
+      {
+        "en": "a breach of Royal protocol",
+        "zh": "对皇家礼仪的违反"
+      },
+      {
+        "en": "diplomatic protocol",
+        "zh": "外交礼仪"
+      },
+      {
+        "en": "The Geneva Protocol of 1925 prohibits the use of poisonous gases in war .",
+        "zh": "1925年通过的《日内瓦公约》禁止在战争中使用有毒气体。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/protocol"
+  },
+  "encryption": {
+    "meaningZh": "（对电子信息的） 加密",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（对电子信息的） 加密"
+      }
+    ],
+    "examples": [
+      {
+        "en": "The records were stored using protective encryption.",
+        "zh": "这些记录是使用保护性加密存储的。"
+      },
+      {
+        "en": "The company's encryption software allows secure credit card transactions over the internet .",
+        "zh": "该公司的加密软件允许通过互联网进行安全的信用卡交易。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/encryption"
+  },
+  "compiler": {
+    "meaningZh": "编纂者?编译程序 ， 编译器 （把指令翻译成可执行机器语言的程序）",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "编纂者"
+      },
+      {
+        "pos": "noun",
+        "zh": "编译程序 ， 编译器 （把指令翻译成可执行机器语言的程序）"
+      }
+    ],
+    "examples": [
+      {
+        "en": "a dictionary compiler",
+        "zh": "词典编纂者"
+      },
+      {
+        "en": "She ran her code through the compiler.",
+        "zh": "她把编码输入编译程序中运行。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/compiler"
+  },
+  "runtime": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/runtime"
+  },
+  "debugging": {
+    "meaningZh": "（从计算机程序中） 排除错误?寻找并拆除窃听装置",
+    "meanings": [
+      {
+        "pos": "verb",
+        "zh": "（从计算机程序中） 排除错误"
+      },
+      {
+        "pos": "verb",
+        "zh": "寻找并拆除窃听装置"
+      }
+    ],
+    "examples": [
+      {
+        "en": "to debug a program",
+        "zh": "排除程序中的错误"
+      },
+      {
+        "en": "Security officers had debugged the room before the meeting .",
+        "zh": "保安人员在开会前已对室内进行了检查，以防有人安放窃听装置。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/debugging"
+  },
+  "recursion": {
+    "meaningZh": "（ 数字的 ） 递归 ， 递推?（ 语言的 ） 递归性 ， 结构嵌套",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（ 数字的 ） 递归 ， 递推"
+      },
+      {
+        "pos": "noun",
+        "zh": "（ 语言的 ） 递归性 ， 结构嵌套"
+      }
+    ],
+    "examples": [
+      {
+        "en": "The function can be solved by recursion.",
+        "zh": "该函数可以通过递归来解决。"
+      },
+      {
+        "en": "Many DNS servers do not allow recursion.",
+        "zh": "许多DNS服务器不允许递归。"
+      },
+      {
+        "en": "Recursion is the capacity to embed phrases inside one another.",
+        "zh": "语言的递归性指的是结构嵌套的能力。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/recursion"
+  },
+  "hash table": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/hash-table"
+  },
+  "queue": {
+    "meaningZh": "（人或车排成的） 队 ， 行列?排队?排队 （ 等候 ） 做 …，非常想做…",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（人或车排成的） 队 ， 行列"
+      },
+      {
+        "pos": "verb",
+        "zh": "排队"
+      },
+      {
+        "pos": "verb",
+        "zh": "排队 （ 等候 ） 做 …，非常想做…"
+      }
+    ],
+    "examples": [
+      {
+        "en": "Are you in the queue for tickets ?",
+        "zh": "你是在排队买票吗?"
+      },
+      {
+        "en": "There was a long queue of traffic stretching down the road .",
+        "zh": "车辆在这条路上排起了长龙。"
+      },
+      {
+        "en": "If you want tickets you'll have to join the queue.",
+        "zh": "你要买票的话就得排队。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/queue"
+  },
+  "stack": {
+    "meaningZh": "（码放整齐的） 堆 ， 叠 ， 摞?大量 ， 许多?（图书馆中排列密集的） 藏书书架 ; 书库",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（码放整齐的） 堆 ， 叠 ， 摞"
+      },
+      {
+        "pos": "noun",
+        "zh": "大量 ， 许多"
+      },
+      {
+        "pos": "noun",
+        "zh": "（图书馆中排列密集的） 藏书书架 ; 书库"
+      },
+      {
+        "pos": "verb",
+        "zh": "把 …放成整齐的一 摞 ; 把 …码成堆"
+      },
+      {
+        "pos": "verb",
+        "zh": "码放 ， 摆放"
+      },
+      {
+        "pos": "verb",
+        "zh": "（ 使 ） 飞机在机场上空盘旋等待降落许可"
+      }
+    ],
+    "examples": [
+      {
+        "en": "He chose a cartoon from the stack of DVDs on the shelf .",
+        "zh": "他从架子上的一摞DVD中挑了盘卡通片。"
+      },
+      {
+        "en": "Don't worry , we've got stacks of time .",
+        "zh": "别担心，我们有的是时间。"
+      },
+      {
+        "en": "We were in the stack for over an hour before we landed .",
+        "zh": "我们和其它飞机在机场上空盘旋等待了一个多小时后才降落。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/stack"
+  },
+  "binary tree": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/binary-tree"
+  },
+  "graph": {
+    "meaningZh": "（通常用直线或曲线表示的） 图 ， 图表 ， 图解",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（通常用直线或曲线表示的） 图 ， 图表 ， 图解"
+      }
+    ],
+    "examples": [
+      {
+        "en": "This graph shows how crime has varied in relationship to unemployment over the last 20 years .",
+        "zh": "这幅图显示出在过去20年里犯罪率与失业率的变化关系。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/graph"
+  },
+  "network": {
+    "meaningZh": "网络 ， 网状系统?计算机网络?使 （ 计算机 ） 联网",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "网络 ， 网状系统"
+      },
+      {
+        "pos": "noun",
+        "zh": "计算机网络"
+      },
+      {
+        "pos": "verb",
+        "zh": "使 （ 计算机 ） 联网"
+      },
+      {
+        "pos": "verb",
+        "zh": "（尤指工作中） 建立关系网 ， 建立人脉"
+      }
+    ],
+    "examples": [
+      {
+        "en": "a television network",
+        "zh": "电视网"
+      },
+      {
+        "en": "a road / rail network",
+        "zh": "公路／铁路网"
+      },
+      {
+        "en": "Massive investment is needed to modernize the country's phone network.",
+        "zh": "使全国电话网络实现现代化需要巨额投资。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/network"
+  },
+  "bandwidth": {
+    "meaningZh": "带宽?处理大信息或复杂情况所需的时间 、 精力和综合能力?频带",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "带宽"
+      },
+      {
+        "pos": "noun",
+        "zh": "处理大信息或复杂情况所需的时间 、 精力和综合能力"
+      },
+      {
+        "pos": "noun",
+        "zh": "频带"
+      }
+    ],
+    "examples": [
+      {
+        "en": "The system will handle signals that need high bandwidth, for instance those that encode TV pictures .",
+        "zh": "这个系统可以处理需要高带宽的信号，比如编码压缩过的电视图像信号。"
+      },
+      {
+        "en": "high-bandwidth services / applications",
+        "zh": "高带宽服务／应用"
+      },
+      {
+        "en": "I don't have the bandwidth to read stuff I know isn't going to lead to productive discussion .",
+        "zh": "我没有精力去看那种没什么正面意义的东西。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/bandwidth"
+  },
+  "latency": {
+    "meaningZh": "潜在因素| 潜伏",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "潜在因素| 潜伏"
+      }
+    ],
+    "examples": [
+      {
+        "en": "The latency period for the cancer is 15 years .",
+        "zh": "癌症的潜伏期是十五年。"
+      },
+      {
+        "en": "They measured the latency of the brain's response to a stimulus .",
+        "zh": "他们测量了大脑对刺激做出反应的潜在因素。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/latency"
+  },
+  "cloud computing": {
+    "meaningZh": "云服务 ， 云端服务",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "云服务 ， 云端服务"
+      }
+    ],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/cloud-computing"
+  },
+  "virtualization": {
+    "meaningZh": "（真实的东西） 虚拟化?（计算机设备或软件的） 虚拟化",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（真实的东西） 虚拟化"
+      },
+      {
+        "pos": "noun",
+        "zh": "（计算机设备或软件的） 虚拟化"
+      }
+    ],
+    "examples": [
+      {
+        "en": "He had published an article on the virtualization of everyday life .",
+        "zh": "他曾发表过一篇关于日常生活虚拟化的文章。"
+      },
+      {
+        "en": "server , desktop , and network virtualization",
+        "zh": "服务器、桌面和网络虚拟化"
+      },
+      {
+        "en": "Rather than having dozens of servers operating at less than their maximum level of utilization , data centers can use virtualization to consolidate those same machines ' functions on just a few computers .",
+        "zh": "数据中心可以利用虚拟化将这些相同机器的功能整合到少数几台电脑上，而不是让几十台服务器以低于其最高利用率的方式运行。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/virtualization"
+  },
+  "container": {
+    "meaningZh": "（尤指用于运输或储存的） 容器?集装箱 ; 货箱",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（尤指用于运输或储存的） 容器"
+      },
+      {
+        "pos": "noun",
+        "zh": "集装箱 ; 货箱"
+      }
+    ],
+    "examples": [
+      {
+        "en": "an airtight container",
+        "zh": "密封容器"
+      },
+      {
+        "en": "a plastic drinks container",
+        "zh": "塑料质地的饮料容器"
+      },
+      {
+        "en": "a container ship / lorry",
+        "zh": "集装箱轮船／卡车"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/container"
+  },
+  "microservice": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/microservice"
+  },
+  "machine learning": {
+    "meaningZh": "机器学习 （指电脑通过学习新数据而改变执行任务的方式，不需要人类发出程序指令）",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "机器学习 （指电脑通过学习新数据而改变执行任务的方式，不需要人类发出程序指令）"
+      }
+    ],
+    "examples": [
+      {
+        "en": "His research helped shape the field of machine learning , bringing computers closer to the realm of human thought .",
+        "zh": "他的研究帮助塑造了机器学习领域，使电脑运作更接近人类思维。"
+      },
+      {
+        "en": "The route to genuine machine learning and artificial intelligence runs through language .",
+        "zh": "真正的机器学习和人工智能之路贯穿于语言之中。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/machine-learning"
+  },
+  "inference": {
+    "meaningZh": "推断 ， 推论 ， 推理",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "推断 ， 推论 ， 推理"
+      }
+    ],
+    "examples": [
+      {
+        "en": "They were warned to expect a heavy air attack and by inference many casualties .",
+        "zh": "他们被警告可能会受到严厉的空中打击，由此推断会有许多人员伤亡。"
+      },
+      {
+        "en": "His change of mind was recent and sudden , the inference being that someone had persuaded him.",
+        "zh": "他最近突然改变了主意，估计是有人说服了他。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/inference"
+  },
+  "dataset": {
+    "meaningZh": "数据集",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "数据集"
+      }
+    ],
+    "examples": [
+      {
+        "en": "Our dataset is 100 times more extensive than any other published for an extinct species .",
+        "zh": "我们有关已灭绝物种的数据集比其他任何此类数据集都要广泛100倍。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/dataset"
+  },
+  "feature": {
+    "meaningZh": "特色 ， 特征 ， 特点?（建筑物的） 外部特征 ; 地形?面容的一 部分 ; 面貌",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "特色 ， 特征 ， 特点"
+      },
+      {
+        "pos": "noun",
+        "zh": "（建筑物的） 外部特征 ; 地形"
+      },
+      {
+        "pos": "noun",
+        "zh": "面容的一 部分 ; 面貌"
+      },
+      {
+        "pos": "verb",
+        "zh": "以 …为特色； 给 …以显著的地位"
+      }
+    ],
+    "examples": [
+      {
+        "en": "The town's main features are its beautiful mosque and ancient marketplace .",
+        "zh": "漂亮的清真寺和古老的集市是该镇的主要特色。"
+      },
+      {
+        "en": "Our latest model of phone has several new features.",
+        "zh": "我们最新款的电话机型有几个新特点。"
+      },
+      {
+        "en": "A unique feature of these rock shelters was that they were dry .",
+        "zh": "这些可供栖身的岩洞的一个独特之处在于它们是干燥的。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/feature"
+  },
+  "model": {
+    "meaningZh": "模范 ， 典型 ， 榜样?模特儿?（汽车等的） 型号 ； 特定型号的汽车",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "模范 ， 典型 ， 榜样"
+      },
+      {
+        "pos": "noun",
+        "zh": "模特儿"
+      },
+      {
+        "pos": "noun",
+        "zh": "（汽车等的） 型号 ； 特定型号的汽车"
+      },
+      {
+        "pos": "verb",
+        "zh": "当模特儿 ; 穿戴 … 展示"
+      },
+      {
+        "pos": "verb",
+        "zh": "模拟 ； 用模型展示"
+      }
+    ],
+    "examples": [
+      {
+        "en": "The educational system was a model for those of many other countries .",
+        "zh": "这种教育体制是许多其他国家学习的典范。"
+      },
+      {
+        "en": "The developer plans to build a model community on the site .",
+        "zh": "开发商想在这个地方建一个样板镇。"
+      },
+      {
+        "en": "They created an education system on the European model.",
+        "zh": "他们创建了一个欧洲模式的教育系统。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/model"
+  },
+  "pipeline": {
+    "meaningZh": "（常指铺设在地下的） 管道 ， 管线",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（常指铺设在地下的） 管道 ， 管线"
+      }
+    ],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/pipeline"
+  },
+  "caching": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/caching"
+  },
+  "concurrency": {
+    "meaningZh": "赞同 ， 同意 ;一致; 同时发生",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "赞同 ， 同意 ;一致; 同时发生"
+      }
+    ],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/concurrency"
+  },
+  "equation": {
+    "meaningZh": "方程式 ; 等式?化学 （ 反应 ） 方程式?（多种因素的） 平衡 ， 综合体",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "方程式 ; 等式"
+      },
+      {
+        "pos": "noun",
+        "zh": "化学 （ 反应 ） 方程式"
+      },
+      {
+        "pos": "noun",
+        "zh": "（多种因素的） 平衡 ， 综合体"
+      }
+    ],
+    "examples": [
+      {
+        "en": "In the equation 3x - 3 = 15, x = 6.",
+        "zh": "在方程式3x-3=15中，x=6。"
+      },
+      {
+        "en": "Managing the economy is a complex equation of controlling inflation and reducing unemployment .",
+        "zh": "经济管理包括控制通货膨胀、降低失业率等复杂的因素。"
+      },
+      {
+        "en": "There is a tendency in movies to make the equation between violence and excitement .",
+        "zh": "电影有把暴力和刺激相等同的倾向。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/equation"
+  },
+  "variable": {
+    "meaningZh": "多变的 ； 反复无常的?变量",
+    "meanings": [
+      {
+        "pos": "adjective",
+        "zh": "多变的 ； 反复无常的"
+      },
+      {
+        "pos": "noun",
+        "zh": "变量"
+      }
+    ],
+    "examples": [
+      {
+        "en": "a variable interest rate",
+        "zh": "不断变化的利率"
+      },
+      {
+        "en": "British weather is perhaps at its most variable in the spring .",
+        "zh": "在英国，春季的天气可能是最变幻莫测的。"
+      },
+      {
+        "en": "The variables in the equation are X, Y, and Z.",
+        "zh": "方程式中的变量是X，Y和Z。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/variable"
+  },
+  "function": {
+    "meaningZh": "功能 ， 用途 ； 职责?典礼 ， 仪式 ; 社交聚会?工作 ； 运行",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "功能 ， 用途 ； 职责"
+      },
+      {
+        "pos": "noun",
+        "zh": "典礼 ， 仪式 ; 社交聚会"
+      },
+      {
+        "pos": "noun",
+        "zh": "工作 ； 运行"
+      },
+      {
+        "pos": "verb",
+        "zh": "运转 ； 工作 ； 起作用"
+      }
+    ],
+    "examples": [
+      {
+        "en": "The function of the veins is to carry blood to the heart .",
+        "zh": "静脉的功能是将血液输送回心脏。"
+      },
+      {
+        "en": "I'm not quite sure what my function is within the company .",
+        "zh": "我拿不太准自己在公司里有什么职责。"
+      },
+      {
+        "en": "A thermostat performs the function of controlling temperature .",
+        "zh": "自动调温器的功用是控制温度。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/function"
+  },
+  "domain": {
+    "meaningZh": "领域 ， 领地?（因特网的） 域",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "领域 ， 领地"
+      },
+      {
+        "pos": "noun",
+        "zh": "（因特网的） 域"
+      }
+    ],
+    "examples": [
+      {
+        "en": "She treated the business as her private domain.",
+        "zh": "她把公司看作是自己的私人势力范围。"
+      },
+      {
+        "en": "These documents are in the public domain (= available to everybody) .",
+        "zh": "这些文件已向公众开放。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/domain"
+  },
+  "range": {
+    "meaningZh": "（一） 批 ;（一） 类 ;（一） 系列?（某公司生产或某商店出售的） 某 一类产品， 某 一系列产品?山脉",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（一） 批 ;（一） 类 ;（一） 系列"
+      },
+      {
+        "pos": "noun",
+        "zh": "（某公司生产或某商店出售的） 某 一类产品， 某 一系列产品"
+      },
+      {
+        "pos": "noun",
+        "zh": "山脉"
+      },
+      {
+        "pos": "verb",
+        "zh": "（ 数量 、种类等变化的） 范围 ， 幅度 ， 区域"
+      },
+      {
+        "pos": "verb",
+        "zh": "排列 ；（尤指） 使排列成行"
+      },
+      {
+        "pos": "verb",
+        "zh": "漫游 ； 闲逛 ； 四处移动"
+      }
+    ],
+    "examples": [
+      {
+        "en": "I offered her a range of options .",
+        "zh": "我给了她各种选择。"
+      },
+      {
+        "en": "There is a wide / whole range of opinions on this issue .",
+        "zh": "在这个问题上，存在着很多不同的意见。"
+      },
+      {
+        "en": "We stock the full range of model railway accessories .",
+        "zh": "我们备有铁路模型玩具的全套零配件。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/range"
+  },
+  "derivative": {
+    "meaningZh": "缺乏独创性的 ; 模仿的?衍生物 ， 派生物 ; 派生词?金融衍生产品",
+    "meanings": [
+      {
+        "pos": "adjective",
+        "zh": "缺乏独创性的 ; 模仿的"
+      },
+      {
+        "pos": "noun",
+        "zh": "衍生物 ， 派生物 ; 派生词"
+      },
+      {
+        "pos": "noun",
+        "zh": "金融衍生产品"
+      }
+    ],
+    "examples": [
+      {
+        "en": "His painting / style is very derivative.",
+        "zh": "他的油画／风格有很重的模仿痕迹。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/derivative"
+  },
+  "integral": {
+    "meaningZh": "构成整体所必需的?内置的",
+    "meanings": [
+      {
+        "pos": "adjective",
+        "zh": "构成整体所必需的"
+      },
+      {
+        "pos": "adjective",
+        "zh": "内置的"
+      }
+    ],
+    "examples": [
+      {
+        "en": "He's an integral part of the team and we can't do without him.",
+        "zh": "他是球队不可缺少的一员，没有他我们可不行。"
+      },
+      {
+        "en": "Bars and terrace cafés are integral to the social life of the city .",
+        "zh": "酒吧和露天咖啡座是这个城市社交生活不可缺少的一部分。"
+      },
+      {
+        "en": "All rooms have a flat-screen TV with integral DVD-player.",
+        "zh": "所有房间都装有内置DVD播放机的平板电视。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/integral"
+  },
+  "limit": {
+    "meaningZh": "限额 ； 限制 ； 上限?限度 ， 限量?忍耐的限度 ， 容忍的极限",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "限额 ； 限制 ； 上限"
+      },
+      {
+        "pos": "noun",
+        "zh": "限度 ， 限量"
+      },
+      {
+        "pos": "noun",
+        "zh": "忍耐的限度 ， 容忍的极限"
+      },
+      {
+        "pos": "verb",
+        "zh": "限制 ， 限定"
+      }
+    ],
+    "examples": [
+      {
+        "en": "Is there a limit on the amount of money you can claim ?",
+        "zh": "你能索赔到的金额有上限吗？"
+      },
+      {
+        "en": "I think we ought to put a strict limit on the amount of time we can spend on the project .",
+        "zh": "我认为我们应该严格限制在这个项目上的时间投入。"
+      },
+      {
+        "en": "There's a limit to the number of times I can stop what I'm doing just so I can help him!",
+        "zh": "我可以停下手里的活儿帮他的忙，但不能帮个没完，总要有个限度！"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/limit"
+  },
+  "matrix": {
+    "meaningZh": "（事物成长发展的） 条件 ， 环境?（数学上的） 矩阵?脉石 ; 母岩 ; 基岩",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（事物成长发展的） 条件 ， 环境"
+      },
+      {
+        "pos": "noun",
+        "zh": "（数学上的） 矩阵"
+      },
+      {
+        "pos": "noun",
+        "zh": "脉石 ; 母岩 ; 基岩"
+      }
+    ],
+    "examples": [
+      {
+        "en": "Europe is remaking itself politically within the matrix of the European Community.",
+        "zh": "欧洲将在欧共体的环境下重塑政治版图。"
+      },
+      {
+        "en": "The fossils lie embedded in a matrix of shale and sandstone .",
+        "zh": "化石牢牢嵌在页岩与砂岩形成的脉石中。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/matrix"
+  },
+  "vector": {
+    "meaningZh": "矢量 ; 向量?（在动物或植物之间传播疾病的） 昆虫媒介 ， 传病媒介?矢量数量 ; 向量数量",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "矢量 ; 向量"
+      },
+      {
+        "pos": "noun",
+        "zh": "（在动物或植物之间传播疾病的） 昆虫媒介 ， 传病媒介"
+      },
+      {
+        "pos": "adjective",
+        "zh": "矢量数量 ; 向量数量"
+      }
+    ],
+    "examples": [
+      {
+        "en": "Mosquitoes are the vectors of malaria .",
+        "zh": "蚊子是疟疾的传播媒介。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/vector"
+  },
+  "determinant": {
+    "meaningZh": "决定因素",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "决定因素"
+      }
+    ],
+    "examples": [
+      {
+        "en": "Soil and climate are the main determinants of how land is used.",
+        "zh": "土壤和气候是土地使用形式的决定因素。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/determinant"
+  },
+  "eigenvalue": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/eigenvalue"
+  },
+  "probability": {
+    "meaningZh": "可能性",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "可能性"
+      }
+    ],
+    "examples": [
+      {
+        "en": "What is the probability of winn ing ?",
+        "zh": "获胜的可能性有多大？"
+      },
+      {
+        "en": "The probability of gett ing all the answers correct is about one in ten.",
+        "zh": "答案全部正确的可能性大约是1／10。"
+      },
+      {
+        "en": "There's a high/ strong probability (that) (= it is very likely that) she'll be here.",
+        "zh": "她很可能会来。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/probability"
+  },
+  "distribution": {
+    "meaningZh": "分发 ， 散发 ; 分配?（人或物） 的分布 ， 分配",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "分发 ， 散发 ; 分配"
+      },
+      {
+        "pos": "noun",
+        "zh": "（人或物） 的分布 ， 分配"
+      }
+    ],
+    "examples": [
+      {
+        "en": "Has the Channel Tunnel improved the distribution of goods between the British Isles and mainland Europe ?",
+        "zh": "海峡隧道是否改善了不列颠群岛与欧洲大陆之间的货物流通？"
+      },
+      {
+        "en": "distribution costs",
+        "zh": "分销费用"
+      },
+      {
+        "en": "a map showing distribution of global population",
+        "zh": "世界人口分布图"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/distribution"
+  },
+  "mean": {
+    "meaningZh": "意思是 ; 意味着?（用于强调） 是 … 的意思?意味着 ; 结果是",
+    "meanings": [
+      {
+        "pos": "verb",
+        "zh": "意思是 ; 意味着"
+      },
+      {
+        "pos": "verb",
+        "zh": "（用于强调） 是 … 的意思"
+      },
+      {
+        "pos": "verb",
+        "zh": "意味着 ; 结果是"
+      },
+      {
+        "pos": "adjective",
+        "zh": "吝啬的 ， 小气的"
+      },
+      {
+        "pos": "adjective",
+        "zh": "卑鄙的 ; 刻薄的"
+      },
+      {
+        "pos": "adjective",
+        "zh": "凶恶的 ; 气势汹汹的"
+      },
+      {
+        "pos": "noun",
+        "zh": "（数学上的） 平均数 ， 平均值"
+      },
+      {
+        "pos": "noun",
+        "zh": "中间 ； 中庸 ； 适度"
+      }
+    ],
+    "examples": [
+      {
+        "en": "What does this word mean?",
+        "zh": "这个词是什么意思？"
+      },
+      {
+        "en": "These figures mean that almost six percent of the working population is unemployed .",
+        "zh": "这些数字意味着近6%的劳动人口处于失业状态。"
+      },
+      {
+        "en": "What do you mean by that remark ?",
+        "zh": "你那话是什么意思？"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/mean"
+  },
+  "median": {
+    "meaningZh": "中间的 ， 居中的 ; 中位数的?（ 身体 ） 正中的?中位数",
+    "meanings": [
+      {
+        "pos": "adjective",
+        "zh": "中间的 ， 居中的 ; 中位数的"
+      },
+      {
+        "pos": "adjective",
+        "zh": "（ 身体 ） 正中的"
+      },
+      {
+        "pos": "noun",
+        "zh": "中位数"
+      }
+    ],
+    "examples": [
+      {
+        "en": "Median household income fell last year .",
+        "zh": "去年中等家庭收入下降了。"
+      },
+      {
+        "en": "the median nerve",
+        "zh": "正中神经"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/median"
+  },
+  "variance": {
+    "meaningZh": "分歧 ； 不同 ； 差异?特殊许可?与 … 有分歧 ; 与 …存在差异",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "分歧 ； 不同 ； 差异"
+      },
+      {
+        "pos": "noun",
+        "zh": "特殊许可"
+      },
+      {
+        "pos": "noun",
+        "zh": "与 … 有分歧 ; 与 …存在差异"
+      }
+    ],
+    "examples": [
+      {
+        "en": "There has been some unusual variance in temperature this month .",
+        "zh": "本月气温有些异常变化。"
+      },
+      {
+        "en": "I could detect subtle variances in fragrance as we strolled through the garden .",
+        "zh": "我们在花园散步时，我可以闻出不同香味间的细微差异。"
+      },
+      {
+        "en": "We had to get a ( zoning ) variance before we could build the extension on our house .",
+        "zh": "我们扩建房屋前必须获得（城市区划）特殊许可。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/variance"
+  },
+  "standard deviation": {
+    "meaningZh": "标准偏差",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "标准偏差"
+      }
+    ],
+    "examples": [
+      {
+        "en": "Price dispersion in the region is measured by the standard deviation of prices for a product across the six economies .",
+        "zh": "该地区的价格差异是通过一种产品在6个经济体的价格标准差来衡量的。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/standard-deviation"
+  },
+  "correlation": {
+    "meaningZh": "相互关系 ； 联系 ； 相关",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "相互关系 ； 联系 ； 相关"
+      }
+    ],
+    "examples": [
+      {
+        "en": "There's a correlation between smoking and cancer .",
+        "zh": "吸烟和癌症之间有相关性。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/correlation"
+  },
+  "regression": {
+    "meaningZh": "（病症） 消退",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（病症） 消退"
+      }
+    ],
+    "examples": [
+      {
+        "en": "The treatment was more effective than tamoxifen, which causes complete regression in only about 30% of cases .",
+        "zh": "这种治疗比他莫昔芬更为有效，只有约30%的患者在接受他莫昔芬治疗后病症完全消退。"
+      },
+      {
+        "en": "In this group there was a significant regression in artery wall thickness .",
+        "zh": "在这一组中，动脉壁厚度有显著减少。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/regression"
+  },
+  "theorem": {
+    "meaningZh": "（尤指数学中的） 定理",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（尤指数学中的） 定理"
+      }
+    ],
+    "examples": [
+      {
+        "en": "a mathematical theorem",
+        "zh": "数学定理"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/theorem"
+  },
+  "proof": {
+    "meaningZh": "证据 ； 证物 ； 证明?校样?标准酒精度的",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "证据 ； 证物 ； 证明"
+      },
+      {
+        "pos": "noun",
+        "zh": "校样"
+      },
+      {
+        "pos": "adjective",
+        "zh": "标准酒精度的"
+      },
+      {
+        "pos": "adjective",
+        "zh": "耐…的， 防 …的"
+      },
+      {
+        "pos": "verb",
+        "zh": "给 （ 表面 ）作防护处理;（尤指） 给 …作防水处理"
+      },
+      {
+        "pos": "suffix",
+        "zh": "防 …的；抗…的"
+      }
+    ],
+    "examples": [
+      {
+        "en": "Do they have any proof that it was Hampson who stole the goods ?",
+        "zh": "他们有什么证据证明是汉普森偷了货物？"
+      },
+      {
+        "en": "I have a suspicion that he's having an affair , though I don't have any concrete (= definite ) proof.",
+        "zh": "我怀疑他有婚外情，不过我没有确凿的证据。"
+      },
+      {
+        "en": "If anyone needs proof of Andrew Davies' genius as a writer , this novel is it.",
+        "zh": "如果有人需要证据证明安德鲁•戴维斯是天才作家，这本小说就是。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/proof"
+  },
+  "set": {
+    "meaningZh": "放 ， 置 ; 使处于 （指定的地方、 位置 ）?（ 故事 、电影等） 以 …为背景?使处于特定状态",
+    "meanings": [
+      {
+        "pos": "verb",
+        "zh": "放 ， 置 ; 使处于 （指定的地方、 位置 ）"
+      },
+      {
+        "pos": "verb",
+        "zh": "（ 故事 、电影等） 以 …为背景"
+      },
+      {
+        "pos": "verb",
+        "zh": "使处于特定状态"
+      },
+      {
+        "pos": "noun",
+        "zh": "套 ; 副"
+      },
+      {
+        "pos": "noun",
+        "zh": "（尤指游戏用的）一套用具"
+      },
+      {
+        "pos": "noun",
+        "zh": "（数学中的） 集 ， 集合"
+      },
+      {
+        "pos": "adjective",
+        "zh": "准备好的 ， 预先准备的"
+      },
+      {
+        "pos": "adjective",
+        "zh": "可能的 ； 在适当条件下的"
+      },
+      {
+        "pos": "adjective",
+        "zh": "不变的 ， 固定的"
+      }
+    ],
+    "examples": [
+      {
+        "en": "He set a vase of flowers on the table .",
+        "zh": "他把一瓶花放在桌子上。"
+      },
+      {
+        "en": "The campsite is set in the middle of a pine forest .",
+        "zh": "宿营地设在松树林的中央。"
+      },
+      {
+        "en": "Our house is set back from the road .",
+        "zh": "我们的房子离公路有一定的距离。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/set"
+  },
+  "subset": {
+    "meaningZh": "子集 （类似的数字、物体或人员的一个集合组，是另一个较大集合的一 部分 ）",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "子集 （类似的数字、物体或人员的一个集合组，是另一个较大集合的一 部分 ）"
+      }
+    ],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/subset"
+  },
+  "sequence": {
+    "meaningZh": "一连串；一 系列 ； 顺序 ， 次序?（影片中的）一组镜头?安排 …的顺序; 发现 …的顺序",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "一连串；一 系列 ； 顺序 ， 次序"
+      },
+      {
+        "pos": "noun",
+        "zh": "（影片中的）一组镜头"
+      },
+      {
+        "pos": "verb",
+        "zh": "安排 …的顺序; 发现 …的顺序"
+      },
+      {
+        "pos": "verb",
+        "zh": "测定DNA的序列"
+      }
+    ],
+    "examples": [
+      {
+        "en": "The first chapter describes the strange sequence of events that led to his death .",
+        "zh": "第一章描述了造成他死亡的一连串奇特事件。"
+      },
+      {
+        "en": "Is there a particular sequence in which you have to perform these tasks ?",
+        "zh": "你是否得按一定的顺序完成这些任务？"
+      },
+      {
+        "en": "For the sake of convenience the photographs are shown in chronological sequence (= in the order in which they were taken) .",
+        "zh": "为方便起见，照片按时间顺序展示。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/sequence"
+  },
+  "series": {
+    "meaningZh": "一连串；一 系列?（两队间的） 系列比赛?（电视或广播的） 系列节目",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "一连串；一 系列"
+      },
+      {
+        "pos": "noun",
+        "zh": "（两队间的） 系列比赛"
+      },
+      {
+        "pos": "noun",
+        "zh": "（电视或广播的） 系列节目"
+      }
+    ],
+    "examples": [
+      {
+        "en": "There has been a series of sexual attacks on women in the area .",
+        "zh": "这个地区发生了一连串针对女性的性侵犯案件。"
+      },
+      {
+        "en": "She gave a series of lectures at Warwick University last year on contemporary British writers .",
+        "zh": "她去年在华威大学作了一系列有关当代英国作家的讲座。"
+      },
+      {
+        "en": "The Yankees have a four-game series against the Orioles at home .",
+        "zh": "扬基队主场有一连四场对金莺队的比赛。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/series"
+  },
+  "logarithm": {
+    "meaningZh": "对数",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "对数"
+      }
+    ],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/logarithm"
+  },
+  "polynomial": {
+    "meaningZh": "多项式",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "多项式"
+      }
+    ],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/polynomial"
+  },
+  "gradient": {
+    "meaningZh": "坡度 ， 倾斜度",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "坡度 ， 倾斜度"
+      }
+    ],
+    "examples": [
+      {
+        "en": "a steep / gentle gradient",
+        "zh": "陡／缓坡"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/gradient"
+  },
+  "optimization": {
+    "meaningZh": "优化 ， 完善",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "优化 ， 完善"
+      }
+    ],
+    "examples": [
+      {
+        "en": "the optimization of chemical processes",
+        "zh": "对化学工序流程的优化"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/optimization"
+  },
+  "foundation": {
+    "meaningZh": "创建 ; 建立?基金会?（ 幼儿学校 ） 小班",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "创建 ; 建立"
+      },
+      {
+        "pos": "noun",
+        "zh": "基金会"
+      },
+      {
+        "pos": "noun",
+        "zh": "（ 幼儿学校 ） 小班"
+      }
+    ],
+    "examples": [
+      {
+        "en": "the foundation of a new state",
+        "zh": "新州的建立"
+      },
+      {
+        "en": "the British Heart Foundation",
+        "zh": "英国心脏健康基金会"
+      },
+      {
+        "en": "the Environmental Research Foundation",
+        "zh": "环境研究基金会"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/foundation"
+  },
+  "footing": {
+    "meaningZh": "站稳?情况 ， 状况",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "站稳"
+      },
+      {
+        "pos": "noun",
+        "zh": "情况 ， 状况"
+      }
+    ],
+    "examples": [
+      {
+        "en": "I lost / missed my footing and fell .",
+        "zh": "我脚没站稳，跌倒了。"
+      },
+      {
+        "en": "It was a struggle just to keep my footing.",
+        "zh": "我挣扎着想要站稳。"
+      },
+      {
+        "en": "New leadership is needed to return the company to a better financial footing.",
+        "zh": "需要新的领导层使公司在财务状况方面实现好转。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/footing"
+  },
+  "beam": {
+    "meaningZh": "光线 ; 光束 ; 光柱?（定向发出的） 射束 ， 粒子流?（尤指支撑建筑物或其他结构的） 梁 ， 桁架 ， 栋梁",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "光线 ; 光束 ; 光柱"
+      },
+      {
+        "pos": "noun",
+        "zh": "（定向发出的） 射束 ， 粒子流"
+      },
+      {
+        "pos": "noun",
+        "zh": "（尤指支撑建筑物或其他结构的） 梁 ， 桁架 ， 栋梁"
+      },
+      {
+        "pos": "verb",
+        "zh": "高兴的微笑 ， 眉开眼笑"
+      },
+      {
+        "pos": "verb",
+        "zh": "辐射 ; 发光 ; 闪光 ; 发射电波 ; 播送"
+      }
+    ],
+    "examples": [
+      {
+        "en": "We could just pick out the trail in the weak beam of the flashlight .",
+        "zh": "我们借着手电筒微弱的光仅能勉强认清路。"
+      },
+      {
+        "en": "The rabbit stopped , mesmerized by the beam of the car's headlights .",
+        "zh": "兔子被汽车前灯射出的光束迷住了眼，停了下来。"
+      },
+      {
+        "en": "a laser beam",
+        "zh": "激光束"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/beam"
+  },
+  "column": {
+    "meaningZh": "（ 报纸 、杂志上的） 栏?（ 报纸 、杂志上的） 栏目 ， 专栏?（词或数字的） 纵列",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（ 报纸 、杂志上的） 栏"
+      },
+      {
+        "pos": "noun",
+        "zh": "（ 报纸 、杂志上的） 栏目 ， 专栏"
+      },
+      {
+        "pos": "noun",
+        "zh": "（词或数字的） 纵列"
+      }
+    ],
+    "examples": [
+      {
+        "en": "I didn't have time to read the whole article - just the first column.",
+        "zh": "我没有时间读整篇文章——只看了第一栏。"
+      },
+      {
+        "en": "She writes a weekly fashion / gossip column for the Evening Standard.",
+        "zh": "她每周都在《旗帜晚报》的时尚／漫谈专栏中发表文章。"
+      },
+      {
+        "en": "Add the column of figures and divide the sum by three.",
+        "zh": "把这列数字相加，再将总数除以3。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/column"
+  },
+  "slab": {
+    "meaningZh": "（石、木、 金属 、食物等的） 板 ， 片",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（石、木、 金属 、食物等的） 板 ， 片"
+      }
+    ],
+    "examples": [
+      {
+        "en": "a concrete / marble slab",
+        "zh": "水泥／大理石板"
+      },
+      {
+        "en": "He ate a whole slab of chocolate .",
+        "zh": "他吃了一整块巧克力。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/slab"
+  },
+  "reinforcement": {
+    "meaningZh": "增强 ； 加强 ； 巩固",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "增强 ； 加强 ； 巩固"
+      }
+    ],
+    "examples": [
+      {
+        "en": "The harbour walls need urgent reinforcement.",
+        "zh": "海港堤坝急需加固。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/reinforcement"
+  },
+  "concrete": {
+    "meaningZh": "混凝土?用混凝土覆盖?确定的 ， 确实的 ； 具体的 ， 有形的 ， 实在的",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "混凝土"
+      },
+      {
+        "pos": "verb",
+        "zh": "用混凝土覆盖"
+      },
+      {
+        "pos": "adjective",
+        "zh": "确定的 ， 确实的 ； 具体的 ， 有形的 ， 实在的"
+      }
+    ],
+    "examples": [
+      {
+        "en": "reinforced concrete",
+        "zh": "钢筋混凝土"
+      },
+      {
+        "en": "a concrete floor / path",
+        "zh": "混凝土地面／道路"
+      },
+      {
+        "en": "a grey concrete building",
+        "zh": "灰色的混凝土建筑物"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/concrete"
+  },
+  "aggregate": {
+    "meaningZh": "聚集体 ， 集成体 ; 总数 ， 合计?骨料 ， 集料 ， 粒料 （建筑用的小石料）?合计的 ， 总的 ； 总数的",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "聚集体 ， 集成体 ; 总数 ， 合计"
+      },
+      {
+        "pos": "noun",
+        "zh": "骨料 ， 集料 ， 粒料 （建筑用的小石料）"
+      },
+      {
+        "pos": "adjective",
+        "zh": "合计的 ， 总的 ； 总数的"
+      },
+      {
+        "pos": "verb",
+        "zh": "使聚集 ， 使积聚"
+      }
+    ],
+    "examples": [
+      {
+        "en": "They purchased an aggregate of 3,000 shares in the company .",
+        "zh": "他们总共买了这家公司的3000股股票。"
+      },
+      {
+        "en": "Snowflakes are loose aggregates of ice crystals .",
+        "zh": "雪花是冰晶松散的凝聚体。"
+      },
+      {
+        "en": "Arsenal lost the second game , but got through to the final on aggregate (= adding together the goals in both matches ) .",
+        "zh": "阿森纳队虽然输了第二场比赛，但是凭借进球总数进入了决赛。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/aggregate"
+  },
+  "mortar": {
+    "meaningZh": "（砌砖等用的） 砂浆 ， 灰浆?迫击炮 （ 弹 ）?臼 ， 研钵",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（砌砖等用的） 砂浆 ， 灰浆"
+      },
+      {
+        "pos": "noun",
+        "zh": "迫击炮 （ 弹 ）"
+      },
+      {
+        "pos": "noun",
+        "zh": "臼 ， 研钵"
+      }
+    ],
+    "examples": [
+      {
+        "en": "Use a pestle and mortar to crush the spices .",
+        "zh": "用杵和臼将香料碾碎。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/mortar"
+  },
+  "rebar": {
+    "meaningZh": "钢筋",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "钢筋"
+      }
+    ],
+    "examples": [
+      {
+        "en": "The concrete is reinforced with steel rebar.",
+        "zh": "混凝土用钢筋加固。"
+      },
+      {
+        "en": "Inspectors surveyed both levels of the structure , looking for exposed rebar, loose bits of concrete , or cracks .",
+        "zh": "检查人员勘察了这栋两层建筑的每个楼层，寻找暴露的钢筋、松动的混凝土块或裂缝。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/rebar"
+  },
+  "formwork": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/formwork"
+  },
+  "pile": {
+    "meaningZh": "摞 ; 垛 ; 堆?一 堆?一 大堆 ， 许多",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "摞 ; 垛 ; 堆"
+      },
+      {
+        "pos": "noun",
+        "zh": "一 堆"
+      },
+      {
+        "pos": "noun",
+        "zh": "一 大堆 ， 许多"
+      },
+      {
+        "pos": "verb",
+        "zh": "把 … 堆积 （或堆叠）起来"
+      },
+      {
+        "pos": "verb",
+        "zh": "（ 人群 ） 拥 ， 挤 ， 蜂拥"
+      }
+    ],
+    "examples": [
+      {
+        "en": "a pile of books",
+        "zh": "一摞书"
+      },
+      {
+        "en": "a pile of dirty clothes",
+        "zh": "一大堆脏衣服"
+      },
+      {
+        "en": "a large pile of sand",
+        "zh": "一大堆沙子"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/pile"
+  },
+  "retaining wall": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/retaining-wall"
+  },
+  "drainage": {
+    "meaningZh": "排水系统 ; 排污系统?土壤排水能力",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "排水系统 ; 排污系统"
+      },
+      {
+        "pos": "noun",
+        "zh": "土壤排水能力"
+      }
+    ],
+    "examples": [
+      {
+        "en": "drainage channels / ditches / systems",
+        "zh": "排水渠／沟／系统"
+      },
+      {
+        "en": "These plants need a sunny spot with good drainage.",
+        "zh": "这些植物需要种植在阳光充足的地方，土壤排水能力要强。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/drainage"
+  },
+  "culvert": {
+    "meaningZh": "（ 道路 、铁路等下面的） 排水管 ， 涵洞 ， 阴沟",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（ 道路 、铁路等下面的） 排水管 ， 涵洞 ， 阴沟"
+      }
+    ],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/culvert"
+  },
+  "pavement": {
+    "meaningZh": "人行道?铺筑过的路面",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "人行道"
+      },
+      {
+        "pos": "noun",
+        "zh": "铺筑过的路面"
+      }
+    ],
+    "examples": [
+      {
+        "en": "Keep to the pavement, Rosie, there's a good girl .",
+        "zh": "沿着人行道走，罗茜，乖孩子。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/pavement"
+  },
+  "asphalt": {
+    "meaningZh": "沥青 ; 柏油?在 …上铺沥青",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "沥青 ; 柏油"
+      },
+      {
+        "pos": "verb",
+        "zh": "在 …上铺沥青"
+      }
+    ],
+    "examples": [
+      {
+        "en": "an asphalted road / pitch / court",
+        "zh": "沥青道路／球场／庭院"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/asphalt"
+  },
+  "geotechnical": {
+    "meaningZh": "土地工程的 ， 地工的",
+    "meanings": [
+      {
+        "pos": "adjective",
+        "zh": "土地工程的 ， 地工的"
+      }
+    ],
+    "examples": [
+      {
+        "en": "Geotechnical engineering is important in any construction occurring on the surface of or within the ground .",
+        "zh": "土地工程技术对于任何地表或地下的建筑都很重要。"
+      },
+      {
+        "en": "A comprehensive geotechnical report will be necessary .",
+        "zh": "有必要写一份全面的大地构造报告。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/geotechnical"
+  },
+  "compaction": {
+    "meaningZh": "压实",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "压实"
+      }
+    ],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/compaction"
+  },
+  "excavation": {
+    "meaningZh": "（ 古物的 ） 发掘?发掘 ; 挖出",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（ 古物的 ） 发掘"
+      },
+      {
+        "pos": "noun",
+        "zh": "发掘 ; 挖出"
+      }
+    ],
+    "examples": [
+      {
+        "en": "Three skulls and one full skeleton were discovered during the excavation of an Egyptian tomb .",
+        "zh": "在发掘一座埃及坟墓时，发现了三具头骨和一具全身骸骨。"
+      },
+      {
+        "en": "She has taken part in several excavations of Roman settlements across Europe .",
+        "zh": "她参加过几次发掘罗马人在欧洲的定居点的工作。"
+      },
+      {
+        "en": "The site has been undergoing demolition and excavation since August .",
+        "zh": "自八月以来，这个工地一直在进行拆除和挖掘工作。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/excavation"
+  },
+  "surveying": {
+    "meaningZh": "调查?（ 土地 ） 测量 ， 勘测 ， 测绘?（对某一专题的） 概述 ， 全面评述",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "调查"
+      },
+      {
+        "pos": "noun",
+        "zh": "（ 土地 ） 测量 ， 勘测 ， 测绘"
+      },
+      {
+        "pos": "noun",
+        "zh": "（对某一专题的） 概述 ， 全面评述"
+      },
+      {
+        "pos": "verb",
+        "zh": "（尤指认真地） 审视 ， 检查"
+      },
+      {
+        "pos": "verb",
+        "zh": "（尤指为绘制地图而） 测量 ， 勘测 ， 测绘"
+      },
+      {
+        "pos": "verb",
+        "zh": "鉴定 ， 查勘 （ 建筑物 ）"
+      }
+    ],
+    "examples": [
+      {
+        "en": "A recent survey found / revealed / showed that 58 percent of people did not know where their heart is.",
+        "zh": "最近的一项调查表明，有58%的人不知道自己的心脏在什么位置。"
+      },
+      {
+        "en": "to conduct / carry out/do a survey",
+        "zh": "进行调查"
+      },
+      {
+        "en": "a geological survey",
+        "zh": "地质勘测"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/surveying"
+  },
+  "contour": {
+    "meaningZh": "轮廓 ; 外形 ; 曲线?（地图上的） 等高线",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "轮廓 ; 外形 ; 曲线"
+      },
+      {
+        "pos": "noun",
+        "zh": "（地图上的） 等高线"
+      }
+    ],
+    "examples": [
+      {
+        "en": "the rugged contour of the coast",
+        "zh": "崎岖不平的海岸线"
+      },
+      {
+        "en": "He studied the contours of her face .",
+        "zh": "他仔细端详她的面部轮廓。"
+      },
+      {
+        "en": "Her latest collection of swimwear shows off the contours of the human body to perfection .",
+        "zh": "她的最新系列泳装衬完美地托出了人体的曲线。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/contour"
+  },
+  "grade": {
+    "meaningZh": "等级 ， 品级 ， 级别?成绩等级 ， 评分等级 ， 分数?年级",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "等级 ， 品级 ， 级别"
+      },
+      {
+        "pos": "noun",
+        "zh": "成绩等级 ， 评分等级 ， 分数"
+      },
+      {
+        "pos": "noun",
+        "zh": "年级"
+      },
+      {
+        "pos": "verb",
+        "zh": "把 …分级； 把 … 分类"
+      },
+      {
+        "pos": "verb",
+        "zh": "给 …评分， 给 …打分数"
+      }
+    ],
+    "examples": [
+      {
+        "en": "He's suffering from some kind of low -grade (= slight ) infection , which he can't seem to get rid of.",
+        "zh": "他感染程度较轻，但好像就是无法痊愈。"
+      },
+      {
+        "en": "There's some really high -grade (= high quality ) musicianship on this recording .",
+        "zh": "这张唱片体现出高超的音乐技能。"
+      },
+      {
+        "en": "Bill has been on the same grade (= his job has been of the same level of importance , or he has had the same level of pay ) for several years now.",
+        "zh": "比尔在同一个职位上已经呆了好几年了。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/grade"
+  },
+  "truss": {
+    "meaningZh": "捆紧 ， 缚牢 （人的双臂或双腿）?（在烹调之前） 将 （ 鸡 、鸭等的）翅膀和脚扎拢?疝带 ， 托带",
+    "meanings": [
+      {
+        "pos": "verb",
+        "zh": "捆紧 ， 缚牢 （人的双臂或双腿）"
+      },
+      {
+        "pos": "verb",
+        "zh": "（在烹调之前） 将 （ 鸡 、鸭等的）翅膀和脚扎拢"
+      },
+      {
+        "pos": "noun",
+        "zh": "疝带 ， 托带"
+      },
+      {
+        "pos": "noun",
+        "zh": "（支撑屋顶、桥梁的） 构架 ， 托臂 ， 桁架"
+      }
+    ],
+    "examples": [
+      {
+        "en": "Police said the couple had been trussed up and robbed before being shot .",
+        "zh": "警方说夫妇俩先遭到捆绑和抢劫，最后才被枪杀。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/truss"
+  },
+  "shear force": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/shear-force"
+  },
+  "bending moment": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/bending-moment"
+  },
+  "seismic design": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/seismic-design"
+  },
+  "load path": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/load-path"
+  },
+  "water supply": {
+    "meaningZh": "（ 某地区的 ） 供水 ， 给水",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（ 某地区的 ） 供水 ， 给水"
+      }
+    ],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/water-supply"
+  },
+  "wastewater": {
+    "meaningZh": "（家里、公司或工厂等排出的） 废水",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（家里、公司或工厂等排出的） 废水"
+      }
+    ],
+    "examples": [
+      {
+        "en": "These new eco-friendly homes recycle waste water in toilet cisterns .",
+        "zh": "这些新型环保住宅利用废水冲厕所。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/wastewater"
+  },
+  "thermodynamics": {
+    "meaningZh": "热力学",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "热力学"
+      }
+    ],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/thermodynamics"
+  },
+  "heat transfer": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/heat-transfer"
+  },
+  "fluid mechanics": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/fluid-mechanics"
+  },
+  "statics": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/statics"
+  },
+  "dynamics": {
+    "meaningZh": "动力?（团体或体系内部的） 变革动力?（乐曲的） 力度变化",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "动力"
+      },
+      {
+        "pos": "noun",
+        "zh": "（团体或体系内部的） 变革动力"
+      },
+      {
+        "pos": "noun",
+        "zh": "（乐曲的） 力度变化"
+      }
+    ],
+    "examples": [
+      {
+        "en": "This software is used for modelling atmospheric dynamics.",
+        "zh": "这个软件用于模拟空气动力。"
+      },
+      {
+        "en": "The fight for the leadership gave a fascinating insight into the group's dynamics.",
+        "zh": "这场争夺领导权的斗争给了人们一个洞察该团体内部变革动力的良好时机。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/dynamics"
+  },
+  "kinematics": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/kinematics"
+  },
+  "stress": {
+    "meaningZh": "紧张 ， 压力 ； 造成紧张的因素?重读 ， 用重音读?压力 ; 应力",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "紧张 ， 压力 ； 造成紧张的因素"
+      },
+      {
+        "pos": "noun",
+        "zh": "重读 ， 用重音读"
+      },
+      {
+        "pos": "noun",
+        "zh": "压力 ; 应力"
+      },
+      {
+        "pos": "verb",
+        "zh": "强调 ， 着重"
+      },
+      {
+        "pos": "verb",
+        "zh": "重读 ， 用重音读"
+      },
+      {
+        "pos": "verb",
+        "zh": "紧张 ， 焦虑 ， 担心"
+      }
+    ],
+    "examples": [
+      {
+        "en": "People under a lot of stress may experience headaches , minor pains , and sleeping difficulties.",
+        "zh": "压力大的人可能会出现头痛、轻微疼痛和睡眠障碍。"
+      },
+      {
+        "en": "Yoga is a very effective technique for combating stress.",
+        "zh": "练瑜伽是舒缓压力的非常有效的方法。"
+      },
+      {
+        "en": "the stresses and strains of the job",
+        "zh": "工作的紧张和压力"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/stress"
+  },
+  "strain": {
+    "meaningZh": "压力 ; 拉力 ， 张力 ; 作用力?（肌肉等软组织的） 损伤 ， 拉伤 ， 扭伤?压力 ； 紧张",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "压力 ; 拉力 ， 张力 ; 作用力"
+      },
+      {
+        "pos": "noun",
+        "zh": "（肌肉等软组织的） 损伤 ， 拉伤 ， 扭伤"
+      },
+      {
+        "pos": "noun",
+        "zh": "压力 ； 紧张"
+      },
+      {
+        "pos": "verb",
+        "zh": "滤 ， 过滤 （ 食物 ）"
+      },
+      {
+        "pos": "verb",
+        "zh": "（ 使 ） 紧张 ，（ 使 ） 承受压力 ； 拉紧 ， 绷紧 ； 损伤"
+      },
+      {
+        "pos": "verb",
+        "zh": "（尤指金钱） 过多使用"
+      }
+    ],
+    "examples": [
+      {
+        "en": "The hurricane put such a strain on the bridge that it collapsed .",
+        "zh": "在飓风强大的作用力下，桥塌了。"
+      },
+      {
+        "en": "As you get older , excess weight puts a lot of strain on the heart .",
+        "zh": "随着年龄的增长，体重过重会给心脏造成很大负担。"
+      },
+      {
+        "en": "Their constant arguments were putting a strain on their marriage .",
+        "zh": "他们持续不断的争吵使他们的婚姻关系非常紧张。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/strain"
+  },
+  "torque": {
+    "meaningZh": "扭转力",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "扭转力"
+      }
+    ],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/torque"
+  },
+  "friction": {
+    "meaningZh": "摩擦力 ; 摩擦?（观点不同者之间的） 摩擦 ， 不和",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "摩擦力 ; 摩擦"
+      },
+      {
+        "pos": "noun",
+        "zh": "（观点不同者之间的） 摩擦 ， 不和"
+      }
+    ],
+    "examples": [
+      {
+        "en": "When you rub your hands together the friction produces heat .",
+        "zh": "揉搓双手时，摩擦会产生热量。"
+      },
+      {
+        "en": "There's a lot of friction between my wife and my mother .",
+        "zh": "我妻子和我母亲之间有很多龃龉。"
+      },
+      {
+        "en": "Politics is a source of considerable friction in our family .",
+        "zh": "政治问题在我们家是矛盾的一大根源。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/friction"
+  },
+  "bearing": {
+    "meaningZh": "轴承?方位 ; 方位角?举止 ， 风度",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "轴承"
+      },
+      {
+        "pos": "noun",
+        "zh": "方位 ; 方位角"
+      },
+      {
+        "pos": "noun",
+        "zh": "举止 ， 风度"
+      },
+      {
+        "pos": "suffix",
+        "zh": "负载 ， 负担 ， 负荷"
+      }
+    ],
+    "examples": [
+      {
+        "en": "a wheel bearing",
+        "zh": "车轮轴承"
+      },
+      {
+        "en": "a roller bearing",
+        "zh": "滚柱轴承"
+      },
+      {
+        "en": "The road system was so complicated that we had to stop to get our bearings several times .",
+        "zh": "路况非常复杂，以至于我们不得不停下来好几次以确定方位。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/bearing"
+  },
+  "gearbox": {
+    "meaningZh": "齿轮箱 ， 变速箱",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "齿轮箱 ， 变速箱"
+      }
+    ],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/gearbox"
+  },
+  "shaft": {
+    "meaningZh": "（工具或武器的） 杆 ， 柄?（机器的） 轴?（头发的） 毛干",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（工具或武器的） 杆 ， 柄"
+      },
+      {
+        "pos": "noun",
+        "zh": "（机器的） 轴"
+      },
+      {
+        "pos": "noun",
+        "zh": "（头发的） 毛干"
+      },
+      {
+        "pos": "verb",
+        "zh": "蒙骗 ， 欺骗"
+      }
+    ],
+    "examples": [
+      {
+        "en": "the shaft of a golf club",
+        "zh": "高尔夫球杆的柄"
+      },
+      {
+        "en": "the drive shaft of a car",
+        "zh": "汽车的驱动轴"
+      },
+      {
+        "en": "the propeller shaft of an aircraft",
+        "zh": "飞机的螺旋桨轴"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/shaft"
+  },
+  "piston": {
+    "meaningZh": "（ 发动机 ） 活塞",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（ 发动机 ） 活塞"
+      }
+    ],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/piston"
+  },
+  "valve": {
+    "meaningZh": "阀 ; 活门 ;（心脏或血管的） 瓣膜?（喇叭等乐器的） 阀键 ， 活塞",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "阀 ; 活门 ;（心脏或血管的） 瓣膜"
+      },
+      {
+        "pos": "noun",
+        "zh": "（喇叭等乐器的） 阀键 ， 活塞"
+      }
+    ],
+    "examples": [
+      {
+        "en": "The valve failed to open / close .",
+        "zh": "阀门打不开／关不上了。"
+      },
+      {
+        "en": "It was a weak heart valve that caused her death .",
+        "zh": "是心瓣膜问题导致了她的死亡。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/valve"
+  },
+  "turbine": {
+    "meaningZh": "涡轮机 ， 叶轮机 ， 透平机",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "涡轮机 ， 叶轮机 ， 透平机"
+      }
+    ],
+    "examples": [
+      {
+        "en": "a steam turbine",
+        "zh": "汽轮机"
+      },
+      {
+        "en": "a turbine engine",
+        "zh": "涡轮发动机"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/turbine"
+  },
+  "compressor": {
+    "meaningZh": "压缩机 ， 压缩器",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "压缩机 ， 压缩器"
+      }
+    ],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/compressor"
+  },
+  "nozzle": {
+    "meaningZh": "管嘴 ， 喷嘴",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "管嘴 ， 喷嘴"
+      }
+    ],
+    "examples": [
+      {
+        "en": "Attach the nozzle to the hose before turning on the water .",
+        "zh": "打开水龙头之前，把管嘴接到浇花园的软管上。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/nozzle"
+  },
+  "fatigue": {
+    "meaningZh": "疲惫 ， 劳累?（金属部件的） 疲劳?使极度疲劳",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "疲惫 ， 劳累"
+      },
+      {
+        "pos": "noun",
+        "zh": "（金属部件的） 疲劳"
+      },
+      {
+        "pos": "verb",
+        "zh": "使极度疲劳"
+      }
+    ],
+    "examples": [
+      {
+        "en": "She was suffering from fatigue.",
+        "zh": "她劳累不堪。"
+      },
+      {
+        "en": "The crash was caused by metal fatigue in one of the propeller blades .",
+        "zh": "坠机事件是因一片螺旋桨叶产生金属疲劳造成的。"
+      },
+      {
+        "en": "army fatigues",
+        "zh": "迷彩服"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/fatigue"
+  },
+  "creep": {
+    "meaningZh": "（通常指为避免注意而） 缓慢行进 ， 悄悄移动 ， 潜行?谄媚者 ， 奴颜婢膝者 ， 阿谀奉承者?讨厌鬼 ， 令人恶心的人 （尤指男人）",
+    "meanings": [
+      {
+        "pos": "verb",
+        "zh": "（通常指为避免注意而） 缓慢行进 ， 悄悄移动 ， 潜行"
+      },
+      {
+        "pos": "noun",
+        "zh": "谄媚者 ， 奴颜婢膝者 ， 阿谀奉承者"
+      },
+      {
+        "pos": "noun",
+        "zh": "讨厌鬼 ， 令人恶心的人 （尤指男人）"
+      }
+    ],
+    "examples": [
+      {
+        "en": "She turned off the light and crept through the door .",
+        "zh": "她关上灯，悄悄溜出门。"
+      },
+      {
+        "en": "Someone was creeping around outside my window .",
+        "zh": "有人在我的窗户外蹑手蹑脚地走动。"
+      },
+      {
+        "en": "The spider crept up the wall .",
+        "zh": "蜘蛛缓缓地爬上墙。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/creep"
+  },
+  "welding": {
+    "meaningZh": "焊接 ， 锻接",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "焊接 ， 锻接"
+      }
+    ],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/welding"
+  },
+  "machining": {
+    "meaningZh": "用机械加工 （ 金属 ）?用缝纫机缝制 （ 衣物 ）",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "用机械加工 （ 金属 ）"
+      },
+      {
+        "pos": "noun",
+        "zh": "用缝纫机缝制 （ 衣物 ）"
+      }
+    ],
+    "examples": [
+      {
+        "en": "The components require precision machining.",
+        "zh": "这些部件需要精密加工。"
+      },
+      {
+        "en": "state-of-the-art machining equipment",
+        "zh": "最先进的加工设备"
+      },
+      {
+        "en": "Once the pieces are cut , the fabric is ready for machining.",
+        "zh": "一旦裁剪完毕，布料就可以用缝纫机加工缝制了。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/machining"
+  },
+  "tolerance": {
+    "meaningZh": "宽容 ; 忍受 ; 容忍?忍耐力 ; 忍受力?（动植物对药物或毒药的） 耐受性",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "宽容 ; 忍受 ; 容忍"
+      },
+      {
+        "pos": "noun",
+        "zh": "忍耐力 ; 忍受力"
+      },
+      {
+        "pos": "noun",
+        "zh": "（动植物对药物或毒药的） 耐受性"
+      }
+    ],
+    "examples": [
+      {
+        "en": "This period in history is not noted for its religious tolerance.",
+        "zh": "历史上的这个时期在宗教上并不宽容。"
+      },
+      {
+        "en": "Some members of the party would like to see it develop a greater tolerance of/towards contrary points of view .",
+        "zh": "党内的一些成员希望看到党对反面意见能更加宽容。"
+      },
+      {
+        "en": "My tolerance of/for heat is considerably greater after having lived in the Far East for a couple of years .",
+        "zh": "在远东生活了几年后，我的耐热能力大为增强。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/tolerance"
+  },
+  "cad": {
+    "meaningZh": "（尤指对女性无礼或不诚实的） 恶棍 ， 卑鄙的人 ， 下流的人?计算机辅助设计 （computer aided design的缩写）?冠状动脉病 （coronary artery disease的缩写）",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（尤指对女性无礼或不诚实的） 恶棍 ， 卑鄙的人 ， 下流的人"
+      },
+      {
+        "pos": "noun",
+        "zh": "计算机辅助设计 （computer aided design的缩写）"
+      },
+      {
+        "pos": "noun",
+        "zh": "冠状动脉病 （coronary artery disease的缩写）"
+      }
+    ],
+    "examples": [
+      {
+        "en": "He's a cad and a bounder - I'm not in the least surprised he let you down.",
+        "zh": "他是个下流粗鲁的人——他让你失望我一点也不觉得惊讶。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/cad"
+  },
+  "cam": {
+    "meaningZh": "（尤指小型数码） 摄像机 ， 摄像头?补充和另类医疗 （complementary and alternative medicine的缩写）",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（尤指小型数码） 摄像机 ， 摄像头"
+      },
+      {
+        "pos": "noun",
+        "zh": "补充和另类医疗 （complementary and alternative medicine的缩写）"
+      }
+    ],
+    "examples": [
+      {
+        "en": "With this truly tiny digital cam that holds up to 104 pics in his pocket , he'll never miss another great shot .",
+        "zh": "有了这个可以存贮104张照片、真正微小的数码相机放在口袋里，他就不会再错过任何一个精彩的镜头了。"
+      },
+      {
+        "en": "You can watch the birds close up via a bird feeder cam streaming live from the wildlife garden .",
+        "zh": "你可以通过野生动物园里的喂鸟器摄像头直播近距离观看鸟类的活动。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/cam"
+  },
+  "finite element analysis": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/finite-element-analysis"
+  },
+  "vibration": {
+    "meaningZh": "持续振动 ; 轻微抖动",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "持续振动 ; 轻微抖动"
+      }
+    ],
+    "examples": [
+      {
+        "en": "Vibrations were felt hundreds of miles from the centre of the earthquake .",
+        "zh": "距震中数百英里范围内都有震感。"
+      },
+      {
+        "en": "Aircraft manufacturers want to reduce vibration for the sake of safety .",
+        "zh": "飞机制造商出于安全的考虑而想要减轻震动。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/vibration"
+  },
+  "control system": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/control-system"
+  },
+  "hydraulics": {
+    "meaningZh": "水力发电系统 ， 水力发动机",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "水力发电系统 ， 水力发动机"
+      }
+    ],
+    "examples": [
+      {
+        "en": "The hydraulics failed and the digger stopped .",
+        "zh": "水力发动机停转了，挖掘机也就停止了工作。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/hydraulics"
+  },
+  "pneumatics": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/pneumatics"
+  },
+  "intersection": {
+    "meaningZh": "（两条线的） 相交 ； 交点?交叉路口 ； 十字路口",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（两条线的） 相交 ； 交点"
+      },
+      {
+        "pos": "noun",
+        "zh": "交叉路口 ； 十字路口"
+      }
+    ],
+    "examples": [
+      {
+        "en": "The intersection of the lines on the graph marks the point where we start to make a profit .",
+        "zh": "图上几条线的交点就是我们的开始盈利点。"
+      },
+      {
+        "en": "a busy intersection",
+        "zh": "繁忙的十字路口"
+      },
+      {
+        "en": "Turn right at the next intersection.",
+        "zh": "在下个十字路口向右拐。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/intersection"
+  },
+  "roundabout": {
+    "meaningZh": "环岛 ； 环形交叉路口?（游乐区的） 旋转平台 ， 旋转椅?（儿童乐园的） 旋转木马",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "环岛 ； 环形交叉路口"
+      },
+      {
+        "pos": "noun",
+        "zh": "（游乐区的） 旋转平台 ， 旋转椅"
+      },
+      {
+        "pos": "noun",
+        "zh": "（儿童乐园的） 旋转木马"
+      },
+      {
+        "pos": "adjective",
+        "zh": "转弯抹角的 ; 绕弯子的 ; 不直接的"
+      }
+    ],
+    "examples": [
+      {
+        "en": "We took a roundabout route to avoid the accident .",
+        "zh": "为了避开那起事故的事发现场，我们绕道而行。"
+      },
+      {
+        "en": "He asked me, in a roundabout way , if he could have a salary increase .",
+        "zh": "他转弯抹角地问我是否可以给他加薪。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/roundabout"
+  },
+  "corridor": {
+    "meaningZh": "（尤指两边是房间的） 走廊 ， 通道 ， 过道?走廊 （ 指 一国领土通过他国境内的狭长地带）",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（尤指两边是房间的） 走廊 ， 通道 ， 过道"
+      },
+      {
+        "pos": "noun",
+        "zh": "走廊 （ 指 一国领土通过他国境内的狭长地带）"
+      }
+    ],
+    "examples": [
+      {
+        "en": "Her office is at the end of the corridor.",
+        "zh": "她的办公室在走廊尽头。"
+      },
+      {
+        "en": "the Polish corridor",
+        "zh": "波兰走廊"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/corridor"
+  },
+  "transit": {
+    "meaningZh": "运输 ; 输送?（尤指用来运货的）一种小型车辆，“全顺”货车",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "运输 ; 输送"
+      },
+      {
+        "pos": "noun",
+        "zh": "（尤指用来运货的）一种小型车辆，“全顺”货车"
+      }
+    ],
+    "examples": [
+      {
+        "en": "It is possible to make an insurance claim for any goods lost or damaged in transit.",
+        "zh": "为在运输中丢失或受损的货物索要保险赔偿是有可能的。"
+      },
+      {
+        "en": "The question is whether road transit is cheaper than rail .",
+        "zh": "问题在于公路运输是否比铁路运输便宜。"
+      },
+      {
+        "en": "a rapid -transit train",
+        "zh": "快运列车"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/transit"
+  },
+  "headway": {
+    "meaningZh": "前进 ， 取得进展",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "前进 ， 取得进展"
+      }
+    ],
+    "examples": [
+      {
+        "en": "I'm trying to learn to drive , but I'm not making much headway ( with it).",
+        "zh": "我想学开车，可是进步缓慢。"
+      },
+      {
+        "en": "Little headway has been made so far in the negotiations .",
+        "zh": "谈判至今未取得进展。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/headway"
+  },
+  "ridership": {
+    "meaningZh": "（公共交通系统的） 乘客数 ， 乘客量",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "（公共交通系统的） 乘客数 ， 乘客量"
+      }
+    ],
+    "examples": [
+      {
+        "en": "This month ridership on the Chicago subway went down again.",
+        "zh": "本月芝加哥地铁的乘客量又下降了。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/ridership"
+  },
+  "capacity": {
+    "meaningZh": "容积 ， 容量 ; 生产能力 ;（尤指某人或某组织的） 办事能力?职位 ; 工作 ; 角色",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "容积 ， 容量 ; 生产能力 ;（尤指某人或某组织的） 办事能力"
+      },
+      {
+        "pos": "noun",
+        "zh": "职位 ; 工作 ; 角色"
+      }
+    ],
+    "examples": [
+      {
+        "en": "The stadium has a seating capacity of 50,000.",
+        "zh": "这个体育场能容纳5万人。"
+      },
+      {
+        "en": "The game was watched by a capacity crowd / audience of 50,000 (= the place was completely full ) .",
+        "zh": "比赛场座无虚席，5万观众观看了比赛。"
+      },
+      {
+        "en": "The generators each have a capacity of (= can produce ) 1,000 kilowatts .",
+        "zh": "每台发电机都有1000千瓦的发电能力。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/capacity"
+  },
+  "congestion": {
+    "meaningZh": "拥挤 ， 阻塞?（鼻腔） 阻塞?充血",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "拥挤 ， 阻塞"
+      },
+      {
+        "pos": "noun",
+        "zh": "（鼻腔） 阻塞"
+      },
+      {
+        "pos": "noun",
+        "zh": "充血"
+      }
+    ],
+    "examples": [
+      {
+        "en": "These facilities are designed to ease the congestion of emergency rooms .",
+        "zh": "这些设施旨在缓解急诊室的拥挤状况。"
+      },
+      {
+        "en": "Cases are being repeatedly delayed because of congestion in the courts .",
+        "zh": "由于庭审密集，案件一再拖延。"
+      },
+      {
+        "en": "This spray helps to ease nasal congestion.",
+        "zh": "这种喷雾剂能帮助缓解鼻腔阻塞。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/congestion"
+  },
+  "signal timing": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/signal-timing"
+  },
+  "detour": {
+    "meaningZh": "绕行的路 ， 迂回路?绕行路线",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "绕行的路 ， 迂回路"
+      },
+      {
+        "pos": "noun",
+        "zh": "绕行路线"
+      }
+    ],
+    "examples": [
+      {
+        "en": "You'd be wise to make a detour to avoid the roadworks .",
+        "zh": "绕开道路施工地点是明智之举。"
+      },
+      {
+        "en": "Traffic detours will be kept to a minimum throughout the festival .",
+        "zh": "在节日期间，尽量不实行交通绕行措施。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/detour"
+  },
+  "freight": {
+    "meaningZh": "货物 ; 货运?运费?运送 （ 货物 ）",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "货物 ; 货运"
+      },
+      {
+        "pos": "noun",
+        "zh": "运费"
+      },
+      {
+        "pos": "verb",
+        "zh": "运送 （ 货物 ）"
+      },
+      {
+        "pos": "adverb",
+        "zh": "（通过船、 飞机 、火车或卡车） 集中发运地"
+      }
+    ],
+    "examples": [
+      {
+        "en": "The ship carries both freight and passengers .",
+        "zh": "这艘船既载货又载客。"
+      },
+      {
+        "en": "a freight company",
+        "zh": "货运公司"
+      },
+      {
+        "en": "Will the goods be sent by air or sea freight?",
+        "zh": "这些货物要空运还是海运？"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/freight"
+  },
+  "logistics": {
+    "meaningZh": "后勤 ; 后勤学",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "后勤 ; 后勤学"
+      }
+    ],
+    "examples": [
+      {
+        "en": "We need to look at the logistics of the whole aid operation .",
+        "zh": "我们需要审视整个援助行动的后勤保障工作。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/logistics"
+  },
+  "intermodal": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/intermodal"
+  },
+  "terminal": {
+    "meaningZh": "（ 疾病 ） 晚期的 ， 末期的?（ 病人 ） 病情危重的?极其的 ， 极度的",
+    "meanings": [
+      {
+        "pos": "adjective",
+        "zh": "（ 疾病 ） 晚期的 ， 末期的"
+      },
+      {
+        "pos": "adjective",
+        "zh": "（ 病人 ） 病情危重的"
+      },
+      {
+        "pos": "adjective",
+        "zh": "极其的 ， 极度的"
+      },
+      {
+        "pos": "noun",
+        "zh": "站台 ； 候机楼 ， 航站 ； 码头"
+      },
+      {
+        "pos": "noun",
+        "zh": "计算机终端"
+      },
+      {
+        "pos": "noun",
+        "zh": "（电路的） 端子 ， 线接头"
+      }
+    ],
+    "examples": [
+      {
+        "en": "She has terminal cancer .",
+        "zh": "她患有晚期癌症。"
+      },
+      {
+        "en": "She claims that the shipbuilding industry is in terminal decline .",
+        "zh": "她声称造船业已经衰败到了极点。"
+      },
+      {
+        "en": "He has nothing to do all day and is suffering from terminal boredom .",
+        "zh": "他终日无所事事，极其无聊。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/terminal"
+  },
+  "timetable": {
+    "meaningZh": "时间表 ， 行程安排?（ 公共汽车 、火车和飞机的） 运行时刻表?（ 学校的 ） 课程表",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "时间表 ， 行程安排"
+      },
+      {
+        "pos": "noun",
+        "zh": "（ 公共汽车 、火车和飞机的） 运行时刻表"
+      },
+      {
+        "pos": "noun",
+        "zh": "（ 学校的 ） 课程表"
+      },
+      {
+        "pos": "verb",
+        "zh": "为 …安排时间"
+      }
+    ],
+    "examples": [
+      {
+        "en": "The timetable for our trip to Paris includes visits to Notre-Dame and the Louvre.",
+        "zh": "我们巴黎之行的时间表上包括参观巴黎圣母院和卢浮宫。"
+      },
+      {
+        "en": "Here is the timetable of events for the day .",
+        "zh": "这是一天的日程安排表。"
+      },
+      {
+        "en": "the timetable for the withdrawal of US troops from the country",
+        "zh": "美军从该国撤军的时间表"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/timetable"
+  },
+  "dispatch": {
+    "meaningZh": "发送 ; 派遣?杀死 ， 结果 …的性命?发送 ; 派遣",
+    "meanings": [
+      {
+        "pos": "verb",
+        "zh": "发送 ; 派遣"
+      },
+      {
+        "pos": "verb",
+        "zh": "杀死 ， 结果 …的性命"
+      },
+      {
+        "pos": "noun",
+        "zh": "发送 ; 派遣"
+      },
+      {
+        "pos": "noun",
+        "zh": "（常指驻外记者发来的军事方面的） 新闻报道 ， 电讯"
+      }
+    ],
+    "examples": [
+      {
+        "en": "Two loads of cloth were dispatched to the factory on 12 December .",
+        "zh": "12月12日两车布料被发到工厂。"
+      },
+      {
+        "en": "Our handsome hero manages to dispatch another five villains .",
+        "zh": "我们英俊的男主人公设法又杀死了5个坏蛋。"
+      },
+      {
+        "en": "the dispatch of troops",
+        "zh": "派遣部队"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/dispatch"
+  },
+  "wayfinding": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/wayfinding"
+  },
+  "crosswalk": {
+    "meaningZh": "人行横道",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "人行横道"
+      }
+    ],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/crosswalk"
+  },
+  "lane": {
+    "meaningZh": "乡间小路 ； 小巷 ， 小街 ， 胡同?车道 ；（田径比赛的） 跑道 ； 泳道?航道 ， 航线",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "乡间小路 ； 小巷 ， 小街 ， 胡同"
+      },
+      {
+        "pos": "noun",
+        "zh": "车道 ；（田径比赛的） 跑道 ； 泳道"
+      },
+      {
+        "pos": "noun",
+        "zh": "航道 ， 航线"
+      }
+    ],
+    "examples": [
+      {
+        "en": "He drives so fast along those narrow country lanes.",
+        "zh": "在那些狭窄的乡间小路上他把车开得飞快。"
+      },
+      {
+        "en": "I live at the end of Church Lane.",
+        "zh": "我住在教堂巷的最里面。"
+      },
+      {
+        "en": "a bus / bike / cycle lane",
+        "zh": "公共汽车／自行车车道"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/lane"
+  },
+  "ramp metering": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/ramp-metering"
+  },
+  "tolling": {
+    "meaningZh": "诉讼时效中止 ， 诉讼时效中断 （指因特定事由的出现而暂时中止或中断诉讼时效）",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "诉讼时效中止 ， 诉讼时效中断 （指因特定事由的出现而暂时中止或中断诉讼时效）"
+      }
+    ],
+    "examples": [
+      {
+        "en": "In a tolling agreement , the statute of limitations on the prosecution of a crime no longer applies .",
+        "zh": "诉讼时效中止后，刑事犯罪起诉时效不再适用。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/tolling"
+  },
+  "bypass": {
+    "meaningZh": "绕过 ; 绕 … 走 ; 避开?忽视 ； 置 …于不顾； 越过?（给心脏接旁通管的） 搭桥手术 ， 分流术",
+    "meanings": [
+      {
+        "pos": "verb",
+        "zh": "绕过 ; 绕 … 走 ; 避开"
+      },
+      {
+        "pos": "verb",
+        "zh": "忽视 ； 置 …于不顾； 越过"
+      },
+      {
+        "pos": "noun",
+        "zh": "（给心脏接旁通管的） 搭桥手术 ， 分流术"
+      },
+      {
+        "pos": "noun",
+        "zh": "（绕过村镇的） 旁路 ， 副道"
+      }
+    ],
+    "examples": [
+      {
+        "en": "We took the road that bypasses the town .",
+        "zh": "我们选择了绕过城镇的道路。"
+      },
+      {
+        "en": "The oil pipeline bypasses the protected wilderness area .",
+        "zh": "石油管道绕过了受保护的野生地区。"
+      },
+      {
+        "en": "They bypassed the committee and went straight to senior management .",
+        "zh": "他们越过委员会，直接找高级管理层。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/bypass"
+  },
+  "overpass": {
+    "meaningZh": "立交桥 ; 跨线桥",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "立交桥 ; 跨线桥"
+      }
+    ],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/overpass"
+  },
+  "underpass": {
+    "meaningZh": "地下通道",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "地下通道"
+      }
+    ],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/underpass"
+  },
+  "pavement marking": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/pavement-marking"
+  },
+  "incident management": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/incident-management"
+  },
+  "travel demand": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/travel-demand"
+  },
+  "trip generation": {
+    "meaningZh": "",
+    "meanings": [],
+    "examples": [],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/trip-generation"
+  },
+  "mobility": {
+    "meaningZh": "活动性 ; 流动性?可在移动设备上提供服务的能力",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "活动性 ; 流动性"
+      },
+      {
+        "pos": "noun",
+        "zh": "可在移动设备上提供服务的能力"
+      }
+    ],
+    "examples": [
+      {
+        "en": "Some neck injuries cause total loss of mobility below the point of injury .",
+        "zh": "一些颈部损伤会导致受伤部位以下肢体完全丧失活动能力。"
+      },
+      {
+        "en": "I prefer the mobility of a hand-held camera .",
+        "zh": "我更喜欢手持摄像机的灵活性。"
+      },
+      {
+        "en": "Consumers are demanding mobility, so that they can have access to information wherever they go.",
+        "zh": "消费者要求享有移动设备上的服务，好让他们随处接触信息。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/mobility"
+  },
+  "resilience": {
+    "meaningZh": "复原力 ; 恢复力 ; 平复心情?回弹 ， 弹性",
+    "meanings": [
+      {
+        "pos": "noun",
+        "zh": "复原力 ; 恢复力 ; 平复心情"
+      },
+      {
+        "pos": "noun",
+        "zh": "回弹 ， 弹性"
+      }
+    ],
+    "examples": [
+      {
+        "en": "Trauma researchers emphasize the resilience of the human psyche .",
+        "zh": "创伤研究人员强调人类心理的复原力。"
+      },
+      {
+        "en": "The plant fibre has incredible strength and resilience.",
+        "zh": "植物纤维有让人难以置信的强度和弹性。"
+      }
+    ],
+    "source": "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/resilience"
+  }
+}

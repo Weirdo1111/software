@@ -1,4 +1,5 @@
 ﻿import type { RecoveryWord } from "@/lib/games/word-game-recovery";
+import cambridgeEnrichment from "@/lib/games/word-game-cambridge-enrichment.generated.json";
 
 export type WordGameBankId = "general" | "cs" | "math" | "civil" | "mechanical" | "transport";
 
@@ -8,21 +9,165 @@ type LexiconSeed = {
   meaningZh: string;
 };
 
-const toEntries = (seeds: LexiconSeed[], bankLabelEn: string, bankLabelZh: string): RecoveryWord[] =>
-  seeds.map((seed) => ({
-    word: seed.word,
-    meaningEn: seed.meaningEn,
-    meaningZh: seed.meaningZh,
-    examples: [
-      {
-        en: `The term "${seed.word}" appears in this ${bankLabelEn} lesson.`,
-        zh: `在这个${bankLabelZh}课程中会出现术语“${seed.word}”。`,
-      },
-    ],
-    uk: `UK /${seed.word}/`,
-    us: `US /${seed.word}/`,
-  }));
+type EnrichmentExample = { en: string; zh: string };
+type EnrichmentMeaning = { pos?: string; zh: string };
+type EnrichmentEntry = {
+  meaningZh?: string;
+  meanings?: EnrichmentMeaning[];
+  examples?: EnrichmentExample[];
+  source?: string;
+};
 
+const CAMBRIDGE_ENRICHMENT: Record<string, EnrichmentEntry> = cambridgeEnrichment as Record<string, EnrichmentEntry>;
+
+const POS_LABEL_MAP: Record<string, string> = {
+  noun: "n.",
+  n: "n.",
+  "n.": "n.",
+  verb: "v.",
+  v: "v.",
+  "v.": "v.",
+  adjective: "adj.",
+  adj: "adj.",
+  "adj.": "adj.",
+  adverb: "adv.",
+  adv: "adv.",
+  "adv.": "adv.",
+  pronoun: "pron.",
+  pron: "pron.",
+  "pron.": "pron.",
+  preposition: "prep.",
+  prep: "prep.",
+  "prep.": "prep.",
+  conjunction: "conj.",
+  conj: "conj.",
+  "conj.": "conj.",
+  determiner: "det.",
+  det: "det.",
+  "det.": "det.",
+  interjection: "int.",
+  exclamation: "int.",
+  int: "int.",
+  "int.": "int.",
+};
+
+const normalizeMeaningZhText = (value: string) =>
+  value
+    .replace(/\s*，\s*/g, "，")
+    .replace(/\s*；\s*/g, "；")
+    .replace(/\s*\?\s*/g, "；")
+    .replace(/\s+/g, " ")
+    .replace(/[。｡.;；]+$/g, "")
+    .trim();
+
+const toPosLabel = (pos?: string) => {
+  if (!pos) return "";
+  const normalized = pos.trim().toLowerCase();
+  const mapped = POS_LABEL_MAP[normalized];
+  if (mapped) return mapped;
+  if (/^[a-z]{1,8}\.?$/i.test(normalized)) {
+    return normalized.endsWith(".") ? normalized : `${normalized}.`;
+  }
+  return normalized;
+};
+
+const formatPosMeanings = (meanings?: EnrichmentMeaning[]) => {
+  if (!Array.isArray(meanings) || meanings.length === 0) return "";
+  const rows = meanings
+    .map((row) => ({ pos: toPosLabel(row.pos), zh: normalizeMeaningZhText(row.zh || "") }))
+    .filter((row) => row.zh.length > 0)
+    .filter((row, index, arr) => arr.findIndex((item) => item.pos === row.pos && item.zh === row.zh) === index);
+  if (rows.length === 0) return "";
+
+  const grouped = new Map<string, string[]>();
+  for (const row of rows) {
+    const key = row.pos || "";
+    const list = grouped.get(key) ?? [];
+    if (!list.includes(row.zh)) {
+      list.push(row.zh);
+    }
+    grouped.set(key, list);
+  }
+
+  return Array.from(grouped.entries())
+    .slice(0, 4)
+    .map(([pos, list]) => (pos ? `${pos} ${list.join("；")}` : list.join("；")))
+    .join("\n");
+};
+
+const splitMeaningZh = (value: string) =>
+  normalizeMeaningZhText(value)
+    .split(/[;；]/)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+
+const mergeMeaningZh = (baseMeaning: string, enrichedMeaning?: string) => {
+  if (!enrichedMeaning || enrichedMeaning.trim().length === 0) return normalizeMeaningZhText(baseMeaning);
+  const merged = [...splitMeaningZh(baseMeaning), ...splitMeaningZh(enrichedMeaning)];
+  const unique = merged.filter((part, index, arr) => arr.findIndex((item) => item === part) === index);
+  return normalizeMeaningZhText(unique.join("；"));
+};
+
+const normalizeExampleText = (value: string) =>
+  value
+    .replace(/\s+([,.;!?])/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const isSentenceLikeEnglish = (value: string) => {
+  const text = normalizeExampleText(value);
+  if (!text) return false;
+  if (!/^[A-Z]/.test(text)) return false;
+  if (!/[.!?]$/.test(text)) return false;
+  const words = (text.match(/[A-Za-z]+(?:'[A-Za-z]+)?/g) ?? []).length;
+  if (words < 5) return false;
+  return true;
+};
+
+const buildFallbackExamples = (word: string, bankLabelEn: string, bankLabelZh: string): EnrichmentExample[] => {
+  const fallbackZh = `在这个${bankLabelZh}课程中会出现术语“${word}”。`;
+  return [
+    {
+      en: `The term "${word}" appears in this ${bankLabelEn} lesson.`,
+      zh: fallbackZh,
+    },
+    {
+      en: `Our assignment asks us to apply "${word}" in a practical task.`,
+      zh: fallbackZh,
+    },
+    {
+      en: `Understanding "${word}" helps improve communication in ${bankLabelEn} contexts.`,
+      zh: fallbackZh,
+    },
+  ];
+};
+
+const mergeExamples = (primary: EnrichmentExample[], fallback: EnrichmentExample[]) => {
+  const merged = [...primary, ...fallback]
+    .map((example) => ({ en: normalizeExampleText(example.en), zh: normalizeExampleText(example.zh) }))
+    .filter((example) => isSentenceLikeEnglish(example.en))
+    .filter((example) => example.en.length > 0 && example.zh.length > 0)
+    .filter((example, index, arr) => arr.findIndex((item) => item.en === example.en && item.zh === example.zh) === index);
+  return merged.slice(0, 3);
+};
+
+const toEntries = (seeds: LexiconSeed[], bankLabelEn: string, bankLabelZh: string): RecoveryWord[] =>
+  seeds.map((seed) => {
+    const enrichment = CAMBRIDGE_ENRICHMENT[seed.word.toLowerCase()];
+    const meaningZhByPos = formatPosMeanings(enrichment?.meanings);
+    const fallbackMergedMeaning = mergeMeaningZh(seed.meaningZh, enrichment?.meaningZh);
+    const meaningZh = meaningZhByPos || fallbackMergedMeaning;
+    const examples = mergeExamples(enrichment?.examples ?? [], buildFallbackExamples(seed.word, bankLabelEn, bankLabelZh));
+
+    return {
+      word: seed.word,
+      meaningEn: seed.meaningEn,
+      meaningZh,
+      examples,
+      uk: `UK /${seed.word}/`,
+      us: `US /${seed.word}/`,
+    };
+  });
 const CS_SEEDS: LexiconSeed[] = [
   { word: "algorithm", meaningEn: "A step-by-step method for solving a problem.", meaningZh: "用于解决问题的分步方法。" },
   { word: "data structure", meaningEn: "A way to organize and store data.", meaningZh: "组织和存储数据的方式。" },
