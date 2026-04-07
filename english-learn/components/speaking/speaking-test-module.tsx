@@ -1030,24 +1030,10 @@ export function SpeakingTestModule({ locale }: { locale: Locale }) {
           </div>
         </aside>
 
-        <main className="mx-auto flex w-full max-w-[1220px] flex-1 flex-col justify-center px-6 py-10 md:px-10 lg:px-16">
+        <main className="mx-auto flex w-full max-w-[1220px] flex-1 flex-col justify-center px-6 py-6 md:px-10 md:py-7 lg:px-16">
           {activePanel === "assessment" ? (
             <>
-              <section ref={assessmentRef} className="mb-10 flex flex-col gap-6 border-b border-[rgba(0,12,30,0.08)] pb-8 md:flex-row md:items-start md:justify-between">
-                <div>
-                  <h1 className="font-newsreader text-[44px] leading-[0.92] tracking-[-0.03em] text-[#000c1e] md:text-[64px]">
-                    {text.pageTitle}
-                  </h1>
-                </div>
-
-                <div className="rounded-full bg-[linear-gradient(135deg,#0b2f62,#0b2447_45%,#d8b96b_100%)] p-[1px] shadow-[0_12px_28px_rgba(25,28,29,0.12)]">
-                  <div className="rounded-full bg-[linear-gradient(135deg,#08234a,#0e376f)] px-6 py-3 font-inter text-[20px] font-bold text-[#e5c987] shadow-[inset_0_1px_0_rgba(255,255,255,0.16)]">
-                    {text.question} {Math.min(currentQuestionIndex + 1, questionSet.questions.length)} {text.of} {questionSet.questions.length}
-                  </div>
-                </div>
-              </section>
-
-              <div className="flex flex-col gap-8">
+              <div ref={assessmentRef} className="flex flex-col gap-8">
                 <section>
                   <div className="mx-auto max-w-[980px] rounded-[32px] bg-white px-8 py-10 shadow-[0_22px_48px_rgba(25,28,29,0.12)] md:px-10 md:py-12">
                     <h3 className="font-inter text-[15px] font-extrabold uppercase tracking-[0.08em] text-[#2c4f7f]">
