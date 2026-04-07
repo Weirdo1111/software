@@ -1,23 +1,27 @@
 @import "tailwindcss";
 
 :root {
-  --paper: #f9f7ff;
-  --paper-strong: #e7eeff;
-  --paper-soft: #fffdf9;
-  --ink: #314166;
-  --ink-soft: #6b7b98;
+  --paper: #f7f9fd;
+  --paper-strong: #e4edf8;
+  --paper-soft: #fffaf7;
+  --ink: #24334d;
+  --ink-soft: #5d6b80;
   --line: rgba(130, 143, 191, 0.18);
-  --navy: #5a7bff;
+  --navy: #13439b;
   --teal: #38c7b4;
-  --amber: #ffbe49;
-  --coral: #ff8f81;
-  --glow: rgba(90, 123, 255, 0.16);
+  --amber: #ce9c45;
+  --coral: #b84b6b;
+  --glow: rgba(19, 67, 155, 0.16);
   --sky: #8ed8ff;
   --grass: #8de06a;
   --petal: #ffc9e1;
   --sun: #ffe38f;
   --berry: #a97bff;
   --mint: #8ff0d3;
+  --diicsu-blue: #13439b;
+  --diicsu-blue-deep: #1c4e95;
+  --diicsu-maroon: #921041;
+  --diicsu-gold: #ce9c45;
   --font-body: "Avenir Next", "Segoe UI", "PingFang SC", "Hiragino Sans GB", sans-serif;
   --font-display: "Arial Rounded MT Bold", "Trebuchet MS", "Avenir Next", "Segoe UI", "PingFang SC", "Hiragino Sans GB", sans-serif;
 }
@@ -35,11 +39,11 @@ body {
   min-height: 100vh;
   color: var(--ink);
   background:
-    radial-gradient(circle at 12% 10%, rgba(255, 227, 143, 0.62), transparent 16%),
-    radial-gradient(circle at 84% 11%, rgba(255, 186, 220, 0.58), transparent 18%),
-    radial-gradient(circle at 26% 74%, rgba(169, 123, 255, 0.16), transparent 22%),
-    radial-gradient(circle at 79% 71%, rgba(143, 240, 211, 0.26), transparent 24%),
-    linear-gradient(180deg, #78d2ff 0%, #99e4ff 23%, #d6f5ff 58%, #fff5fb 100%);
+    radial-gradient(circle at 10% 12%, rgba(206, 156, 69, 0.18), transparent 16%),
+    radial-gradient(circle at 85% 12%, rgba(146, 16, 65, 0.12), transparent 18%),
+    radial-gradient(circle at 24% 72%, rgba(19, 67, 155, 0.1), transparent 22%),
+    radial-gradient(circle at 78% 70%, rgba(28, 78, 149, 0.08), transparent 24%),
+    linear-gradient(180deg, #eaf2fb 0%, #f5f8fd 38%, #fbfdff 66%, #fff8f5 100%);
   background-attachment: fixed;
   font-family: var(--font-body);
 }
@@ -49,16 +53,13 @@ body::before {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  opacity: 0.62;
+  opacity: 0.58;
   background:
-    radial-gradient(circle at 9% 12%, rgba(255, 255, 255, 0.9) 0 5.6%, transparent 6%),
-    radial-gradient(circle at 16% 16%, rgba(255, 255, 255, 0.78) 0 3.8%, transparent 4.1%),
-    radial-gradient(circle at 72% 11%, rgba(255, 255, 255, 0.96) 0 8%, transparent 8.4%),
-    radial-gradient(circle at 80% 16%, rgba(255, 255, 255, 0.82) 0 5%, transparent 5.3%),
-    radial-gradient(circle at 24% 23%, rgba(255, 244, 181, 0.5) 0 1.2%, transparent 1.4%),
-    radial-gradient(circle at 61% 21%, rgba(255, 196, 225, 0.44) 0 1.1%, transparent 1.3%),
-    radial-gradient(circle at 88% 31%, rgba(255, 244, 181, 0.42) 0 1.15%, transparent 1.35%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 24%, transparent 82%, rgba(141, 224, 106, 0.08));
+    radial-gradient(circle at 9% 12%, rgba(255, 255, 255, 0.92) 0 5.2%, transparent 5.6%),
+    radial-gradient(circle at 78% 12%, rgba(255, 255, 255, 0.82) 0 6.6%, transparent 7%),
+    radial-gradient(circle at 24% 24%, rgba(206, 156, 69, 0.14) 0 1.2%, transparent 1.4%),
+    radial-gradient(circle at 62% 22%, rgba(146, 16, 65, 0.1) 0 1%, transparent 1.2%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 24%, transparent 82%, rgba(19, 67, 155, 0.04));
 }
 
 body::after {
@@ -66,12 +67,12 @@ body::after {
   position: fixed;
   inset: -8% -10%;
   pointer-events: none;
-  opacity: 0.56;
+  opacity: 0.42;
   background:
-    linear-gradient(180deg, transparent 0%, transparent 74%, rgba(132, 206, 255, 0.1) 82%, rgba(255, 198, 227, 0.12) 100%),
-    radial-gradient(circle at 16% 20%, rgba(90, 123, 255, 0.12), transparent 18%),
-    radial-gradient(circle at 84% 12%, rgba(255, 190, 73, 0.2), transparent 16%),
-    radial-gradient(circle at 52% 103%, rgba(255, 172, 207, 0.22), transparent 20%);
+    linear-gradient(180deg, transparent 0%, transparent 78%, rgba(19, 67, 155, 0.06) 86%, rgba(146, 16, 65, 0.08) 100%),
+    radial-gradient(circle at 16% 20%, rgba(19, 67, 155, 0.08), transparent 18%),
+    radial-gradient(circle at 84% 12%, rgba(206, 156, 69, 0.16), transparent 16%),
+    radial-gradient(circle at 52% 103%, rgba(146, 16, 65, 0.08), transparent 20%);
   animation: driftField 18s ease-in-out infinite;
 }
 
@@ -117,11 +118,11 @@ body::after {
   align-items: center;
   border-radius: 1.5rem;
   border: 2px solid rgba(255, 255, 255, 0.9);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(235, 244, 255, 0.92));
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(238, 244, 252, 0.94));
   padding: 0.72rem 0.95rem;
   box-shadow:
-    0 10px 0 rgba(126, 196, 255, 0.45),
-    0 24px 42px rgba(79, 123, 196, 0.18);
+    0 10px 0 rgba(19, 67, 155, 0.12),
+    0 24px 42px rgba(19, 67, 155, 0.14);
 }
 
 .institution-brand-image {
@@ -140,11 +141,11 @@ body::after {
   isolation: isolate;
   border-color: rgba(255, 255, 255, 0.78);
   background:
-    linear-gradient(90deg, rgba(37, 58, 122, 0.97) 0%, rgba(58, 87, 159, 0.96) 42%, rgba(88, 126, 198, 0.93) 100%);
+    linear-gradient(90deg, rgba(19, 67, 155, 0.98) 0%, rgba(28, 78, 149, 0.97) 48%, rgba(67, 108, 176, 0.95) 100%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    0 10px 0 rgba(126, 196, 255, 0.22),
-    0 20px 34px rgba(44, 74, 140, 0.22);
+    0 10px 0 rgba(19, 67, 155, 0.16),
+    0 20px 34px rgba(19, 67, 155, 0.22);
 }
 
 .institution-brand-plate-embedded::before {
@@ -170,10 +171,13 @@ body::after {
 
 .surface-panel {
   border: 2px solid rgba(255, 255, 255, 0.88);
-  background: linear-gradient(160deg, rgba(255, 252, 247, 0.98), rgba(246, 249, 255, 0.86));
+  background:
+    radial-gradient(circle at top right, rgba(206, 156, 69, 0.09), transparent 20%),
+    radial-gradient(circle at left top, rgba(19, 67, 155, 0.08), transparent 24%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(243, 247, 252, 0.9));
   box-shadow:
-    0 14px 0 rgba(143, 196, 255, 0.32),
-    0 28px 54px rgba(90, 123, 255, 0.12);
+    0 14px 0 rgba(19, 67, 155, 0.12),
+    0 28px 54px rgba(19, 67, 155, 0.1);
   backdrop-filter: blur(18px);
 }
 
@@ -192,20 +196,20 @@ body::after {
   gap: 0.5rem;
   border-radius: 999px;
   border: 2px solid rgba(255, 255, 255, 0.88);
-  background: linear-gradient(135deg, rgba(255, 244, 181, 0.94), rgba(255, 210, 230, 0.92));
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(235, 242, 252, 0.92));
   padding: 0.48rem 0.95rem;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #6b5d34;
-  box-shadow: 0 10px 18px rgba(255, 190, 73, 0.18);
+  color: var(--diicsu-blue-deep);
+  box-shadow: 0 10px 18px rgba(19, 67, 155, 0.08);
 }
 
 .institution-label {
-  border-color: rgba(28, 78, 149, 0.18);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.86), rgba(232, 239, 250, 0.74));
-  color: var(--navy);
+  border-color: rgba(19, 67, 155, 0.16);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(236, 242, 251, 0.88));
+  color: var(--diicsu-blue);
 }
 
 .metric-chip {
@@ -213,13 +217,13 @@ body::after {
   align-items: center;
   gap: 0.5rem;
   border-radius: 999px;
-  border: 2px solid rgba(255, 255, 255, 0.88);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(240, 246, 255, 0.92));
+  border: 1px solid rgba(19, 67, 155, 0.12);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(243, 247, 252, 0.92));
   padding: 0.5rem 0.9rem;
   font-size: 0.82rem;
   font-weight: 700;
   color: var(--ink);
-  box-shadow: 0 12px 20px rgba(90, 123, 255, 0.08);
+  box-shadow: 0 12px 20px rgba(19, 67, 155, 0.06);
 }
 
 .data-rule {
@@ -289,15 +293,24 @@ body::after {
   align-items: center;
   gap: 0.45rem;
   border-radius: 999px;
-  border: 2px solid rgba(255, 255, 255, 0.94);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(247, 238, 255, 0.92));
+  border: 1px solid rgba(19, 67, 155, 0.12);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(244, 248, 253, 0.92));
   padding: 0.56rem 1rem;
   font-size: 0.8rem;
   font-weight: 700;
   color: var(--ink);
   box-shadow:
-    0 8px 0 rgba(169, 123, 255, 0.16),
-    0 18px 26px rgba(90, 123, 255, 0.1);
+    0 8px 0 rgba(19, 67, 155, 0.06),
+    0 18px 26px rgba(19, 67, 155, 0.08);
+}
+
+.buddy-chip-brand {
+  border-color: rgba(19, 67, 155, 0.1);
+  background: linear-gradient(135deg, rgba(19, 67, 155, 0.96), rgba(28, 78, 149, 0.92));
+  color: #fff;
+  box-shadow:
+    0 8px 0 rgba(19, 67, 155, 0.14),
+    0 18px 26px rgba(19, 67, 155, 0.16);
 }
 
 .buddy-bubble {
@@ -352,10 +365,12 @@ body::after {
   overflow: hidden;
   border-radius: 1.9rem;
   border: 2px solid rgba(255, 255, 255, 0.9);
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(246, 249, 255, 0.92));
+  background:
+    radial-gradient(circle at top right, rgba(206, 156, 69, 0.1), transparent 22%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(244, 248, 252, 0.92));
   box-shadow:
-    0 12px 0 rgba(255, 201, 225, 0.34),
-    0 24px 42px rgba(90, 123, 255, 0.12);
+    0 12px 0 rgba(19, 67, 155, 0.08),
+    0 24px 42px rgba(19, 67, 155, 0.1);
   transition: transform 180ms ease, box-shadow 180ms ease;
 }
 
@@ -365,7 +380,7 @@ body::after {
   inset: auto -15% -28% 18%;
   height: 8rem;
   border-radius: 999px;
-  background: linear-gradient(90deg, rgba(255, 214, 132, 0.26), rgba(255, 201, 225, 0.22), transparent);
+  background: linear-gradient(90deg, rgba(206, 156, 69, 0.18), rgba(146, 16, 65, 0.1), transparent);
   filter: blur(20px);
   pointer-events: none;
 }
@@ -373,8 +388,8 @@ body::after {
 .campus-card:hover {
   transform: translateY(-2px) scale(1.01);
   box-shadow:
-    0 14px 0 rgba(255, 201, 225, 0.38),
-    0 28px 48px rgba(90, 123, 255, 0.16);
+    0 14px 0 rgba(19, 67, 155, 0.1),
+    0 28px 48px rgba(19, 67, 155, 0.14);
 }
 
 .quest-orb {
@@ -383,10 +398,10 @@ body::after {
   justify-content: center;
   border-radius: 1.35rem;
   border: 2px solid rgba(255, 255, 255, 0.88);
-  background: linear-gradient(135deg, rgba(141, 224, 106, 0.42), rgba(126, 216, 255, 0.46), rgba(255, 218, 116, 0.46));
+  background: linear-gradient(135deg, rgba(206, 156, 69, 0.2), rgba(221, 231, 246, 0.9), rgba(19, 67, 155, 0.14));
   box-shadow:
     inset 0 2px 0 rgba(255, 255, 255, 0.56),
-    0 12px 24px rgba(90, 123, 255, 0.12);
+    0 12px 24px rgba(19, 67, 155, 0.08);
 }
 
 .pet-sticker {
@@ -394,15 +409,15 @@ body::after {
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(243, 250, 255, 0.94));
+  border: 1px solid rgba(19, 67, 155, 0.12);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(245, 248, 252, 0.94));
   padding: 0.5rem 0.9rem;
   font-size: 0.74rem;
   font-weight: 700;
   color: var(--ink-soft);
   box-shadow:
-    0 8px 0 rgba(143, 240, 211, 0.22),
-    0 14px 22px rgba(90, 123, 255, 0.08);
+    0 8px 0 rgba(19, 67, 155, 0.05),
+    0 14px 22px rgba(19, 67, 155, 0.07);
 }
 
 .buddy-dressup-trigger {
@@ -1398,12 +1413,12 @@ body::after {
   border: 2px solid rgba(255, 255, 255, 0.9);
   background:
     radial-gradient(circle at 16% 18%, rgba(255, 255, 255, 0.92), transparent 13%),
-    radial-gradient(circle at 74% 18%, rgba(255, 255, 255, 0.88), transparent 13%),
-    radial-gradient(circle at 81% 30%, rgba(255, 198, 227, 0.44), transparent 16%),
-    linear-gradient(180deg, rgba(132, 212, 255, 0.72), rgba(173, 239, 255, 0.64) 38%, rgba(255, 255, 255, 0.96) 100%);
+    radial-gradient(circle at 76% 18%, rgba(255, 255, 255, 0.86), transparent 13%),
+    radial-gradient(circle at 82% 28%, rgba(146, 16, 65, 0.14), transparent 16%),
+    linear-gradient(180deg, rgba(226, 236, 248, 0.9), rgba(240, 245, 252, 0.92) 42%, rgba(255, 255, 255, 0.98) 100%);
   box-shadow:
-    0 14px 0 rgba(143, 196, 255, 0.34),
-    0 28px 54px rgba(90, 123, 255, 0.14);
+    0 14px 0 rgba(19, 67, 155, 0.08),
+    0 28px 54px rgba(19, 67, 155, 0.1);
 }
 
 .sky-panel::after {
@@ -1413,7 +1428,7 @@ body::after {
   height: 8rem;
   background:
     radial-gradient(circle at 20% 8%, rgba(255, 255, 255, 0.3), transparent 9%),
-    linear-gradient(180deg, rgba(126, 216, 255, 0), rgba(255, 212, 233, 0.28));
+    linear-gradient(180deg, rgba(19, 67, 155, 0), rgba(206, 156, 69, 0.12));
   pointer-events: none;
 }
 
@@ -1426,6 +1441,47 @@ body::after {
     radial-gradient(circle at 70% 22%, rgba(255, 255, 255, 0.84) 0 2.2%, transparent 2.4%),
     radial-gradient(circle at 58% 34%, rgba(255, 227, 143, 0.34) 0 1.5%, transparent 1.7%);
   pointer-events: none;
+}
+
+.diicsu-hero-panel {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(251, 252, 254, 0.97) 0%,
+      rgba(251, 252, 254, 0.92) 18%,
+      rgba(251, 252, 254, 0.76) 34%,
+      rgba(251, 252, 254, 0.42) 50%,
+      rgba(251, 252, 254, 0.16) 66%,
+      rgba(251, 252, 254, 0.26) 100%
+    ),
+    linear-gradient(180deg, rgba(17, 42, 82, 0.12), rgba(255, 255, 255, 0.04) 38%, rgba(255, 255, 255, 0.54) 100%),
+    url("/dii-brand/institute-building.jpg");
+  background-position: 16% 30%;
+  background-size: cover;
+}
+
+.diicsu-hero-panel::before {
+  background:
+    radial-gradient(circle at 16% 20%, rgba(255, 255, 255, 0.72) 0 9%, transparent 24%),
+    radial-gradient(circle at 80% 14%, rgba(206, 156, 69, 0.12) 0 8%, transparent 22%),
+    radial-gradient(circle at 82% 36%, rgba(19, 67, 155, 0.08) 0 10%, transparent 28%);
+}
+
+.diicsu-hero-panel::after {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0) 54%, rgba(255, 255, 255, 0.22) 78%, rgba(255, 255, 255, 0.72) 100%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02), transparent 24%, transparent 76%, rgba(255, 255, 255, 0.06));
+}
+
+@media (max-width: 900px) {
+  .diicsu-hero-panel {
+    background:
+      linear-gradient(180deg, rgba(251, 252, 254, 0.94) 0%, rgba(251, 252, 254, 0.72) 36%, rgba(251, 252, 254, 0.9) 100%),
+      linear-gradient(90deg, rgba(251, 252, 254, 0.82), rgba(251, 252, 254, 0.24)),
+      url("/dii-brand/institute-building.jpg");
+    background-position: 60% 30%;
+    background-size: cover;
+  }
 }
 
 .mission-badge {
@@ -1442,14 +1498,14 @@ body::after {
 
 .mission-badge-live {
   border: 2px solid rgba(255, 255, 255, 0.88);
-  background: linear-gradient(135deg, rgba(126, 216, 255, 0.94), rgba(143, 240, 211, 0.9));
-  color: #235f80;
+  background: linear-gradient(135deg, rgba(19, 67, 155, 0.92), rgba(62, 126, 210, 0.88));
+  color: #fff;
 }
 
 .mission-badge-win {
   border: 2px solid rgba(255, 255, 255, 0.88);
-  background: linear-gradient(135deg, rgba(255, 227, 143, 0.96), rgba(255, 198, 227, 0.9));
-  color: #845d00;
+  background: linear-gradient(135deg, rgba(206, 156, 69, 0.95), rgba(239, 213, 153, 0.92));
+  color: #5a4311;
 }
 
 .party-button {
@@ -1459,14 +1515,14 @@ body::after {
   gap: 0.55rem;
   border-radius: 999px;
   border: 2px solid rgba(255, 255, 255, 0.92);
-  background: linear-gradient(135deg, #6f87ff, #55d8ff);
+  background: linear-gradient(135deg, var(--diicsu-blue), #3f6fca);
   padding: 0.84rem 1.35rem;
   font-size: 0.92rem;
   font-weight: 800;
   color: white;
   box-shadow:
-    0 10px 0 rgba(92, 111, 221, 0.28),
-    0 18px 30px rgba(90, 123, 255, 0.22);
+    0 10px 0 rgba(19, 67, 155, 0.2),
+    0 18px 30px rgba(19, 67, 155, 0.2);
   transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
 }
 
@@ -1481,15 +1537,15 @@ body::after {
   justify-content: center;
   gap: 0.55rem;
   border-radius: 999px;
-  border: 2px solid rgba(255, 255, 255, 0.92);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(245, 248, 255, 0.96));
+  border: 1px solid rgba(19, 67, 155, 0.12);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(243, 246, 251, 0.96));
   padding: 0.84rem 1.35rem;
   font-size: 0.92rem;
   font-weight: 800;
   color: var(--ink);
   box-shadow:
-    0 9px 0 rgba(143, 196, 255, 0.18),
-    0 16px 26px rgba(90, 123, 255, 0.1);
+    0 9px 0 rgba(19, 67, 155, 0.06),
+    0 16px 26px rgba(19, 67, 155, 0.08);
   transition: transform 180ms ease, box-shadow 180ms ease;
 }
 
@@ -1501,19 +1557,64 @@ body::after {
   border-radius: 2rem;
   border: 2px solid rgba(255, 255, 255, 0.92);
   background:
-    radial-gradient(circle at top right, rgba(255, 198, 227, 0.34), transparent 24%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(244, 249, 255, 0.92));
+    radial-gradient(circle at top right, rgba(146, 16, 65, 0.12), transparent 24%),
+    radial-gradient(circle at left top, rgba(206, 156, 69, 0.1), transparent 20%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(243, 247, 252, 0.94));
   box-shadow:
-    0 14px 0 rgba(143, 196, 255, 0.28),
-    0 26px 52px rgba(90, 123, 255, 0.14);
+    0 14px 0 rgba(19, 67, 155, 0.08),
+    0 26px 52px rgba(19, 67, 155, 0.12);
   backdrop-filter: blur(18px);
 }
 
 .party-nav-track {
   border-radius: 1.5rem;
-  border: 2px solid rgba(255, 255, 255, 0.82);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(245, 248, 255, 0.92));
+  border: 1px solid rgba(19, 67, 155, 0.1);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(244, 247, 252, 0.94));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.diicsu-nav-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  border-radius: 1.55rem;
+  border: 1px solid rgba(19, 67, 155, 0.1);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(241, 246, 252, 0.94));
+  padding: 0.8rem 0.85rem;
+  box-shadow:
+    0 10px 0 rgba(19, 67, 155, 0.08),
+    0 18px 28px rgba(19, 67, 155, 0.1);
+}
+
+.diicsu-nav-badge {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  border-radius: 1.15rem;
+  border: 1px solid rgba(19, 67, 155, 0.12);
+  background: linear-gradient(135deg, rgba(19, 67, 155, 0.96), rgba(28, 78, 149, 0.94));
+  padding: 0.7rem 0.85rem;
+  color: #fff;
+  box-shadow:
+    0 8px 0 rgba(19, 67, 155, 0.12),
+    0 14px 22px rgba(19, 67, 155, 0.16);
+}
+
+.diicsu-nav-eyebrow {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.diicsu-nav-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1.35;
 }
 
 .buddy-loading-screen {
@@ -2238,20 +2339,122 @@ body::after {
   font-size: 0.95rem;
   font-weight: 800;
   color: var(--ink);
+  border: 1px solid transparent;
   transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
 }
 
 .party-tab:hover {
-  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(19, 67, 155, 0.1);
+  background: rgba(255, 255, 255, 0.9);
   transform: translateY(-1px);
 }
 
 .party-tab-active {
-  background: linear-gradient(135deg, #7d86ff, #4ad2ff);
+  border-color: rgba(19, 67, 155, 0.08);
+  background: linear-gradient(135deg, var(--diicsu-blue), #3d71cf);
   color: white;
   box-shadow:
-    0 8px 0 rgba(93, 104, 220, 0.26),
-    0 16px 28px rgba(90, 123, 255, 0.2);
+    0 8px 0 rgba(19, 67, 155, 0.18),
+    0 16px 28px rgba(19, 67, 155, 0.18);
+}
+
+.diicsu-section-label {
+  background: linear-gradient(135deg, rgba(19, 67, 155, 0.96), rgba(28, 78, 149, 0.92));
+  color: #fff;
+}
+
+.diicsu-resource-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(19, 67, 155, 0.12);
+  border-radius: 1.8rem;
+  background:
+    radial-gradient(circle at top right, rgba(206, 156, 69, 0.12), transparent 22%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(243, 247, 252, 0.94));
+  padding: 1.2rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 16px 30px rgba(19, 67, 155, 0.08);
+}
+
+.diicsu-resource-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.85rem;
+}
+
+.diicsu-resource-link {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(19, 67, 155, 0.1);
+  background: rgba(255, 255, 255, 0.88);
+  padding: 0.85rem 0.95rem;
+  box-shadow: 0 12px 24px rgba(19, 67, 155, 0.06);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.diicsu-resource-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 30px rgba(19, 67, 155, 0.1);
+}
+
+.diicsu-resource-link-note {
+  display: block;
+  margin-top: 0.18rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.diicsu-campus-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.diicsu-campus-media {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.45rem;
+  aspect-ratio: 5 / 4;
+  min-height: 13rem;
+  background: rgba(230, 236, 244, 0.9);
+}
+
+.diicsu-campus-media-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(19, 67, 155, 0.08) 0%, rgba(19, 67, 155, 0.16) 54%, rgba(19, 67, 155, 0.72) 100%),
+    linear-gradient(135deg, rgba(146, 16, 65, 0.08), transparent 45%);
+}
+
+.diicsu-campus-media-label {
+  position: absolute;
+  left: 1rem;
+  top: 1rem;
+  z-index: 1;
+}
+
+.diicsu-campus-card-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 0 0.2rem 0.2rem;
+}
+
+.diicsu-campus-link {
+  align-self: flex-start;
+  gap: 0.45rem;
+  color: var(--diicsu-blue);
+}
+
+.diicsu-campus-link:hover {
+  color: var(--diicsu-maroon);
 }
 
 .party-stage {

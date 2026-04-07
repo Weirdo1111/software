@@ -11,34 +11,38 @@ export function PageFrame({
   description,
   children,
   showHeader = true,
+  showShell = true,
 }: {
   locale: Locale;
   title: string;
   description?: string;
   children: ReactNode;
   showHeader?: boolean;
+  showShell?: boolean;
 }) {
   const frameCopy =
     locale === "zh"
       ? {
-          label: "DIICSU Buddy Campus",
-          eyebrow: "面向 DIICSU 本科生的卡通化学术英语校园体验",
-          chips: ["Listening + Speaking", "Quest-based campus", "Buddy growth with progress"],
-          footer: "DIICSU Buddy Campus - English adventure prototype",
+          label: "中南大学邓迪国际学院 Academic English Hub",
+          eyebrow: "面向 DIICSU 本科生的双校联合学术英语支持平台",
+          chips: ["双校联合支持", "EMI 课程英语", "图书馆 + seminar 路径"],
+          footer: "Dundee International Institute of CSU · Academic English Hub",
         }
       : {
-          label: "DIICSU Buddy Campus",
+          label: "Dundee International Institute of CSU",
           eyebrow:
-            "Built for DIICSU undergraduates, playful EMI study, and visible buddy progression.",
-          chips: ["Listening + Speaking", "Quest-based campus", "Buddy growth with progress"],
-          footer: "DIICSU Buddy Campus - English adventure prototype",
+            "Dual-campus academic English support for DIICSU undergraduates.",
+          chips: ["CSU × Dundee", "EMI coursework support", "Library + seminar pathways"],
+          footer: "Dundee International Institute of CSU · Academic English Hub",
         };
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-10">
-      <div className="z-[70]">
-        <AppShell locale={locale} />
-      </div>
+      {showShell ? (
+        <div className="z-[70]">
+          <AppShell locale={locale} />
+        </div>
+      ) : null}
 
       {showHeader ? (
         <header className="surface-panel page-grid reveal-up rounded-[2rem] p-6 sm:p-8">

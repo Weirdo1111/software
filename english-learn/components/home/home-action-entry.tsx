@@ -3,10 +3,12 @@
 // AI-assisted authorship note: the 2026 Buddy Campus home refresh in this module
 // was drafted with AI help and then reviewed, edited, and integrated by the team.
 
+import Image from "next/image";
 import Link from "next/link";
 import { createPortal } from "react-dom";
 import {
   ArrowRight,
+  Building2,
   CalendarDays,
   CircleHelp,
   Compass,
@@ -14,11 +16,17 @@ import {
   FileText,
   Gamepad2,
   Glasses,
+  GraduationCap,
   Hand,
   HatGlasses,
   Headphones,
+  Library,
   LibraryBig,
   Lock,
+  LogIn,
+  LogOut,
+  Mail,
+  MapPin,
   Mic,
   PawPrint,
   PenLine,
@@ -26,10 +34,13 @@ import {
   Shirt,
   Target,
   Trophy,
+  User,
   WandSparkles,
+  type LucideIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from "react";
 
+import { InstitutionBrand } from "@/components/institution-brand";
 import { BuddyCampusLobby } from "@/components/home/buddy-campus-lobby";
 import { BuddyCompanion, type BuddyFace, type BuddyVariant } from "@/components/home/buddy-companion";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -296,18 +307,122 @@ function getQuestVisual(skill: string) {
   };
 }
 
-const majorStickers = [
-  "Civil Engineering",
-  "Mathematics",
-  "Computing Science",
-  "Mechanical Engineering",
-  "Transportation",
-] as const;
-
 const weekdayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const LAST_SEEN_BUDDY_LEVEL_KEY = "english-learn:buddy:last-seen-level";
 type WardrobeCategory = "hat" | "clothing" | "glasses" | "heldItem";
 type WardrobeTab = WardrobeCategory | "variant";
+type InstitutionQuickLink = {
+  label: string;
+  note: string;
+  href: string;
+  Icon: LucideIcon;
+};
+type InstitutionShowcaseCard = {
+  key: string;
+  eyebrow: string;
+  title: string;
+  note: string;
+  cta: string;
+  href: string;
+  imageSrc: string;
+  imageAlt: string;
+  Icon: LucideIcon;
+};
+
+function getInstitutionSignals(locale: Locale) {
+  if (locale === "zh") {
+    return ["中南大学 × 邓迪大学", "全英文课程支持", "双校图书馆资源", "潇湘校区校园生活"];
+  }
+
+  return ["CSU × Dundee", "EMI coursework support", "Dual-library access", "Xiaoxiang Campus life"];
+}
+
+function getInstitutionQuickLinks(locale: Locale): InstitutionQuickLink[] {
+  const homeHref = locale === "zh" ? "https://dii.csu.edu.cn/" : "https://dii.csu.edu.cn/EN/HOME.htm";
+
+  return [
+    {
+      label: locale === "zh" ? "中南大学图书馆" : "CSU Library",
+      note: locale === "zh" ? "校内检索、数据库与学习资源" : "Search, databases, and campus study resources",
+      href: "https://lib.csu.edu.cn",
+      Icon: Library,
+    },
+    {
+      label: locale === "zh" ? "邓迪大学图书馆" : "UoD Library",
+      note: locale === "zh" ? "邓迪大学学术资源入口" : "University of Dundee academic resources",
+      href: "https://www.dundee.ac.uk/library/",
+      Icon: LibraryBig,
+    },
+    {
+      label: locale === "zh" ? "学院邮箱" : "Office Email",
+      note: "office_dii@csu.edu.cn",
+      href: "mailto:office_dii@csu.edu.cn",
+      Icon: Mail,
+    },
+    {
+      label: locale === "zh" ? "学院官网" : "Official Site",
+      note: locale === "zh" ? "潇湘校区 · 长沙" : "Xiaoxiang Campus, Changsha",
+      href: homeHref,
+      Icon: MapPin,
+    },
+  ];
+}
+
+function getInstitutionShowcaseCards(locale: Locale): InstitutionShowcaseCard[] {
+  return [
+    {
+      key: "about-us",
+      eyebrow: "About Us",
+      title: locale === "zh" ? "学院介绍" : "About DIICSU",
+      note:
+        locale === "zh"
+          ? "了解双校联合办学背景、学院定位与国际化培养框架。"
+          : "See the dual-campus background, institute identity, and international learning structure.",
+      cta: locale === "zh" ? "查看官方介绍" : "Open official page",
+      href:
+        locale === "zh"
+          ? "https://dii.csu.edu.cn/xygk/xyjs1/xyjj.htm"
+          : "https://dii.csu.edu.cn/EN/ABOUT/Why_DIICSU/Introduction.htm",
+      imageSrc: "/dii-brand/about-us.jpg",
+      imageAlt: locale === "zh" ? "邓迪国际学院学院介绍栏目图" : "DIICSU About Us artwork",
+      Icon: Building2,
+    },
+    {
+      key: "degree-programmes",
+      eyebrow: "Degree Programmes",
+      title: locale === "zh" ? "专业设置" : "Degree Programmes",
+      note:
+        locale === "zh"
+          ? "把专业背景、课程语境和学术英语路径连到一起。"
+          : "Connect majors, coursework context, and academic English preparation in one place.",
+      cta: locale === "zh" ? "查看专业页面" : "View programmes",
+      href:
+        locale === "zh"
+          ? "https://dii.csu.edu.cn/zsxx/zsxx/zysz.htm"
+          : "https://dii.csu.edu.cn/EN/ACADEMICS/DegreeProgrammes.htm",
+      imageSrc: "/dii-brand/degree-programmes.jpg",
+      imageAlt: locale === "zh" ? "邓迪国际学院专业设置栏目图" : "DIICSU degree programmes artwork",
+      Icon: GraduationCap,
+    },
+    {
+      key: "campus-life",
+      eyebrow: "Campus Life",
+      title: locale === "zh" ? "校园生活" : "Campus Life",
+      note:
+        locale === "zh"
+          ? "把校园活动、成长体验与学习支持一起带进首页。"
+          : "Bring campus activities, student life, and institute atmosphere into the home view.",
+      cta: locale === "zh" ? "打开校园生活" : "Explore campus life",
+      href:
+        locale === "zh"
+          ? "https://dii.csu.edu.cn/xsgz/xgdt.htm"
+          : "https://dii.csu.edu.cn/EN/CAMPUS_LIFE/Campus_Life.htm",
+      imageSrc: "/dii-brand/campus-life.jpg",
+      imageAlt: locale === "zh" ? "邓迪国际学院校园生活栏目图" : "DIICSU campus life artwork",
+      Icon: Compass,
+    },
+  ];
+}
 
 const BUDDY_WARDROBE_UNLOCK_ORDER: Array<
   | { category: "hat"; value: BuddyHat }
@@ -670,6 +785,9 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   const mainBuddyAnchorRef = useRef<HTMLDivElement | null>(null);
   const homeBuddyIntroShrinkTimerRef = useRef<number | null>(null);
   const homeBuddyIntroFinishTimerRef = useRef<number | null>(null);
+  const accountLabel = locale === "zh" ? "个人主页" : "Profile";
+  const loginLabel = locale === "zh" ? "登录" : "Log in";
+  const logoutLabel = locale === "zh" ? "退出" : "Log out";
 
   useEffect(() => {
     const refresh = () => {
@@ -709,6 +827,49 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       window.removeEventListener("demo-placement-changed", refresh as EventListener);
     };
   }, [locale]);
+
+  useEffect(() => {
+    if (isLoggedIn) return;
+
+    let cancelled = false;
+
+    const syncSession = async () => {
+      try {
+        const response = await fetch("/api/auth/session", { cache: "no-store" });
+        if (!response.ok) return;
+
+        const payload = (await response.json()) as {
+          authenticated?: boolean;
+          user?: { username?: string; email?: string } | null;
+          auth_provider?: string;
+          auth_user_id?: string;
+        };
+
+        if (!payload.authenticated || cancelled) return;
+
+        localStorage.setItem("demo_logged_in", "true");
+        localStorage.setItem(
+          "demo_user",
+          payload.user?.username || payload.user?.email || "Learner",
+        );
+        if (payload.auth_user_id) {
+          localStorage.setItem("demo_auth_user_id", payload.auth_user_id);
+        }
+        if (payload.auth_provider) {
+          localStorage.setItem("demo_auth_provider", payload.auth_provider);
+        }
+        window.dispatchEvent(new Event("demo-auth-changed"));
+      } catch {
+        // Ignore silent session sync failures on the home hero.
+      }
+    };
+
+    void syncSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn]);
 
   const weeklySchedule = useMemo(() => {
     const appliedPlans = getActiveWeekPlanOverrides(preferences, new Date());
@@ -1237,6 +1398,162 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     locale === "zh" ? `Dorm Lockout 通关 +${BUDDY_XP_RULES.dormLockoutClear} XP` : `Dorm Lockout clear +${BUDDY_XP_RULES.dormLockoutClear} XP`,
     locale === "zh" ? `Last Train Escape 通关 +${BUDDY_XP_RULES.lastTrainClear} XP` : `Last Train Escape clear +${BUDDY_XP_RULES.lastTrainClear} XP`,
   ];
+  const institutionSignals = getInstitutionSignals(locale);
+  const institutionQuickLinks = getInstitutionQuickLinks(locale);
+  const institutionShowcaseCards = getInstitutionShowcaseCards(locale);
+  const institutionResourcePanel = (
+    <div className="diicsu-resource-panel mt-6">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div className="max-w-2xl">
+          <p className="section-label diicsu-section-label">
+            <Building2 className="size-3.5" />
+            {locale === "zh" ? "邓迪国际学院官方入口" : "DIICSU Official Touchpoints"}
+          </p>
+          <h3 className="font-display mt-4 text-2xl tracking-tight text-[var(--ink)] sm:text-[2rem]">
+            {locale === "zh" ? "把学院资源和学习主界面放在一起。" : "Keep institute resources and study routes in one place."}
+          </h3>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--ink-soft)]">
+            {locale === "zh"
+              ? "围绕双校联合背景、全英文课程、图书馆资源和校园生活，把更像邓迪国际学院的入口带回首页。"
+              : "Bring dual-campus context, library resources, and campus-life cues into the same hub as listening, speaking, reading, and writing."}
+          </p>
+        </div>
+      </div>
+
+      <div className="diicsu-resource-grid mt-5">
+        {institutionQuickLinks.map((item) => (
+          <a
+            key={item.label}
+            href={item.href}
+            target="_blank"
+            rel="noreferrer"
+            className="diicsu-resource-link"
+          >
+            <span className="quest-orb h-11 w-11 shrink-0">
+              <item.Icon className="size-4.5 text-[var(--navy)]" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold text-[var(--ink)]">{item.label}</span>
+              <span className="diicsu-resource-link-note">{item.note}</span>
+            </span>
+            <ArrowRight className="size-4 shrink-0 text-[var(--navy)]" />
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+  const institutionQuickLinkStrip = (
+    <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {institutionQuickLinks.map((item) => (
+        <a
+          key={`hero-${item.label}`}
+          href={item.href}
+          target="_blank"
+          rel="noreferrer"
+          className="diicsu-resource-link"
+        >
+          <span className="quest-orb h-11 w-11 shrink-0">
+            <item.Icon className="size-4.5 text-[var(--navy)]" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold text-[var(--ink)]">{item.label}</span>
+            <span className="diicsu-resource-link-note">{item.note}</span>
+          </span>
+          <ArrowRight className="size-4 shrink-0 text-[var(--navy)]" />
+        </a>
+      ))}
+    </div>
+  );
+  const institutionShowcaseGrid = (
+    <div className="grid gap-4 lg:grid-cols-3">
+      {institutionShowcaseCards.map((item) => (
+        <article key={item.key} className="campus-card diicsu-campus-card p-4">
+          <div className="diicsu-campus-media">
+            <Image
+              src={item.imageSrc}
+              alt={item.imageAlt}
+              fill
+              sizes="(max-width: 1024px) 100vw, 33vw"
+              className="object-cover"
+            />
+            <div className="diicsu-campus-media-overlay" />
+            <p className="section-label diicsu-campus-media-label">
+              <item.Icon className="size-3.5" />
+              {item.eyebrow}
+            </p>
+          </div>
+
+          <div className="diicsu-campus-card-body">
+            <h3 className="text-xl font-semibold text-[var(--ink)]">{item.title}</h3>
+            <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">{item.note}</p>
+            <a
+              href={item.href}
+              target="_blank"
+              rel="noreferrer"
+              className="pet-sticker diicsu-campus-link mt-5"
+            >
+              {item.cta}
+              <ArrowRight className="size-3.5" />
+            </a>
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/sign-out", {
+        method: "POST",
+      });
+    } catch {
+      // Ignore sign-out network errors and still clear local client state.
+    }
+
+    localStorage.removeItem("demo_logged_in");
+    localStorage.removeItem("demo_user");
+    localStorage.removeItem("demo_auth_provider");
+    localStorage.removeItem("demo_auth_user_id");
+    window.dispatchEvent(new Event("demo-auth-changed"));
+    window.location.href = "/";
+  };
+
+  const homeHeroTopBar = (
+    <div className="relative z-10 mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-wrap items-center gap-2 md:gap-3">
+        <InstitutionBrand locale={locale} embedded compact className="max-w-[17rem] justify-start lg:flex-none" />
+        <span className="buddy-chip buddy-chip-brand whitespace-nowrap">
+          <Building2 className="size-4" />
+          {locale === "zh" ? "中南大学 × 邓迪大学" : "Central South University × Dundee"}
+        </span>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap lg:justify-end">
+        <LanguageSwitcher locale={locale} />
+        {isLoggedIn ? (
+          <>
+            <Link href={`/dashboard?lang=${locale}`} className="party-button-ghost whitespace-nowrap">
+              <User className="size-4" />
+              {accountLabel}
+            </Link>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-full border-2 border-white/90 bg-[linear-gradient(135deg,var(--diicsu-maroon),#b84b6b)] px-4 text-[15px] font-semibold text-white shadow-[0_9px_0_rgba(107,18,49,0.24),0_18px_26px_rgba(146,16,65,0.18)] transition hover:translate-y-[-1px]"
+            >
+              <LogOut className="size-4" />
+              {logoutLabel}
+            </button>
+          </>
+        ) : (
+          <Link href={`/login?lang=${locale}`} className="party-button whitespace-nowrap">
+            <LogIn className="size-4" />
+            {loginLabel}
+          </Link>
+        )}
+      </div>
+    </div>
+  );
 
   const homeBuddyLoadingOverlay = homeBuddyLoadingActive ? (
     <div className="home-buddy-loading-overlay" aria-live="polite" aria-label={locale === "zh" ? "首页桌宠加载中" : "Homepage buddy loading"}>
@@ -1298,8 +1615,9 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       <>
         {homeBuddyLoadingOverlay}
         {homeBuddyIntroOverlay}
-        <section className={`mt-6 grid gap-5 reveal-up${homeBuddyLoadingActive ? " home-buddy-page-preload" : ""}${homeBuddyIntroActive ? " home-buddy-page-locked" : ""}`}>
-        <article className="sky-panel rounded-[2.5rem] px-6 pb-7 pt-4 sm:px-8 sm:pb-9 sm:pt-5">
+        <section className={`grid gap-5 reveal-up${homeBuddyLoadingActive ? " home-buddy-page-preload" : ""}${homeBuddyIntroActive ? " home-buddy-page-locked" : ""}`}>
+        <article className="sky-panel diicsu-hero-panel rounded-[2.5rem] px-6 pb-7 pt-4 sm:px-8 sm:pb-9 sm:pt-5">
+          {homeHeroTopBar}
           <span className="party-floater right-8 top-10 h-12 w-12">
             <Trophy className="size-5" />
           </span>
@@ -1308,26 +1626,26 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
           </span>
           <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
             <div className="relative z-10">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="buddy-chip">
-                  <Sparkles className="size-4 text-[var(--navy)]" />
-                  {locale === "zh" ? "卡通学伴校园" : "Cartoon Buddy Campus"}
+              <div className="flex flex-wrap items-center gap-2 md:gap-3 xl:flex-nowrap">
+                <span className="buddy-chip buddy-chip-brand">
+                  <Building2 className="size-4" />
+                  {locale === "zh" ? "中南大学 × 邓迪大学" : "Central South University × Dundee"}
                 </span>
                 <span className="buddy-chip">
-                  <PawPrint className="size-4 text-[var(--coral)]" />
-                  {locale === "zh" ? "桌宠成长系统" : "Pet growth system"}
+                  <Sparkles className="size-4 text-[var(--navy)]" />
+                  {locale === "zh" ? "邓迪国际学院学术英语平台" : "DIICSU Academic English Hub"}
                 </span>
               </div>
 
               <h2 className="font-display game-title mt-3 max-w-3xl text-4xl tracking-tight text-[var(--ink)] sm:text-5xl">
                 {locale === "zh"
-                  ? "为 DIICSU 新生打造的英语冒险校园。"
-                  : "A DIICSU English adventure campus built for first-year students."}
+                  ? "面向邓迪国际学院学生的学术英语主界面。"
+                  : "An academic English home built for DIICSU students."}
               </h2>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--ink-soft)] sm:text-base">
                 {locale === "zh"
-                  ? "把工科学术听力、学术口语、论坛互动和每周挑战放进一个更友好、更有吸引力的卡通校园里。你的 Buddy 会随着学习逐步成长。"
-                  : "Academic listening, academic speaking, community tasks, and weekly quests all live inside one playful campus. Your buddy grows as you keep learning."}
+                  ? "围绕全英文课程、seminar 发言、reading list、专业学习和双校资源入口设计，让首页既保留学伴体验，也更像邓迪国际学院自己的平台。"
+                  : "Built around EMI coursework, seminar turns, reading lists, majors, and dual-campus resources, so the home view feels closer to a DIICSU platform while keeping the buddy experience."}
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
@@ -1351,9 +1669,10 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                   {locale === "zh" ? "试玩游戏中心" : "Preview Game Center"}
                 </Link>
               </div>
+              {institutionResourcePanel}
 
               <div className="mt-6 flex flex-wrap gap-2.5">
-                {majorStickers.map((item) => (
+                {institutionSignals.map((item) => (
                   <span key={item} className="pet-sticker">
                     {item}
                   </span>
@@ -1403,45 +1722,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
           </div>
         </article>
 
-        <div className="grid gap-4 lg:grid-cols-3">
-          {[
-            {
-              title: locale === "zh" ? "学术听力库" : "Academic Listening",
-              note:
-                locale === "zh"
-                  ? "按专业、来源机构、口音和难度浏览材料；支持站内播放，也支持看文本后答题。"
-                  : "Browse by major, provider, accent, and difficulty, then watch in-app or read before answering.",
-              Icon: Headphones,
-            },
-            {
-              title: locale === "zh" ? "AI 口语场景" : "AI Speaking Scenes",
-              note:
-                locale === "zh"
-                  ? "让 AI 扮演 tutor、classmate、team leader。"
-                  : "Let AI act as a tutor, classmate, or team leader in speaking tasks.",
-              Icon: WandSparkles,
-            },
-            {
-              title: locale === "zh" ? "每周学伴任务" : "Weekly Buddy Missions",
-              note:
-                locale === "zh"
-                  ? "通过 XP、成长和任务板让学生更愿意回来。"
-                  : "Bring students back with XP, growth, and a weekly mission board.",
-              Icon: Trophy,
-            },
-          ].map((item) => (
-            <article
-              key={item.title}
-              className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(244,248,255,0.92),rgba(255,242,247,0.86))] p-5"
-            >
-              <div className="quest-orb h-12 w-12">
-                <item.Icon className="size-5 text-[var(--navy)]" />
-              </div>
-              <h3 className="mt-4 text-lg font-semibold text-[var(--ink)]">{item.title}</h3>
-              <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">{item.note}</p>
-            </article>
-          ))}
-        </div>
+        {institutionShowcaseGrid}
         </section>
       </>
     );
@@ -1451,74 +1732,25 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     <>
       {homeBuddyLoadingOverlay}
       {homeBuddyIntroOverlay}
-      <section className={`mt-6 grid gap-5 reveal-up${homeBuddyLoadingActive ? " home-buddy-page-preload" : ""}${homeBuddyIntroActive ? " home-buddy-page-locked" : ""}`}>
-      <article className="sky-panel rounded-[2.5rem] px-6 pb-7 pt-4 sm:px-8 sm:pb-8 sm:pt-5">
+      <section className={`grid gap-5 reveal-up${homeBuddyLoadingActive ? " home-buddy-page-preload" : ""}${homeBuddyIntroActive ? " home-buddy-page-locked" : ""}`}>
+      <article className="sky-panel diicsu-hero-panel rounded-[2.5rem] px-6 pb-7 pt-4 sm:px-8 sm:pb-8 sm:pt-5">
+        {homeHeroTopBar}
         <span className="party-floater right-10 top-11 h-12 w-12">
           <Trophy className="size-5" />
         </span>
         <span className="party-floater bottom-16 right-[32%] h-10 w-10">
           <Compass className="size-4.5" />
         </span>
-        <div className="grid gap-8 xl:grid-cols-[1.08fr_0.92fr] xl:items-center">
-          <div className="relative z-10">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="buddy-chip">
-                  <Sparkles className="size-4 text-[var(--navy)]" />
-                  {buddyStage.title}
-                </span>
-                <span className="buddy-chip">
-                  <Target className="size-4 text-[var(--teal)]" />
-                  {getGoalLabel(preferences.goal, locale)}
-                </span>
-                <span className="buddy-chip">
-                  <Flame className="size-4 text-[var(--coral)]" />
-                  XP {xp}
-                </span>
-              </div>
-              <LanguageSwitcher locale={locale} />
-            </div>
-
-            <p className="mt-3 text-sm font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">
-              {locale === "zh" ? "欢迎回来" : "Welcome back"} · {getStageLabel(levelPrefix, locale)} · {levelPrefix}
-            </p>
-            <h2 className="font-display game-title mt-2 max-w-3xl text-4xl tracking-tight text-[var(--ink)] sm:text-5xl">
+        <div className="grid gap-8 xl:min-h-[44rem]">
+          <div className="relative z-10 xl:max-w-[52rem]">
+            <h2 className="font-display game-title mt-3 max-w-3xl text-4xl tracking-tight text-[var(--ink)] sm:text-5xl">
               {locale === "zh"
-                ? `你好，${displayName}。今天让你的 Buddy 再进化一点。`
-                : `Hi, ${displayName}. Let's help your buddy evolve a little more today.`}
+                ? `你好，${displayName}。从邓迪国际学院的学习主线开始今天。`
+                : `Hi, ${displayName}. Start today from the DIICSU study route.`}
             </h2>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link href={nextQuestHref} className="party-button">
-                {locale === "zh" ? "开始今日任务" : "Start today's quest"}
-                <ArrowRight className="size-4" />
-              </Link>
-              <Link href={readingHref} className="party-button-ghost">
-                <FileText className="size-4" />
-                {locale === "zh" ? "打开阅读" : "Open Reading"}
-              </Link>
-              <Link href={writingHref} className="party-button-ghost">
-                <PenLine className="size-4" />
-                {locale === "zh" ? "打开写作" : "Open Writing"}
-              </Link>
-              <Link href={`/discussion?lang=${locale}`} className="party-button-ghost">
-                {locale === "zh" ? "打开学伴广场" : "Open Buddy Square"}
-              </Link>
-              <Link href={`/games?lang=${locale}`} className="party-button-ghost">
-                <Gamepad2 className="size-4" />
-                {locale === "zh" ? "打开游戏中心" : "Open Game Center"}
-              </Link>
-            </div>
-
-            <div className="mt-6 flex flex-wrap gap-2.5">
-              {majorStickers.map((item) => (
-                <span key={item} className="pet-sticker">
-                  {item}
-                </span>
-              ))}
-            </div>
           </div>
 
-          <div className="relative z-10">
+          <div className="relative z-10 xl:max-w-[26rem]">
             {levelUpNotice ? (
               <div className="absolute right-4 top-4 z-20 w-[min(20rem,calc(100%-1rem))]">
                 <div className="rounded-[1.45rem] border-2 border-white/92 bg-[linear-gradient(160deg,rgba(255,255,255,0.99),rgba(241,247,255,0.97),rgba(255,241,248,0.95))] p-5 shadow-[0_14px_0_rgba(143,196,255,0.16),0_24px_38px_rgba(90,123,255,0.14)]">
@@ -1548,7 +1780,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                 </div>
               </div>
             ) : null}
-            <div className="relative mx-auto max-w-[26rem] overflow-visible rounded-[2.2rem] border-2 border-white/90 bg-[rgba(255,255,255,0.72)] p-4 shadow-[0_16px_0_rgba(255,201,225,0.26),0_28px_56px_rgba(90,123,255,0.14)] backdrop-blur-xl">
+            <div className="relative max-w-[26rem] overflow-visible rounded-[2.2rem] border-2 border-white/90 bg-[rgba(255,255,255,0.72)] p-4 shadow-[0_16px_0_rgba(255,201,225,0.26),0_28px_56px_rgba(90,123,255,0.14)] backdrop-blur-xl">
               <div
                 key={`home-buddy-bubble-main-${homeBuddySpeechTick}`}
                 className={`buddy-bubble home-hero-buddy-bubble p-4${homeBuddyBubbleVisible ? " home-hero-buddy-bubble-visible" : " home-hero-buddy-bubble-hidden"}`}
@@ -1667,6 +1899,10 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className="relative z-10">
+            {institutionQuickLinkStrip}
           </div>
         </div>
       </article>
@@ -1980,6 +2216,8 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
         buddyVariant={buddyVariant}
         buddyOutfit={effectiveBuddyOutfit}
       />
+
+      {institutionShowcaseGrid}
 
       <div className="grid gap-5 xl:grid-cols-[1.04fr_0.96fr]">
         <article className="campus-card bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(246,250,255,0.92),rgba(255,241,248,0.88))] p-6">
