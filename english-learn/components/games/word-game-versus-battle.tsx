@@ -76,10 +76,13 @@ export function WordGameVersusBattle({
   const bankLabel = BANK_LABELS[roomState?.bank ?? "general"] ?? BANK_LABELS.general;
   const yourHpPercent = ((selfPlayer?.hp ?? MAX_HP) / MAX_HP) * 100;
   const rivalHpPercent = ((rivalPlayer?.hp ?? MAX_HP) / MAX_HP) * 100;
-  const duelProgress = useMemo(() => {
-    if (!roomState) return 0;
-    return Math.min(100, (roomState.waveNumber / roomState.totalWaves) * 100);
-  }, [roomState]);
+  const questionTimerPercent = useMemo(() => {
+    const timeLeft = roomState?.question?.timeLeftSeconds ?? 0;
+    const timeTotal = roomState?.question?.timeTotalSeconds ?? 0;
+    if (roomState?.status !== "active" || timeTotal <= 0) return 0;
+    const ratio = (timeLeft / timeTotal) * 100;
+    return Math.max(0, Math.min(100, ratio));
+  }, [roomState?.question?.timeLeftSeconds, roomState?.question?.timeTotalSeconds, roomState?.status]);
 
   const battleActive = roomState?.status === "active";
 
@@ -261,9 +264,12 @@ export function WordGameVersusBattle({
           </div>
 
           <div className="duel-progress">
-            <span>Duel Momentum</span>
+            <span>
+              Question Timer
+              {battleActive && roomState?.question ? ` ${roomState.question.timeLeftSeconds}s` : ""}
+            </span>
             <div className="momentum-track">
-              <div className="momentum-fill" style={{ width: `${duelProgress}%` }} />
+              <div className="momentum-fill" style={{ width: `${questionTimerPercent}%` }} />
             </div>
           </div>
         </section>
