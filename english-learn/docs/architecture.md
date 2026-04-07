@@ -305,8 +305,7 @@ This is exactly the kind of repo that benefits from clear docs, because clarity 
 
 If you want the docs set to feel even more professional later, add:
 
-1. `docs/deployment.md`
-2. `docs/contributing.md`
-3. `docs/env-reference.md`
-4. `docs/game-system.md`
-5. a simple architecture diagram
+1. `docs/env-reference.md`
+2. `docs/game-system.md`
+3. a simple architecture diagram
+4. a short operations/runbook note for incidents
