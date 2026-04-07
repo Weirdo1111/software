@@ -38,7 +38,7 @@ import {
   WandSparkles,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from "react";
 
 import { InstitutionBrand } from "@/components/institution-brand";
 import { BuddyCampusLobby } from "@/components/home/buddy-campus-lobby";
@@ -957,7 +957,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     setPreferences(updated);
   };
 
-  const clearHomeBuddyIntroTimers = () => {
+  const clearHomeBuddyIntroTimers = useCallback(() => {
     if (homeBuddyIntroShrinkTimerRef.current !== null) {
       window.clearTimeout(homeBuddyIntroShrinkTimerRef.current);
       homeBuddyIntroShrinkTimerRef.current = null;
@@ -966,9 +966,9 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       window.clearTimeout(homeBuddyIntroFinishTimerRef.current);
       homeBuddyIntroFinishTimerRef.current = null;
     }
-  };
+  }, []);
 
-  const syncHomeBuddyIntroTarget = () => {
+  const syncHomeBuddyIntroTarget = useCallback(() => {
     if (typeof window === "undefined") return;
     const activeAnchor = isLoggedIn ? mainBuddyAnchorRef.current : guestBuddyAnchorRef.current;
     if (!activeAnchor) return;
@@ -985,7 +985,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       y: targetCenterY - viewportCenterY,
       scale: Math.max(0.42, Math.min(0.88, rect.width / introBaseWidth)),
     });
-  };
+  }, [isLoggedIn]);
 
   const ensureHomeBuddyAudio = () => {
     if (typeof window === "undefined") return null;
@@ -1001,7 +1001,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     return context;
   };
 
-  const playHomeBuddyVoice = (variant: BuddyVariant) => {
+  const playHomeBuddyVoice = useCallback((variant: BuddyVariant) => {
     const context = ensureHomeBuddyAudio();
     if (!context || !homeBuddyAudioReady) return;
 
@@ -1034,7 +1034,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       oscillator.start(now + index * 0.065);
       oscillator.stop(now + index * 0.065 + 0.12);
     });
-  };
+  }, [homeBuddyAudioReady]);
 
   const finishHomeBuddyIntro = () => {
     clearHomeBuddyIntroTimers();
@@ -1056,22 +1056,29 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   };
 
   useEffect(() => {
-    setHomeBuddyLineIndex(0);
-    setHomeBuddyBubbleVisible(true);
+    const resetFrame = window.requestAnimationFrame(() => {
+      setHomeBuddyLineIndex(0);
+      setHomeBuddyBubbleVisible(true);
+    });
+
+    return () => window.cancelAnimationFrame(resetFrame);
   }, [homeBuddyIdleLines]);
 
   useEffect(() => {
     if (!homeHasHydrated) return;
 
-    setHomeBuddyIntroPhase("welcome");
-    setHomeBuddyBubbleVisible(false);
-    setHomeBuddyFace("open");
-    setHomeBuddySpeechMotion("wave");
+    const introFrame = window.requestAnimationFrame(() => {
+      setHomeBuddyIntroPhase("welcome");
+      setHomeBuddyBubbleVisible(false);
+      setHomeBuddyFace("open");
+      setHomeBuddySpeechMotion("wave");
+    });
 
     return () => {
+      window.cancelAnimationFrame(introFrame);
       clearHomeBuddyIntroTimers();
     };
-  }, [homeHasHydrated]);
+  }, [clearHomeBuddyIntroTimers, homeHasHydrated]);
 
   useEffect(() => {
     if (!homeBuddyIntroActive) return;
@@ -1081,7 +1088,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     window.addEventListener("resize", handleResize);
 
     return () => window.removeEventListener("resize", handleResize);
-  }, [homeBuddyIntroActive, isLoggedIn]);
+  }, [homeBuddyIntroActive, syncHomeBuddyIntroTarget]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1106,9 +1113,13 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   useEffect(() => {
     if (!homeBuddyIntroActive) return;
 
-    setHomeBuddySpeechTick((current) => current + 1);
-    playHomeBuddyVoice(buddyVariant);
-  }, [buddyVariant, homeBuddyAudioReady, homeBuddyIntroActive]);
+    const speechFrame = window.requestAnimationFrame(() => {
+      setHomeBuddySpeechTick((current) => current + 1);
+      playHomeBuddyVoice(buddyVariant);
+    });
+
+    return () => window.cancelAnimationFrame(speechFrame);
+  }, [buddyVariant, homeBuddyIntroActive, playHomeBuddyVoice]);
 
   useEffect(() => {
     if (typeof window === "undefined" || homeBuddyIntroActive) return;
@@ -1145,7 +1156,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       window.clearTimeout(reopenTimer);
       window.clearTimeout(secondBlinkTimer);
     };
-  }, []);
+  }, [homeBuddyIntroActive]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1169,10 +1180,13 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       }, showDuration);
     };
 
-    setHomeBuddyBubbleVisible(true);
-    queueCycle();
+    const initialCycleFrame = window.requestAnimationFrame(() => {
+      setHomeBuddyBubbleVisible(true);
+      queueCycle();
+    });
 
     return () => {
+      window.cancelAnimationFrame(initialCycleFrame);
       window.clearTimeout(hideTimer);
       window.clearTimeout(nextLineTimer);
     };
@@ -1181,17 +1195,22 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   useEffect(() => {
     if (typeof window === "undefined" || homeBuddyIntroActive || !homeBuddyBubbleVisible) return;
 
-    setHomeBuddySpeechTick((current) => current + 1);
-    setHomeBuddyFace("open");
-    setHomeBuddySpeechMotion(HOME_BUDDY_SPEECH_MOTIONS[homeBuddyLineIndex % HOME_BUDDY_SPEECH_MOTIONS.length]);
-    playHomeBuddyVoice(buddyVariant);
+    const speechFrame = window.requestAnimationFrame(() => {
+      setHomeBuddySpeechTick((current) => current + 1);
+      setHomeBuddyFace("open");
+      setHomeBuddySpeechMotion(HOME_BUDDY_SPEECH_MOTIONS[homeBuddyLineIndex % HOME_BUDDY_SPEECH_MOTIONS.length]);
+      playHomeBuddyVoice(buddyVariant);
+    });
 
     const settleTimer = window.setTimeout(() => {
       setHomeBuddyFace("happy");
     }, 820);
 
-    return () => window.clearTimeout(settleTimer);
-  }, [buddyVariant, homeBuddyAudioReady, homeBuddyBubbleVisible, homeBuddyIntroActive, homeBuddyLineIndex]);
+    return () => {
+      window.cancelAnimationFrame(speechFrame);
+      window.clearTimeout(settleTimer);
+    };
+  }, [buddyVariant, homeBuddyBubbleVisible, homeBuddyIntroActive, homeBuddyLineIndex, playHomeBuddyVoice]);
 
   useEffect(() => {
     return () => {

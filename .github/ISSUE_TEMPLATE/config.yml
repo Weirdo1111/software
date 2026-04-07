@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Team contribution workflow
+    url: https://github.com/Weirdo1111/software/blob/main/CONTRIBUTING.md
+    about: Follow the issue -> branch -> PR -> review workflow before opening work.
+  - name: Team project board
+    url: https://github.com/users/Weirdo1111/projects/2
+    about: Update status, assignee, priority, estimate, and sprint timing here.
+  - name: Deployment and demo guide
+    url: https://github.com/Weirdo1111/software/blob/main/english-learn/docs/deployment.md
+    about: Use this when preparing preview links, production releases, and demo evidence.
