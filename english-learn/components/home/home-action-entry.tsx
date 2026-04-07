@@ -1056,19 +1056,26 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   };
 
   useEffect(() => {
-    setHomeBuddyLineIndex(0);
-    setHomeBuddyBubbleVisible(true);
+    const frame = window.requestAnimationFrame(() => {
+      setHomeBuddyLineIndex(0);
+      setHomeBuddyBubbleVisible(true);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
   }, [homeBuddyIdleLines]);
 
   useEffect(() => {
     if (!homeHasHydrated) return;
 
-    setHomeBuddyIntroPhase("welcome");
-    setHomeBuddyBubbleVisible(false);
-    setHomeBuddyFace("open");
-    setHomeBuddySpeechMotion("wave");
+    const frame = window.requestAnimationFrame(() => {
+      setHomeBuddyIntroPhase("welcome");
+      setHomeBuddyBubbleVisible(false);
+      setHomeBuddyFace("open");
+      setHomeBuddySpeechMotion("wave");
+    });
 
     return () => {
+      window.cancelAnimationFrame(frame);
       clearHomeBuddyIntroTimers();
     };
   }, [homeHasHydrated]);
@@ -1106,8 +1113,12 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   useEffect(() => {
     if (!homeBuddyIntroActive) return;
 
-    setHomeBuddySpeechTick((current) => current + 1);
-    playHomeBuddyVoice(buddyVariant);
+    const frame = window.requestAnimationFrame(() => {
+      setHomeBuddySpeechTick((current) => current + 1);
+      playHomeBuddyVoice(buddyVariant);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
   }, [buddyVariant, homeBuddyAudioReady, homeBuddyIntroActive]);
 
   useEffect(() => {
@@ -1152,6 +1163,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
 
     let hideTimer = 0;
     let nextLineTimer = 0;
+    let frame = 0;
 
     const showDuration = 6400;
     const quietDuration = 3400;
@@ -1169,10 +1181,13 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       }, showDuration);
     };
 
-    setHomeBuddyBubbleVisible(true);
-    queueCycle();
+    frame = window.requestAnimationFrame(() => {
+      setHomeBuddyBubbleVisible(true);
+      queueCycle();
+    });
 
     return () => {
+      window.cancelAnimationFrame(frame);
       window.clearTimeout(hideTimer);
       window.clearTimeout(nextLineTimer);
     };
@@ -1181,16 +1196,22 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   useEffect(() => {
     if (typeof window === "undefined" || homeBuddyIntroActive || !homeBuddyBubbleVisible) return;
 
-    setHomeBuddySpeechTick((current) => current + 1);
-    setHomeBuddyFace("open");
-    setHomeBuddySpeechMotion(HOME_BUDDY_SPEECH_MOTIONS[homeBuddyLineIndex % HOME_BUDDY_SPEECH_MOTIONS.length]);
-    playHomeBuddyVoice(buddyVariant);
+    let settleTimer = 0;
+    const frame = window.requestAnimationFrame(() => {
+      setHomeBuddySpeechTick((current) => current + 1);
+      setHomeBuddyFace("open");
+      setHomeBuddySpeechMotion(HOME_BUDDY_SPEECH_MOTIONS[homeBuddyLineIndex % HOME_BUDDY_SPEECH_MOTIONS.length]);
+      playHomeBuddyVoice(buddyVariant);
 
-    const settleTimer = window.setTimeout(() => {
-      setHomeBuddyFace("happy");
-    }, 820);
+      settleTimer = window.setTimeout(() => {
+        setHomeBuddyFace("happy");
+      }, 820);
+    });
 
-    return () => window.clearTimeout(settleTimer);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(settleTimer);
+    };
   }, [buddyVariant, homeBuddyAudioReady, homeBuddyBubbleVisible, homeBuddyIntroActive, homeBuddyLineIndex]);
 
   useEffect(() => {
