@@ -54,6 +54,33 @@ function getBridgeUrl() {
   return process.env.NEXT_PUBLIC_ROLEPLAY_BRIDGE_URL || "ws://127.0.0.1:8877";
 }
 
+const SPEAKING_TEST_HELP_DISMISSED_KEY = "english-learn:speaking-test-help-dismissed";
+
+function getSpeakingTestHelpStorageKey() {
+  if (typeof window === "undefined") {
+    return `${SPEAKING_TEST_HELP_DISMISSED_KEY}:guest:guest`;
+  }
+
+  const authProvider = window.localStorage.getItem("demo_auth_provider")?.trim() || "guest";
+  const authUserId = window.localStorage.getItem("demo_auth_user_id")?.trim() || "guest";
+  return `${SPEAKING_TEST_HELP_DISMISSED_KEY}:${authProvider}:${authUserId}`;
+}
+
+function isSpeakingTestHelpDismissed() {
+  if (typeof window === "undefined") return true;
+  return window.localStorage.getItem(getSpeakingTestHelpStorageKey()) === "true";
+}
+
+function setSpeakingTestHelpDismissed(value: boolean) {
+  if (typeof window === "undefined") return;
+  const key = getSpeakingTestHelpStorageKey();
+  if (value) {
+    window.localStorage.setItem(key, "true");
+  } else {
+    window.localStorage.removeItem(key);
+  }
+}
+
 function buildQuestionInstruction(question: SpeakingTestQuestion, questionIndex: number) {
   return [
     "[SYSTEM CONTROL]",
@@ -225,6 +252,8 @@ export function SpeakingTestModule({ locale }: { locale: Locale }) {
   const [hasExamStarted, setHasExamStarted] = useState(false);
   const [scoreAttempted, setScoreAttempted] = useState(false);
   const [showScoreReportNotice, setShowScoreReportNotice] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [suppressHelpModal, setSuppressHelpModal] = useState(false);
   const [activePanel, setActivePanel] = useState<"assessment" | "report" | "history">("assessment");
   const [historyEntries, setHistoryEntries] = useState<SpeakingEvaluationHistoryEntry[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -336,6 +365,15 @@ export function SpeakingTestModule({ locale }: { locale: Locale }) {
           reportReadyTitle: "Score Report Ready",
           reportReadyBody: "Your test is complete. Open the Score Report section to view the score and full evaluation.",
           viewScoreReport: "View Score Report",
+          helpTitle: "口语测试说明",
+          helpBody:
+            "请先点击 Connect 开始测试。每道题点击 Start Mic 后开始作答，单次回答最长 30 秒，超过会自动截断。说完后点击 Over，系统会进入下一题。",
+          helpStepConnect: "点击 Connect 开始口语测试。",
+          helpStepMic: `点击 Start Mic 开始回答，每题限时 ${MAX_TRANSCRIPTION_DURATION_SECONDS} 秒。`,
+          helpStepCutoff: `如果回答超过 ${MAX_TRANSCRIPTION_DURATION_SECONDS} 秒，系统会自动截断。`,
+          helpStepOver: '回答结束后点击 “Over”，系统进入下一题。',
+          doNotShowAgain: "此账号不再提示",
+          understood: "知道了",
           historyTitle: "Evaluation History",
           historyIntro:
             "Review your previous speaking tests and score reports in one place.",
@@ -425,6 +463,15 @@ export function SpeakingTestModule({ locale }: { locale: Locale }) {
           reportReadyTitle: "Score Report Ready",
           reportReadyBody: "Your test is complete. Open the Score Report section to view the score and full evaluation.",
           viewScoreReport: "View Score Report",
+          helpTitle: "Speaking Test Help",
+          helpBody:
+            "Connect to start the test. For each question, click Start Mic and answer within 30 seconds. Answers longer than 30 seconds are cut automatically. After you finish speaking, click Over to move to the next question.",
+          helpStepConnect: "Click Connect to start the speaking test.",
+          helpStepMic: `Click Start Mic and answer within ${MAX_TRANSCRIPTION_DURATION_SECONDS} seconds.`,
+          helpStepCutoff: `Answers longer than ${MAX_TRANSCRIPTION_DURATION_SECONDS} seconds are cut off automatically.`,
+          helpStepOver: 'After you finish speaking, click "Over" to continue to the next question.',
+          doNotShowAgain: "Do not show this again for this account",
+          understood: "Understood",
           historyTitle: "Evaluation History",
           historyIntro:
             "Review your previous speaking tests and score reports in one place.",
@@ -449,6 +496,21 @@ export function SpeakingTestModule({ locale }: { locale: Locale }) {
       setShowScoreReportNotice(true);
     }
   }, [feedback]);
+
+  useEffect(() => {
+    const syncHelpModal = () => {
+      const dismissed = isSpeakingTestHelpDismissed();
+      setSuppressHelpModal(dismissed);
+      setShowHelpModal(!dismissed);
+    };
+
+    syncHelpModal();
+    window.addEventListener("demo-auth-changed", syncHelpModal as EventListener);
+
+    return () => {
+      window.removeEventListener("demo-auth-changed", syncHelpModal as EventListener);
+    };
+  }, []);
 
   useEffect(() => {
     const syncBuddy = () => {
@@ -819,6 +881,11 @@ export function SpeakingTestModule({ locale }: { locale: Locale }) {
     historyRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  function handleCloseHelpModal() {
+    setSpeakingTestHelpDismissed(suppressHelpModal);
+    setShowHelpModal(false);
+  }
+
   function handleOpenHistoryReport(entry: SpeakingEvaluationHistoryEntry) {
     setFeedback(entry.report);
     setStatus(`Loaded historical report from ${entry.monthLabel} ${entry.dayLabel}, ${entry.yearLabel}.`);
@@ -980,23 +1047,25 @@ export function SpeakingTestModule({ locale }: { locale: Locale }) {
                 </div>
               </section>
 
-              <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,0.98fr)_minmax(0,1fr)] lg:gap-12">
+              <div className="flex flex-col gap-8">
                 <section>
-                  <div className="rounded-[32px] bg-white px-8 py-10 shadow-[0_22px_48px_rgba(25,28,29,0.12)] md:px-10 md:py-12">
+                  <div className="mx-auto max-w-[980px] rounded-[32px] bg-white px-8 py-10 shadow-[0_22px_48px_rgba(25,28,29,0.12)] md:px-10 md:py-12">
                     <h3 className="font-inter text-[15px] font-extrabold uppercase tracking-[0.08em] text-[#2c4f7f]">
                       {text.currentQuestion}
                     </h3>
-                    <p className="mt-8 font-newsreader text-[44px] leading-[1.02] tracking-[-0.03em] text-[#000c1e] md:text-[58px]">
+                    <p className="mt-8 max-w-[700px] font-newsreader text-[36px] leading-[1.06] tracking-[-0.03em] text-[#000c1e] md:text-[48px]">
                       {currentQuestion?.prompt || "All questions have been answered."}
                     </p>
 
-                    <div className="mt-8 inline-flex rounded-full bg-[linear-gradient(135deg,#103566,#0b2c58_42%,#dbbf78_100%)] p-[1px] shadow-[0_10px_24px_rgba(17,37,67,0.16)]">
-                      <div className="rounded-full bg-[linear-gradient(135deg,#254f86,#1e3f72_42%,#cba856_100%)] px-5 py-3 font-inter text-[16px] font-bold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.24)]">
-                        {Math.min(currentQuestion?.expectedSeconds ?? 0, MAX_TRANSCRIPTION_DURATION_SECONDS)}s suggested
+                    <div className="mt-8 flex max-w-[700px] flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                      <p className="max-w-[460px] font-inter text-[18px] leading-[1.45] text-[#212733]">{text.durationHint}</p>
+
+                      <div className="inline-flex w-fit rounded-full bg-[linear-gradient(135deg,#103566,#0b2c58_42%,#dbbf78_100%)] p-[1px] shadow-[0_10px_24px_rgba(17,37,67,0.16)]">
+                        <div className="rounded-full bg-[linear-gradient(135deg,#254f86,#1e3f72_42%,#cba856_100%)] px-5 py-3 font-inter text-[16px] font-bold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.24)]">
+                          {Math.min(currentQuestion?.expectedSeconds ?? 0, MAX_TRANSCRIPTION_DURATION_SECONDS)}s suggested
+                        </div>
                       </div>
                     </div>
-
-                    <p className="mt-6 max-w-[430px] font-inter text-[18px] leading-[1.45] text-[#212733]">{text.durationHint}</p>
 
                     <div className="mt-10 grid gap-6 sm:grid-cols-3">
                       {questionSet.questions.map((question, index) => {
@@ -1061,138 +1130,140 @@ export function SpeakingTestModule({ locale }: { locale: Locale }) {
                   <div className="relative overflow-hidden rounded-[32px] bg-[radial-gradient(circle_at_top,#163969_0%,#0b2348_46%,#06152c_100%)] px-7 py-8 shadow-[0_26px_54px_rgba(6,21,44,0.24)] md:px-8">
                     <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0))]" />
                     <div className="relative z-10">
-                      <div className="rounded-[16px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.08)] px-5 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-sm">
-                        <p className="font-inter text-[16px] leading-[1.55] text-[#f2e7c6]">
-                          {heroMessage.includes('"Over"') ? (
-                            <>
-                              Welcome to your Speaking Assessment. Please listen carefully to each question. Click{" "}
-                              <span className="font-bold text-[#e8c56f]">&quot;Over&quot;</span> when you finish your response.
-                            </>
-                          ) : (
-                            heroMessage
-                          )}
-                        </p>
-                      </div>
+                      <div className="grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_260px_minmax(0,1.05fr)] lg:items-center">
+                        <div>
+                          <div className="rounded-[16px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.08)] px-5 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-sm">
+                            <p className="font-inter text-[16px] leading-[1.55] text-[#f2e7c6]">
+                              {heroMessage.includes('"Over"') ? (
+                                <>
+                                  Welcome to your Speaking Assessment. Please listen carefully to each question. Click{" "}
+                                  <span className="font-bold text-[#e8c56f]">&quot;Over&quot;</span> when you finish your response.
+                                </>
+                              ) : (
+                                heroMessage
+                              )}
+                            </p>
+                          </div>
 
-                      <div className="mt-6 flex justify-center">
-                        <div className="relative">
-                          <div className="absolute -inset-8 rounded-full bg-[radial-gradient(circle,rgba(9,91,191,0.32),rgba(9,91,191,0))] blur-2xl" />
-                          <div className="absolute inset-[-18px] rounded-full border border-[rgba(225,196,110,0.32)]" />
-                          <div className="absolute inset-[-30px] rounded-full border border-[rgba(58,99,173,0.35)]" />
-                          <div className="absolute inset-[-42px] rounded-full border border-[rgba(27,73,148,0.18)]" />
-                          <div className="relative flex h-[244px] w-[244px] items-center justify-center rounded-full bg-[linear-gradient(180deg,#1b4178,#091c3b)] shadow-[0_18px_40px_rgba(0,0,0,0.32)]">
-                            <div className="absolute inset-[8px] rounded-full bg-[linear-gradient(145deg,#1e5092,#0e2d57)]" />
-                            <div className="absolute inset-[14px] rounded-full border-[3px] border-[#ccb16c]" />
-                            <div className="absolute inset-[20px] overflow-hidden rounded-full bg-[radial-gradient(circle_at_top,#fff7de_0%,#eef3ff_42%,#d4e0f6_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
-                              <div className="absolute inset-[10%] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.65),rgba(255,255,255,0)_68%)]" />
-                              <BuddyCompanion
-                                stage={buddyStage}
-                                focus={buddyFocus}
-                                face={examinerBuddyFace}
-                                mood={examinerBuddyMood}
-                                variant={buddyVariant}
-                                outfit={buddyOutfit}
-                                float={false}
-                                className="relative z-10 mx-auto mt-5 w-[78%] max-w-none drop-shadow-[0_16px_24px_rgba(10,27,54,0.22)]"
-                              />
-                            </div>
-                            <div className="pointer-events-none absolute inset-x-[26px] bottom-[18px] h-[16px] rounded-full bg-[linear-gradient(90deg,rgba(224,191,108,0.1),rgba(224,191,108,0.95),rgba(224,191,108,0.1))] blur-[1px]" />
-                            <div className="pointer-events-none absolute inset-x-[38px] bottom-[4px] h-[18px] rounded-full border-b-4 border-[#d1b26a]" />
+                          <div className="mt-5 inline-flex rounded-full border border-[rgba(255,255,255,0.12)] bg-[rgba(12,30,58,0.8)] px-4 py-2 font-inter text-[11px] font-bold uppercase tracking-[0.2em] text-[#e8cc84] shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
+                            {text.speaking}
                           </div>
                         </div>
-                      </div>
 
-                      <div className="mt-6 flex justify-center">
-                        <div className="rounded-full border border-[rgba(255,255,255,0.12)] bg-[rgba(12,30,58,0.8)] px-4 py-2 font-inter text-[11px] font-bold uppercase tracking-[0.2em] text-[#e8cc84] shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
-                          {text.speaking}
+                        <div className="flex justify-center">
+                          <div className="relative">
+                            <div className="absolute -inset-8 rounded-full bg-[radial-gradient(circle,rgba(9,91,191,0.32),rgba(9,91,191,0))] blur-2xl" />
+                            <div className="absolute inset-[-18px] rounded-full border border-[rgba(225,196,110,0.32)]" />
+                            <div className="absolute inset-[-30px] rounded-full border border-[rgba(58,99,173,0.35)]" />
+                            <div className="absolute inset-[-42px] rounded-full border border-[rgba(27,73,148,0.18)]" />
+                            <div className="relative flex h-[244px] w-[244px] items-center justify-center rounded-full bg-[linear-gradient(180deg,#1b4178,#091c3b)] shadow-[0_18px_40px_rgba(0,0,0,0.32)]">
+                              <div className="absolute inset-[8px] rounded-full bg-[linear-gradient(145deg,#1e5092,#0e2d57)]" />
+                              <div className="absolute inset-[14px] rounded-full border-[3px] border-[#ccb16c]" />
+                              <div className="absolute inset-[20px] overflow-hidden rounded-full bg-[radial-gradient(circle_at_top,#fff7de_0%,#eef3ff_42%,#d4e0f6_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
+                                <div className="absolute inset-[10%] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.65),rgba(255,255,255,0)_68%)]" />
+                                <BuddyCompanion
+                                  stage={buddyStage}
+                                  focus={buddyFocus}
+                                  face={examinerBuddyFace}
+                                  mood={examinerBuddyMood}
+                                  variant={buddyVariant}
+                                  outfit={buddyOutfit}
+                                  float={false}
+                                  className="relative z-10 mx-auto mt-5 w-[78%] max-w-none drop-shadow-[0_16px_24px_rgba(10,27,54,0.22)]"
+                                />
+                              </div>
+                              <div className="pointer-events-none absolute inset-x-[26px] bottom-[18px] h-[16px] rounded-full bg-[linear-gradient(90deg,rgba(224,191,108,0.1),rgba(224,191,108,0.95),rgba(224,191,108,0.1))] blur-[1px]" />
+                              <div className="pointer-events-none absolute inset-x-[38px] bottom-[4px] h-[18px] rounded-full border-b-4 border-[#d1b26a]" />
+                            </div>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="mt-8 flex w-full flex-col items-center">
-                        <div className="mb-8 flex h-14 w-full items-center justify-center gap-[6px] opacity-70">
-                          {waveformHeights.map((height, index) => (
-                            <span
-                              key={index}
-                              className={[
-                                "block w-[3px] rounded-full transition-all duration-300",
-                                realtime.isMicActive || realtime.isAssistantSpeaking || isTranscribing ? "bg-[#e3c06f]" : "bg-[#2a5aa4]",
-                              ].join(" ")}
-                              style={{ height: Math.max(10, height - 6) }}
-                            />
-                          ))}
-                        </div>
+                        <div className="flex w-full flex-col items-center lg:items-stretch">
+                          <div className="mb-8 flex h-14 w-full items-center justify-center gap-[6px] opacity-70">
+                            {waveformHeights.map((height, index) => (
+                              <span
+                                key={index}
+                                className={[
+                                  "block w-[3px] rounded-full transition-all duration-300",
+                                  realtime.isMicActive || realtime.isAssistantSpeaking || isTranscribing ? "bg-[#e3c06f]" : "bg-[#2a5aa4]",
+                                ].join(" ")}
+                                style={{ height: Math.max(10, height - 6) }}
+                              />
+                            ))}
+                          </div>
 
-                        <div className="flex w-full max-w-[540px] flex-col gap-4">
-                          <button
-                            type="button"
-                            onClick={() => void handleStartMic()}
-                            disabled={!canStartMic}
-                            className="rounded-[14px] border border-[rgba(225,196,110,0.38)] bg-[linear-gradient(135deg,rgba(19,58,112,0.92),rgba(28,73,136,0.92)_56%,rgba(215,181,98,0.92)_100%)] px-6 py-4 font-inter text-[18px] font-bold text-white shadow-[0_18px_34px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.18)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0"
-                          >
-                            {text.startMic}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => void handleOver()}
-                            disabled={!canOver}
-                            className="rounded-[14px] border border-[rgba(225,196,110,0.38)] bg-[linear-gradient(135deg,rgba(22,54,102,0.92),rgba(28,73,136,0.92)_45%,rgba(225,196,110,0.94)_100%)] px-6 py-4 font-inter text-[18px] font-bold text-[#091b36] shadow-[0_18px_34px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.18)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0"
-                          >
-                            <span className="flex items-center justify-center gap-3">
-                              <StopCircle className="h-5 w-5" />
-                              {text.over} (Submit Response)
-                            </span>
-                          </button>
-
-                          <div className="grid gap-3 sm:grid-cols-2">
+                          <div className="flex w-full max-w-[540px] flex-col gap-4 lg:max-w-none">
                             <button
                               type="button"
-                              onClick={() => void realtime.connectSession(SPEAKING_TEST_EXAMINER_CHARACTER_ID)}
-                              disabled={realtime.connectionState === "connecting" || realtime.connectionState === "connected"}
-                              className="rounded-[12px] border border-[rgba(225,196,110,0.22)] bg-[rgba(255,255,255,0.06)] px-4 py-3 font-inter text-[15px] font-semibold text-[#f2e7c6] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:bg-[rgba(255,255,255,0.1)] disabled:cursor-not-allowed disabled:opacity-40"
+                              onClick={() => void handleStartMic()}
+                              disabled={!canStartMic}
+                              className="rounded-[14px] border border-[rgba(225,196,110,0.38)] bg-[linear-gradient(135deg,rgba(19,58,112,0.92),rgba(28,73,136,0.92)_56%,rgba(215,181,98,0.92)_100%)] px-6 py-4 font-inter text-[18px] font-bold text-white shadow-[0_18px_34px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.18)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0"
                             >
-                              <span className="flex items-center justify-center gap-2">
-                                <Waves className="h-4 w-4" />
-                                {text.connect}
-                              </span>
+                              {text.startMic}
                             </button>
 
                             <button
                               type="button"
-                              onClick={() => void realtime.disconnectSession()}
-                              disabled={realtime.connectionState !== "connected"}
-                              className="rounded-[12px] border border-[rgba(225,196,110,0.22)] bg-[rgba(255,255,255,0.06)] px-4 py-3 font-inter text-[15px] font-semibold text-[#e7b07d] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:bg-[rgba(255,255,255,0.1)] disabled:cursor-not-allowed disabled:opacity-40"
+                              onClick={() => void handleOver()}
+                              disabled={!canOver}
+                              className="rounded-[14px] border border-[rgba(225,196,110,0.38)] bg-[linear-gradient(135deg,rgba(22,54,102,0.92),rgba(28,73,136,0.92)_45%,rgba(225,196,110,0.94)_100%)] px-6 py-4 font-inter text-[18px] font-bold text-[#091b36] shadow-[0_18px_34px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.18)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0"
                             >
-                              <span className="flex items-center justify-center gap-2">
-                                <Volume2 className="h-4 w-4" />
-                                {text.disconnect}
+                              <span className="flex items-center justify-center gap-3">
+                                <StopCircle className="h-5 w-5" />
+                                {text.over} (Submit Response)
                               </span>
                             </button>
 
-                            <button
-                              type="button"
-                              onClick={() => void resetTest()}
-                              className="rounded-[12px] border border-[rgba(225,196,110,0.22)] bg-[rgba(255,255,255,0.06)] px-4 py-3 font-inter text-[15px] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:bg-[rgba(255,255,255,0.1)]"
-                            >
-                              <span className="flex items-center justify-center gap-2">
-                                <RefreshCcw className="h-4 w-4" />
-                                {text.reset}
-                              </span>
-                            </button>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              <button
+                                type="button"
+                                onClick={() => void realtime.connectSession(SPEAKING_TEST_EXAMINER_CHARACTER_ID)}
+                                disabled={realtime.connectionState === "connecting" || realtime.connectionState === "connected"}
+                                className="rounded-[12px] border border-[rgba(225,196,110,0.22)] bg-[rgba(255,255,255,0.06)] px-4 py-3 font-inter text-[15px] font-semibold text-[#f2e7c6] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:bg-[rgba(255,255,255,0.1)] disabled:cursor-not-allowed disabled:opacity-40"
+                              >
+                                <span className="flex items-center justify-center gap-2">
+                                  <Waves className="h-4 w-4" />
+                                  {text.connect}
+                                </span>
+                              </button>
 
-                            <button
-                              type="button"
-                              onClick={() => {
-                                recorder.stopRecording();
-                                void recorder.resetRecording();
-                              }}
-                              className="rounded-[12px] border border-[rgba(225,196,110,0.22)] bg-[rgba(255,255,255,0.06)] px-4 py-3 font-inter text-[15px] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:bg-[rgba(255,255,255,0.1)]"
-                            >
-                              <span className="flex items-center justify-center gap-2">
-                                <RefreshCcw className="h-4 w-4" />
-                                {text.restartRecording}
-                              </span>
-                            </button>
+                              <button
+                                type="button"
+                                onClick={() => void realtime.disconnectSession()}
+                                disabled={realtime.connectionState !== "connected"}
+                                className="rounded-[12px] border border-[rgba(225,196,110,0.22)] bg-[rgba(255,255,255,0.06)] px-4 py-3 font-inter text-[15px] font-semibold text-[#e7b07d] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:bg-[rgba(255,255,255,0.1)] disabled:cursor-not-allowed disabled:opacity-40"
+                              >
+                                <span className="flex items-center justify-center gap-2">
+                                  <Volume2 className="h-4 w-4" />
+                                  {text.disconnect}
+                                </span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => void resetTest()}
+                                className="rounded-[12px] border border-[rgba(225,196,110,0.22)] bg-[rgba(255,255,255,0.06)] px-4 py-3 font-inter text-[15px] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:bg-[rgba(255,255,255,0.1)]"
+                              >
+                                <span className="flex items-center justify-center gap-2">
+                                  <RefreshCcw className="h-4 w-4" />
+                                  {text.reset}
+                                </span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  recorder.stopRecording();
+                                  void recorder.resetRecording();
+                                }}
+                                className="rounded-[12px] border border-[rgba(225,196,110,0.22)] bg-[rgba(255,255,255,0.06)] px-4 py-3 font-inter text-[15px] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:bg-[rgba(255,255,255,0.1)]"
+                              >
+                                <span className="flex items-center justify-center gap-2">
+                                  <RefreshCcw className="h-4 w-4" />
+                                  {text.restartRecording}
+                                </span>
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1558,6 +1629,49 @@ export function SpeakingTestModule({ locale }: { locale: Locale }) {
                 className="inline-flex items-center justify-center rounded-full border border-[#000c1e] bg-white px-5 py-3 font-inter text-[14px] font-semibold text-[#000c1e] transition hover:bg-[#000c1e] hover:text-white"
               >
                 {text.close}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showHelpModal ? (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#000c1e]/55 px-6">
+          <div className="w-full max-w-[560px] rounded-[28px] bg-white p-7 shadow-[0_24px_80px_rgba(0,12,30,0.24)]">
+            <p className="font-inter text-[11px] font-bold uppercase tracking-[0.2em] text-[#095bbf]">{text.pageTitle}</p>
+            <h2 className="mt-3 font-newsreader text-[34px] leading-none text-[#000c1e]">{text.helpTitle}</h2>
+            <p className="mt-4 font-inter text-[15px] leading-7 text-[#526766]">{text.helpBody}</p>
+
+            <div className="mt-6 rounded-[20px] bg-[#f8fafc] px-5 py-5">
+              <ol className="space-y-4">
+                {[text.helpStepConnect, text.helpStepMic, text.helpStepCutoff, text.helpStepOver].map((item, index) => (
+                  <li key={item} className="flex items-start gap-3">
+                    <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#143c75] font-inter text-[11px] font-bold text-white">
+                      {index + 1}
+                    </span>
+                    <span className="font-inter text-[14px] leading-6 text-[#27405d]">{item}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <label className="flex items-start gap-3 sm:max-w-[320px]">
+                <input
+                  type="checkbox"
+                  checked={suppressHelpModal}
+                  onChange={(event) => setSuppressHelpModal(event.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-[#95a3b8] text-[#143c75] focus:ring-[#143c75]"
+                />
+                <span className="font-inter text-[13px] leading-6 text-[#526766]">{text.doNotShowAgain}</span>
+              </label>
+
+              <button
+                type="button"
+                onClick={handleCloseHelpModal}
+                className="inline-flex items-center justify-center rounded-full bg-[#000c1e] px-6 py-3 font-inter text-[14px] font-semibold text-white transition hover:opacity-90"
+              >
+                {text.understood}
               </button>
             </div>
           </div>
