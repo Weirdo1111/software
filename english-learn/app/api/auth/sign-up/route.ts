@@ -70,41 +70,18 @@ export async function POST(request: Request) {
         response.cookies.set(
           AUTH_SESSION_COOKIE,
           session.rawToken,
-          createSessionCookieOptions(session.expiresAt),
+          createSessionCookieOptions(session.expiresAt, request),
         );
       }
 
       const cookieExpires = session?.expiresAt ?? new Date(Date.now() + 1000 * 60 * 60 * 24 * 14);
+      const authCookieOptions = createSessionCookieOptions(cookieExpires, request);
 
-      response.cookies.set(AUTH_PROVIDER_COOKIE, authProvider, {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-        path: "/",
-        expires: cookieExpires,
-      });
-      response.cookies.set(AUTH_USER_ID_COOKIE, authUserId, {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-        path: "/",
-        expires: cookieExpires,
-      });
-      response.cookies.set(AUTH_USERNAME_COOKIE, createdUser.username, {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-        path: "/",
-        expires: cookieExpires,
-      });
+      response.cookies.set(AUTH_PROVIDER_COOKIE, authProvider, authCookieOptions);
+      response.cookies.set(AUTH_USER_ID_COOKIE, authUserId, authCookieOptions);
+      response.cookies.set(AUTH_USERNAME_COOKIE, createdUser.username, authCookieOptions);
       if (createdUser.email) {
-        response.cookies.set(AUTH_EMAIL_COOKIE, createdUser.email, {
-          httpOnly: true,
-          sameSite: "lax",
-          secure: process.env.NODE_ENV === "production",
-          path: "/",
-          expires: cookieExpires,
-        });
+        response.cookies.set(AUTH_EMAIL_COOKIE, createdUser.email, authCookieOptions);
       }
 
       return response;

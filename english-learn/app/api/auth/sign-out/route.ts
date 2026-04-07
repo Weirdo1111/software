@@ -8,8 +8,8 @@ import {
   AUTH_USERNAME_COOKIE,
 } from "@/lib/current-user";
 
-function clearCookie(response: NextResponse, name: string) {
-  response.cookies.set(name, "", createSessionCookieOptions(new Date(0)));
+function clearCookie(response: NextResponse, name: string, request: Request) {
+  response.cookies.set(name, "", createSessionCookieOptions(new Date(0), request));
 }
 
 export async function POST(request: Request) {
@@ -24,11 +24,11 @@ export async function POST(request: Request) {
 
   const response = NextResponse.json({ signedOut: true });
 
-  clearCookie(response, AUTH_SESSION_COOKIE);
-  clearCookie(response, AUTH_PROVIDER_COOKIE);
-  clearCookie(response, AUTH_USER_ID_COOKIE);
-  clearCookie(response, AUTH_USERNAME_COOKIE);
-  clearCookie(response, AUTH_EMAIL_COOKIE);
+  clearCookie(response, AUTH_SESSION_COOKIE, request);
+  clearCookie(response, AUTH_PROVIDER_COOKIE, request);
+  clearCookie(response, AUTH_USER_ID_COOKIE, request);
+  clearCookie(response, AUTH_USERNAME_COOKIE, request);
+  clearCookie(response, AUTH_EMAIL_COOKIE, request);
 
   return response;
 }
