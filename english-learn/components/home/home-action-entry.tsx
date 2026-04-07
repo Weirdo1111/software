@@ -449,6 +449,7 @@ const buddyVariantCopy: Record<BuddyVariant, { zh: string; en: string; noteZh: s
 };
 
 const selectableBuddyVariants: BuddyVariant[] = ["bear", "bunny", "cat"];
+const HOME_HYDRATE_FAILSAFE_MS = 3500;
 const HOME_BUDDY_SPEECH_MOTIONS = ["hop", "wave", "shimmy"] as const;
 type HomeBuddySpeechMotion = (typeof HOME_BUDDY_SPEECH_MOTIONS)[number];
 type HomeBuddyIntroPhase = "hidden" | "welcome" | "shrinking" | "done";
@@ -672,17 +673,39 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   const homeBuddyIntroFinishTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const refresh = () => {
-      const storedPreferences = loadSchedulePreferencesFromStorage(locale);
-      setIsLoggedIn(window.localStorage.getItem("demo_logged_in") === "true");
-      setDisplayName(toDisplayName(window.localStorage.getItem("demo_user")));
-      setLevelPrefix(normalizeLevel(window.localStorage.getItem("demo_level")));
-      setSnapshot(loadLearningTrackerSnapshotFromStorage());
-      setPreferences(storedPreferences);
-      setBuddyOutfit(loadBuddyOutfitFromStorage());
-      setBuddyVariant(loadBuddyVariantFromStorage(getGoalVariant(storedPreferences.goal)));
-      setXpSummary(getBuddyXpSummaryFromStorage());
+    if (typeof window === "undefined" || homeHasHydrated) return;
+
+    const failsafeTimer = window.setTimeout(() => {
       setHomeHasHydrated(true);
+    }, HOME_HYDRATE_FAILSAFE_MS);
+
+    return () => window.clearTimeout(failsafeTimer);
+  }, [homeHasHydrated]);
+
+  useEffect(() => {
+    const refresh = () => {
+      try {
+        const storedPreferences = loadSchedulePreferencesFromStorage(locale);
+        setIsLoggedIn(window.localStorage.getItem("demo_logged_in") === "true");
+        setDisplayName(toDisplayName(window.localStorage.getItem("demo_user")));
+        setLevelPrefix(normalizeLevel(window.localStorage.getItem("demo_level")));
+        setSnapshot(loadLearningTrackerSnapshotFromStorage());
+        setPreferences(storedPreferences);
+        setBuddyOutfit(loadBuddyOutfitFromStorage());
+        setBuddyVariant(loadBuddyVariantFromStorage(getGoalVariant(storedPreferences.goal)));
+        setXpSummary(getBuddyXpSummaryFromStorage());
+      } catch {
+        setIsLoggedIn(false);
+        setDisplayName("Learner");
+        setLevelPrefix("A2");
+        setSnapshot(createEmptyLearningTrackerSnapshot());
+        setPreferences(createDefaultSchedulePreferences(stableInitialDate, locale));
+        setBuddyOutfit(DEFAULT_BUDDY_OUTFIT);
+        setBuddyVariant(DEFAULT_BUDDY_VARIANT);
+        setXpSummary(createEmptyBuddyXpSummary());
+      } finally {
+        setHomeHasHydrated(true);
+      }
     };
 
     refresh();
