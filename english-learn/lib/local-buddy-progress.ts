@@ -547,11 +547,15 @@ async function resetBuddyProgressInDatabase(input: {
 export async function reconcileLocalBuddyProgressWithAuthUsers() {
   const [db, authUsers] = await Promise.all([readBuddyProgressDb(), readLocalAuthUsers()]);
 
+  // Preserve non-legacy providers (e.g. database/supabase identities).
+  // Legacy file sync should only manage local-file records.
+  const preservedRecords = db.records.filter((record) => record.authProvider !== "local-file");
+
   const existingByKey = new Map(
     db.records.map((record) => [`${record.authProvider}:${record.authUserId}`, record] as const)
   );
 
-  const nextRecords = authUsers.map((user) => {
+  const nextLocalFileRecords = authUsers.map((user) => {
     const existing = existingByKey.get(`local-file:${user.id}`);
 
     if (!existing) {
@@ -574,6 +578,8 @@ export async function reconcileLocalBuddyProgressWithAuthUsers() {
       updatedAt: new Date().toISOString(),
     };
   });
+
+  const nextRecords = [...preservedRecords, ...nextLocalFileRecords];
 
   const changed =
     nextRecords.length !== db.records.length ||
