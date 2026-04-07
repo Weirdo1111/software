@@ -734,6 +734,15 @@ export async function submitVersusAnswer(input: SubmitAnswerInput) {
         } else {
           finishRoom(room, "knockout", "Both cores collapsed. Winner decided by score.");
         }
+      } else {
+        // Resolve this question cycle even on wrong answer so the timer resets per question.
+        room.waveNumber += 1;
+        if (room.waveNumber > room.totalWaves) {
+          finishRoom(room, "waves", "All waves cleared. Winner decided by score.");
+        } else {
+          const pool = getPoolForRoom(room.bank);
+          openNextWave(room, pool, now);
+        }
       }
     }
 
