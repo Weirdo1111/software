@@ -131,7 +131,7 @@ export function BuddyCampusLobby({
         title: locale === "zh" ? "闯关区" : "Challenge",
         note: locale === "zh" ? "进入随机听力测试与挑战模式。" : "Enter the listening test challenge.",
         hint: locale === "zh" ? "随机测试" : "Listening test",
-        href: `/listening/test?lang=${locale}`,
+        href: `/challenge?lang=${locale}`,
         x: 0.03,
         y: 0.18,
         width: 0.17,
