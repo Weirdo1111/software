@@ -51,9 +51,7 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
   const loginLabel = locale === "zh" ? "登录" : "Log in";
   const logoutLabel = locale === "zh" ? "退出" : "Log out";
   const homeLabel = locale === "zh" ? "首页" : "Home";
-  const buddyLabel = locale === "zh" ? "邓迪国际学院学术英语平台" : "DIICSU Academic English Hub";
-  const partnershipLabel =
-    locale === "zh" ? "中南大学 × 邓迪大学" : "Central South University × Dundee";
+  const buddyLabel = locale === "zh" ? "DIICSU Buddy Campus" : "DIICSU Buddy Campus";
   const primaryNav = useMemo(
     () =>
       getFunctionZoneLinks({
@@ -141,15 +139,9 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
   const isHomeActive = pathname === "/";
 
   const isPrimaryActive = (id: FunctionZoneId) => {
-    if (id === "challenge") {
-      return (
-        pathname?.startsWith("/challenge") ||
-        pathname?.startsWith("/listening/test") ||
-        pathname?.startsWith("/speaking/test")
-      );
-    }
+    if (id === "challenge") return pathname?.startsWith("/quests");
     if (id === "tasks") return pathname?.startsWith("/schedule");
-    if (id === "listening") return pathname?.startsWith("/listening") && !pathname?.startsWith("/listening/test");
+    if (id === "listening") return pathname?.startsWith("/listening");
     if (id === "speaking") return pathname?.includes("/lesson/") && pathname?.includes("speaking");
     if (id === "reading") return pathname?.startsWith("/reading");
     if (id === "writing") {
@@ -178,16 +170,13 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
           : "w-full",
       )}
     >
-      <div className="grid gap-2 xl:grid-cols-[minmax(15rem,18rem)_1fr_auto] xl:items-center">
-        <div className="diicsu-nav-brand">
+      <div className="grid gap-2 xl:grid-cols-[minmax(12rem,13.5rem)_1fr_auto] xl:items-center">
+        <div className="flex flex-col items-start gap-2 rounded-[1.55rem] border-2 border-white/85 bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(240,247,255,0.9))] px-3 py-2.5 shadow-[0_10px_0_rgba(255,201,225,0.24),0_18px_28px_rgba(90,123,255,0.1)]">
           <InstitutionBrand locale={locale} embedded compact className="w-full justify-center" />
-          <div className="diicsu-nav-badge">
-            <span className="diicsu-nav-eyebrow">{partnershipLabel}</span>
-            <span className="diicsu-nav-title">
-              <Sparkles className="size-3.5" />
-              {buddyLabel}
-            </span>
-          </div>
+          <span className="inline-flex items-center gap-1 self-center rounded-full border-2 border-white/90 bg-[linear-gradient(135deg,rgba(255,242,165,0.95),rgba(255,212,231,0.9))] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--navy)] shadow-[0_8px_0_rgba(255,201,225,0.25),0_14px_22px_rgba(90,123,255,0.12)]">
+            <Sparkles className="size-3.5" />
+            {buddyLabel}
+          </span>
         </div>
 
         <div className="min-w-0 overflow-x-auto">
@@ -242,7 +231,7 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
               <button
                 type="button"
                 onClick={handleLogout}
-                className="inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-white/90 bg-[linear-gradient(135deg,var(--diicsu-maroon),#b84b6b)] px-4 text-[15px] font-semibold text-white shadow-[0_9px_0_rgba(107,18,49,0.24),0_18px_26px_rgba(146,16,65,0.18)] transition hover:translate-y-[-1px]"
+                className="inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-white/90 bg-[linear-gradient(135deg,#ffac9a,#ff8ac8)] px-4 text-[15px] font-semibold text-white shadow-[0_9px_0_rgba(230,107,133,0.28),0_18px_26px_rgba(255,138,200,0.18)] transition hover:translate-y-[-1px]"
               >
                 <LogOut className="size-4" />
                 {logoutLabel}

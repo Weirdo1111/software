@@ -61,6 +61,6 @@ describe("AppShell", () => {
 
     await user.click(screen.getByRole("button", { name: /challenge/i }));
 
-    expect(pushSpy).toHaveBeenCalledWith("/challenge?lang=en");
+    expect(pushSpy).toHaveBeenCalledWith("/quests/escape-room?lang=en");
   });
 });

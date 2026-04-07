@@ -1,0 +1,1011 @@
+{
+  "summary": {
+    "checked_at": "2026-04-02",
+    "source_file": "/Users/zhuxuan/Documents/GitHub/software/english-learn/lib/listening-materials.ts",
+    "total_talks": 60,
+    "found_official": 0,
+    "not_found": 60
+  },
+  "results": [
+    {
+      "slug": "alex_luebke_vivek_kumbhari_how_you_could_see_inside_your_body_with_a_micro_robot",
+      "title": "How you could see inside your body -- with a micro-robot",
+      "speaker": "Alex Luebke and Vivek Kumbhari",
+      "queries": [
+        "How you could see inside your body -- with a micro-robot Alex Luebke and Vivek Kumbhari",
+        "How you could see inside your body -- with a micro-robot",
+        "could see inside body micro robot Alex Luebke and Vivek Kumbhari",
+        "could see inside body micro robot",
+        "alex luebke vivek kumbhari how you could see inside your body with a micro robot"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "alyssa_amor_gibbons_how_to_design_climate_resilient_buildings",
+      "title": "How to design climate-resilient buildings",
+      "speaker": "Alyssa-Amor Gibbons",
+      "queries": [
+        "How to design climate-resilient buildings Alyssa-Amor Gibbons",
+        "How to design climate-resilient buildings",
+        "design climate resilient buildings Alyssa-Amor Gibbons",
+        "design climate resilient buildings",
+        "alyssa amor gibbons how to design climate resilient buildings"
+      ],
+      "candidate_links": [
+        "/lessons/how-to-design-climate-resilient-buildings-alyssa-amor-gibbons",
+        "/lessons/can-the-economy-grow-forever",
+        "/lessons/what-earth-in-2125-could-look-like-iseult-gillespie",
+        "/lessons/this-country-isn-t-just-carbon-neutral-it-s-carbon-negative"
+      ],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "anima_anandkumar_ai_that_connects_the_digital_and_physical_worlds",
+      "title": "AI that connects the digital and physical worlds",
+      "speaker": "Anima Anandkumar",
+      "queries": [
+        "AI that connects the digital and physical worlds Anima Anandkumar",
+        "AI that connects the digital and physical worlds",
+        "AI that connects digital physical worlds Anima Anandkumar",
+        "AI that connects digital physical worlds",
+        "anima anandkumar ai that connects the digital and physical worlds"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "anthony_atala_printing_a_human_kidney",
+      "title": "Printing a human kidney",
+      "speaker": "Anthony Atala",
+      "queries": [
+        "Printing a human kidney Anthony Atala",
+        "Printing a human kidney",
+        "Printing human kidney Anthony Atala",
+        "Printing human kidney",
+        "anthony atala printing a human kidney"
+      ],
+      "candidate_links": [
+        "/lessons/printing-a-human-kidney-anthony-atala",
+        "/lessons/what-causes-kidney-stones-arash-shadman",
+        "/lessons/how-do-your-kidneys-work-emma-bryce",
+        "/lessons/how-do-kidney-transplants-work-alexander-h-toledo",
+        "/lessons/how-to-3d-print-human-tissue-taneka-jones"
+      ],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "avi_reichental_what_s_next_in_3d_printing",
+      "title": "What's next in 3D printing",
+      "speaker": "Avi Reichental",
+      "queries": [
+        "What's next in 3D printing Avi Reichental",
+        "What's next in 3D printing",
+        "s next 3D printing Avi Reichental",
+        "s next 3D printing",
+        "avi reichental what s next in 3d printing"
+      ],
+      "candidate_links": [
+        "/lessons/forget-shopping-soon-you-ll-download-your-new-clothes-danit-peleg",
+        "/lessons/how-to-3d-print-human-tissue-taneka-jones",
+        "/lessons/how-do-self-driving-cars-see-sajan-saini",
+        "/lessons/how-light-technology-is-changing-medicine-sajan-saini",
+        "/best_of_web/AOFUG389",
+        "/lessons/life-of-an-astronaut-jerry-carr",
+        "/lessons/why-the-sun-could-crash-your-internet-fabio-pacucci",
+        "/lessons/the-rise-of-the-ottoman-empire-mostafa-minawi",
+        "/lessons/why-does-your-voice-change-as-you-get-older-shaylin-a-schundler",
+        "/lessons/meet-the-microscopic-life-in-your-home-and-on-your-face-anne-madden"
+      ],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "ben_zhao_can_we_authenticate_human_creativity",
+      "title": "Can we authenticate human creativity?",
+      "speaker": "Ben Zhao",
+      "queries": [
+        "Can we authenticate human creativity? Ben Zhao",
+        "Can we authenticate human creativity?",
+        "authenticate human creativity Ben Zhao",
+        "authenticate human creativity",
+        "ben zhao can we authenticate human creativity"
+      ],
+      "candidate_links": [
+        "/lessons/the-infamous-jojo-thought-experiment-michael-vazquez-and-sarah-stroud"
+      ],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "carlo_rovelli_4_lessons_on_time_and_technology",
+      "title": "4 lessons on time and technology",
+      "speaker": "Carlo Rovelli",
+      "queries": [
+        "4 lessons on time and technology Carlo Rovelli",
+        "4 lessons on time and technology",
+        "4 lessons time technology Carlo Rovelli",
+        "4 lessons time technology",
+        "carlo rovelli 4 lessons on time and technology"
+      ],
+      "candidate_links": [
+        "/lessons/can-robots-be-creative-gil-weinberg",
+        "/lessons/what-gets-lost-when-we-treat-conversations-like-transactions-khaya-dlanga",
+        "/lessons/how-curiosity-got-us-to-mars-bobak-ferdowsi"
+      ],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "david_mccandless_the_beauty_of_data_visualization",
+      "title": "The beauty of data visualization",
+      "speaker": "David McCandless",
+      "queries": [
+        "The beauty of data visualization David McCandless",
+        "The beauty of data visualization",
+        "beauty data visualization David McCandless",
+        "beauty data visualization",
+        "david mccandless the beauty of data visualization"
+      ],
+      "candidate_links": [
+        "/lessons/david-mccandless-the-beauty-of-data-visualization"
+      ],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "doreen_orishaba_how_to_make_transportation_quieter_cleaner_and_cheaper",
+      "title": "How to make transportation quieter, cleaner and cheaper",
+      "speaker": "Doreen Orishaba",
+      "queries": [
+        "How to make transportation quieter, cleaner and cheaper Doreen Orishaba",
+        "How to make transportation quieter, cleaner and cheaper",
+        "make transportation quieter cleaner cheaper Doreen Orishaba",
+        "make transportation quieter cleaner cheaper",
+        "doreen orishaba how to make transportation quieter cleaner and cheaper"
+      ],
+      "candidate_links": [
+        "/lessons/this-is-what-happens-when-you-hit-the-gas-shannon-odell"
+      ],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "enrique_penalosa_why_buses_represent_democracy_in_action",
+      "title": "Why buses represent democracy in action",
+      "speaker": "Enrique Peñalosa",
+      "queries": [
+        "Why buses represent democracy in action Enrique Peñalosa",
+        "Why buses represent democracy in action",
+        "buses represent democracy action Enrique Peñalosa",
+        "buses represent democracy action",
+        "enrique penalosa why buses represent democracy in action"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "ethan_mollick_ai_s_productivity_paradox_and_what_it_means_for_you",
+      "title": "AI's productivity paradox and what it means for you",
+      "speaker": "Ethan Mollick",
+      "queries": [
+        "AI's productivity paradox and what it means for you Ethan Mollick",
+        "AI's productivity paradox and what it means for you",
+        "AI s productivity paradox it means Ethan Mollick",
+        "AI s productivity paradox it means",
+        "ethan mollick ai s productivity paradox and what it means for you"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "franziska_trautmann_your_empty_wine_bottle_could_help_rebuild_coastlines",
+      "title": "Your empty wine bottle could help rebuild coastlines",
+      "speaker": "Franziska Trautmann",
+      "queries": [
+        "Your empty wine bottle could help rebuild coastlines Franziska Trautmann",
+        "Your empty wine bottle could help rebuild coastlines",
+        "empty wine bottle could help rebuild Franziska Trautmann",
+        "empty wine bottle could help rebuild",
+        "franziska trautmann your empty wine bottle could help rebuild coastlines"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "george_zaidan_and_sajan_saini_how_are_microchips_made",
+      "title": "How are microchips made?",
+      "speaker": "George Zaidan and Sajan Saini",
+      "queries": [
+        "How are microchips made? George Zaidan and Sajan Saini",
+        "How are microchips made?",
+        "microchips made George Zaidan and Sajan Saini",
+        "microchips made",
+        "george zaidan and sajan saini how are microchips made"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "gerd_gigerenzer_how_good_are_you_at_calculating_risk",
+      "title": "How good are you at calculating risk?",
+      "speaker": "Gerd Gigerenzer",
+      "queries": [
+        "How good are you at calculating risk? Gerd Gigerenzer",
+        "How good are you at calculating risk?",
+        "good at calculating risk Gerd Gigerenzer",
+        "good at calculating risk",
+        "gerd gigerenzer how good are you at calculating risk"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "guillaume_verdon_the_future_of_civilization_powered_by_physics_and_ai",
+      "title": "The future of civilization, powered by physics and AI",
+      "speaker": "Guillaume Verdon",
+      "queries": [
+        "The future of civilization, powered by physics and AI Guillaume Verdon",
+        "The future of civilization, powered by physics and AI",
+        "future civilization powered physics AI Guillaume Verdon",
+        "future civilization powered physics AI",
+        "guillaume verdon the future of civilization powered by physics and ai"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "hans_rosling_the_best_stats_you_ve_ever_seen",
+      "title": "The best stats you've ever seen",
+      "speaker": "Hans Rosling",
+      "queries": [
+        "The best stats you've ever seen Hans Rosling",
+        "The best stats you've ever seen",
+        "best stats ve ever seen Hans Rosling",
+        "best stats ve ever seen",
+        "hans rosling the best stats you ve ever seen"
+      ],
+      "candidate_links": [
+        "/lessons/hans-rosling-shows-the-best-stats-you-ve-ever-seen"
+      ],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "jakob_uszkoreit_how_ai_sidesteps_traditional_science",
+      "title": "How AI sidesteps traditional science",
+      "speaker": "Jakob Uszkoreit",
+      "queries": [
+        "How AI sidesteps traditional science Jakob Uszkoreit",
+        "How AI sidesteps traditional science",
+        "AI sidesteps traditional science Jakob Uszkoreit",
+        "AI sidesteps traditional science",
+        "jakob uszkoreit how ai sidesteps traditional science"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "jeff_hawkins_how_brain_science_will_change_computing",
+      "title": "How brain science will change computing",
+      "speaker": "Jeff Hawkins",
+      "queries": [
+        "How brain science will change computing Jeff Hawkins",
+        "How brain science will change computing",
+        "brain science will change computing Jeff Hawkins",
+        "brain science will change computing",
+        "jeff hawkins how brain science will change computing"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "jeff_speck_4_ways_to_make_a_city_more_walkable",
+      "title": "4 ways to make a city more walkable",
+      "speaker": "Jeff Speck",
+      "queries": [
+        "4 ways to make a city more walkable Jeff Speck",
+        "4 ways to make a city more walkable",
+        "4 ways make city more walkable Jeff Speck",
+        "4 ways make city more walkable",
+        "jeff speck 4 ways to make a city more walkable"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "jeff_speck_the_walkable_city",
+      "title": "The walkable city",
+      "speaker": "Jeff Speck",
+      "queries": [
+        "The walkable city Jeff Speck",
+        "The walkable city",
+        "walkable city Jeff Speck",
+        "walkable city",
+        "jeff speck the walkable city"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "jerome_monceaux_the_wonderful_world_of_joyful_robots",
+      "title": "The wonderful world of joyful robots",
+      "speaker": "Jerome Monceaux",
+      "queries": [
+        "The wonderful world of joyful robots Jerome Monceaux",
+        "The wonderful world of joyful robots",
+        "wonderful world joyful robots Jerome Monceaux",
+        "wonderful world joyful robots",
+        "jerome monceaux the wonderful world of joyful robots"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "jessica_coon_lessons_from_linguistics_for_the_future_of_ai",
+      "title": "Lessons from linguistics for the future of AI",
+      "speaker": "Jessica Coon",
+      "queries": [
+        "Lessons from linguistics for the future of AI Jessica Coon",
+        "Lessons from linguistics for the future of AI",
+        "Lessons from linguistics future AI Jessica Coon",
+        "Lessons from linguistics future AI",
+        "jessica coon lessons from linguistics for the future of ai"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "joelle_pineau_what_s_inside_the_black_box_of_ai",
+      "title": "What's inside the black box of AI",
+      "speaker": "Joelle Pineau",
+      "queries": [
+        "What's inside the black box of AI Joelle Pineau",
+        "What's inside the black box of AI",
+        "s inside black box AI Joelle Pineau",
+        "s inside black box AI",
+        "joelle pineau what s inside the black box of ai"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "joseph_desimone_what_if_3d_printing_was_100x_faster",
+      "title": "What if 3D printing was 100x faster?",
+      "speaker": "Joseph DeSimone",
+      "queries": [
+        "What if 3D printing was 100x faster? Joseph DeSimone",
+        "What if 3D printing was 100x faster?",
+        "if 3D printing was 100x faster Joseph DeSimone",
+        "if 3D printing was 100x faster",
+        "joseph desimone what if 3d printing was 100x faster"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "joseph_redmon_how_computers_learn_to_recognize_objects_instantly",
+      "title": "How computers learn to recognize objects instantly",
+      "speaker": "Joseph Redmon",
+      "queries": [
+        "How computers learn to recognize objects instantly Joseph Redmon",
+        "How computers learn to recognize objects instantly",
+        "computers learn recognize objects instantly Joseph Redmon",
+        "computers learn recognize objects instantly",
+        "joseph redmon how computers learn to recognize objects instantly"
+      ],
+      "candidate_links": [
+        "/lessons/J7VBZmKf"
+      ],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "juergen_schmidhuber_why_2042_will_be_a_big_year_for_ai",
+      "title": "Why 2042 will be a big year for AI",
+      "speaker": "Juergen Schmidhuber",
+      "queries": [
+        "Why 2042 will be a big year for AI Juergen Schmidhuber",
+        "Why 2042 will be a big year for AI",
+        "2042 will be big year AI Juergen Schmidhuber",
+        "2042 will be big year AI",
+        "juergen schmidhuber why 2042 will be a big year for ai"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "katja_hofmann_why_we_re_training_ai_on_video_games",
+      "title": "Why we're training AI on video games",
+      "speaker": "Katja Hofmann",
+      "queries": [
+        "Why we're training AI on video games Katja Hofmann",
+        "Why we're training AI on video games",
+        "re training AI video games Katja Hofmann",
+        "re training AI video games",
+        "katja hofmann why we re training ai on video games"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "kiran_bhat_how_to_build_the_3d_world_of_your_dreams_with_just_a_text_prompt",
+      "title": "How to build the 3D world of your dreams with just a text prompt",
+      "speaker": "Kiran Bhat",
+      "queries": [
+        "How to build the 3D world of your dreams with just a text prompt Kiran Bhat",
+        "How to build the 3D world of your dreams with just a text prompt",
+        "build 3D world dreams just text Kiran Bhat",
+        "build 3D world dreams just text",
+        "kiran bhat how to build the 3d world of your dreams with just a text prompt"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "kotchakorn_voraakhom_how_to_transform_sinking_cities_into_landscapes_that_fight_floods",
+      "title": "How to transform sinking cities into landscapes that fight floods",
+      "speaker": "Kotchakorn Voraakhom",
+      "queries": [
+        "How to transform sinking cities into landscapes that fight floods Kotchakorn Voraakhom",
+        "How to transform sinking cities into landscapes that fight floods",
+        "transform sinking cities into landscapes that Kotchakorn Voraakhom",
+        "transform sinking cities into landscapes that",
+        "kotchakorn voraakhom how to transform sinking cities into landscapes that fight floods"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "lauren_taylor_the_key_to_sustainable_growth_is_deep_innovation",
+      "title": "The key to sustainable growth is deep innovation",
+      "speaker": "Lauren Taylor",
+      "queries": [
+        "The key to sustainable growth is deep innovation Lauren Taylor",
+        "The key to sustainable growth is deep innovation",
+        "key sustainable growth deep innovation Lauren Taylor",
+        "key sustainable growth deep innovation",
+        "lauren taylor the key to sustainable growth is deep innovation"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "leo_villareal_how_light_and_code_can_transform_a_city",
+      "title": "How light and code can transform a city",
+      "speaker": "Leo Villareal",
+      "queries": [
+        "How light and code can transform a city Leo Villareal",
+        "How light and code can transform a city",
+        "light code transform city Leo Villareal",
+        "light code transform city",
+        "leo villareal how light and code can transform a city"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "lisa_harouni_a_primer_on_3d_printing",
+      "title": "A primer on 3D printing",
+      "speaker": "Lisa Harouni",
+      "queries": [
+        "A primer on 3D printing Lisa Harouni",
+        "A primer on 3D printing",
+        "primer 3D printing Lisa Harouni",
+        "primer 3D printing",
+        "lisa harouni a primer on 3d printing"
+      ],
+      "candidate_links": [
+        "/lessons/forget-shopping-soon-you-ll-download-your-new-clothes-danit-peleg",
+        "/lessons/how-do-self-driving-cars-see-sajan-saini",
+        "/lessons/the-hidden-network-that-makes-the-internet-possible-sajan-saini"
+      ],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "mark_miodownik_the_brilliance_of_bridges_and_roads_that_repair_themselves",
+      "title": "The brilliance of bridges and roads that repair themselves",
+      "speaker": "Mark Miodownik",
+      "queries": [
+        "The brilliance of bridges and roads that repair themselves Mark Miodownik",
+        "The brilliance of bridges and roads that repair themselves",
+        "brilliance bridges roads that repair themselves Mark Miodownik",
+        "brilliance bridges roads that repair themselves",
+        "mark miodownik the brilliance of bridges and roads that repair themselves"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "max_tegmark_how_to_get_empowered_not_overpowered_by_ai",
+      "title": "How to get empowered, not overpowered, by AI",
+      "speaker": "Max Tegmark",
+      "queries": [
+        "How to get empowered, not overpowered, by AI Max Tegmark",
+        "How to get empowered, not overpowered, by AI",
+        "get empowered not overpowered AI Max Tegmark",
+        "get empowered not overpowered AI",
+        "max tegmark how to get empowered not overpowered by ai"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "michael_green_how_we_can_make_the_world_a_better_place_by_2030",
+      "title": "How we can make the world a better place by 2030",
+      "speaker": "Michael Green",
+      "queries": [
+        "How we can make the world a better place by 2030 Michael Green",
+        "How we can make the world a better place by 2030",
+        "make world better place 2030 Michael Green",
+        "make world better place 2030",
+        "michael green how we can make the world a better place by 2030"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "michael_green_why_we_should_build_wooden_skyscrapers",
+      "title": "Why we should build wooden skyscrapers",
+      "speaker": "Michael Green",
+      "queries": [
+        "Why we should build wooden skyscrapers Michael Green",
+        "Why we should build wooden skyscrapers",
+        "should build wooden skyscrapers Michael Green",
+        "should build wooden skyscrapers",
+        "michael green why we should build wooden skyscrapers"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "mona_chalabi_what_we_miss_when_we_focus_on_the_average",
+      "title": "What we miss when we focus on the average",
+      "speaker": "Mona Chalabi",
+      "queries": [
+        "What we miss when we focus on the average Mona Chalabi",
+        "What we miss when we focus on the average",
+        "miss when focus average Mona Chalabi",
+        "miss when focus average",
+        "mona chalabi what we miss when we focus on the average"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "monica_araya_the_billion_dollar_campaign_to_electrify_transport",
+      "title": "The billion-dollar campaign to electrify transport",
+      "speaker": "Monica Araya",
+      "queries": [
+        "The billion-dollar campaign to electrify transport Monica Araya",
+        "The billion-dollar campaign to electrify transport",
+        "billion dollar campaign electrify transport Monica Araya",
+        "billion dollar campaign electrify transport",
+        "monica araya the billion dollar campaign to electrify transport"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "norah_magero_this_refrigerator_is_saving_lives",
+      "title": "This refrigerator is saving lives",
+      "speaker": "Norah Magero",
+      "queries": [
+        "This refrigerator is saving lives Norah Magero",
+        "This refrigerator is saving lives",
+        "This refrigerator saving lives Norah Magero",
+        "This refrigerator saving lives",
+        "norah magero this refrigerator is saving lives"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "norman_foster_my_green_agenda_for_architecture",
+      "title": "My green agenda for architecture",
+      "speaker": "Norman Foster",
+      "queries": [
+        "My green agenda for architecture Norman Foster",
+        "My green agenda for architecture",
+        "My green agenda architecture Norman Foster",
+        "My green agenda architecture",
+        "norman foster my green agenda for architecture"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "oliver_brock_the_science_of_intelligence_and_a_bold_new_principle",
+      "title": "The science of intelligence and a bold new principle",
+      "speaker": "Oliver Brock",
+      "queries": [
+        "The science of intelligence and a bold new principle Oliver Brock",
+        "The science of intelligence and a bold new principle",
+        "science intelligence bold new principle Oliver Brock",
+        "science intelligence bold new principle",
+        "oliver brock the science of intelligence and a bold new principle"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "olivier_scalabre_the_next_manufacturing_revolution_is_here",
+      "title": "The next manufacturing revolution is here",
+      "speaker": "Olivier Scalabre",
+      "queries": [
+        "The next manufacturing revolution is here Olivier Scalabre",
+        "The next manufacturing revolution is here",
+        "next manufacturing revolution here Olivier Scalabre",
+        "next manufacturing revolution here",
+        "olivier scalabre the next manufacturing revolution is here"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "paul_scharre_the_case_for_regulating_ai_like_critical_infrastructure",
+      "title": "The case for regulating AI like critical infrastructure",
+      "speaker": "Paul Scharre",
+      "queries": [
+        "The case for regulating AI like critical infrastructure Paul Scharre",
+        "The case for regulating AI like critical infrastructure",
+        "case regulating AI like critical infrastructure Paul Scharre",
+        "case regulating AI like critical infrastructure",
+        "paul scharre the case for regulating ai like critical infrastructure"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "pedro_domingos_can_ai_help_build_a_collective_human_intelligence",
+      "title": "Can AI help build a collective human intelligence?",
+      "speaker": "Pedro Domingos",
+      "queries": [
+        "Can AI help build a collective human intelligence? Pedro Domingos",
+        "Can AI help build a collective human intelligence?",
+        "AI help build collective human intelligence Pedro Domingos",
+        "AI help build collective human intelligence",
+        "pedro domingos can ai help build a collective human intelligence"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "peter_calthorpe_7_principles_for_building_better_cities",
+      "title": "7 principles for building better cities",
+      "speaker": "Peter Calthorpe",
+      "queries": [
+        "7 principles for building better cities Peter Calthorpe",
+        "7 principles for building better cities",
+        "7 principles building better cities Peter Calthorpe",
+        "7 principles building better cities",
+        "peter calthorpe 7 principles for building better cities"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "ramin_hasani_how_a_worm_could_save_humanity_from_bad_ai",
+      "title": "How a worm could save humanity from bad AI",
+      "speaker": "Ramin Hasani",
+      "queries": [
+        "How a worm could save humanity from bad AI Ramin Hasani",
+        "How a worm could save humanity from bad AI",
+        "worm could save humanity from bad Ramin Hasani",
+        "worm could save humanity from bad",
+        "ramin hasani how a worm could save humanity from bad ai"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "ramin_hasani_meet_the_ai_system_inspired_by_the_human_brain",
+      "title": "Meet the AI system inspired by the human brain",
+      "speaker": "Ramin Hasani",
+      "queries": [
+        "Meet the AI system inspired by the human brain Ramin Hasani",
+        "Meet the AI system inspired by the human brain",
+        "Meet AI system inspired human brain Ramin Hasani",
+        "Meet AI system inspired human brain",
+        "ramin hasani meet the ai system inspired by the human brain"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "refilwe_ledwaba_how_to_empower_the_next_generation_of_pilots",
+      "title": "How to empower the next generation of pilots",
+      "speaker": "Refilwe Ledwaba",
+      "queries": [
+        "How to empower the next generation of pilots Refilwe Ledwaba",
+        "How to empower the next generation of pilots",
+        "empower next generation pilots Refilwe Ledwaba",
+        "empower next generation pilots",
+        "refilwe ledwaba how to empower the next generation of pilots"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "roger_antonsen_math_is_the_hidden_secret_to_understanding_the_world",
+      "title": "Math is the hidden secret to understanding the world",
+      "speaker": "Roger Antonsen",
+      "queries": [
+        "Math is the hidden secret to understanding the world Roger Antonsen",
+        "Math is the hidden secret to understanding the world",
+        "Math hidden secret understanding world Roger Antonsen",
+        "Math hidden secret understanding world",
+        "roger antonsen math is the hidden secret to understanding the world"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "selena_deckelmann_why_ai_should_be_more_like_wikipedia",
+      "title": "Why AI should be more like Wikipedia",
+      "speaker": "Selena Deckelmann",
+      "queries": [
+        "Why AI should be more like Wikipedia Selena Deckelmann",
+        "Why AI should be more like Wikipedia",
+        "AI should be more like Wikipedia Selena Deckelmann",
+        "AI should be more like Wikipedia",
+        "selena deckelmann why ai should be more like wikipedia"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "shaolei_ren_ai_consumes_a_lot_of_water_but_why",
+      "title": "AI consumes a lot of water, but why?",
+      "speaker": "Shaolei Ren",
+      "queries": [
+        "AI consumes a lot of water, but why? Shaolei Ren",
+        "AI consumes a lot of water, but why?",
+        "AI consumes lot water but Shaolei Ren",
+        "AI consumes lot water but",
+        "shaolei ren ai consumes a lot of water but why"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "surya_ganguli_can_ai_match_the_human_brain",
+      "title": "Can AI match the human brain?",
+      "speaker": "Surya Ganguli",
+      "queries": [
+        "Can AI match the human brain? Surya Ganguli",
+        "Can AI match the human brain?",
+        "AI match human brain Surya Ganguli",
+        "AI match human brain",
+        "surya ganguli can ai match the human brain"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "thomas_dohmke_with_ai_anyone_can_be_a_coder_now",
+      "title": "With AI, anyone can be a coder now",
+      "speaker": "Thomas Dohmke",
+      "queries": [
+        "With AI, anyone can be a coder now Thomas Dohmke",
+        "With AI, anyone can be a coder now",
+        "AI anyone be coder now Thomas Dohmke",
+        "AI anyone be coder now",
+        "thomas dohmke with ai anyone can be a coder now"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "thomas_wolf_what_if_ai_just_works",
+      "title": "What if AI just works?",
+      "speaker": "Thomas Wolf",
+      "queries": [
+        "What if AI just works? Thomas Wolf",
+        "What if AI just works?",
+        "if AI just works Thomas Wolf",
+        "if AI just works",
+        "thomas wolf what if ai just works"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "tri_dao_how_ai_is_transforming_work_and_everyday_life",
+      "title": "How AI is transforming work and everyday life",
+      "speaker": "Tri Dao",
+      "queries": [
+        "How AI is transforming work and everyday life Tri Dao",
+        "How AI is transforming work and everyday life",
+        "AI transforming work everyday life Tri Dao",
+        "AI transforming work everyday life",
+        "tri dao how ai is transforming work and everyday life"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "vit_ruzicka_how_ai_helps_us_track_methane_from_space",
+      "title": "How AI helps us track methane from space",
+      "speaker": "Vit Ruzicka",
+      "queries": [
+        "How AI helps us track methane from space Vit Ruzicka",
+        "How AI helps us track methane from space",
+        "AI helps us track methane from Vit Ruzicka",
+        "AI helps us track methane from",
+        "vit ruzicka how ai helps us track methane from space"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "wayne_ting_a_carbon_free_future_starts_with_driving_less",
+      "title": "A carbon-free future starts with driving less",
+      "speaker": "Wayne Ting",
+      "queries": [
+        "A carbon-free future starts with driving less Wayne Ting",
+        "A carbon-free future starts with driving less",
+        "carbon free future starts driving less Wayne Ting",
+        "carbon free future starts driving less",
+        "wayne ting a carbon free future starts with driving less"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "xu_hao_how_we_re_turning_pollution_into_toys_toothpaste_and_more",
+      "title": "How we're turning pollution into toys, toothpaste and more",
+      "speaker": "Xu Hao",
+      "queries": [
+        "How we're turning pollution into toys, toothpaste and more Xu Hao",
+        "How we're turning pollution into toys, toothpaste and more",
+        "re turning pollution into toys toothpaste Xu Hao",
+        "re turning pollution into toys toothpaste",
+        "xu hao how we re turning pollution into toys toothpaste and more"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "yann_lecun_deep_learning_neural_networks_and_the_future_of_ai",
+      "title": "Deep learning, neural networks and the future of AI",
+      "speaker": "Yann LeCun",
+      "queries": [
+        "Deep learning, neural networks and the future of AI Yann LeCun",
+        "Deep learning, neural networks and the future of AI",
+        "Deep learning neural networks future AI Yann LeCun",
+        "Deep learning neural networks future AI",
+        "yann lecun deep learning neural networks and the future of ai"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    },
+    {
+      "slug": "yves_behar_and_christoph_kohstall_building_robots_with_heart_and_mind",
+      "title": "Building robots with heart and mind",
+      "speaker": "Yves Behar and Christoph Kohstall",
+      "queries": [
+        "Building robots with heart and mind Yves Behar and Christoph Kohstall",
+        "Building robots with heart and mind",
+        "Building robots heart mind Yves Behar and Christoph Kohstall",
+        "Building robots heart mind",
+        "yves behar and christoph kohstall building robots with heart and mind"
+      ],
+      "candidate_links": [],
+      "has_official_question_lesson": false,
+      "matched_lesson_path": null,
+      "match_method": null
+    }
+  ]
+}
