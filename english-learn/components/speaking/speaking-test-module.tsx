@@ -12,10 +12,28 @@ import {
   Waves,
 } from "lucide-react";
 
+import {
+  BuddyCompanion,
+  type BuddyFace,
+  type BuddyFocus,
+  type BuddyMood,
+  type BuddyStage,
+  type BuddyVariant,
+} from "@/components/home/buddy-companion";
 import { useRealtimeRoleplay } from "@/components/discussion/use-realtime-roleplay";
 import { useShadowingPractice } from "@/components/forms/listening/use-shadowing-practice";
 import { useAudioRecorder } from "@/components/forms/speaking/use-audio-recorder";
+import { getBuddyXpSummaryFromStorage, subscribeBuddyXpSources } from "@/lib/buddy-xp";
+import {
+  DEFAULT_BUDDY_OUTFIT,
+  DEFAULT_BUDDY_VARIANT,
+  loadBuddyOutfitFromStorage,
+  loadBuddyVariantFromStorage,
+  subscribeBuddyOutfit,
+  type BuddyOutfit,
+} from "@/lib/buddy-wardrobe";
 import { recordSkillAttemptInStorage } from "@/lib/learning-tracker";
+import { loadSchedulePreferencesFromStorage, subscribeSchedulePreferences } from "@/lib/schedule";
 import type { SpeakingEvaluationHistoryEntry } from "@/lib/speaking-evaluation-history";
 import { MAX_TRANSCRIPTION_DURATION_SECONDS } from "@/lib/speaking-audio";
 import {
@@ -119,6 +137,57 @@ function normalizeTranscript(input: string) {
   return input.replace(/\s+/g, " ").trim();
 }
 
+function getBuddyStage(totalXp: number): BuddyStage {
+  if (totalXp >= 780) return "scholar";
+  if (totalXp >= 440) return "explorer";
+  if (totalXp >= 180) return "growing";
+  return "fresh";
+}
+
+function getBuddyFocus(): BuddyFocus {
+  const goal = loadSchedulePreferencesFromStorage("en").goal;
+  if (goal === "research") return "research";
+  if (goal === "seminar") return "seminar";
+  return "coursework";
+}
+
+function getBuddyVariantFallback(focus: BuddyFocus): BuddyVariant {
+  if (focus === "research") return "bunny";
+  if (focus === "seminar") return "cat";
+  return "bear";
+}
+
+function getExaminerBuddyFace({
+  isAssistantSpeaking,
+  isMicActive,
+  isListening,
+  hasExamStarted,
+}: {
+  isAssistantSpeaking: boolean;
+  isMicActive: boolean;
+  isListening: boolean;
+  hasExamStarted: boolean;
+}): BuddyFace {
+  if (isAssistantSpeaking) return "open";
+  if (isMicActive || isListening) return "happy";
+  if (hasExamStarted) return "blink";
+  return "blush";
+}
+
+function getExaminerBuddyMood({
+  isAssistantSpeaking,
+  isMicActive,
+  isConnected,
+}: {
+  isAssistantSpeaking: boolean;
+  isMicActive: boolean;
+  isConnected: boolean;
+}): BuddyMood {
+  if (isAssistantSpeaking) return "proud";
+  if (isMicActive) return "happy";
+  return isConnected ? "calm" : "happy";
+}
+
 function parseSpeakingFeedbackFromAssistantTurn(input: string) {
   const trimmed = input.trim();
   if (!trimmed) {
@@ -160,6 +229,10 @@ export function SpeakingTestModule({ locale }: { locale: Locale }) {
   const [historyEntries, setHistoryEntries] = useState<SpeakingEvaluationHistoryEntry[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState("");
+  const [buddyFocus, setBuddyFocus] = useState<BuddyFocus>("coursework");
+  const [buddyStage, setBuddyStage] = useState<BuddyStage>("fresh");
+  const [buddyVariant, setBuddyVariant] = useState<BuddyVariant>(DEFAULT_BUDDY_VARIANT);
+  const [buddyOutfit, setBuddyOutfit] = useState<BuddyOutfit>(DEFAULT_BUDDY_OUTFIT);
 
   const bridgeUrl = useMemo(() => getBridgeUrl(), []);
   const realtime = useRealtimeRoleplay(bridgeUrl);
@@ -178,6 +251,17 @@ export function SpeakingTestModule({ locale }: { locale: Locale }) {
   const liveTranscript = normalizeTranscript(
     browserSpeech.transcript.trim() ? browserSpeech.transcript : realtime.liveUserTranscript,
   );
+  const examinerBuddyFace = getExaminerBuddyFace({
+    isAssistantSpeaking: realtime.isAssistantSpeaking,
+    isMicActive: realtime.isMicActive,
+    isListening: browserSpeech.status === "listening",
+    hasExamStarted,
+  });
+  const examinerBuddyMood = getExaminerBuddyMood({
+    isAssistantSpeaking: realtime.isAssistantSpeaking,
+    isMicActive: realtime.isMicActive,
+    isConnected: realtime.connectionState === "connected",
+  });
 
   const text =
     locale === "zh"
@@ -365,6 +449,27 @@ export function SpeakingTestModule({ locale }: { locale: Locale }) {
       setShowScoreReportNotice(true);
     }
   }, [feedback]);
+
+  useEffect(() => {
+    const syncBuddy = () => {
+      const nextFocus = getBuddyFocus();
+      setBuddyFocus(nextFocus);
+      setBuddyStage(getBuddyStage(getBuddyXpSummaryFromStorage().totalXp));
+      setBuddyVariant(loadBuddyVariantFromStorage(getBuddyVariantFallback(nextFocus)));
+      setBuddyOutfit(loadBuddyOutfitFromStorage());
+    };
+
+    syncBuddy();
+    const unsubscribeOutfit = subscribeBuddyOutfit(syncBuddy);
+    const unsubscribeSchedule = subscribeSchedulePreferences(syncBuddy);
+    const unsubscribeXp = subscribeBuddyXpSources(syncBuddy);
+
+    return () => {
+      unsubscribeOutfit();
+      unsubscribeSchedule();
+      unsubscribeXp();
+    };
+  }, []);
 
   useEffect(() => {
     if (!feedback) {
@@ -978,11 +1083,17 @@ export function SpeakingTestModule({ locale }: { locale: Locale }) {
                           <div className="relative flex h-[244px] w-[244px] items-center justify-center rounded-full bg-[linear-gradient(180deg,#1b4178,#091c3b)] shadow-[0_18px_40px_rgba(0,0,0,0.32)]">
                             <div className="absolute inset-[8px] rounded-full bg-[linear-gradient(145deg,#1e5092,#0e2d57)]" />
                             <div className="absolute inset-[14px] rounded-full border-[3px] border-[#ccb16c]" />
-                            <div className="absolute inset-[20px] overflow-hidden rounded-full bg-[linear-gradient(145deg,#fcfcfb,#eceae4)] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
-                              <img
-                                className="h-full w-full object-cover"
-                                src="https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=900&q=80"
-                                alt="Speaking test examiner"
+                            <div className="absolute inset-[20px] overflow-hidden rounded-full bg-[radial-gradient(circle_at_top,#fff7de_0%,#eef3ff_42%,#d4e0f6_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
+                              <div className="absolute inset-[10%] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.65),rgba(255,255,255,0)_68%)]" />
+                              <BuddyCompanion
+                                stage={buddyStage}
+                                focus={buddyFocus}
+                                face={examinerBuddyFace}
+                                mood={examinerBuddyMood}
+                                variant={buddyVariant}
+                                outfit={buddyOutfit}
+                                float={false}
+                                className="relative z-10 mx-auto mt-5 w-[78%] max-w-none drop-shadow-[0_16px_24px_rgba(10,27,54,0.22)]"
                               />
                             </div>
                             <div className="pointer-events-none absolute inset-x-[26px] bottom-[18px] h-[16px] rounded-full bg-[linear-gradient(90deg,rgba(224,191,108,0.1),rgba(224,191,108,0.95),rgba(224,191,108,0.1))] blur-[1px]" />
