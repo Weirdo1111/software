@@ -47,6 +47,7 @@ const createFallbackPlayer = () => {
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
     ...init,
+    cache: "no-store",
     headers: {
       "Content-Type": "application/json",
       ...(init?.headers ?? {}),
@@ -91,7 +92,7 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
     () => (readyCount / 2) * 100,
     [readyCount],
   );
-  const canEnterMatch = roomState?.status === "active";
+  const canEnterMatch = roomState?.status === "active" || roomState?.status === "finished";
   const canToggleReady = Boolean(roomState && selfPlayer && roomState.status === "lobby");
   const canStartMatch = Boolean(roomState?.canStart && selfPlayer?.isHost);
 
@@ -133,7 +134,9 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
     let cancelled = false;
     const tick = async () => {
       try {
-        const state = await requestJson<VersusRoomState>(`/api/games/word-game/versus/rooms/${activeRoomCode}?playerId=${encodeURIComponent(playerId)}`);
+        const state = await requestJson<VersusRoomState>(
+          `/api/games/word-game/versus/rooms/${activeRoomCode}?playerId=${encodeURIComponent(playerId)}&ts=${Date.now()}`,
+        );
         if (!cancelled) {
           setRoomState(state);
           setSelectedBank(state.bank);
@@ -143,6 +146,7 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
       }
     };
 
+    void tick();
     const pollId = window.setInterval(tick, 1000);
     return () => {
       cancelled = true;
