@@ -85,6 +85,25 @@ export function WordGameVersusBattle({
   }, [roomState?.question?.timeLeftSeconds, roomState?.question?.timeTotalSeconds, roomState?.status]);
 
   const battleActive = roomState?.status === "active";
+  const matchFinished = roomState?.status === "finished";
+  const resultType = useMemo<"win" | "lose" | "draw">(() => {
+    if (!matchFinished) return "draw";
+    if (!roomState?.winnerLabel || roomState.winnerLabel === "Draw") return "draw";
+    if (selfPlayer?.name && roomState.winnerLabel === selfPlayer.name) return "win";
+    return "lose";
+  }, [matchFinished, roomState?.winnerLabel, selfPlayer?.name]);
+  const resultTitle =
+    resultType === "win"
+      ? "Victory"
+      : resultType === "lose"
+        ? "Defeat"
+        : "Draw";
+  const resultDesc =
+    resultType === "win"
+      ? "You cleared the duel with a stronger final result."
+      : resultType === "lose"
+        ? "Your rival won this duel. Regroup and challenge again."
+        : "Both sides ended tied. Run it back for a winner.";
 
   useEffect(() => {
     if (resolvedPlayerId) return;
@@ -169,6 +188,12 @@ export function WordGameVersusBattle({
     },
     [answer, battleActive, resolvedPlayerId, roomState],
   );
+  const goLobby = useCallback(() => {
+    router.push(`/games/word-game/multiplayer?lang=${locale}`);
+  }, [locale, router]);
+  const goHome = useCallback(() => {
+    router.push(`/games/word-game?lang=${locale}`);
+  }, [locale, router]);
 
   return (
     <div className="word-versus-root" data-page="versus-battle">
@@ -303,6 +328,37 @@ export function WordGameVersusBattle({
           </article>
         </section>
       </main>
+
+      <div className="versus-result-overlay" style={{ display: matchFinished ? "flex" : "none" }}>
+        <section className={`versus-result-card ${resultType}`}>
+          <div className="result-eyebrow">Match Finished</div>
+          <h2>{resultTitle}</h2>
+          <p>{resultDesc}</p>
+          <div className="versus-result-stats">
+            <div className="versus-result-stat">
+              <span>Your Score</span>
+              <strong>{selfPlayer?.score ?? 0}</strong>
+            </div>
+            <div className="versus-result-stat">
+              <span>Opponent Score</span>
+              <strong>{rivalPlayer?.score ?? 0}</strong>
+            </div>
+            <div className="versus-result-stat">
+              <span>Reason</span>
+              <strong>{roomState?.resultReason ?? "result"}</strong>
+            </div>
+            <div className="versus-result-stat">
+              <span>Winner</span>
+              <strong>{roomState?.winnerLabel ?? "Draw"}</strong>
+            </div>
+          </div>
+          <div className="versus-result-actions">
+            <button type="button" className="result-primary" onClick={goLobby}>Play Again</button>
+            <button type="button" className="result-secondary" onClick={goLobby}>Return To Lobby</button>
+            <button type="button" className="result-secondary" onClick={goHome}>Return Home</button>
+          </div>
+        </section>
+      </div>
 
       <style jsx global>{`
         .word-versus-root {
@@ -741,6 +797,121 @@ export function WordGameVersusBattle({
           color: #b8f4bd;
         }
 
+        .versus-result-overlay {
+          position: fixed;
+          inset: 0;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+          background: rgba(18, 22, 42, 0.66);
+          backdrop-filter: blur(7px);
+          z-index: 40;
+        }
+
+        .versus-result-card {
+          width: min(760px, calc(100vw - 32px));
+          border-radius: 26px;
+          border: 4px solid #6c4128;
+          background: linear-gradient(180deg, #f3dec0 0%, #d2ae84 100%);
+          color: #33231a;
+          padding: 24px 22px 20px;
+          box-shadow: inset 0 3px 0 rgba(255, 251, 232, 0.62), 0 18px 0 rgba(85, 54, 34, 0.3);
+          text-align: center;
+        }
+
+        .versus-result-card.win {
+          background: linear-gradient(180deg, #f4e7c9 0%, #d5b98f 100%);
+        }
+
+        .versus-result-card.lose {
+          background: linear-gradient(180deg, #f0d8cb 0%, #d9ab93 100%);
+        }
+
+        .versus-result-card.draw {
+          background: linear-gradient(180deg, #eee1ce 0%, #cfb593 100%);
+        }
+
+        .versus-result-card .result-eyebrow {
+          font-size: 0.84rem;
+          font-weight: 900;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: #9a3b36;
+        }
+
+        .versus-result-card h2 {
+          margin: 10px 0 8px;
+          font-size: clamp(2.2rem, 5.6vw, 3.2rem);
+          line-height: 1;
+        }
+
+        .versus-result-card p {
+          margin: 0 0 14px;
+          font-size: 1.04rem;
+          line-height: 1.5;
+          color: rgba(51, 35, 26, 0.84);
+        }
+
+        .versus-result-stats {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+          margin-bottom: 14px;
+        }
+
+        .versus-result-stat {
+          border-radius: 14px;
+          border: 1px solid rgba(108, 65, 40, 0.3);
+          background: rgba(255, 255, 255, 0.52);
+          padding: 10px 12px;
+        }
+
+        .versus-result-stat span {
+          display: block;
+          font-size: 0.78rem;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: #8d867b;
+          margin-bottom: 4px;
+        }
+
+        .versus-result-stat strong {
+          font-size: 1.2rem;
+          color: #41352b;
+        }
+
+        .versus-result-actions {
+          display: flex;
+          justify-content: center;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        .versus-result-actions button {
+          height: 48px;
+          min-width: 180px;
+          border-radius: 14px;
+          font: inherit;
+          font-weight: 900;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          cursor: pointer;
+        }
+
+        .versus-result-actions .result-primary {
+          border: 3px solid #6f2d1e;
+          background: linear-gradient(180deg, #d97d54, #a84e30);
+          color: #fffef8;
+          box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.18), inset 0 -5px 0 rgba(109, 41, 25, 0.36);
+        }
+
+        .versus-result-actions .result-secondary {
+          border: 3px solid var(--purple-line);
+          background: linear-gradient(180deg, rgba(91, 65, 146, 0.98), rgba(61, 39, 103, 1));
+          color: var(--cream);
+          box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.14), inset 0 -5px 0 rgba(28, 17, 52, 0.3);
+        }
+
         @media (max-width: 1060px) {
           .top-row {
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -764,6 +935,10 @@ export function WordGameVersusBattle({
           }
 
           .answer-form {
+            grid-template-columns: 1fr;
+          }
+
+          .versus-result-stats {
             grid-template-columns: 1fr;
           }
         }
