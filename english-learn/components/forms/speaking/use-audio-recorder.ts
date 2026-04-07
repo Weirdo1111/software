@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import type { RecorderStatus, SpeakingAudioClip } from "@/components/forms/speaking/types";
+import { MAX_TRANSCRIPTION_DURATION_MS } from "@/lib/speaking-audio";
 
 const MIME_TYPE_CANDIDATES = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"] as const;
 
@@ -45,7 +46,11 @@ function getRecorderSupportServerSnapshot() {
 // Date: 2026/3/18
 // Author: Tianbo Cao
 // Added a browser audio recorder hook so the speaking studio can capture real rehearsal audio before ASR is connected.
-export function useAudioRecorder() {
+export function useAudioRecorder({
+  maxDurationMs = MAX_TRANSCRIPTION_DURATION_MS,
+}: {
+  maxDurationMs?: number;
+} = {}) {
   const [status, setStatus] = useState<RecorderStatus>("idle");
   const [error, setError] = useState("");
   const [elapsedMs, setElapsedMs] = useState(0);
@@ -68,6 +73,7 @@ export function useAudioRecorder() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const autoStoppedRef = useRef(false);
 
   function clearTickTimer() {
     if (tickTimerRef.current !== null) {
@@ -114,7 +120,19 @@ export function useAudioRecorder() {
 
     tickTimerRef.current = window.setInterval(() => {
       const runningMs = startedAtRef.current ? Date.now() - startedAtRef.current : 0;
-      setElapsedMs(elapsedBeforePauseRef.current + runningMs);
+      const nextElapsedMs = elapsedBeforePauseRef.current + runningMs;
+      setElapsedMs(nextElapsedMs);
+
+      if (
+        maxDurationMs > 0 &&
+        nextElapsedMs >= maxDurationMs &&
+        mediaRecorderRef.current?.state === "recording" &&
+        !autoStoppedRef.current
+      ) {
+        autoStoppedRef.current = true;
+        setError(`Recording reached the ${Math.round(maxDurationMs / 1000)}-second limit and stopped automatically.`);
+        stopRecording();
+      }
     }, 150);
   }
 
@@ -162,6 +180,7 @@ export function useAudioRecorder() {
     setAudioLevel(0);
     elapsedBeforePauseRef.current = 0;
     chunksRef.current = [];
+    autoStoppedRef.current = false;
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -287,6 +306,7 @@ export function useAudioRecorder() {
     startedAtRef.current = null;
     elapsedBeforePauseRef.current = 0;
     chunksRef.current = [];
+    autoStoppedRef.current = false;
     revokeClipUrl();
     setAudioClip(null);
     setElapsedMs(0);

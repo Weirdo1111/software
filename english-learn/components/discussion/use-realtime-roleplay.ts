@@ -32,6 +32,15 @@ export type RoleplayRealtimeLog = {
   message: string;
 };
 
+export type RoleplayAssistantTurn = {
+  id: string;
+  text: string;
+};
+
+function normalizeTranscriptText(input: string) {
+  return input.replace(/\s+/g, " ").trim();
+}
+
 type PlaybackController = {
   enqueue: (buffer: ArrayBuffer) => void;
   clear: () => void;
@@ -42,8 +51,114 @@ type CaptureController = {
   stop: () => Promise<void>;
 };
 
+type AssistantTurnResolver = {
+  afterCount: number;
+  resolve: (text: string) => void;
+  resolveOnJson: boolean;
+};
+
 function nextId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function extractJsonLikeText(input: string) {
+  const trimmed = input.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  try {
+    JSON.parse(trimmed);
+    return trimmed;
+  } catch {}
+
+  const start = trimmed.indexOf("{");
+  const end = trimmed.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) {
+    return "";
+  }
+
+  const candidate = trimmed.slice(start, end + 1);
+  try {
+    JSON.parse(candidate);
+    return candidate;
+  } catch {
+    return "";
+  }
+}
+
+function summarizeOutboundText(content: string) {
+  const trimmed = content.trim();
+  if (!trimmed.startsWith("[SYSTEM CONTROL]")) {
+    return `Text sent: ${trimmed}`;
+  }
+
+  if (trimmed.includes("Return one JSON object only")) {
+    return "Platform scoring request sent.";
+  }
+
+  if (trimmed.includes("candidate is now answering")) {
+    return "Platform switched the examiner to silent listening mode.";
+  }
+
+  if (trimmed.includes("administering question")) {
+    return "Platform queued the next exam question.";
+  }
+
+  return "Platform control sent.";
+}
+
+function collectTranscriptCandidates(value: unknown, keyHint = ""): string[] {
+  if (typeof value === "string") {
+    const normalized = normalizeTranscriptText(value);
+    if (!normalized) {
+      return [];
+    }
+
+    if (
+      !keyHint ||
+      /(text|content|transcript|utterance|utter|result|sentence|message|display|recognized|recognition|caption)/i.test(
+        keyHint,
+      ) ||
+      /[a-zA-Z]{3,}/.test(normalized)
+    ) {
+      return [normalized];
+    }
+
+    return [];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => collectTranscriptCandidates(item, keyHint));
+  }
+
+  if (!value || typeof value !== "object") {
+    return [];
+  }
+
+  return Object.entries(value).flatMap(([key, nestedValue]) => collectTranscriptCandidates(nestedValue, key));
+}
+
+function pickTranscriptChunk(value: unknown) {
+  const candidates = collectTranscriptCandidates(value);
+  if (candidates.length === 0) {
+    return "";
+  }
+
+  const unique = Array.from(new Set(candidates));
+  return unique.sort((left, right) => right.length - left.length)[0] ?? "";
+}
+
+function summarizeUpstreamPayload(value: unknown) {
+  if (typeof value === "string") {
+    return normalizeTranscriptText(value).slice(0, 220);
+  }
+
+  try {
+    return JSON.stringify(value).slice(0, 220);
+  } catch {
+    return String(value).slice(0, 220);
+  }
 }
 
 function appendUint8Arrays(left: Uint8Array, right: Uint8Array) {
@@ -206,6 +321,8 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
   const [isAssistantSpeaking, setIsAssistantSpeaking] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
   const [logs, setLogs] = useState<RoleplayRealtimeLog[]>([]);
+  const [assistantTurns, setAssistantTurns] = useState<RoleplayAssistantTurn[]>([]);
+  const [liveUserTranscript, setLiveUserTranscript] = useState("");
   const [status, setStatus] = useState("");
   const [speaker, setSpeaker] = useState("");
   const [dialogVariant, setDialogVariant] = useState("");
@@ -216,6 +333,12 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
   const websocketRef = useRef<WebSocket | null>(null);
   const playbackRef = useRef<PlaybackController | null>(null);
   const captureRef = useRef<CaptureController | null>(null);
+  const assistantTurnsRef = useRef<RoleplayAssistantTurn[]>([]);
+  const currentAssistantTextRef = useRef("");
+  const currentUserTranscriptRef = useRef("");
+  const assistantTurnResolversRef = useRef<AssistantTurnResolver[]>([]);
+  const isAssistantAudioMutedRef = useRef(false);
+  const isMicActiveRef = useRef(false);
   const botNameRef = useRef("");
   const connectionNonceRef = useRef(0);
 
@@ -224,7 +347,114 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
   }
 
   function pushLog(message: string, tone: RoleplayRealtimeLog["tone"] = "neutral") {
-    setLogs((current) => [...current.slice(-11), { id: nextId("log"), message, tone }]);
+    setLogs((current) => [...current.slice(-19), { id: nextId("log"), message, tone }]);
+  }
+
+  function resolveAssistantTurnWaiters(nextTurns: RoleplayAssistantTurn[]) {
+    const pendingResolvers = assistantTurnResolversRef.current;
+    if (pendingResolvers.length === 0) {
+      return;
+    }
+
+    const remainingResolvers: AssistantTurnResolver[] = [];
+    for (const pending of pendingResolvers) {
+      if (nextTurns.length > pending.afterCount) {
+        pending.resolve(nextTurns[pending.afterCount]?.text ?? "");
+      } else {
+        remainingResolvers.push(pending);
+      }
+    }
+
+    assistantTurnResolversRef.current = remainingResolvers;
+  }
+
+  function resolveAssistantJsonWaiters() {
+    const pendingJsonText = extractJsonLikeText(currentAssistantTextRef.current);
+    if (!pendingJsonText) {
+      return;
+    }
+
+    const pendingResolvers = assistantTurnResolversRef.current;
+    if (pendingResolvers.length === 0) {
+      return;
+    }
+
+    const currentTurnCount = assistantTurnsRef.current.length;
+    const remainingResolvers: AssistantTurnResolver[] = [];
+    for (const pending of pendingResolvers) {
+      if (pending.resolveOnJson && pending.afterCount === currentTurnCount) {
+        pending.resolve(pendingJsonText);
+      } else {
+        remainingResolvers.push(pending);
+      }
+    }
+
+    assistantTurnResolversRef.current = remainingResolvers;
+  }
+
+  function finalizeAssistantTurn() {
+    const nextText = currentAssistantTextRef.current.trim();
+    currentAssistantTextRef.current = "";
+
+    if (!nextText) {
+      return;
+    }
+
+    const nextTurns = [...assistantTurnsRef.current, { id: nextId("assistant-turn"), text: nextText }];
+    assistantTurnsRef.current = nextTurns;
+    setAssistantTurns(nextTurns);
+    resolveAssistantTurnWaiters(nextTurns);
+  }
+
+  function appendAssistantTextChunk(chunk: string) {
+    const nextChunk = chunk.trim();
+    if (!nextChunk) {
+      return;
+    }
+
+    const current = currentAssistantTextRef.current;
+    if (!current) {
+      currentAssistantTextRef.current = chunk;
+      return;
+    }
+
+    const normalizedCurrent = current.replace(/\s+/g, " ").trim();
+    const normalizedChunk = nextChunk.replace(/\s+/g, " ").trim();
+    if (normalizedCurrent === normalizedChunk || normalizedCurrent.includes(normalizedChunk)) {
+      return;
+    }
+
+    currentAssistantTextRef.current = `${current}${chunk}`;
+    resolveAssistantJsonWaiters();
+  }
+
+  function appendUserTranscriptChunk(chunk: string) {
+    const nextChunk = normalizeTranscriptText(chunk);
+    if (!nextChunk) {
+      return;
+    }
+
+    const current = currentUserTranscriptRef.current;
+    if (!current) {
+      currentUserTranscriptRef.current = nextChunk;
+      setLiveUserTranscript(nextChunk);
+      return;
+    }
+
+    const normalizedCurrent = normalizeTranscriptText(current);
+    if (normalizedCurrent === nextChunk || normalizedCurrent.includes(nextChunk)) {
+      return;
+    }
+
+    if (nextChunk.includes(normalizedCurrent)) {
+      currentUserTranscriptRef.current = nextChunk;
+      setLiveUserTranscript(nextChunk);
+      return;
+    }
+
+    const merged = `${normalizedCurrent} ${nextChunk}`.trim();
+    currentUserTranscriptRef.current = merged;
+    setLiveUserTranscript(merged);
   }
 
   async function stopMicrophone() {
@@ -234,6 +464,7 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
     if (capture) {
       await capture.stop();
     }
+    isMicActiveRef.current = false;
     setIsMicActive(false);
   }
 
@@ -261,6 +492,16 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
     setConnectionState("idle");
     setStatus("");
     setAudioLevel(0);
+    currentAssistantTextRef.current = "";
+    currentUserTranscriptRef.current = "";
+    setLiveUserTranscript("");
+    assistantTurnsRef.current = [];
+    setAssistantTurns([]);
+    for (const pending of assistantTurnResolversRef.current) {
+      pending.resolve("");
+    }
+    assistantTurnResolversRef.current = [];
+    isAssistantAudioMutedRef.current = false;
     setSpeaker("");
     setDialogVariant("");
     setResourceId("");
@@ -316,8 +557,10 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
       if (typeof event.data !== "string") {
         const buffer =
           event.data instanceof ArrayBuffer ? event.data : await event.data.arrayBuffer();
-        playback.enqueue(buffer);
-        setIsAssistantSpeaking(true);
+        if (!isAssistantAudioMutedRef.current) {
+          playback.enqueue(buffer);
+          setIsAssistantSpeaking(true);
+        }
         return;
       }
 
@@ -337,12 +580,14 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
       }
 
       if (payload.type === "hello_finished") {
+        finalizeAssistantTurn();
         setStatus(`${botNameRef.current || "The character"} finished the opening line. You can start the microphone now.`);
         pushLog("Opening line finished. You can start speaking now.", "success");
         return;
       }
 
       if (payload.type === "assistant_turn_finished") {
+        finalizeAssistantTurn();
         setIsAssistantSpeaking(false);
         pushLog(`${botNameRef.current || "The character"} finished the current voice turn.`);
         return;
@@ -361,7 +606,7 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
       }
 
       if (payload.type === "text_sent") {
-        pushLog(`Text sent: ${payload.content}`);
+        pushLog(summarizeOutboundText(payload.content));
         return;
       }
 
@@ -373,6 +618,25 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
       }
 
       if (payload.type === "upstream_event") {
+        if (payload.event === 550 && payload.payload && typeof payload.payload === "object" && "content" in payload.payload) {
+          const chunk = typeof payload.payload.content === "string" ? payload.payload.content : "";
+          appendAssistantTextChunk(chunk);
+        }
+
+        if (payload.event === 351 && payload.payload && typeof payload.payload === "object" && "text" in payload.payload) {
+          const chunk = typeof payload.payload.text === "string" ? payload.payload.text : "";
+          appendAssistantTextChunk(chunk);
+        }
+
+        if (isMicActiveRef.current && payload.event !== 550 && payload.event !== 351) {
+          const userChunk = pickTranscriptChunk(payload.payload);
+          appendUserTranscriptChunk(userChunk);
+
+          if (payload.payload && !userChunk) {
+            pushLog(`Upstream event ${payload.event ?? "?"}: ${summarizeUpstreamPayload(payload.payload)}`);
+          }
+        }
+
         if (typeof payload.payload === "string" && payload.payload.trim()) {
           pushLog(`Upstream event ${payload.event ?? "?"}: ${payload.payload}`);
         }
@@ -408,6 +672,7 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
       }
       setIsAssistantSpeaking(false);
       setIsMicActive(false);
+      isMicActiveRef.current = false;
       setAudioLevel(0);
       setConnectionState((current) => (current === "error" ? current : "idle"));
     };
@@ -420,6 +685,9 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
     }
 
     captureRef.current = await createMicCapture(socket, setAudioLevel);
+    currentUserTranscriptRef.current = "";
+    setLiveUserTranscript("");
+    isMicActiveRef.current = true;
     setIsMicActive(true);
     setStatus("Microphone is live. Speak naturally and the audio is streamed in realtime.");
     pushLog("Microphone streaming started.", "success");
@@ -451,6 +719,7 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
     isMicActive,
     isAssistantSpeaking,
     audioLevel,
+    liveUserTranscript,
     logs,
     status,
     speaker,
@@ -458,13 +727,67 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
     resourceId,
     logId,
     botName,
+    assistantTurns,
     connectSession,
     disconnectSession,
     startMicrophone,
     stopMicrophone,
     sendTextTurn,
+    setAssistantAudioMuted(muted: boolean) {
+      isAssistantAudioMutedRef.current = muted;
+      if (muted) {
+        playbackRef.current?.clear();
+        setIsAssistantSpeaking(false);
+      }
+    },
+    waitForNextAssistantTurn(
+      afterCount = assistantTurnsRef.current.length,
+      options?: {
+        timeoutMs?: number;
+        resolveOnJson?: boolean;
+      },
+    ) {
+      const currentTurns = assistantTurnsRef.current;
+      if (currentTurns.length > afterCount) {
+        return Promise.resolve(currentTurns[afterCount]?.text ?? "");
+      }
+
+      if (options?.resolveOnJson) {
+        const pendingJsonText = extractJsonLikeText(currentAssistantTextRef.current);
+        if (pendingJsonText && currentTurns.length === afterCount) {
+          return Promise.resolve(pendingJsonText);
+        }
+      }
+
+      return new Promise<string>((resolve) => {
+        const resolver: AssistantTurnResolver = {
+          afterCount,
+          resolve: (text) => {
+            if (timeoutId !== null) {
+              window.clearTimeout(timeoutId);
+            }
+            resolve(text);
+          },
+          resolveOnJson: options?.resolveOnJson ?? false,
+        };
+
+        let timeoutId: number | null = null;
+        if ((options?.timeoutMs ?? 0) > 0) {
+          timeoutId = window.setTimeout(() => {
+            assistantTurnResolversRef.current = assistantTurnResolversRef.current.filter((item) => item !== resolver);
+            resolve("");
+          }, options?.timeoutMs);
+        }
+
+        assistantTurnResolversRef.current.push(resolver);
+      });
+    },
     clearLogs() {
       setLogs([]);
+    },
+    clearLiveUserTranscript() {
+      currentUserTranscriptRef.current = "";
+      setLiveUserTranscript("");
     },
   };
 }
