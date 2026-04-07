@@ -1618,9 +1618,6 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
         <section className={`grid gap-5 reveal-up${homeBuddyLoadingActive ? " home-buddy-page-preload" : ""}${homeBuddyIntroActive ? " home-buddy-page-locked" : ""}`}>
         <article className="sky-panel diicsu-hero-panel rounded-[2.5rem] px-6 pb-7 pt-4 sm:px-8 sm:pb-9 sm:pt-5">
           {homeHeroTopBar}
-          <span className="party-floater right-8 top-10 h-12 w-12">
-            <Trophy className="size-5" />
-          </span>
           <span className="party-floater bottom-[4.5rem] right-[28%] h-10 w-10">
             <Mic className="size-4.5" />
           </span>
@@ -1735,9 +1732,6 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       <section className={`grid gap-5 reveal-up${homeBuddyLoadingActive ? " home-buddy-page-preload" : ""}${homeBuddyIntroActive ? " home-buddy-page-locked" : ""}`}>
       <article className="sky-panel diicsu-hero-panel rounded-[2.5rem] px-6 pb-7 pt-4 sm:px-8 sm:pb-8 sm:pt-5">
         {homeHeroTopBar}
-        <span className="party-floater right-10 top-11 h-12 w-12">
-          <Trophy className="size-5" />
-        </span>
         <span className="party-floater bottom-16 right-[32%] h-10 w-10">
           <Compass className="size-4.5" />
         </span>
