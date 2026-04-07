@@ -33,6 +33,7 @@ const createFallbackPlayer = () => {
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
     ...init,
+    cache: "no-store",
     headers: {
       "Content-Type": "application/json",
       ...(init?.headers ?? {}),
@@ -115,7 +116,7 @@ export function WordGameVersusBattle({
 
     try {
       const state = await requestJson<VersusRoomState>(
-        `/api/games/word-game/versus/rooms/${normalizedRoom}?playerId=${encodeURIComponent(resolvedPlayerId)}`,
+        `/api/games/word-game/versus/rooms/${normalizedRoom}?playerId=${encodeURIComponent(resolvedPlayerId)}&ts=${Date.now()}`,
       );
       setRoomState(state);
       setFeedback(state.lastEvent || "State synced.");
