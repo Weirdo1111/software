@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import type { VersusRoomState } from "@/lib/games/word-game-versus-types";
@@ -63,6 +63,7 @@ export function WordGameVersusBattle({
   const [feedback, setFeedback] = useState("Syncing match state...");
   const [errorText, setErrorText] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const answerInputRef = useRef<HTMLInputElement | null>(null);
 
   const normalizedRoom = useMemo(() => normalizeRoomCode(room), [room]);
   const selfPlayer = useMemo(
@@ -104,6 +105,16 @@ export function WordGameVersusBattle({
       : resultType === "lose"
         ? "Your rival won this duel. Regroup and challenge again."
         : "Both sides ended tied. Run it back for a winner.";
+
+  const focusAnswerInput = useCallback(() => {
+    if (typeof window === "undefined") return;
+    window.requestAnimationFrame(() => {
+      const input = answerInputRef.current;
+      if (!input || input.disabled) return;
+      input.focus({ preventScroll: true });
+      input.setSelectionRange(input.value.length, input.value.length);
+    });
+  }, []);
 
   useEffect(() => {
     if (resolvedPlayerId) return;
@@ -158,6 +169,11 @@ export function WordGameVersusBattle({
     };
   }, [normalizedRoom, resolvedPlayerId, syncRoomState]);
 
+  useEffect(() => {
+    if (!battleActive) return;
+    focusAnswerInput();
+  }, [battleActive, focusAnswerInput, roomState?.waveNumber]);
+
   const submitAnswer = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
@@ -184,9 +200,10 @@ export function WordGameVersusBattle({
         setErrorText(error instanceof Error ? error.message : "Failed to submit answer.");
       } finally {
         setSubmitting(false);
+        focusAnswerInput();
       }
     },
-    [answer, battleActive, resolvedPlayerId, roomState],
+    [answer, battleActive, focusAnswerInput, resolvedPlayerId, roomState],
   );
   const goLobby = useCallback(() => {
     router.push(`/games/word-game/multiplayer?lang=${locale}`);
@@ -304,6 +321,7 @@ export function WordGameVersusBattle({
             <h3>Your Answer Panel</h3>
             <form className="answer-form" onSubmit={submitAnswer}>
               <input
+                ref={answerInputRef}
                 className="input-shell"
                 value={answer}
                 onChange={(event) => setAnswer(event.target.value)}
