@@ -1056,19 +1056,26 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   };
 
   useEffect(() => {
-    setHomeBuddyLineIndex(0);
-    setHomeBuddyBubbleVisible(true);
+    const frame = window.requestAnimationFrame(() => {
+      setHomeBuddyLineIndex(0);
+      setHomeBuddyBubbleVisible(true);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
   }, [homeBuddyIdleLines]);
 
   useEffect(() => {
     if (!homeHasHydrated) return;
 
-    setHomeBuddyIntroPhase("welcome");
-    setHomeBuddyBubbleVisible(false);
-    setHomeBuddyFace("open");
-    setHomeBuddySpeechMotion("wave");
+    const frame = window.requestAnimationFrame(() => {
+      setHomeBuddyIntroPhase("welcome");
+      setHomeBuddyBubbleVisible(false);
+      setHomeBuddyFace("open");
+      setHomeBuddySpeechMotion("wave");
+    });
 
     return () => {
+      window.cancelAnimationFrame(frame);
       clearHomeBuddyIntroTimers();
     };
   }, [homeHasHydrated]);
@@ -1106,8 +1113,12 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   useEffect(() => {
     if (!homeBuddyIntroActive) return;
 
-    setHomeBuddySpeechTick((current) => current + 1);
-    playHomeBuddyVoice(buddyVariant);
+    const frame = window.requestAnimationFrame(() => {
+      setHomeBuddySpeechTick((current) => current + 1);
+      playHomeBuddyVoice(buddyVariant);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
   }, [buddyVariant, homeBuddyAudioReady, homeBuddyIntroActive]);
 
   useEffect(() => {
@@ -1152,6 +1163,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
 
     let hideTimer = 0;
     let nextLineTimer = 0;
+    let frame = 0;
 
     const showDuration = 6400;
     const quietDuration = 3400;
@@ -1169,10 +1181,13 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       }, showDuration);
     };
 
-    setHomeBuddyBubbleVisible(true);
-    queueCycle();
+    frame = window.requestAnimationFrame(() => {
+      setHomeBuddyBubbleVisible(true);
+      queueCycle();
+    });
 
     return () => {
+      window.cancelAnimationFrame(frame);
       window.clearTimeout(hideTimer);
       window.clearTimeout(nextLineTimer);
     };
@@ -1181,16 +1196,22 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   useEffect(() => {
     if (typeof window === "undefined" || homeBuddyIntroActive || !homeBuddyBubbleVisible) return;
 
-    setHomeBuddySpeechTick((current) => current + 1);
-    setHomeBuddyFace("open");
-    setHomeBuddySpeechMotion(HOME_BUDDY_SPEECH_MOTIONS[homeBuddyLineIndex % HOME_BUDDY_SPEECH_MOTIONS.length]);
-    playHomeBuddyVoice(buddyVariant);
+    let settleTimer = 0;
+    const frame = window.requestAnimationFrame(() => {
+      setHomeBuddySpeechTick((current) => current + 1);
+      setHomeBuddyFace("open");
+      setHomeBuddySpeechMotion(HOME_BUDDY_SPEECH_MOTIONS[homeBuddyLineIndex % HOME_BUDDY_SPEECH_MOTIONS.length]);
+      playHomeBuddyVoice(buddyVariant);
 
-    const settleTimer = window.setTimeout(() => {
-      setHomeBuddyFace("happy");
-    }, 820);
+      settleTimer = window.setTimeout(() => {
+        setHomeBuddyFace("happy");
+      }, 820);
+    });
 
-    return () => window.clearTimeout(settleTimer);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(settleTimer);
+    };
   }, [buddyVariant, homeBuddyAudioReady, homeBuddyBubbleVisible, homeBuddyIntroActive, homeBuddyLineIndex]);
 
   useEffect(() => {
@@ -1618,9 +1639,6 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
         <section className={`grid gap-5 reveal-up${homeBuddyLoadingActive ? " home-buddy-page-preload" : ""}${homeBuddyIntroActive ? " home-buddy-page-locked" : ""}`}>
         <article className="sky-panel diicsu-hero-panel rounded-[2.5rem] px-6 pb-7 pt-4 sm:px-8 sm:pb-9 sm:pt-5">
           {homeHeroTopBar}
-          <span className="party-floater right-8 top-10 h-12 w-12">
-            <Trophy className="size-5" />
-          </span>
           <span className="party-floater bottom-[4.5rem] right-[28%] h-10 w-10">
             <Mic className="size-4.5" />
           </span>
@@ -1735,9 +1753,6 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       <section className={`grid gap-5 reveal-up${homeBuddyLoadingActive ? " home-buddy-page-preload" : ""}${homeBuddyIntroActive ? " home-buddy-page-locked" : ""}`}>
       <article className="sky-panel diicsu-hero-panel rounded-[2.5rem] px-6 pb-7 pt-4 sm:px-8 sm:pb-8 sm:pt-5">
         {homeHeroTopBar}
-        <span className="party-floater right-10 top-11 h-12 w-12">
-          <Trophy className="size-5" />
-        </span>
         <span className="party-floater bottom-16 right-[32%] h-10 w-10">
           <Compass className="size-4.5" />
         </span>
