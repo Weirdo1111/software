@@ -1,0 +1,60 @@
+name: Bug report
+description: Capture a reproducible defect with expected behavior, actual behavior, and validation notes.
+title: "[Bug]: "
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: Bug summary
+      placeholder: Home buddy intro does not dismiss on mobile
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to ...
+        2. Click ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: The user should ...
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      placeholder: Instead, the app ...
+    validations:
+      required: true
+  - type: input
+    id: owner
+    attributes:
+      label: Proposed owner
+      placeholder: "@github-handle"
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Critical
+        - High
+        - Medium
+        - Low
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation after fix
+      description: Describe how the team should confirm the fix.
+      placeholder: |
+        - [ ] Reproduced before fix
+        - [ ] Verified after fix
+        - [ ] Regression check completed

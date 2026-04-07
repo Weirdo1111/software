@@ -1,0 +1,64 @@
+name: User story
+description: Plan a learner-facing feature or improvement with a clear outcome and acceptance criteria.
+title: "[Story]: "
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: Story summary
+      description: Write the feature in one sentence.
+      placeholder: As a learner, I want to ...
+    validations:
+      required: true
+  - type: textarea
+    id: reason
+    attributes:
+      label: Why this matters
+      description: What learner, demo, or product problem does this solve?
+      placeholder: This story matters because ...
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Use a checklist so the team can review it objectively.
+      placeholder: |
+        - [ ] Behavior A works
+        - [ ] Behavior B works
+        - [ ] Edge case C is handled
+    validations:
+      required: true
+  - type: input
+    id: owner
+    attributes:
+      label: Proposed owner
+      placeholder: "@github-handle"
+  - type: input
+    id: sprint
+    attributes:
+      label: Sprint / iteration
+      placeholder: Sprint 3-4
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0
+        - P1
+        - P2
+    validations:
+      required: true
+  - type: input
+    id: estimate
+    attributes:
+      label: Estimate
+      description: Use the same sizing convention as the project board.
+      placeholder: 3 story points
+  - type: checkboxes
+    id: workflow
+    attributes:
+      label: Workflow checklist
+      options:
+        - label: I will link this issue to the GitHub Project and open a branch/PR from it.
+          required: true

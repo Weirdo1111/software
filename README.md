@@ -37,6 +37,8 @@ Start here for the actual product:
 - [english-learn/README.md](./english-learn/README.md)
 - [english-learn/docs/architecture.md](./english-learn/docs/architecture.md)
 - [english-learn/docs/demo-guide.md](./english-learn/docs/demo-guide.md)
+- [english-learn/docs/deployment.md](./english-learn/docs/deployment.md)
+- [CONTRIBUTING.md](./CONTRIBUTING.md)
 
 ### Repository-Level Working Docs
 
@@ -49,6 +51,14 @@ Project-support materials live under:
 - [docs/archive](./docs/archive)
 
 These folders are useful for team process, design iteration, and historical reference. They are not the main product runtime.
+
+## Team Workflow
+
+Repository process expectations live in:
+
+- [CONTRIBUTING.md](./CONTRIBUTING.md)
+
+Use that guide for issue quality, project-board updates, branch naming, PR expectations, and the team Definition of Done.
 
 ## Repository Structure
 
