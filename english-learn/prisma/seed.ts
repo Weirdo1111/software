@@ -368,14 +368,19 @@ async function removeObviousTestPosts() {
   await prisma.discussionPost.deleteMany({
     where: {
       OR: [
-        { title: { contains: "test" } },
-        { title: { contains: "Test" } },
-        { title: { contains: "TEST" } },
+        { title: { equals: "test" } },
+        { title: { equals: "Test" } },
+        { title: { equals: "TEST" } },
+        { title: { startsWith: "test " } },
+        { title: { startsWith: "Test " } },
+        { title: { startsWith: "TEST " } },
+        { title: { startsWith: "[test]" } },
+        { title: { startsWith: "[Test]" } },
         { title: { contains: "测试" } },
-        { title: { contains: "demo" } },
-        { title: { contains: "Demo" } },
-        { title: { contains: "sample" } },
-        { title: { contains: "Sample" } },
+        { title: { startsWith: "demo" } },
+        { title: { startsWith: "Demo" } },
+        { title: { startsWith: "sample" } },
+        { title: { startsWith: "Sample" } },
       ],
     },
   });
