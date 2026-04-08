@@ -1294,7 +1294,9 @@ export function SpeakingTestModule({ locale }: { locale: Locale }) {
                           <p className="font-inter text-[10px] font-bold uppercase tracking-[0.18em] text-[#6f87ff]">
                             {item.label}
                           </p>
-                          <p className="mt-4 font-inter text-[13px] leading-7 text-[#526766]">"{item.comment}"</p>
+                          <p className="mt-4 font-inter text-[13px] leading-7 text-[#526766]">
+                            &ldquo;{item.comment}&rdquo;
+                          </p>
                           <div className="mt-6 bg-[#f8f9fa] p-4">
                             <p className="font-inter text-[10px] font-bold uppercase tracking-[0.18em] text-[#7b8ca2]">
                               Improvement Suggestion
