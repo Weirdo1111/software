@@ -14,7 +14,9 @@ This repository is designed to show both the product and the team's delivery pro
 | [`english-learn/docs/architecture.md`](./english-learn/docs/architecture.md) | System structure, module boundaries, and implementation notes |
 | [`english-learn/docs/demo-guide.md`](./english-learn/docs/demo-guide.md) | Recommended walkthrough for demos and presentations |
 | [`english-learn/docs/deployment.md`](./english-learn/docs/deployment.md) | Deployment, release, rollback, and submission evidence |
+| [`english-learn/docs/release-notes.md`](./english-learn/docs/release-notes.md) | Final release summary and suggested review path |
 | [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Team workflow, PR expectations, and Definition of Done |
+| [`docs/SM_work/final-retrospective.md`](./docs/SM_work/final-retrospective.md) | Closing retrospective on process, evidence, and lessons learned |
 | <https://github.com/users/Weirdo1111/projects/2> | Public GitHub project board |
 
 ## Project Status
@@ -97,7 +99,9 @@ software/
 - [`english-learn/docs/architecture.md`](./english-learn/docs/architecture.md): system structure and engineering notes
 - [`english-learn/docs/demo-guide.md`](./english-learn/docs/demo-guide.md): recommended demo path and presentation highlights
 - [`english-learn/docs/deployment.md`](./english-learn/docs/deployment.md): deployment, release, rollback, and demo evidence
+- [`english-learn/docs/release-notes.md`](./english-learn/docs/release-notes.md): final release summary, scope, and review path
 - [`english-learn/docs/seminar-rooms.md`](./english-learn/docs/seminar-rooms.md): seminar-room data flow and extension notes
+- [`docs/SM_work/final-retrospective.md`](./docs/SM_work/final-retrospective.md): final retrospective and process reflections
 - [`docs/planning`](./docs/planning), [`docs/design`](./docs/design), [`docs/PO_work`](./docs/PO_work), [`docs/SM_work`](./docs/SM_work): project-process materials
 
 ## Contributing
