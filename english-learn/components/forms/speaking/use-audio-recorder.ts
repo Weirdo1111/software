@@ -43,6 +43,13 @@ function getRecorderSupportServerSnapshot() {
   return true;
 }
 
+function getMonotonicTimestamp() {
+  if (typeof performance !== "undefined" && typeof performance.now === "function") {
+    return performance.now();
+  }
+  return Date.now();
+}
+
 // Date: 2026/3/18
 // Author: Tianbo Cao
 // Added a browser audio recorder hook so the speaking studio can capture real rehearsal audio before ASR is connected.
@@ -235,7 +242,7 @@ export function useAudioRecorder({
       };
 
       await configureAudioMonitor(stream);
-      startedAtRef.current = Date.now();
+      startedAtRef.current = getMonotonicTimestamp();
       startTickTimer();
       mediaRecorder.start(250);
       setStatus("recording");
@@ -256,7 +263,7 @@ export function useAudioRecorder({
 
     mediaRecorder.pause();
     if (startedAtRef.current) {
-      elapsedBeforePauseRef.current += Date.now() - startedAtRef.current;
+      elapsedBeforePauseRef.current += getMonotonicTimestamp() - startedAtRef.current;
       startedAtRef.current = null;
       setElapsedMs(elapsedBeforePauseRef.current);
     }
@@ -270,7 +277,7 @@ export function useAudioRecorder({
     const mediaRecorder = mediaRecorderRef.current;
     if (!mediaRecorder || mediaRecorder.state !== "paused") return;
 
-    startedAtRef.current = Date.now();
+    startedAtRef.current = getMonotonicTimestamp();
     startTickTimer();
     if (audioContextRef.current?.state === "suspended") {
       await audioContextRef.current.resume().catch(() => {});
