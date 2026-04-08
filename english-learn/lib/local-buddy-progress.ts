@@ -213,11 +213,15 @@ function buildRecordWithCounts(record: BuddyProgressRecord, counts: BuddyProgres
 export async function reconcileLocalBuddyProgressWithAuthUsers() {
   const [db, authUsers] = await Promise.all([readBuddyProgressDb(), readLocalAuthUsers()]);
 
+  // Keep non-legacy identities (e.g. database auth) intact.
+  // Local auth file reconciliation should only manage local-file users.
+  const preservedRecords = db.records.filter((record) => record.authProvider !== "local-file");
+
   const existingByKey = new Map(
     db.records.map((record) => [`${record.authProvider}:${record.authUserId}`, record] as const)
   );
 
-  const nextRecords = authUsers.map((user) => {
+  const nextLocalFileRecords = authUsers.map((user) => {
     const existing = existingByKey.get(`local-file:${user.id}`);
 
     if (!existing) {
@@ -240,6 +244,8 @@ export async function reconcileLocalBuddyProgressWithAuthUsers() {
       updatedAt: new Date().toISOString(),
     };
   });
+
+  const nextRecords = [...preservedRecords, ...nextLocalFileRecords];
 
   const changed =
     nextRecords.length !== db.records.length ||
