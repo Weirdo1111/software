@@ -687,8 +687,16 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
         }
 
         .join-btn {
-          min-width: 86px;
+          min-width: 138px;
           min-height: 42px;
+          font-size: 0.76rem;
+          letter-spacing: 0.03em;
+          padding-inline: 14px;
+          white-space: nowrap;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
         }
 
         .bank-row .bank-select {
