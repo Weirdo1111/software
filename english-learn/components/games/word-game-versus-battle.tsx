@@ -99,12 +99,44 @@ export function WordGameVersusBattle({
       : resultType === "lose"
         ? "Defeat"
         : "Draw";
-  const resultDesc =
-    resultType === "win"
-      ? "You cleared the duel with a stronger final result."
-      : resultType === "lose"
-        ? "Your rival won this duel. Regroup and challenge again."
-        : "Both sides ended tied. Run it back for a winner.";
+  const resultReasonText = useMemo(() => {
+    if (!matchFinished) return "";
+
+    if (roomState?.resultReason === "knockout") {
+      if (resultType === "win") {
+        return `Your opponent missed ${MAX_HP} answers, their core was broken, so you win.`;
+      }
+      if (resultType === "lose") {
+        return `You missed ${MAX_HP} answers, your core was broken, so you lose.`;
+      }
+      return "Both cores were broken, so the result is a draw by score.";
+    }
+
+    if (roomState?.resultReason === "timeout") {
+      if (resultType === "win") {
+        return "Time ran out and your score is higher, so you win.";
+      }
+      if (resultType === "lose") {
+        return "Time ran out and your opponent's score is higher, so you lose.";
+      }
+      return "Time ran out and both scores are equal, so it is a draw.";
+    }
+
+    if (roomState?.resultReason === "waves") {
+      if (resultType === "win") {
+        return "All waves were cleared and your score is higher, so you win.";
+      }
+      if (resultType === "lose") {
+        return "All waves were cleared and your opponent's score is higher, so you lose.";
+      }
+      return "All waves were cleared and both scores are equal, so it is a draw.";
+    }
+
+    if (resultType === "win") return "You performed better in this match, so you win.";
+    if (resultType === "lose") return "Your opponent performed better in this match, so you lose.";
+    return "Both sides performed similarly, so it is a draw.";
+  }, [matchFinished, resultType, roomState?.resultReason]);
+  const resultDesc = resultReasonText;
 
   const focusAnswerInput = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -362,17 +394,12 @@ export function WordGameVersusBattle({
               <strong>{rivalPlayer?.score ?? 0}</strong>
             </div>
             <div className="versus-result-stat">
-              <span>Reason</span>
-              <strong>{roomState?.resultReason ?? "result"}</strong>
-            </div>
-            <div className="versus-result-stat">
               <span>Winner</span>
               <strong>{roomState?.winnerLabel ?? "Draw"}</strong>
             </div>
           </div>
           <div className="versus-result-actions">
             <button type="button" className="result-primary" onClick={goLobby}>Play Again</button>
-            <button type="button" className="result-secondary" onClick={goLobby}>Return To Lobby</button>
             <button type="button" className="result-secondary" onClick={goHome}>Return Home</button>
           </div>
         </section>
@@ -859,8 +886,24 @@ export function WordGameVersusBattle({
 
         .versus-result-card h2 {
           margin: 10px 0 8px;
-          font-size: clamp(2.2rem, 5.6vw, 3.2rem);
-          line-height: 1;
+          font-size: clamp(2.8rem, 6.8vw, 4.2rem);
+          line-height: 0.95;
+          font-weight: 900;
+          letter-spacing: 0.02em;
+          text-transform: uppercase;
+          text-shadow: 0 2px 0 rgba(59, 30, 20, 0.18);
+        }
+
+        .versus-result-card.win h2 {
+          color: #2f8b35;
+        }
+
+        .versus-result-card.lose h2 {
+          color: #a53a2f;
+        }
+
+        .versus-result-card.draw h2 {
+          color: #5c5044;
         }
 
         .versus-result-card p {
@@ -872,9 +915,9 @@ export function WordGameVersusBattle({
 
         .versus-result-stats {
           display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+          grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 10px;
-          margin-bottom: 14px;
+          margin-bottom: 16px;
         }
 
         .versus-result-stat {
@@ -899,19 +942,22 @@ export function WordGameVersusBattle({
         }
 
         .versus-result-actions {
-          display: flex;
-          justify-content: center;
-          gap: 10px;
-          flex-wrap: wrap;
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 14px;
+          width: min(640px, 100%);
+          margin: 0 auto;
         }
 
         .versus-result-actions button {
-          height: 48px;
-          min-width: 180px;
-          border-radius: 14px;
+          width: 100%;
+          height: 58px;
+          min-width: 0;
+          border-radius: 16px;
           font: inherit;
           font-weight: 900;
-          letter-spacing: 0.06em;
+          font-size: 1.08rem;
+          letter-spacing: 0.07em;
           text-transform: uppercase;
           cursor: pointer;
         }
@@ -956,9 +1002,6 @@ export function WordGameVersusBattle({
             grid-template-columns: 1fr;
           }
 
-          .versus-result-stats {
-            grid-template-columns: 1fr;
-          }
         }
 
         @media (max-width: 720px) {
@@ -971,6 +1014,14 @@ export function WordGameVersusBattle({
           }
 
           .top-row {
+            grid-template-columns: 1fr;
+          }
+
+          .versus-result-stats {
+            grid-template-columns: 1fr;
+          }
+
+          .versus-result-actions {
             grid-template-columns: 1fr;
           }
         }
