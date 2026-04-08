@@ -32,6 +32,7 @@ The product already includes:
 For a cleaner structure, detailed documentation now lives in `docs/`:
 
 - [docs/architecture.md](./docs/architecture.md): system structure, feature organization, data layers, and engineering notes
+- [docs/source-attribution-ai-statement.md](./docs/source-attribution-ai-statement.md): image/material sourcing notes, GitHub citation guidance, and AI disclosure
 - [docs/demo-guide.md](./docs/demo-guide.md): recommended demo flows, stage highlights, audience-specific storytelling, and presentation tips
 - [docs/deployment.md](./docs/deployment.md): deployment, release, rollback, and demo evidence workflow
 - [docs/release-notes.md](./docs/release-notes.md): final release summary, scope snapshot, and suggested review order
