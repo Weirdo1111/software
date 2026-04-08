@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { spawn } from "node:child_process";
+import net from "node:net";
 
 const rootDir = process.cwd();
 const bridgeHost = process.env.ROLEPLAY_BRIDGE_HOST || "127.0.0.1";
@@ -78,6 +79,25 @@ function terminate(child) {
   child.kill("SIGTERM");
 }
 
+async function canConnectToPort(host, port) {
+  return new Promise((resolve) => {
+    const socket = net.createConnection({
+      host,
+      port: Number(port),
+    });
+
+    const finish = (result) => {
+      socket.removeAllListeners();
+      socket.destroy();
+      resolve(result);
+    };
+
+    socket.once("connect", () => finish(true));
+    socket.once("error", () => finish(false));
+    socket.setTimeout(1000, () => finish(false));
+  });
+}
+
 async function main() {
   loadEnvFile(".env");
   loadEnvFile(".env.development");
@@ -99,11 +119,18 @@ async function main() {
     );
   }
 
-  const bridge = startProcess(
-    pythonLauncher,
-    [pythonVersionArg, "scripts/roleplay_realtime_bridge.py", "--host", bridgeHost, "--port", bridgePort],
-    "bridge",
-  );
+  let bridge = null;
+  const bridgeAlreadyRunning = await canConnectToPort(bridgeHost, bridgePort);
+  if (bridgeAlreadyRunning) {
+    console.log(`[bridge] Reusing existing realtime bridge at ws://${bridgeHost}:${bridgePort}.`);
+  } else {
+    bridge = startProcess(
+      pythonLauncher,
+      [pythonVersionArg, "scripts/roleplay_realtime_bridge.py", "--host", bridgeHost, "--port", bridgePort],
+      "bridge",
+    );
+  }
+
   const nextCommand = resolveNextCommand();
   const next = startProcess(nextCommand.command, nextCommand.args, "next");
 
