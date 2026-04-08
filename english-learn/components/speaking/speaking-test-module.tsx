@@ -268,7 +268,7 @@ export function SpeakingTestModule({ locale }: { locale: Locale }) {
   const recorder = useAudioRecorder();
   const browserSpeech = useShadowingPractice();
   const liveTranscriptRef = useRef("");
-  const assessmentRef = useRef<HTMLElement | null>(null);
+  const assessmentRef = useRef<HTMLDivElement | null>(null);
   const scoreReportRef = useRef<HTMLElement | null>(null);
   const historyRef = useRef<HTMLElement | null>(null);
   const introFinished = realtime.logs.some((entry) => entry.message.includes("Opening line finished."));
