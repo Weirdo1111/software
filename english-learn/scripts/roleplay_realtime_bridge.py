@@ -23,6 +23,26 @@ def json_message(payload: dict[str, Any]) -> str:
     return json.dumps(payload, ensure_ascii=True)
 
 
+def build_bridge_error_payload(error: object) -> dict[str, Any]:
+    message = str(error or "Upstream realtime roleplay service failed.")
+    lowered = message.lower()
+
+    if "dialogaudioidletimeouterror" in lowered or "52000042" in lowered:
+        return {
+            "type": "error",
+            "reason": "idle_timeout",
+            "shouldClose": True,
+            "message": "The realtime session was closed because it stayed idle for too long. Please reconnect when you are ready to continue.",
+        }
+
+    return {
+        "type": "error",
+        "reason": "upstream_error",
+        "shouldClose": False,
+        "message": message,
+    }
+
+
 class RealtimeRoleplayBridgeSession:
     def __init__(
         self,
@@ -157,14 +177,7 @@ class RealtimeRoleplayBridgeSession:
                     continue
 
                 if message_type == "SERVER_ERROR_RESPONSE":
-                    await self.client_ws.send(
-                        json_message(
-                            {
-                                "type": "error",
-                                "message": str(payload or "Upstream realtime roleplay service failed."),
-                            }
-                        )
-                    )
+                    await self.client_ws.send(json_message(build_bridge_error_payload(payload)))
                     break
 
                 event = parsed.get("event")
@@ -203,7 +216,7 @@ class RealtimeRoleplayBridgeSession:
                     )
         except Exception as exc:
             if not self.client_ws.closed:
-                await self.client_ws.send(json_message({"type": "error", "message": str(exc)}))
+                await self.client_ws.send(json_message(build_bridge_error_payload(exc)))
         finally:
             self.upstream_finished = True
 
@@ -290,7 +303,7 @@ async def handle_browser_client(client_ws):
                     session.receive_task = asyncio.create_task(session.receive_forever())
                     await session.say_hello()
                 except Exception as exc:
-                    await client_ws.send(json_message({"type": "error", "message": str(exc)}))
+                    await client_ws.send(json_message(build_bridge_error_payload(exc)))
             elif command_type == "text":
                 if session is None:
                     await client_ws.send(json_message({"type": "error", "message": "Session has not started yet."}))

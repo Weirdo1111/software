@@ -23,7 +23,7 @@ type BridgeMessage =
   | { type: "session_finished"; event?: number }
   | { type: "text_sent"; content: string }
   | { type: "upstream_event"; event?: number; payload?: unknown }
-  | { type: "error"; message: string }
+  | { type: "error"; message: string; reason?: string; shouldClose?: boolean }
   | { type: "pong" };
 
 export type RoleplayRealtimeLog = {
@@ -159,6 +159,26 @@ function summarizeUpstreamPayload(value: unknown) {
   } catch {
     return String(value).slice(0, 220);
   }
+}
+
+function shouldSuppressUpstreamLog(event?: number, payload?: unknown) {
+  if (event === 154) {
+    return true;
+  }
+
+  if (event === 359 && payload && typeof payload === "object") {
+    return true;
+  }
+
+  return false;
+}
+
+function isIdleTimeoutBridgeError(payload: Extract<BridgeMessage, { type: "error" }>) {
+  if (payload.reason === "idle_timeout") {
+    return true;
+  }
+
+  return /DialogAudioIdleTimeoutError|52000042/i.test(payload.message);
 }
 
 function appendUint8Arrays(left: Uint8Array, right: Uint8Array) {
@@ -634,18 +654,29 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
           const userChunk = pickTranscriptChunk(payload.payload);
           appendUserTranscriptChunk(userChunk);
 
-          if (payload.payload && !userChunk) {
+          if (payload.payload && !userChunk && !shouldSuppressUpstreamLog(payload.event, payload.payload)) {
             pushLog(`Upstream event ${payload.event ?? "?"}: ${summarizeUpstreamPayload(payload.payload)}`);
           }
         }
 
-        if (typeof payload.payload === "string" && payload.payload.trim()) {
+        if (
+          typeof payload.payload === "string" &&
+          payload.payload.trim() &&
+          !shouldSuppressUpstreamLog(payload.event, payload.payload)
+        ) {
           pushLog(`Upstream event ${payload.event ?? "?"}: ${payload.payload}`);
         }
         return;
       }
 
       if (payload.type === "error") {
+        if (payload.shouldClose || isIdleTimeoutBridgeError(payload)) {
+          await disconnectSession();
+          setStatus(payload.message);
+          pushLog(payload.message, "warn");
+          return;
+        }
+
         setConnectionState("error");
         setStatus(payload.message);
         pushLog(payload.message, "error");
