@@ -26,6 +26,9 @@ type DiscussionPostRecord = {
   title: string;
   content: string;
   excerpt?: string | null;
+  audioData?: string | null;
+  audioMimeType?: string | null;
+  audioDurationSec?: number | null;
   category: string;
   likesCount: number;
   pinned: boolean;
@@ -62,6 +65,9 @@ export function toDiscussionPost(post: DiscussionPostRecord, currentUserId: bigi
     title: post.title,
     content: post.content,
     excerpt: post.excerpt ?? undefined,
+    audioDataUrl: post.audioData ?? undefined,
+    audioMimeType: post.audioMimeType ?? undefined,
+    audioDurationSec: post.audioDurationSec ?? undefined,
     author: post.author.displayName,
     tag: normalizeDiscussionCategory(post.category),
     likes: post.likesCount,

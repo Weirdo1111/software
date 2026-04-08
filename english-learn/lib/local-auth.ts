@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import { randomUUID, scrypt as scryptCallback, timingSafeEqual } from "node:crypto";
 import { join } from "node:path";
 import { promisify } from "node:util";
+import type { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 
@@ -19,6 +20,15 @@ type LegacyStoredUser = {
 type AuthDatabase = {
   users: LegacyStoredUser[];
 };
+
+const publicLocalAuthUserSelect = {
+  id: true,
+  username: true,
+  email: true,
+  authProvider: true,
+  authUserId: true,
+  displayName: true,
+} satisfies Prisma.UserSelect;
 
 export type PublicAuthUser = {
   id: string;
@@ -235,6 +245,7 @@ export async function findLocalUserByAuthIdentity(authProvider: string, authUser
           authUserId,
         },
       },
+      select: publicLocalAuthUserSelect,
     });
   } catch {
     return findLegacyUserByAuthIdentity(authProvider, authUserId);

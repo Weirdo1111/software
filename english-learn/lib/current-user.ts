@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import type { User as PrismaUser } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 
 import { AUTH_SESSION_COOKIE, getUserFromSessionToken } from "@/lib/auth-session";
 import { findLocalUserByAuthIdentity, isDatabaseAuthConfigured } from "@/lib/local-auth";
@@ -10,6 +10,19 @@ export const AUTH_PROVIDER_COOKIE = "demo_auth_provider";
 export const AUTH_USER_ID_COOKIE = "demo_auth_user_id";
 export const AUTH_USERNAME_COOKIE = "demo_auth_username";
 export const AUTH_EMAIL_COOKIE = "demo_auth_email";
+
+const currentUserSelect = {
+  id: true,
+  username: true,
+  email: true,
+  displayName: true,
+  authProvider: true,
+  authUserId: true,
+} satisfies Prisma.UserSelect;
+
+type CurrentUserRecord = Prisma.UserGetPayload<{
+  select: typeof currentUserSelect;
+}>;
 
 type CurrentAuthIdentity = {
   userId?: bigint;
@@ -78,6 +91,7 @@ async function buildUniqueUsername(base: string, authUserId: string) {
   for (const candidate of candidates) {
     const existing = await prisma.user.findUnique({
       where: { username: candidate },
+      select: { id: true },
     });
 
     if (!existing) {
@@ -128,6 +142,7 @@ async function getIdentityFromCookies() {
           authUserId,
         },
       },
+      select: currentUserSelect,
     });
 
     if (existingDb) {
@@ -157,6 +172,7 @@ async function getIdentityFromCookies() {
           usernameCookie ? { username: usernameCookie } : undefined,
         ].filter(Boolean) as Array<{ email?: string; username?: string }>,
       },
+      select: currentUserSelect,
     });
 
     if (existing) {
@@ -198,6 +214,7 @@ async function getIdentityFromSupabase(): Promise<CurrentAuthIdentity | null> {
         authUserId: user.id,
       },
     },
+    select: currentUserSelect,
   });
 
   if (existing) {
@@ -229,7 +246,7 @@ export async function getCurrentAuthIdentity(): Promise<CurrentAuthIdentity | nu
   return getIdentityFromSupabase();
 }
 
-export async function requireCurrentUser(): Promise<PrismaUser> {
+export async function requireCurrentUser(): Promise<CurrentUserRecord> {
   const identity = await getCurrentAuthIdentity();
 
   if (!identity) {
@@ -243,6 +260,7 @@ export async function requireCurrentUser(): Promise<PrismaUser> {
   if (identity.userId) {
     const existingById = await prisma.user.findUnique({
       where: { id: identity.userId },
+      select: currentUserSelect,
     });
 
     if (existingById) {
@@ -257,6 +275,7 @@ export async function requireCurrentUser(): Promise<PrismaUser> {
         authUserId: identity.authUserId,
       },
     },
+    select: currentUserSelect,
   });
 
   if (existing) {
@@ -267,6 +286,7 @@ export async function requireCurrentUser(): Promise<PrismaUser> {
         displayName: identity.displayName || existing.displayName,
         username: existing.username,
       },
+      select: currentUserSelect,
     });
   }
 
@@ -280,6 +300,7 @@ export async function requireCurrentUser(): Promise<PrismaUser> {
       email: identity.email,
       displayName: identity.displayName,
     },
+    select: currentUserSelect,
   });
 }
 

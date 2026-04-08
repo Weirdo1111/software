@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "node scripts/dev-with-bridge.mjs",
     "dev:next": "next dev --webpack",
-    "build": "next build --webpack",
+    "build": "prisma generate && next build --webpack",
     "start": "next start",
     "postinstall": "prisma generate",
     "lint": "eslint",
@@ -13,6 +13,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "prisma:generate": "prisma generate",
+    "prisma:deploy": "prisma migrate deploy",
+    "deploy:server": "prisma migrate deploy && prisma generate && next build --webpack",
     "prisma:seed": "tsx prisma/seed.ts",
     "roleplay:bridge:setup": "py -3 -m pip install -r scripts/roleplay_bridge/requirements.txt",
     "roleplay:bridge": "py -3 scripts/roleplay_realtime_bridge.py --host 127.0.0.1 --port 8877",
