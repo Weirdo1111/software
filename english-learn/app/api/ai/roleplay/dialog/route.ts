@@ -29,12 +29,16 @@ export async function POST(request: Request) {
       return NextResponse.json(buildMockRoleplayReply(payload.user_turn));
     }
 
-    const output = await generateStructuredJSON(
-      roleplayConversationPrompt(payload.user_turn, payload.history),
-    );
-    const parsed = safeParseAIJSON(output, buildMockRoleplayReply(payload.user_turn));
-
-    return NextResponse.json(parsed);
+    try {
+      const output = await generateStructuredJSON(
+        roleplayConversationPrompt(payload.user_turn, payload.history),
+      );
+      const parsed = safeParseAIJSON(output, buildMockRoleplayReply(payload.user_turn));
+      return NextResponse.json(parsed);
+    } catch (aiError) {
+      console.error("Roleplay AI request failed, fallback to mock reply:", aiError);
+      return NextResponse.json(buildMockRoleplayReply(payload.user_turn));
+    }
   } catch (error) {
     if (error instanceof z.ZodError) {
       return jsonError(error.issues[0]?.message ?? "Invalid payload", 422);

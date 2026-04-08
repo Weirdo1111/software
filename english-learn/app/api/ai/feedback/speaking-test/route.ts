@@ -51,16 +51,25 @@ export async function POST(request: Request) {
     const hasCompleteTranscripts = payload.answers.every((answer) => answer.transcript.trim().length > 0);
     const mockFeedback = normalizeSpeakingTestFeedback(buildMockSpeakingTestFeedback(questionSet, payload.answers));
 
-    const result = !hasCompleteTranscripts
-      ? normalizeSpeakingTestFeedback(buildMissingTranscriptSpeakingTestFeedback(questionSet, payload.answers))
-      : !hasAIConfig()
-        ? mockFeedback
-        : normalizeSpeakingTestFeedback(
-            safeParseAIJSON(
-              await generateStructuredJSON(speakingTestFeedbackPrompt(questionSet, payload.answers)),
-              mockFeedback,
-            ),
-          );
+    let result: ReturnType<typeof normalizeSpeakingTestFeedback>;
+
+    if (!hasCompleteTranscripts) {
+      result = normalizeSpeakingTestFeedback(buildMissingTranscriptSpeakingTestFeedback(questionSet, payload.answers));
+    } else if (!hasAIConfig()) {
+      result = mockFeedback;
+    } else {
+      try {
+        result = normalizeSpeakingTestFeedback(
+          safeParseAIJSON(
+            await generateStructuredJSON(speakingTestFeedbackPrompt(questionSet, payload.answers)),
+            mockFeedback,
+          ),
+        );
+      } catch (aiError) {
+        console.error("Speaking-test AI request failed, fallback to mock feedback:", aiError);
+        result = mockFeedback;
+      }
+    }
 
     await persistSpeakingTestFeedback({
       input: {
