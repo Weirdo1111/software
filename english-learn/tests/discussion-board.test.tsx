@@ -34,6 +34,7 @@ const basePost: DiscussionPost = {
   createdAt: "2026-03-30T08:00:00.000Z",
   comments: [],
   views: 12,
+  moderationStatus: "approved",
 };
 
 const notifications: DiscussionNotification[] = [];

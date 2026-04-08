@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 
 import { prisma } from "@/lib/prisma";
+import { resolveAuthRole, type AuthRole } from "@/lib/user-roles";
 
 const scrypt = promisify(scryptCallback);
 const authDbPath = join(process.cwd(), "data", "auth-users.json");
@@ -14,6 +15,7 @@ type LegacyStoredUser = {
   email: string;
   passwordHash: string;
   createdAt: string;
+  role?: AuthRole;
 };
 
 type AuthDatabase = {
@@ -25,6 +27,7 @@ export type PublicAuthUser = {
   username: string;
   email: string | null;
   createdAt: string;
+  role: AuthRole;
 };
 
 export type LocalAuthUserRecord = {
@@ -37,6 +40,7 @@ export type LocalAuthUserRecord = {
   authUserId: string;
   displayName?: string;
   lastLoginAt?: Date | null;
+  role?: AuthRole;
 };
 
 let legacyUsersImportPromise: Promise<void> | null = null;
@@ -74,6 +78,7 @@ function toLegacyLocalAuthUser(user: LegacyStoredUser): LocalAuthUserRecord {
     authUserId: user.id,
     displayName: user.username,
     lastLoginAt: null,
+    role: resolveAuthRole(user),
   };
 }
 
@@ -308,11 +313,13 @@ export function toPublicUser(user: {
   username: string;
   email: string | null;
   createdAt: Date | string;
+  role?: string | null;
 }) {
   return {
     id: typeof user.id === "bigint" ? user.id.toString() : user.id,
     username: user.username,
     email: user.email,
     createdAt: user.createdAt instanceof Date ? user.createdAt.toISOString() : user.createdAt,
+    role: resolveAuthRole(user),
   } satisfies PublicAuthUser;
 }

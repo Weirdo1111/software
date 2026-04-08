@@ -296,11 +296,11 @@ export function DiscussionClient({
 
       {openComposer && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-black/40 px-4 py-24 sm:py-28"
           onClick={() => setOpenComposer(false)}
         >
           <div
-            className="w-full max-w-3xl bg-[#f9f9ff] shadow-2xl"
+            className="max-h-[calc(100vh-3rem)] w-full max-w-3xl overflow-y-auto bg-[#f9f9ff] shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="border-b border-[#dde2f3] px-6 py-5">
