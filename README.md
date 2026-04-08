@@ -1,93 +1,62 @@
-# EnglishSoftware
+# English Learn
 
-Course project repository for an AI-assisted English learning platform.
+> AI-assisted English learning platform for non-native university students, combining four-skill practice, study planning, seminar collaboration, and browser-based quest learning in one cohesive product.
 
-This repository contains the main product application, product/design documents, planning materials, and demo-oriented feature work. The primary codebase is the `english-learn` app, which includes both the core study experience and the browser-based Game Center.
+`Final submission` · `Primary app: english-learn` · `Main branch protected` · `CI: lint + build + typecheck + test`
 
-## What This Repository Contains
+This repository is designed to show both the product and the team's delivery process. The main application lives in [`english-learn`](./english-learn), while the surrounding docs, templates, workflows, and project board preserve the engineering and agile evidence behind the final submission.
 
-At a high level, this repo combines:
+## Project Links
 
-- a full Next.js application for English learning
-- onboarding, placement, and four-skill learning flows
-- AI-assisted practice features
-- review, progress, discussion, and schedule-related modules
-- a separate Game Center with quest-style educational gameplay
-- product, design, and planning documentation used during development
+| Link | Purpose |
+| --- | --- |
+| [`english-learn/README.md`](./english-learn/README.md) | App overview, routes, environment setup, and feature notes |
+| [`english-learn/docs/architecture.md`](./english-learn/docs/architecture.md) | System structure, module boundaries, and implementation notes |
+| [`english-learn/docs/demo-guide.md`](./english-learn/docs/demo-guide.md) | Recommended walkthrough for demos and presentations |
+| [`english-learn/docs/deployment.md`](./english-learn/docs/deployment.md) | Deployment, release, rollback, and submission evidence |
+| [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Team workflow, PR expectations, and Definition of Done |
+| <https://github.com/users/Weirdo1111/projects/2> | Public GitHub project board |
 
-## Main Application
+## Project Status
 
-The main product lives in:
+| Item | Current state |
+| --- | --- |
+| Course phase | Final hand-in snapshot |
+| Product scope | Academic English learning, feedback, planning, discussion, and game-based practice |
+| Workflow evidence | Issues, project board, PR process, CI, deployment guide, and contribution policy |
+| Quality gate | `lint`, `build`, `typecheck`, and `test` documented at repository level |
+| Default application | [`english-learn`](./english-learn) |
 
-- [english-learn](./english-learn)
+## Product Snapshot
 
-That subdirectory is the application you should open if you want to:
+| Item | Details |
+| --- | --- |
+| Product focus | Academic English practice, study guidance, and engagement-driven learning |
+| Primary experience | Listening, speaking, reading, writing, review, progress, discussion, and quests |
+| Delivery evidence | GitHub project board, issue templates, PR workflow, CI, and deployment guide |
+| Team workflow | [`CONTRIBUTING.md`](./CONTRIBUTING.md) |
 
-- run the product locally
-- inspect the app architecture
-- work on frontend or backend features
-- explore the game/quest module
+## Tech Stack
 
-## Documentation Map
+| Layer | Technology |
+| --- | --- |
+| Frontend | Next.js 16, React 19, Tailwind CSS 4 |
+| Application | TypeScript, App Router, server/client hybrid flows |
+| Data | Prisma, MySQL, Supabase |
+| AI | OpenAI-compatible APIs, AI-assisted feedback features |
+| Realtime | Local Python bridge for dialogue and speaking flows |
+| Payments and analytics | Stripe, PostHog, Sentry |
+| Quality | Vitest, ESLint, TypeScript, GitHub Actions |
 
-### Application Docs
+## Core Experience
 
-Start here for the actual product:
-
-- [english-learn/README.md](./english-learn/README.md)
-- [english-learn/docs/architecture.md](./english-learn/docs/architecture.md)
-- [english-learn/docs/demo-guide.md](./english-learn/docs/demo-guide.md)
-- [english-learn/docs/deployment.md](./english-learn/docs/deployment.md)
-- [CONTRIBUTING.md](./CONTRIBUTING.md)
-
-### Repository-Level Working Docs
-
-Project-support materials live under:
-
-- [docs/planning](./docs/planning)
-- [docs/design](./docs/design)
-- [docs/PO_work](./docs/PO_work)
-- [docs/SM_work](./docs/SM_work)
-- [docs/archive](./docs/archive)
-
-These folders are useful for team process, design iteration, and historical reference. They are not the main product runtime.
-
-## Team Workflow
-
-Repository process expectations live in:
-
-- [CONTRIBUTING.md](./CONTRIBUTING.md)
-
-Use that guide for issue quality, project-board updates, branch naming, PR expectations, and the team Definition of Done.
-
-## Repository Structure
-
-```text
-software/
-├── english-learn/          # Main Next.js application
-├── docs/                   # Planning, design, PO/SM work, archive
-├── README.md               # Repository entry point
-└── ...
-```
-
-## Main Tech Stack
-
-Inside `english-learn/`, the primary stack includes:
-
-- Next.js 16
-- React 19
-- TypeScript
-- Tailwind CSS 4
-- Supabase
-- Prisma + MySQL
-- OpenAI-compatible AI integration
-- Stripe
-- PostHog
-- Sentry
+- onboarding and placement-based entry flows
+- listening, speaking, reading, and writing practice
+- review, progress, dashboard, and scheduling features
+- discussion and seminar-style collaboration routes
+- browser-based educational game and quest content
 
 ## Quick Start
-
-From the repository root:
 
 ```bash
 cd english-learn
@@ -96,31 +65,49 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Then open:
+Open:
 
-- [http://localhost:3000](http://localhost:3000)
+- <http://localhost:3000>
 
-## Useful Commands
+## Quality Gate
 
 Run these inside [`english-learn`](./english-learn):
 
 ```bash
-npm run dev
-npm run test
 npm run lint
+npm run build
 npm run typecheck
+npm test
 ```
 
-## Recommended Reading Order
+## Repository At A Glance
 
-If you are new to the repository:
+```text
+software/
+├── english-learn/          # Main Next.js application
+├── docs/                   # Planning, design, PO/SM work, archive
+├── .github/                # CI, issue templates, PR template
+├── CONTRIBUTING.md         # Team workflow and Definition of Done
+└── README.md               # Repository homepage
+```
 
-1. Read [english-learn/README.md](./english-learn/README.md)
-2. Read [english-learn/docs/architecture.md](./english-learn/docs/architecture.md)
-3. Read [english-learn/docs/demo-guide.md](./english-learn/docs/demo-guide.md)
+## Documentation
 
-## Notes
+- [`english-learn/README.md`](./english-learn/README.md): product overview, routes, env vars, app-level setup
+- [`english-learn/docs/architecture.md`](./english-learn/docs/architecture.md): system structure and engineering notes
+- [`english-learn/docs/demo-guide.md`](./english-learn/docs/demo-guide.md): recommended demo path and presentation highlights
+- [`english-learn/docs/deployment.md`](./english-learn/docs/deployment.md): deployment, release, rollback, and demo evidence
+- [`english-learn/docs/seminar-rooms.md`](./english-learn/docs/seminar-rooms.md): seminar-room data flow and extension notes
+- [`docs/planning`](./docs/planning), [`docs/design`](./docs/design), [`docs/PO_work`](./docs/PO_work), [`docs/SM_work`](./docs/SM_work): project-process materials
 
-- The main GitHub homepage README is this file.
-- The detailed app documentation now lives inside [`english-learn`](./english-learn).
-- If you were previously looking for the updated long-form README on the repo homepage, it is now linked above and split into app-specific documents.
+## Contributing
+
+We use the repository as both a product codebase and an agile delivery record.
+
+1. Create or refine an issue first.
+2. Move the issue on the GitHub project board.
+3. Work on a short-lived branch and open a PR.
+4. Pass CI before merge.
+5. Merge through PRs instead of pushing feature work directly to `main`.
+
+Full workflow expectations live in [`CONTRIBUTING.md`](./CONTRIBUTING.md).
