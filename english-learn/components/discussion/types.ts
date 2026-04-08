@@ -66,6 +66,9 @@ export type DiscussionPost = {
   title: string;
   content: string;
   excerpt?: string;
+  audioDataUrl?: string;
+  audioMimeType?: string;
+  audioDurationSec?: number;
   author: string;
   tag: DiscussionCategory;
   likes: number;

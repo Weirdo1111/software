@@ -8,6 +8,31 @@ import { toStoredDiscussionModerationStatus } from "@/lib/discussion-moderation"
 import { prisma } from "@/lib/prisma";
 import { toDiscussionPost } from "@/lib/discussion-mappers";
 
+function getDiscussionPostCreateErrorMessage(error: unknown) {
+  if (!(error instanceof Error)) {
+    return "Failed to create post";
+  }
+
+  if (
+    error.message.includes("Unknown argument `audioData`") ||
+    error.message.includes("Unknown argument `audioMimeType`") ||
+    error.message.includes("Unknown argument `audioDurationSec`")
+  ) {
+    return "Server Prisma Client is outdated. Run `npm run prisma:generate`, then rebuild and restart the server.";
+  }
+
+  if (
+    error.message.includes("Unknown column") &&
+    (error.message.includes("audioData") ||
+      error.message.includes("audioMimeType") ||
+      error.message.includes("audioDurationSec"))
+  ) {
+    return "Server database is missing discussion voice-post columns. Run `npm run prisma:deploy`, then rebuild and restart the server.";
+  }
+
+  return `Failed to create post: ${error.message}`;
+}
+
 export async function GET(req: NextRequest) {
   try {
     const currentIdentity = await getCurrentAuthIdentity();
@@ -80,18 +105,44 @@ export async function POST(req: NextRequest) {
     const currentUser = await requireCurrentDiscussionUser();
     const body = await req.json();
     const { title, content, category } = body;
+    const audioDataUrl =
+      typeof body.audioDataUrl === "string" ? body.audioDataUrl.trim() : "";
+    const audioMimeType =
+      typeof body.audioMimeType === "string" ? body.audioMimeType.trim() : "";
+    const audioDurationSec =
+      typeof body.audioDurationSec === "number" && Number.isFinite(body.audioDurationSec)
+        ? Math.max(1, Math.round(body.audioDurationSec))
+        : null;
 
-    if (!title?.trim() || !content?.trim() || !category?.trim()) {
+    if (!title?.trim() || !category?.trim() || (!content?.trim() && !audioDataUrl)) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
+    if (audioDataUrl && !audioDataUrl.startsWith("data:audio/")) {
+      return NextResponse.json({ error: "Invalid voice payload" }, { status: 400 });
+    }
+
+    if (audioDataUrl.length > 3_000_000) {
+      return NextResponse.json(
+        { error: "Voice message is too large. Keep it under about 60 seconds." },
+        { status: 400 }
+      );
+    }
+
+    const trimmedContent = typeof content === "string" ? content.trim() : "";
     const created = await prisma.discussionPost.create({
       data: {
         authorId: currentUser.id,
         title: title.trim(),
-        content: content.trim(),
-        excerpt:
-          content.trim().length > 140 ? `${content.trim().slice(0, 140)}...` : content.trim(),
+        content: trimmedContent,
+        excerpt: trimmedContent
+          ? trimmedContent.length > 140
+            ? `${trimmedContent.slice(0, 140)}...`
+            : trimmedContent
+          : "Voice post",
+        audioData: audioDataUrl || null,
+        audioMimeType: audioMimeType || null,
+        audioDurationSec,
         category: category.trim(),
         moderationStatus: toStoredDiscussionModerationStatus("pending"),
         pinned: false,
@@ -129,14 +180,6 @@ export async function POST(req: NextRequest) {
     }
 
     console.error("discussion posts POST failed", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? `Failed to create post: ${error.message}`
-            : "Failed to create post",
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: getDiscussionPostCreateErrorMessage(error) }, { status: 500 });
   }
 }

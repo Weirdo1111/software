@@ -126,7 +126,9 @@ export function useAudioRecorder({
     clearTickTimer();
 
     tickTimerRef.current = window.setInterval(() => {
-      const runningMs = startedAtRef.current ? Date.now() - startedAtRef.current : 0;
+      const runningMs = startedAtRef.current
+        ? getMonotonicTimestamp() - startedAtRef.current
+        : 0;
       const nextElapsedMs = elapsedBeforePauseRef.current + runningMs;
       setElapsedMs(nextElapsedMs);
 
@@ -292,7 +294,7 @@ export function useAudioRecorder({
     if (!mediaRecorder || mediaRecorder.state === "inactive") return;
 
     if (startedAtRef.current) {
-      elapsedBeforePauseRef.current += Date.now() - startedAtRef.current;
+      elapsedBeforePauseRef.current += getMonotonicTimestamp() - startedAtRef.current;
       startedAtRef.current = null;
     }
     clearTickTimer();

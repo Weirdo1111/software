@@ -154,11 +154,13 @@ async function main() {
     process.exit(code ?? 0);
   });
 
-  bridge.on("exit", (code) => {
-    if (!next.killed && next.exitCode === null) {
-      console.warn(`[bridge] exited with code ${code ?? 0}. Realtime Connect will stop working until it is restarted.`);
-    }
-  });
+  if (bridge) {
+    bridge.on("exit", (code) => {
+      if (!next.killed && next.exitCode === null) {
+        console.warn(`[bridge] exited with code ${code ?? 0}. Realtime Connect will stop working until it is restarted.`);
+      }
+    });
+  }
 }
 
 void main();

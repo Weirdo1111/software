@@ -50,11 +50,11 @@ function formatRelativeDate(dateString: string, locale: Locale) {
   }
 
   if (diff < day) {
-    const value = Math.floor(diff / hour);
+    const value = Math.max(1, Math.floor(diff / hour));
     return locale === "zh" ? `${value} 小时前` : `${value}h ago`;
   }
 
-  const value = Math.floor(diff / day);
+  const value = Math.max(1, Math.floor(diff / day));
   return locale === "zh" ? `${value} 天前` : `${value}d ago`;
 }
 
@@ -90,7 +90,7 @@ export function DiscussionDetail({
   commentDraft,
   setCommentDraft,
 }: DiscussionDetailProps) {
-  const recorder = useAudioRecorder();
+  const recorder = useAudioRecorder({ maxDurationMs: MAX_VOICE_MS });
   const {
     audioClip,
     audioLevel,
@@ -104,6 +104,7 @@ export function DiscussionDetail({
   } = recorder;
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const text = {
     zh: {
       back: "返回讨论区",
@@ -114,32 +115,22 @@ export function DiscussionDetail({
       noComments: "还没有评论。",
       views: "浏览",
       recorderTitle: "语音评论",
-      recorderHint: "录音会先保留在浏览器里，确认后再随评论一起发送。",
+      recorderHint: "录音会先保存在浏览器里，确认后再随评论一起发送。",
       startRecording: "开始录音",
       stopRecordingInline: "结束录音",
-      tapToStop: "再次点击麦克风结束",
-      pause: "暂停",
-      resume: "继续",
-      stop: "停止",
+      tapToStop: "再次点击麦克风结束录音",
       reset: "重录",
       recorderUnsupported: "当前浏览器不支持麦克风录音。",
-      recorderReady: "麦克风已就绪",
-      recorderRecording: "正在录音",
-      recorderPaused: "录音已暂停",
-      recorderSaved: "语音已保存",
       voicePreview: "语音预览",
       voiceComment: "语音评论",
-      voiceOnly: "仅语音评论",
-      voiceLimit: "单条语音建议控制在 60 秒内。",
-      voiceAutoStopped: "已接近 60 秒上限，录音已自动停止。",
+      voicePost: "语音主贴",
+      voiceOnly: "仅语音内容",
+      voiceLimit: "建议单条语音控制在 60 秒内。",
+      voiceAutoStopped: "录音接近 60 秒上限，已自动停止。",
       voiceReadFailed: "语音读取失败，请重新录制。",
-      voiceTooLarge: "语音过大，请控制在约 60 秒内。",
+      voiceTooLarge: "语音文件过大，请控制在约 60 秒内。",
       requireContent: "请输入文字或录制语音。",
       submitFailed: "评论发送失败，请稍后重试。",
-      audioSummary: "本地预览",
-      levelLabel: "麦克风电平",
-      live: "录音中",
-      idle: "待机",
       voiceAttached: "语音已加入输入区",
     },
     en: {
@@ -155,28 +146,18 @@ export function DiscussionDetail({
       startRecording: "Start recording",
       stopRecordingInline: "Stop recording",
       tapToStop: "Tap the mic again to stop",
-      pause: "Pause",
-      resume: "Resume",
-      stop: "Stop",
       reset: "Reset",
       recorderUnsupported: "Microphone recording is not available in this browser.",
-      recorderReady: "Recorder ready",
-      recorderRecording: "Recording live",
-      recorderPaused: "Recording paused",
-      recorderSaved: "Voice saved",
       voicePreview: "Voice preview",
       voiceComment: "Voice comment",
-      voiceOnly: "Voice-only comment",
+      voicePost: "Voice post",
+      voiceOnly: "Voice-only content",
       voiceLimit: "Keep each voice message under about 60 seconds.",
       voiceAutoStopped: "The recorder stopped automatically near the 60 second limit.",
       voiceReadFailed: "The voice clip could not be processed. Please record again.",
       voiceTooLarge: "The voice message is too large. Keep it under about 60 seconds.",
       requireContent: "Add text or a voice message.",
       submitFailed: "Failed to post comment. Please try again.",
-      audioSummary: "Local preview",
-      levelLabel: "Mic level",
-      live: "LIVE",
-      idle: "IDLE",
       voiceAttached: "Voice attached to the composer",
     },
   }[locale];
@@ -199,7 +180,7 @@ export function DiscussionDetail({
   const composerStatusLabel = !isSupported
     ? text.recorderUnsupported
     : isRecording
-      ? `${text.recorderRecording} ${formatRecordingTime(elapsedMs)}`
+      ? `${text.stopRecordingInline} ${formatRecordingTime(elapsedMs)}`
       : audioClip
         ? `${text.voiceAttached} ${formatRecordingTime(audioClip.durationMs)}`
         : text.voiceLimit;
@@ -309,9 +290,33 @@ export function DiscussionDetail({
             </div>
 
             <div className="mt-8 border-t border-[#dde2f3] pt-8">
-              <p className="whitespace-pre-line text-[17px] leading-8 text-[#2a303d]">
-                {post.content}
-              </p>
+              {post.content ? (
+                <p className="whitespace-pre-line text-[17px] leading-8 text-[#2a303d]">
+                  {post.content}
+                </p>
+              ) : post.audioDataUrl ? (
+                <p className="text-[17px] italic leading-8 text-[#6b7280]">{text.voiceOnly}</p>
+              ) : null}
+
+              {post.audioDataUrl ? (
+                <div className="mt-5 rounded-2xl border border-[#dde2f3] bg-[#f9f9ff] p-4">
+                  <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-[#45474C]">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1">
+                      <Volume2 className="size-3.5" />
+                      {text.voicePost}
+                    </span>
+                    {post.audioDurationSec ? (
+                      <span>{formatRecordingTime(post.audioDurationSec * 1000)}</span>
+                    ) : null}
+                  </div>
+                  <audio
+                    controls
+                    preload="none"
+                    src={post.audioDataUrl}
+                    className="mt-3 w-full"
+                  />
+                </div>
+              ) : null}
             </div>
 
             <div className="mt-8 flex flex-wrap items-center gap-6 border-t border-[#dde2f3] pt-6">
@@ -391,6 +396,11 @@ export function DiscussionDetail({
 
             <div className="mt-8 border-t border-[#dde2f3] pt-6">
               <div className="rounded-[1.75rem] border border-[#dde2f3] bg-[#f9f9ff] p-4">
+                <div className="mb-3">
+                  <p className="text-sm font-medium text-[#030813]">{text.recorderTitle}</p>
+                  <p className="mt-1 text-xs text-[#45474C]">{text.recorderHint}</p>
+                </div>
+
                 {audioClip ? (
                   <div className="mb-3 rounded-2xl border border-[#dde2f3] bg-white p-3">
                     <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-[#45474C]">

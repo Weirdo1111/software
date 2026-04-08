@@ -1,10 +1,20 @@
 import { createHash, randomBytes } from "node:crypto";
+import type { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 
 export const AUTH_SESSION_COOKIE = "english_learn_session";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 14;
 type CookieRequestContext = Headers | Request | null | undefined;
+
+const sessionUserSelect = {
+  id: true,
+  username: true,
+  email: true,
+  displayName: true,
+  authProvider: true,
+  authUserId: true,
+} satisfies Prisma.UserSelect;
 
 function isDatabaseSessionConfigured() {
   return Boolean(process.env.DATABASE_URL?.trim());
@@ -118,7 +128,9 @@ export async function getUserFromSessionToken(rawToken: string | null | undefine
       tokenHash: hashToken(rawToken),
     },
     include: {
-      user: true,
+      user: {
+        select: sessionUserSelect,
+      },
     },
   });
 
