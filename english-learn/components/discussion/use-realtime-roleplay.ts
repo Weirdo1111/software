@@ -316,6 +316,8 @@ async function createMicCapture(websocket: WebSocket, onLevelChange: (value: num
 }
 
 export function useRealtimeRoleplay(bridgeUrl: string) {
+  const bridgeConnectHelp =
+    "Could not connect to the local realtime bridge. Run `npm run roleplay:bridge:setup` once, then `npm run roleplay:bridge` in another terminal, and confirm the ROLEPLAY_DIALOG_* env vars are configured on this machine.";
   const [connectionState, setConnectionState] = useState<"idle" | "connecting" | "connected" | "error">("idle");
   const [isMicActive, setIsMicActive] = useState(false);
   const [isAssistantSpeaking, setIsAssistantSpeaking] = useState(false);
@@ -519,7 +521,7 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
     connectionNonceRef.current = connectionNonce;
     setConnectionState("connecting");
     setStatus("Connecting to the realtime bridge...");
-    pushLog("Connecting to the local realtime roleplay bridge.");
+    pushLog(`Connecting to the local realtime roleplay bridge at ${bridgeUrl}.`);
 
     const playback = await createFloat32PlaybackController();
     if (connectionNonceRef.current !== connectionNonce) {
@@ -656,8 +658,8 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
       }
 
       setConnectionState("error");
-      setStatus("Could not connect to the local realtime bridge.");
-      pushLog("Could not connect to the local realtime bridge.", "error");
+      setStatus(bridgeConnectHelp);
+      pushLog(bridgeConnectHelp, "error");
     };
 
     socket.onclose = () => {

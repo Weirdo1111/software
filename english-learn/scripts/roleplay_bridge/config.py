@@ -7,7 +7,7 @@ from character_profiles import CHARACTER_PROFILES
 
 def load_env_files():
     root = Path(__file__).resolve().parents[2]
-    for filename in (".env", ".env.local"):
+    for filename in (".env", ".env.development", ".env.local"):
       path = root / filename
       if not path.exists():
           continue

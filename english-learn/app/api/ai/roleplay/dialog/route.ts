@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { jsonError } from "@/lib/api";
+import { hasNonEnglishContent } from "@/lib/ai/language";
 import { generateStructuredJSON, hasAIConfig } from "@/lib/ai/client";
 import { roleplayConversationPrompt } from "@/lib/ai/prompts";
 import { buildMockRoleplayReply } from "@/lib/roleplay";
@@ -29,12 +30,13 @@ export async function POST(request: Request) {
       return NextResponse.json(buildMockRoleplayReply(payload.user_turn));
     }
 
+    const fallback = buildMockRoleplayReply(payload.user_turn);
     const output = await generateStructuredJSON(
       roleplayConversationPrompt(payload.user_turn, payload.history),
     );
-    const parsed = safeParseAIJSON(output, buildMockRoleplayReply(payload.user_turn));
+    const parsed = safeParseAIJSON(output, fallback);
 
-    return NextResponse.json(parsed);
+    return NextResponse.json(hasNonEnglishContent(parsed) ? fallback : parsed);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return jsonError(error.issues[0]?.message ?? "Invalid payload", 422);

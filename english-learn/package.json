@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
+    "dev": "node scripts/dev-with-bridge.mjs",
+    "dev:next": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
     "postinstall": "prisma generate",
@@ -13,8 +14,9 @@
     "typecheck": "tsc --noEmit",
     "prisma:generate": "prisma generate",
     "prisma:seed": "tsx prisma/seed.ts",
-    "roleplay:bridge": "py -3.13 scripts/roleplay_realtime_bridge.py --port 8877",
-    "roleplay:bridge:bg": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Start-Process -WindowStyle Hidden -FilePath py -ArgumentList '-3.13','scripts/roleplay_realtime_bridge.py','--port','8877' -WorkingDirectory '.'\"",
+    "roleplay:bridge:setup": "py -3 -m pip install -r scripts/roleplay_bridge/requirements.txt",
+    "roleplay:bridge": "py -3 scripts/roleplay_realtime_bridge.py --host 127.0.0.1 --port 8877",
+    "roleplay:bridge:bg": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Start-Process -WindowStyle Hidden -FilePath py -ArgumentList '-3','scripts/roleplay_realtime_bridge.py','--host','127.0.0.1','--port','8877' -WorkingDirectory '.'\"",
     "audio:listening": "tsx scripts/generate-listening-audio.mjs",
     "seed:listening": "tsx scripts/seed-listening-materials.mjs"
   },
