@@ -33,11 +33,10 @@ function loadEnvFile(filename) {
 }
 
 function resolveNextCommand() {
-  if (process.platform === "win32") {
-    return path.join(rootDir, "node_modules", ".bin", "next.cmd");
-  }
-
-  return path.join(rootDir, "node_modules", ".bin", "next");
+  return {
+    command: process.execPath,
+    args: [path.join(rootDir, "node_modules", "next", "dist", "bin", "next"), "dev", "--webpack"],
+  };
 }
 
 function startProcess(command, args, label) {
@@ -105,7 +104,8 @@ async function main() {
     [pythonVersionArg, "scripts/roleplay_realtime_bridge.py", "--host", bridgeHost, "--port", bridgePort],
     "bridge",
   );
-  const next = startProcess(resolveNextCommand(), ["dev", "--webpack"], "next");
+  const nextCommand = resolveNextCommand();
+  const next = startProcess(nextCommand.command, nextCommand.args, "next");
 
   const shutdown = () => {
     terminate(next);
