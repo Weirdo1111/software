@@ -769,7 +769,7 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
           nextTurnPreparationResolverRef.current = null;
           resolve();
         }
-      }, 1500);
+      }, 4000);
     });
   }
 

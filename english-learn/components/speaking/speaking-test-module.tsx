@@ -81,14 +81,27 @@ function setSpeakingTestHelpDismissed(value: boolean) {
   }
 }
 
-function buildQuestionInstruction(question: SpeakingTestQuestion, questionIndex: number) {
+function buildQuestionInstruction(
+  questionSet: SpeakingTestQuestionSet,
+  question: SpeakingTestQuestion,
+  questionIndex: number,
+) {
   return [
     "[SYSTEM CONTROL]",
-    `You are now administering question ${questionIndex + 1} of 3.`,
-    "Ask the next question exactly as written.",
-    "Use at most one short lead-in sentence.",
-    "Do not explain the answer and do not give feedback.",
-    `Question: ${question.prompt}`,
+    questionSet.openingInstruction,
+    `You are now administering question ${questionIndex + 1} of ${questionSet.questions.length}.`,
+    `Test context: ${questionSet.examinerBrief}`,
+    `Theme: ${questionSet.theme}.`,
+    "Your only task in this turn is to read the next question aloud once in English and then stop.",
+    "Do not mention the candidate's previous answer.",
+    "Do not change the topic.",
+    "Do not paraphrase the question.",
+    "Do not explain the question.",
+    "Do not answer the question yourself.",
+    "Do not give feedback, hints, or extra discussion.",
+    "If you use a lead-in, it must be one short sentence only, such as 'Question two.'",
+    `Speak this question verbatim: ${JSON.stringify(question.prompt)}`,
+    "After speaking it once, remain silent until the next [SYSTEM CONTROL] command arrives.",
   ].join(" ");
 }
 
@@ -162,6 +175,34 @@ function buildWaveHeights(isActive: boolean) {
 
 function normalizeTranscript(input: string) {
   return input.replace(/\s+/g, " ").trim();
+}
+
+async function blobToBase64(blob: Blob) {
+  return await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result !== "string") {
+        reject(new Error("Recorded audio could not be read for transcription."));
+        return;
+      }
+
+      const commaIndex = result.indexOf(",");
+      if (commaIndex === -1) {
+        reject(new Error("Recorded audio could not be encoded for transcription."));
+        return;
+      }
+
+      resolve(result.slice(commaIndex + 1));
+    };
+
+    reader.onerror = () => {
+      reject(new Error("Recorded audio could not be read for transcription."));
+    };
+
+    reader.readAsDataURL(blob);
+  });
 }
 
 function getBuddyStage(totalXp: number): BuddyStage {
@@ -661,11 +702,56 @@ export function SpeakingTestModule({ locale }: { locale: Locale }) {
     realtime.setAssistantAudioMuted(false);
 
     try {
-      await realtime.sendTextTurn(buildQuestionInstruction(nextQuestion, questionIndex));
+      await realtime.sendTextTurn(buildQuestionInstruction(questionSet, nextQuestion, questionIndex));
       setStatus(`Question ${questionIndex + 1} is ready. Start the microphone when the examiner finishes speaking.`);
     } finally {
       setIsQuestionQueued(false);
     }
+  }
+
+  async function transcribeRecordedAnswer(clip: NonNullable<typeof recorder.audioClip>) {
+    const response = await fetch("/api/ai/speaking/transcribe", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        audio_base64: await blobToBase64(clip.blob),
+        mime_type: clip.mimeType,
+        duration_ms: clip.durationMs,
+      }),
+    });
+
+    const payload = (await response.json().catch(() => null)) as { transcript?: string; error?: string } | null;
+    if (!response.ok) {
+      throw new Error(payload?.error || "Recorded answer transcription failed.");
+    }
+
+    return normalizeTranscript(payload?.transcript ?? "");
+  }
+
+  async function resolveAnswerTranscript(clip: NonNullable<typeof recorder.audioClip>) {
+    const liveTranscript = normalizeTranscript(liveTranscriptRef.current);
+    const liveWordCount = liveTranscript ? liveTranscript.split(/\s+/).filter(Boolean).length : 0;
+    const shouldUseRecordedFallback = !liveTranscript || (clip.durationMs >= 3000 && liveWordCount < 4);
+
+    if (!shouldUseRecordedFallback) {
+      return liveTranscript;
+    }
+
+    const recordedTranscript = await transcribeRecordedAnswer(clip).catch((error) => {
+      if (liveTranscript) {
+        return liveTranscript;
+      }
+
+      throw error;
+    });
+
+    if (!liveTranscript) {
+      return recordedTranscript;
+    }
+
+    return recordedTranscript.length > liveTranscript.length ? recordedTranscript : liveTranscript;
   }
 
   async function handleStartMic() {
@@ -734,7 +820,13 @@ export function SpeakingTestModule({ locale }: { locale: Locale }) {
     setError("");
 
     try {
-      const transcript = normalizeTranscript(liveTranscriptRef.current);
+      const transcript = await resolveAnswerTranscript(clip);
+      if (!transcript) {
+        throw new Error(
+          "Transcript capture failed for this answer. Please answer the question again after checking your microphone and connection.",
+        );
+      }
+
       const nextAnswer: SpeakingTestAnswerInput = {
         question_id: question.id,
         prompt: question.prompt,
