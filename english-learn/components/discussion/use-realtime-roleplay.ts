@@ -22,6 +22,7 @@ type BridgeMessage =
   | { type: "assistant_resumed" }
   | { type: "session_finished"; event?: number }
   | { type: "text_sent"; content: string }
+  | { type: "turn_session_prepared" }
   | { type: "upstream_event"; event?: number; payload?: unknown }
   | { type: "error"; message: string; reason?: string; shouldClose?: boolean }
   | { type: "pong" };
@@ -363,6 +364,7 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
   const currentAssistantTextRef = useRef("");
   const currentUserTranscriptRef = useRef("");
   const assistantTurnResolversRef = useRef<AssistantTurnResolver[]>([]);
+  const nextTurnPreparationResolverRef = useRef<(() => void) | null>(null);
   const isAssistantAudioMutedRef = useRef(false);
   const isMicActiveRef = useRef(false);
   const botNameRef = useRef("");
@@ -527,6 +529,8 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
       pending.resolve("");
     }
     assistantTurnResolversRef.current = [];
+    nextTurnPreparationResolverRef.current?.();
+    nextTurnPreparationResolverRef.current = null;
     isAssistantAudioMutedRef.current = false;
     setSpeaker("");
     setDialogVariant("");
@@ -632,6 +636,12 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
 
       if (payload.type === "text_sent") {
         pushLog(summarizeOutboundText(payload.content));
+        return;
+      }
+
+      if (payload.type === "turn_session_prepared") {
+        nextTurnPreparationResolverRef.current?.();
+        nextTurnPreparationResolverRef.current = null;
         return;
       }
 
@@ -744,6 +754,25 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
     socket.send(JSON.stringify({ type: "text", content: trimmed }));
   }
 
+  async function prepareNextTurn() {
+    const socket = websocketRef.current;
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      setStatus("Start the realtime session before moving to the next turn.");
+      return;
+    }
+
+    await new Promise<void>((resolve) => {
+      nextTurnPreparationResolverRef.current = resolve;
+      socket.send(JSON.stringify({ type: "prepare_next_turn" }));
+      window.setTimeout(() => {
+        if (nextTurnPreparationResolverRef.current === resolve) {
+          nextTurnPreparationResolverRef.current = null;
+          resolve();
+        }
+      }, 1500);
+    });
+  }
+
   useEffect(() => {
     return () => {
       void disconnectSession();
@@ -769,6 +798,7 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
     startMicrophone,
     stopMicrophone,
     sendTextTurn,
+    prepareNextTurn,
     setAssistantAudioMuted(muted: boolean) {
       isAssistantAudioMutedRef.current = muted;
       if (muted) {

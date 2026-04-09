@@ -81,6 +81,13 @@ export function useAudioRecorder({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const autoStoppedRef = useRef(false);
+  const stopWaiterRef = useRef<((clip: SpeakingAudioClip | null) => void) | null>(null);
+
+  function resolvePendingStop(clip: SpeakingAudioClip | null) {
+    const resolve = stopWaiterRef.current;
+    stopWaiterRef.current = null;
+    resolve?.(clip);
+  }
 
   function clearTickTimer() {
     if (tickTimerRef.current !== null) {
@@ -215,15 +222,16 @@ export function useAudioRecorder({
         const recordedMimeType = mediaRecorder.mimeType || mimeType || "audio/webm";
         const blob = new Blob(chunksRef.current, { type: recordedMimeType });
         const nextUrl = URL.createObjectURL(blob);
-        revokeClipUrl();
-        clipUrlRef.current = nextUrl;
-        setAudioClip({
+        const nextClip = {
           blob,
           url: nextUrl,
           mimeType: recordedMimeType,
           durationMs: elapsedBeforePauseRef.current,
           createdAt: new Date().toISOString(),
-        });
+        } satisfies SpeakingAudioClip;
+        revokeClipUrl();
+        clipUrlRef.current = nextUrl;
+        setAudioClip(nextClip);
         setElapsedMs(elapsedBeforePauseRef.current);
         setStatus("stopped");
         chunksRef.current = [];
@@ -231,6 +239,7 @@ export function useAudioRecorder({
         await teardownAudioMonitor();
         stopStreamTracks();
         mediaRecorderRef.current = null;
+        resolvePendingStop(nextClip);
       };
 
       mediaRecorder.onerror = async () => {
@@ -241,6 +250,7 @@ export function useAudioRecorder({
         await teardownAudioMonitor();
         stopStreamTracks();
         mediaRecorderRef.current = null;
+        resolvePendingStop(null);
       };
 
       await configureAudioMonitor(stream);
@@ -256,6 +266,7 @@ export function useAudioRecorder({
       await teardownAudioMonitor();
       stopStreamTracks();
       mediaRecorderRef.current = null;
+      resolvePendingStop(null);
     }
   }
 
@@ -303,6 +314,18 @@ export function useAudioRecorder({
     mediaRecorder.stop();
   }
 
+  async function stopRecordingAndWait() {
+    const mediaRecorder = mediaRecorderRef.current;
+    if (!mediaRecorder || mediaRecorder.state === "inactive") {
+      return audioClip;
+    }
+
+    return new Promise<SpeakingAudioClip | null>((resolve) => {
+      stopWaiterRef.current = resolve;
+      stopRecording();
+    });
+  }
+
   async function resetRecording() {
     const mediaRecorder = mediaRecorderRef.current;
     if (mediaRecorder && mediaRecorder.state !== "inactive") {
@@ -310,6 +333,8 @@ export function useAudioRecorder({
       mediaRecorder.onerror = null;
       mediaRecorder.stop();
     }
+
+    resolvePendingStop(null);
 
     clearTickTimer();
     startedAtRef.current = null;
@@ -351,6 +376,7 @@ export function useAudioRecorder({
     pauseRecording,
     resumeRecording,
     stopRecording,
+    stopRecordingAndWait,
     resetRecording,
   };
 }
