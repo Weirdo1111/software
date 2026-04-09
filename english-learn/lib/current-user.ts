@@ -1,10 +1,12 @@
 import { cookies } from "next/headers";
 import type { Prisma } from "@prisma/client";
+import type { User as PrismaUser } from "@prisma/client";
 
 import { AUTH_SESSION_COOKIE, getUserFromSessionToken } from "@/lib/auth-session";
 import { findLocalUserByAuthIdentity, isDatabaseAuthConfigured } from "@/lib/local-auth";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { isManagerUser, resolveAuthRole, type AuthRole } from "@/lib/user-roles";
 
 export const AUTH_PROVIDER_COOKIE = "demo_auth_provider";
 export const AUTH_USER_ID_COOKIE = "demo_auth_user_id";
@@ -31,6 +33,7 @@ type CurrentAuthIdentity = {
   username: string;
   email?: string;
   displayName: string;
+  role: AuthRole;
 };
 
 function normalizeUsername(value: string) {
@@ -57,6 +60,7 @@ function buildIdentityFromUser(user: {
   username: string;
   email: string | null | undefined;
   displayName?: string;
+  role?: string | null;
 }) {
   const authProvider = user.authProvider || "local-file";
   const authUserId =
@@ -70,6 +74,7 @@ function buildIdentityFromUser(user: {
     username: normalizeUsername(user.username) || `user-${authUserId}`,
     email: user.email ?? undefined,
     displayName: user.displayName || buildDisplayName(user.username, user.email ?? undefined),
+    role: resolveAuthRole(user),
   } satisfies CurrentAuthIdentity;
 }
 
@@ -132,6 +137,7 @@ async function getIdentityFromCookies() {
           `user-${authUserId.replace(/[^a-zA-Z0-9]/g, "").slice(0, 8).toLowerCase()}`,
         email: emailCookie || undefined,
         displayName: buildDisplayName(usernameCookie, emailCookie || undefined),
+        role: resolveAuthRole({ username: usernameCookie, email: emailCookie || undefined }),
       } satisfies CurrentAuthIdentity;
     }
 
@@ -157,6 +163,7 @@ async function getIdentityFromCookies() {
         `user-${authUserId.replace(/[^a-zA-Z0-9]/g, "").slice(0, 8).toLowerCase()}`,
       email: emailCookie || undefined,
       displayName: buildDisplayName(usernameCookie, emailCookie || undefined),
+      role: resolveAuthRole({ username: usernameCookie, email: emailCookie || undefined }),
     } satisfies CurrentAuthIdentity;
   }
 
@@ -230,6 +237,10 @@ async function getIdentityFromSupabase(): Promise<CurrentAuthIdentity | null> {
       String(user.user_metadata?.username || user.user_metadata?.name || getEmailPrefix(user.email)),
       user.email,
     ),
+    role: resolveAuthRole({
+      username: String(user.user_metadata?.username || user.user_metadata?.name || getEmailPrefix(user.email)),
+      email: user.email,
+    }),
   };
 }
 
@@ -329,4 +340,16 @@ export async function getCurrentDiscussionUser() {
 
 export async function getCurrentDiscussionUserId() {
   return getCurrentUserId();
+}
+
+export function isManagerIdentity(identity: CurrentAuthIdentity | null | undefined) {
+  return Boolean(identity && identity.role === "manager");
+}
+
+export function isManagerCurrentUser(user: Pick<PrismaUser, "username" | "email"> | null | undefined) {
+  if (!user) {
+    return false;
+  }
+
+  return isManagerUser(user);
 }

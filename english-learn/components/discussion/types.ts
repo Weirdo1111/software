@@ -59,6 +59,8 @@ export type DiscussionCommentInput = {
   audioDurationSec?: number;
 };
 
+export type DiscussionModerationStatus = "pending" | "approved" | "rejected";
+
 export type DiscussionPost = {
   id: string;
   title: string;
@@ -75,6 +77,8 @@ export type DiscussionPost = {
   createdAt: string;
   comments: DiscussionComment[];
   views: number;
+  moderationStatus: DiscussionModerationStatus;
+  canModerate?: boolean;
 };
 
 export type DiscussionNotification = {

@@ -8,6 +8,14 @@
       "createdAt": "2026-03-20T00:00:00.000Z"
     },
     {
+      "id": "00000000-0000-0000-0000-000000000002",
+      "username": "manager",
+      "email": "manager@example.com",
+      "passwordHash": "30a4bad5f2004d2b90c4d1fef9ce8d4f:a70ceb89f87b0c7841fd8000e8d53517f6305fe76cbcbfca946359a654bc2f2b92a0cfccdf621fddbd7d18c49afc2ef801c4705440205a1abaed70f6cc24d7d3",
+      "createdAt": "2026-04-08T00:00:00.000Z",
+      "role": "manager"
+    },
+    {
       "id": "07b069b0-0b40-4d88-94cf-958ed4095973",
       "username": "wzx_test_user",
       "email": "wzx_test_user@example.com",

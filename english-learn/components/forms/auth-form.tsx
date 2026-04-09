@@ -97,7 +97,7 @@ export function AuthForm({ mode, locale }: { mode: AuthMode; locale: Locale }) {
         throw new Error(data.error || "Authentication failed.");
       }
 
-      const user = data.user as { username?: string; email?: string } | undefined;
+      const user = data.user as { username?: string; email?: string; role?: string } | undefined;
       const authUserId = typeof data.user_id === "string" ? data.user_id : undefined;
       const authProvider = typeof data.auth_provider === "string" ? data.auth_provider : "local-file";
       const displayName = user?.username || user?.email || account.trim();
@@ -107,9 +107,11 @@ export function AuthForm({ mode, locale }: { mode: AuthMode; locale: Locale }) {
         localStorage.setItem("demo_auth_user_id", authUserId);
       }
       localStorage.setItem("demo_auth_provider", authProvider);
+      localStorage.setItem("demo_auth_role", user?.role || "user");
       window.dispatchEvent(new Event("demo-auth-changed"));
       setStatus(data.message || copy.statusReady);
-      window.location.href = mode === "sign-up" ? "/dashboard" : "/dashboard";
+      window.location.href =
+        mode === "sign-in" && user?.role === "manager" ? "/manager" : "/dashboard";
     } catch (nextError) {
       const message = nextError instanceof Error ? nextError.message : "Authentication failed.";
       setError(message);
