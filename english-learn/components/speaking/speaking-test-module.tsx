@@ -564,24 +564,6 @@ export function SpeakingTestModule({ locale }: { locale: Locale }) {
   }, [hasExamStarted, introFinished, realtime.connectionState]);
 
   useEffect(() => {
-    if (pendingQuestionIndex === null) {
-      return;
-    }
-
-    if (recorder.status === "error") {
-      setError(recorder.error || "Local recording failed before the answer could be transcribed.");
-      setPendingQuestionIndex(null);
-      return;
-    }
-
-    if (recorder.status !== "stopped" || !recorder.audioClip) {
-      return;
-    }
-
-    void finalizeAnswer(pendingQuestionIndex, recorder.audioClip);
-  }, [pendingQuestionIndex, recorder.audioClip, recorder.error, recorder.status]);
-
-  useEffect(() => {
     const shouldAutoSubmitCurrentAnswer =
       pendingQuestionIndex === null &&
       recorder.status === "stopped" &&
@@ -594,22 +576,15 @@ export function SpeakingTestModule({ locale }: { locale: Locale }) {
       return;
     }
 
-    setStatus(`Reached the ${MAX_TRANSCRIPTION_DURATION_SECONDS}-second limit. Submitting the current response.`);
-    setPendingQuestionIndex(currentQuestionIndex);
-    browserSpeech.stopListening();
-    recorder.stopRecording();
-    void realtime.stopMicrophone();
+    void submitAnswer(currentQuestionIndex, `Reached the ${MAX_TRANSCRIPTION_DURATION_SECONDS}-second limit. Submitting the current response.`);
   }, [
-    browserSpeech.stopListening,
     currentQuestionIndex,
     feedback,
     isScoring,
     isTranscribing,
     pendingQuestionIndex,
     recorder.audioClip,
-    recorder.stopRecording,
     recorder.status,
-    realtime,
   ]);
 
   useEffect(() => {
@@ -722,18 +697,30 @@ export function SpeakingTestModule({ locale }: { locale: Locale }) {
     await realtime.startMicrophone();
   }
 
+  async function submitAnswer(questionIndex: number, statusMessage: string) {
+    setError("");
+    setStatus(statusMessage);
+    setPendingQuestionIndex(questionIndex);
+    browserSpeech.stopListening();
+    realtime.setAssistantAudioMuted(true);
+    await realtime.stopMicrophone();
+
+    const clip = await recorder.stopRecordingAndWait();
+    if (!clip) {
+      setPendingQuestionIndex(null);
+      setError(recorder.error || "Local recording failed before the answer could be transcribed.");
+      return;
+    }
+
+    await finalizeAnswer(questionIndex, clip);
+  }
+
   async function handleOver() {
     if (!currentQuestion || isTranscribing || isScoring) {
       return;
     }
 
-    setError("");
-    setStatus(text.transcribing);
-    setPendingQuestionIndex(currentQuestionIndex);
-    browserSpeech.stopListening();
-    recorder.stopRecording();
-    realtime.setAssistantAudioMuted(true);
-    void realtime.stopMicrophone();
+    await submitAnswer(currentQuestionIndex, text.transcribing);
   }
 
   async function finalizeAnswer(questionIndex: number, clip: NonNullable<typeof recorder.audioClip>) {
@@ -769,6 +756,7 @@ export function SpeakingTestModule({ locale }: { locale: Locale }) {
         browserSpeech.resetListening();
         realtime.clearLiveUserTranscript();
         await recorder.resetRecording();
+        await realtime.prepareNextTurn();
         setStatus(
           transcript
             ? `Question ${questionIndex + 1} saved. Question ${nextIndex + 1} is being queued.`
