@@ -4,6 +4,7 @@ import {
   getCurrentAuthIdentity,
   requireCurrentDiscussionUser,
 } from "@/lib/current-user";
+import { toStoredDiscussionModerationStatus } from "@/lib/discussion-moderation";
 import { prisma } from "@/lib/prisma";
 import { toDiscussionPost } from "@/lib/discussion-mappers";
 
@@ -41,7 +42,9 @@ export async function GET(req: NextRequest) {
     const view = searchParams.get("view");
     const search = searchParams.get("search");
 
-    const where: Prisma.DiscussionPostWhereInput = {};
+    const where: Prisma.DiscussionPostWhereInput = {
+      moderationStatus: "APPROVED",
+    };
 
     if (category && category !== "all") {
       where.category = category;
@@ -141,6 +144,7 @@ export async function POST(req: NextRequest) {
         audioMimeType: audioMimeType || null,
         audioDurationSec,
         category: category.trim(),
+        moderationStatus: toStoredDiscussionModerationStatus("pending"),
         pinned: false,
         viewsCount: 0,
         likesCount: 0,
