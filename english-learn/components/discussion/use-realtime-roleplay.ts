@@ -171,6 +171,10 @@ function shouldSuppressUpstreamLog(event?: number, payload?: unknown) {
     return true;
   }
 
+  if (event === 559 && payload && typeof payload === "object") {
+    return true;
+  }
+
   if (event === 359 && payload && typeof payload === "object") {
     return true;
   }
