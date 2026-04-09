@@ -312,6 +312,12 @@ async def handle_browser_client(client_ws):
                 if content:
                     await session.send_text(content)
                     await client_ws.send(json_message({"type": "text_sent", "content": content}))
+            elif command_type == "prepare_next_turn":
+                if session is None:
+                    await client_ws.send(json_message({"type": "error", "message": "Session has not started yet."}))
+                    continue
+                await session._prepare_next_turn_session()
+                await client_ws.send(json_message({"type": "turn_session_prepared"}))
             elif command_type == "finish":
                 break
             elif command_type == "ping":
