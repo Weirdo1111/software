@@ -166,6 +166,10 @@ function shouldSuppressUpstreamLog(event?: number, payload?: unknown) {
     return true;
   }
 
+  if (event === 459) {
+    return true;
+  }
+
   if (event === 359 && payload && typeof payload === "object") {
     return true;
   }
@@ -623,7 +627,6 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
       }
 
       if (payload.type === "assistant_resumed") {
-        pushLog("Assistant resumed after interruption.");
         return;
       }
 

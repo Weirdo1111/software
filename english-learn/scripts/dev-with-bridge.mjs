@@ -100,7 +100,6 @@ async function canConnectToPort(host, port) {
 
 async function main() {
   loadEnvFile(".env");
-  loadEnvFile(".env.development");
   loadEnvFile(".env.local");
 
   const hasBridgeDeps = await runPythonCheck();
