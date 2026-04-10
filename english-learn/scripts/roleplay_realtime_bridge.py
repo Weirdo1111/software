@@ -65,6 +65,7 @@ class RealtimeRoleplayBridgeSession:
         self.hello_finished = False
         self.upstream_finished = False
         self.reset_session_each_turn = config.should_reset_session_each_turn(self.character_id)
+        self.preparing_next_turn = False
 
     async def connect(self):
         ws_config = config.build_ws_config(self.character_id)
@@ -200,6 +201,9 @@ class RealtimeRoleplayBridgeSession:
                 elif event == 459:
                     await self.client_ws.send(json_message({"type": "assistant_resumed"}))
                 elif event in (152, 153):
+                    if self.preparing_next_turn:
+                        self.preparing_next_turn = False
+                        continue
                     await self.client_ws.send(json_message({"type": "session_finished", "event": event}))
                     self.upstream_finished = True
                     break
@@ -257,6 +261,7 @@ class RealtimeRoleplayBridgeSession:
         if not self.ws or self.upstream_finished:
             return
 
+        self.preparing_next_turn = True
         await self._finish_session()
         self.session_id = str(uuid.uuid4())
         await self._send_start_session()
