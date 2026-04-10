@@ -6,6 +6,8 @@ Updated: 2026-04-10
 
 This document is based on the current repository code and is intended for project display, repository documentation, presentations, assessment materials, and compliance-style disclosure for `English Learn`.
 
+If you want a faster teacher-facing checklist rather than a narrative explanation, use [./source-register.md](./source-register.md).
+
 - GitHub repository: <https://github.com/Weirdo1111/software>
 - Project folder: `english-learn/`
 - Local audit baseline used for this document: branch `z-x-hub/agile-remediation-on-latest-main`, latest local commit `857111e` dated 2026-04-08 with message `fix(lint): resolve strict react and jsx checks`
