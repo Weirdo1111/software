@@ -22,8 +22,9 @@ type BridgeMessage =
   | { type: "assistant_resumed" }
   | { type: "session_finished"; event?: number }
   | { type: "text_sent"; content: string }
+  | { type: "turn_session_prepared" }
   | { type: "upstream_event"; event?: number; payload?: unknown }
-  | { type: "error"; message: string }
+  | { type: "error"; message: string; reason?: string; shouldClose?: boolean }
   | { type: "pong" };
 
 export type RoleplayRealtimeLog = {
@@ -159,6 +160,34 @@ function summarizeUpstreamPayload(value: unknown) {
   } catch {
     return String(value).slice(0, 220);
   }
+}
+
+function shouldSuppressUpstreamLog(event?: number, payload?: unknown) {
+  if (event === 154) {
+    return true;
+  }
+
+  if (event === 459) {
+    return true;
+  }
+
+  if (event === 559 && payload && typeof payload === "object") {
+    return true;
+  }
+
+  if (event === 359 && payload && typeof payload === "object") {
+    return true;
+  }
+
+  return false;
+}
+
+function isIdleTimeoutBridgeError(payload: Extract<BridgeMessage, { type: "error" }>) {
+  if (payload.reason === "idle_timeout") {
+    return true;
+  }
+
+  return /DialogAudioIdleTimeoutError|52000042/i.test(payload.message);
 }
 
 function appendUint8Arrays(left: Uint8Array, right: Uint8Array) {
@@ -316,6 +345,8 @@ async function createMicCapture(websocket: WebSocket, onLevelChange: (value: num
 }
 
 export function useRealtimeRoleplay(bridgeUrl: string) {
+  const bridgeConnectHelp =
+    "Could not connect to the local realtime bridge. Run `npm run roleplay:bridge:setup` once, then `npm run roleplay:bridge` in another terminal, and confirm the ROLEPLAY_DIALOG_* env vars are configured on this machine.";
   const [connectionState, setConnectionState] = useState<"idle" | "connecting" | "connected" | "error">("idle");
   const [isMicActive, setIsMicActive] = useState(false);
   const [isAssistantSpeaking, setIsAssistantSpeaking] = useState(false);
@@ -337,6 +368,7 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
   const currentAssistantTextRef = useRef("");
   const currentUserTranscriptRef = useRef("");
   const assistantTurnResolversRef = useRef<AssistantTurnResolver[]>([]);
+  const nextTurnPreparationResolverRef = useRef<(() => void) | null>(null);
   const isAssistantAudioMutedRef = useRef(false);
   const isMicActiveRef = useRef(false);
   const botNameRef = useRef("");
@@ -501,6 +533,8 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
       pending.resolve("");
     }
     assistantTurnResolversRef.current = [];
+    nextTurnPreparationResolverRef.current?.();
+    nextTurnPreparationResolverRef.current = null;
     isAssistantAudioMutedRef.current = false;
     setSpeaker("");
     setDialogVariant("");
@@ -519,7 +553,7 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
     connectionNonceRef.current = connectionNonce;
     setConnectionState("connecting");
     setStatus("Connecting to the realtime bridge...");
-    pushLog("Connecting to the local realtime roleplay bridge.");
+    pushLog(`Connecting to the local realtime roleplay bridge at ${bridgeUrl}.`);
 
     const playback = await createFloat32PlaybackController();
     if (connectionNonceRef.current !== connectionNonce) {
@@ -601,12 +635,17 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
       }
 
       if (payload.type === "assistant_resumed") {
-        pushLog("Assistant resumed after interruption.");
         return;
       }
 
       if (payload.type === "text_sent") {
         pushLog(summarizeOutboundText(payload.content));
+        return;
+      }
+
+      if (payload.type === "turn_session_prepared") {
+        nextTurnPreparationResolverRef.current?.();
+        nextTurnPreparationResolverRef.current = null;
         return;
       }
 
@@ -632,18 +671,29 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
           const userChunk = pickTranscriptChunk(payload.payload);
           appendUserTranscriptChunk(userChunk);
 
-          if (payload.payload && !userChunk) {
+          if (payload.payload && !userChunk && !shouldSuppressUpstreamLog(payload.event, payload.payload)) {
             pushLog(`Upstream event ${payload.event ?? "?"}: ${summarizeUpstreamPayload(payload.payload)}`);
           }
         }
 
-        if (typeof payload.payload === "string" && payload.payload.trim()) {
+        if (
+          typeof payload.payload === "string" &&
+          payload.payload.trim() &&
+          !shouldSuppressUpstreamLog(payload.event, payload.payload)
+        ) {
           pushLog(`Upstream event ${payload.event ?? "?"}: ${payload.payload}`);
         }
         return;
       }
 
       if (payload.type === "error") {
+        if (payload.shouldClose || isIdleTimeoutBridgeError(payload)) {
+          await disconnectSession();
+          setStatus(payload.message);
+          pushLog(payload.message, "warn");
+          return;
+        }
+
         setConnectionState("error");
         setStatus(payload.message);
         pushLog(payload.message, "error");
@@ -656,8 +706,8 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
       }
 
       setConnectionState("error");
-      setStatus("Could not connect to the local realtime bridge.");
-      pushLog("Could not connect to the local realtime bridge.", "error");
+      setStatus(bridgeConnectHelp);
+      pushLog(bridgeConnectHelp, "error");
     };
 
     socket.onclose = () => {
@@ -708,6 +758,25 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
     socket.send(JSON.stringify({ type: "text", content: trimmed }));
   }
 
+  async function prepareNextTurn() {
+    const socket = websocketRef.current;
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      setStatus("Start the realtime session before moving to the next turn.");
+      return;
+    }
+
+    await new Promise<void>((resolve) => {
+      nextTurnPreparationResolverRef.current = resolve;
+      socket.send(JSON.stringify({ type: "prepare_next_turn" }));
+      window.setTimeout(() => {
+        if (nextTurnPreparationResolverRef.current === resolve) {
+          nextTurnPreparationResolverRef.current = null;
+          resolve();
+        }
+      }, 4000);
+    });
+  }
+
   useEffect(() => {
     return () => {
       void disconnectSession();
@@ -733,6 +802,7 @@ export function useRealtimeRoleplay(bridgeUrl: string) {
     startMicrophone,
     stopMicrophone,
     sendTextTurn,
+    prepareNextTurn,
     setAssistantAudioMuted(muted: boolean) {
       isAssistantAudioMutedRef.current = muted;
       if (muted) {

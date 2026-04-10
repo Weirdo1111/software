@@ -4,6 +4,7 @@ import type {
   DiscussionPost,
 } from "@/components/discussion/types";
 import { normalizeDiscussionCategory } from "@/components/discussion/types";
+import { normalizeDiscussionModerationStatus } from "@/lib/discussion-moderation";
 
 type DiscussionLikeRecord = {
   userId: bigint;
@@ -23,10 +24,15 @@ type DiscussionCommentRecord = {
 
 type DiscussionPostRecord = {
   id: bigint | number | string;
+  authorId?: bigint;
   title: string;
   content: string;
   excerpt?: string | null;
+  audioData?: string | null;
+  audioMimeType?: string | null;
+  audioDurationSec?: number | null;
   category: string;
+  moderationStatus?: string | null;
   likesCount: number;
   pinned: boolean;
   createdAt: Date | string;
@@ -56,12 +62,19 @@ export function serializeId(id: bigint | number | string) {
   return id.toString();
 }
 
-export function toDiscussionPost(post: DiscussionPostRecord, currentUserId: bigint): DiscussionPost {
+export function toDiscussionPost(
+  post: DiscussionPostRecord,
+  currentUserId: bigint,
+  options?: { canModerate?: boolean },
+): DiscussionPost {
   return {
     id: serializeId(post.id),
     title: post.title,
     content: post.content,
     excerpt: post.excerpt ?? undefined,
+    audioDataUrl: post.audioData ?? undefined,
+    audioMimeType: post.audioMimeType ?? undefined,
+    audioDurationSec: post.audioDurationSec ?? undefined,
     author: post.author.displayName,
     tag: normalizeDiscussionCategory(post.category),
     likes: post.likesCount,
@@ -85,6 +98,8 @@ export function toDiscussionPost(post: DiscussionPostRecord, currentUserId: bigi
         }),
       ) ?? [],
     views: post.viewsCount,
+    moderationStatus: normalizeDiscussionModerationStatus(post.moderationStatus),
+    canModerate: options?.canModerate ?? false,
   };
 }
 

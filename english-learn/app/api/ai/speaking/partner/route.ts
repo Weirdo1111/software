@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { jsonError } from "@/lib/api";
+import { hasNonEnglishContent } from "@/lib/ai/language";
 import { generateStructuredJSON, hasAIConfig } from "@/lib/ai/client";
 import { speakingPartnerPrompt } from "@/lib/ai/prompts";
 import { buildMockSpeakingPartnerReply, safeParseAIJSON } from "@/lib/speaking-ai";
@@ -54,20 +55,18 @@ export async function POST(request: Request) {
       return jsonError("Speaking task context is out of sync", 422);
     }
 
+    const fallback = buildMockSpeakingPartnerReply(payload.learner_turn, speakingPrompt);
+
     if (!hasAIConfig()) {
-      return NextResponse.json(buildMockSpeakingPartnerReply(payload.learner_turn, speakingPrompt));
+      return NextResponse.json(fallback);
     }
 
     const output = await generateStructuredJSON(
       speakingPartnerPrompt(payload.target_level, speakingPrompt, payload.learner_turn, payload.history),
     );
-    const parsed = safeParseAIJSON(output, {
-      reply: "Your point is understandable. Build it further with one clearer support detail.",
-      follow_up: "Can you give one concrete example to support that idea?",
-      coaching_note: "Keep the next turn short and focused on one claim.",
-    });
+    const parsed = safeParseAIJSON(output, fallback);
 
-    return NextResponse.json(parsed);
+    return NextResponse.json(hasNonEnglishContent(parsed) ? fallback : parsed);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return jsonError(error.issues[0]?.message ?? "Invalid payload", 422);

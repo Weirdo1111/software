@@ -7,7 +7,7 @@
       "email": "admin@example.com",
       "counts": {
         "listeningCompletions": 66,
-        "speakingCompletions": 4,
+        "speakingCompletions": 8,
         "readingCompletions": 0,
         "writingCompletions": 1,
         "reviewSessions": 0,
@@ -16,10 +16,31 @@
         "dormLockoutClears": 0,
         "lastTrainClears": 0
       },
-      "totalXp": 1115,
-      "totalCompletedSources": 72,
+      "totalXp": 1195,
+      "totalCompletedSources": 76,
       "createdAt": "2026-03-31T09:40:48.145Z",
-      "updatedAt": "2026-04-07T11:19:22.082Z"
+      "updatedAt": "2026-04-09T06:01:49.598Z"
+    },
+    {
+      "authProvider": "local-file",
+      "authUserId": "00000000-0000-0000-0000-000000000002",
+      "username": "manager",
+      "email": "manager@example.com",
+      "counts": {
+        "listeningCompletions": 0,
+        "speakingCompletions": 0,
+        "readingCompletions": 0,
+        "writingCompletions": 0,
+        "reviewSessions": 0,
+        "wordGameClears": 0,
+        "escapeRoomClears": 0,
+        "dormLockoutClears": 0,
+        "lastTrainClears": 0
+      },
+      "totalXp": 0,
+      "totalCompletedSources": 0,
+      "createdAt": "2026-04-08T12:19:08.132Z",
+      "updatedAt": "2026-04-08T12:19:08.132Z"
     },
     {
       "authProvider": "local-file",

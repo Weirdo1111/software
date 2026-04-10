@@ -129,14 +129,26 @@ function getLastActivityText(post: DiscussionPost, locale: Locale) {
 
 function getLikeButtonLabel(post: DiscussionPost, locale: Locale) {
   if (locale === "zh") {
-    return post.liked ? `取消点赞：${post.title}` : `点赞：${post.title}`;
+    return post.liked ? `取消点赞: ${post.title}` : `点赞: ${post.title}`;
   }
 
   return post.liked ? `Unlike: ${post.title}` : `Like: ${post.title}`;
 }
 
 function getCommentLinkLabel(post: DiscussionPost, locale: Locale) {
-  return locale === "zh" ? `查看评论：${post.title}` : `View comments: ${post.title}`;
+  return locale === "zh" ? `查看评论: ${post.title}` : `View comments: ${post.title}`;
+}
+
+function getPostPreview(post: DiscussionPost, locale: Locale) {
+  if (post.content.trim()) {
+    return post.excerpt || post.content;
+  }
+
+  if (post.audioDataUrl) {
+    return locale === "zh" ? "这是一条语音主贴，点击可收听完整内容。" : "This is a voice post. Open it to listen to the full clip.";
+  }
+
+  return post.excerpt || "";
 }
 
 export function DiscussionBoard({
@@ -167,10 +179,11 @@ export function DiscussionBoard({
       popular: "热门",
       empty: "当前没有匹配的讨论内容。",
       forumBrand: "LearnEnglishRight 社区",
-      heroSubtitleAll: "浏览同学们的学习经验、问题与答疑。",
+      heroSubtitleAll: "浏览同学们的学习经验、问题与交流。",
       heroSubtitleCategory: "当前板块",
-      roleplay: "场景口语",
+      roleplay: "情景口语",
       seminars: "Seminar Rooms",
+      voice: "语音",
     },
     en: {
       sideTitle: "Categories",
@@ -186,6 +199,7 @@ export function DiscussionBoard({
       heroSubtitleCategory: "Current board",
       roleplay: "Roleplay",
       seminars: "Seminar Rooms",
+      voice: "Voice",
     },
   }[locale];
 
@@ -334,7 +348,7 @@ export function DiscussionBoard({
                 <p className="mt-2 text-sm text-slate-500">
                   {selectedTag === "all"
                     ? text.heroSubtitleAll
-                    : `${text.heroSubtitleCategory}：${getCategoryLabel(selectedTag, locale)}`}
+                    : `${text.heroSubtitleCategory}: ${getCategoryLabel(selectedTag, locale)}`}
                 </p>
               </div>
 
@@ -377,8 +391,14 @@ export function DiscussionBoard({
                           {post.title}
                         </h3>
                         <p className="line-clamp-2 text-sm leading-relaxed text-slate-500">
-                          {post.excerpt || post.content}
+                          {getPostPreview(post, locale)}
                         </p>
+                        {post.audioDataUrl ? (
+                          <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                            <Mic className="size-3.5" />
+                            {text.voice}
+                          </div>
+                        ) : null}
                       </div>
                     </Link>
 

@@ -79,6 +79,10 @@ jobs:
         working-directory: english-learn
         run: npm run lint --if-present
 
+      - name: Build
+        working-directory: english-learn
+        run: npm run build --if-present
+
       - name: Typecheck
         working-directory: english-learn
         run: npm run typecheck --if-present
@@ -117,6 +121,10 @@ jobs:
       - name: Lint
         working-directory: software/english-learn
         run: npm run lint --if-present
+
+      - name: Build
+        working-directory: software/english-learn
+        run: npm run build --if-present
 
       - name: Typecheck
         working-directory: software/english-learn

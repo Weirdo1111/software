@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { jsonError } from "@/lib/api";
+import { hasNonEnglishContent } from "@/lib/ai/language";
 import { generateStructuredJSON, hasAIConfig } from "@/lib/ai/client";
 import { speakingTestFeedbackPrompt } from "@/lib/ai/prompts";
 import { getCurrentUser } from "@/lib/current-user";
@@ -50,17 +51,22 @@ export async function POST(request: Request) {
 
     const hasCompleteTranscripts = payload.answers.every((answer) => answer.transcript.trim().length > 0);
     const mockFeedback = normalizeSpeakingTestFeedback(buildMockSpeakingTestFeedback(questionSet, payload.answers));
+    let result: ReturnType<typeof normalizeSpeakingTestFeedback>;
 
-    const result = !hasCompleteTranscripts
-      ? normalizeSpeakingTestFeedback(buildMissingTranscriptSpeakingTestFeedback(questionSet, payload.answers))
-      : !hasAIConfig()
-        ? mockFeedback
-        : normalizeSpeakingTestFeedback(
-            safeParseAIJSON(
-              await generateStructuredJSON(speakingTestFeedbackPrompt(questionSet, payload.answers)),
-              mockFeedback,
-            ),
-          );
+    if (!hasCompleteTranscripts) {
+      result = normalizeSpeakingTestFeedback(buildMissingTranscriptSpeakingTestFeedback(questionSet, payload.answers));
+    } else if (!hasAIConfig()) {
+      result = mockFeedback;
+    } else {
+      const parsed = normalizeSpeakingTestFeedback(
+        safeParseAIJSON(
+          await generateStructuredJSON(speakingTestFeedbackPrompt(questionSet, payload.answers)),
+          mockFeedback,
+        ),
+      );
+
+      result = hasNonEnglishContent(parsed) ? mockFeedback : parsed;
+    }
 
     await persistSpeakingTestFeedback({
       input: {

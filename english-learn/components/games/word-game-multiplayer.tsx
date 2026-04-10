@@ -332,7 +332,7 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
                 </div>
 
                 <div className="field">
-                  <span className="label">Create a Room</span>
+                  <span className="label">Room Code</span>
                   <div className="room-box">{activeRoomCode || draftRoomCode}</div>
                   <div className="tiny-actions">
                     <button type="button" className="tiny-btn" onClick={handleCopy}>
@@ -348,9 +348,6 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
                       disabled={busy}
                     >
                       Regenerate
-                    </button>
-                    <button type="button" className="tiny-btn" onClick={handleCreateRoom} disabled={busy || !playerId}>
-                      Create a Room
                     </button>
                   </div>
                 </div>
@@ -380,18 +377,28 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
 
                 <div className="field">
                   <span className="label">Sector Bank</span>
-                  <select
-                    className="bank-select"
-                    value={selectedBank}
-                    onChange={(event) => setSelectedBank(event.target.value)}
-                    disabled={roomState?.status === "active"}
-                  >
-                    {BANKS.map((bank) => (
-                      <option key={bank.id} value={bank.id}>
-                        {bank.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="join-row bank-row">
+                    <select
+                      className="bank-select"
+                      value={selectedBank}
+                      onChange={(event) => setSelectedBank(event.target.value)}
+                      disabled={roomState?.status === "active"}
+                    >
+                      {BANKS.map((bank) => (
+                        <option key={bank.id} value={bank.id}>
+                          {bank.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="tiny-btn join-btn create-room-btn"
+                      onClick={handleCreateRoom}
+                      disabled={busy || !playerId}
+                    >
+                      Create a Room
+                    </button>
+                  </div>
                 </div>
               </article>
 
@@ -680,8 +687,29 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
         }
 
         .join-btn {
-          min-width: 86px;
+          min-width: 138px;
           min-height: 42px;
+          font-size: 0.76rem;
+          letter-spacing: 0.03em;
+          padding-inline: 14px;
+          white-space: nowrap;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+        }
+
+        .bank-row .bank-select {
+          height: 42px;
+        }
+
+        .create-room-btn {
+          min-width: 138px;
+          min-height: 42px;
+          font-size: 0.76rem;
+          letter-spacing: 0.03em;
+          padding-inline: 14px;
+          white-space: nowrap;
         }
 
         .join-help {
