@@ -1119,7 +1119,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [buddyVariant, homeBuddyIntroActive, playHomeBuddyVoice]);
+  }, [buddyVariant, homeBuddyAudioReady, homeBuddyIntroActive]);
 
   useEffect(() => {
     if (typeof window === "undefined" || homeBuddyIntroActive) return;
@@ -1212,7 +1212,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       window.cancelAnimationFrame(frame);
       window.clearTimeout(settleTimer);
     };
-  }, [buddyVariant, homeBuddyBubbleVisible, homeBuddyIntroActive, homeBuddyLineIndex, playHomeBuddyVoice]);
+  }, [buddyVariant, homeBuddyAudioReady, homeBuddyBubbleVisible, homeBuddyIntroActive, homeBuddyLineIndex]);
 
   useEffect(() => {
     return () => {
