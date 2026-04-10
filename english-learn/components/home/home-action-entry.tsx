@@ -1056,20 +1056,17 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   };
 
   useEffect(() => {
-    const resetFrame = window.requestAnimationFrame(() => {
     const frame = window.requestAnimationFrame(() => {
       setHomeBuddyLineIndex(0);
       setHomeBuddyBubbleVisible(true);
     });
 
-    return () => window.cancelAnimationFrame(resetFrame);
     return () => window.cancelAnimationFrame(frame);
   }, [homeBuddyIdleLines]);
 
   useEffect(() => {
     if (!homeHasHydrated) return;
 
-    const introFrame = window.requestAnimationFrame(() => {
     const frame = window.requestAnimationFrame(() => {
       setHomeBuddyIntroPhase("welcome");
       setHomeBuddyBubbleVisible(false);
@@ -1078,7 +1075,6 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     });
 
     return () => {
-      window.cancelAnimationFrame(introFrame);
       window.cancelAnimationFrame(frame);
       clearHomeBuddyIntroTimers();
     };
@@ -1117,15 +1113,13 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   useEffect(() => {
     if (!homeBuddyIntroActive) return;
 
-    const speechFrame = window.requestAnimationFrame(() => {
     const frame = window.requestAnimationFrame(() => {
       setHomeBuddySpeechTick((current) => current + 1);
       playHomeBuddyVoice(buddyVariant);
     });
 
-    return () => window.cancelAnimationFrame(speechFrame);
     return () => window.cancelAnimationFrame(frame);
-  }, [buddyVariant, homeBuddyIntroActive, playHomeBuddyVoice]);
+  }, [buddyVariant, homeBuddyAudioReady, homeBuddyIntroActive]);
 
   useEffect(() => {
     if (typeof window === "undefined" || homeBuddyIntroActive) return;
@@ -1187,14 +1181,12 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       }, showDuration);
     };
 
-    const initialCycleFrame = window.requestAnimationFrame(() => {
     frame = window.requestAnimationFrame(() => {
       setHomeBuddyBubbleVisible(true);
       queueCycle();
     });
 
     return () => {
-      window.cancelAnimationFrame(initialCycleFrame);
       window.cancelAnimationFrame(frame);
       window.clearTimeout(hideTimer);
       window.clearTimeout(nextLineTimer);
@@ -1204,14 +1196,12 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
   useEffect(() => {
     if (typeof window === "undefined" || homeBuddyIntroActive || !homeBuddyBubbleVisible) return;
 
-    const speechFrame = window.requestAnimationFrame(() => {
     let settleTimer = 0;
     const frame = window.requestAnimationFrame(() => {
       setHomeBuddySpeechTick((current) => current + 1);
       setHomeBuddyFace("open");
       setHomeBuddySpeechMotion(HOME_BUDDY_SPEECH_MOTIONS[homeBuddyLineIndex % HOME_BUDDY_SPEECH_MOTIONS.length]);
       playHomeBuddyVoice(buddyVariant);
-    });
 
       settleTimer = window.setTimeout(() => {
         setHomeBuddyFace("happy");
@@ -1219,11 +1209,10 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     });
 
     return () => {
-      window.cancelAnimationFrame(speechFrame);
       window.cancelAnimationFrame(frame);
       window.clearTimeout(settleTimer);
     };
-  }, [buddyVariant, homeBuddyBubbleVisible, homeBuddyIntroActive, homeBuddyLineIndex, playHomeBuddyVoice]);
+  }, [buddyVariant, homeBuddyAudioReady, homeBuddyBubbleVisible, homeBuddyIntroActive, homeBuddyLineIndex]);
 
   useEffect(() => {
     return () => {
