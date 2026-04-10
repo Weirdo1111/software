@@ -29,6 +29,7 @@ export const defaultDiscussionPosts: DiscussionPost[] = [
       },
     ],
     views: 96,
+    moderationStatus: "approved",
   },
   {
     id: "p2",
@@ -43,6 +44,7 @@ export const defaultDiscussionPosts: DiscussionPost[] = [
     createdAt: "2026-03-19 18:20",
     comments: [],
     views: 54,
+    moderationStatus: "approved",
   },
 ];
 
@@ -75,6 +77,7 @@ function isDiscussionPost(value: unknown): value is DiscussionPost {
     typeof record.pinned === "boolean" &&
     typeof record.createdAt === "string" &&
     typeof record.views === "number" &&
+    typeof record.moderationStatus === "string" &&
     Array.isArray(record.comments) &&
     record.comments.every(isDiscussionComment)
   );

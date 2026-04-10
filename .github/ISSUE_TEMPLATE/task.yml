@@ -1,0 +1,63 @@
+name: Engineering task
+description: Track a technical task, refactor, documentation update, or delivery step with a clear owner.
+title: "[Task]: "
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: Task summary
+      placeholder: Improve CI quality gates for english-learn
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Explain the technical need, constraint, or delivery requirement.
+      placeholder: This task is needed because ...
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: Definition of done
+      description: Make the finish line visible before implementation starts.
+      placeholder: |
+        - [ ] Condition A is met
+        - [ ] Condition B is met
+        - [ ] Validation step C is documented
+    validations:
+      required: true
+  - type: input
+    id: owner
+    attributes:
+      label: Owner
+      placeholder: "@github-handle"
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0
+        - P1
+        - P2
+    validations:
+      required: true
+  - type: input
+    id: estimate
+    attributes:
+      label: Estimate
+      placeholder: 1-3 points
+  - type: input
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Link related issues, docs, or blockers if they already exist.
+      placeholder: Depends on #123
+  - type: checkboxes
+    id: workflow
+    attributes:
+      label: Workflow checklist
+      options:
+        - label: I will update the project board status when this task starts and when it is ready for review.
+          required: true

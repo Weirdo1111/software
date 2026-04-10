@@ -19,35 +19,103 @@ type DoubaoSpeechResult = {
   };
 };
 
+type DoubaoSpeechConfig = {
+  appId: string;
+  accessKey: string;
+  appKey: string;
+  resourceId: string;
+};
+
+function getFirstEnvValue(keys: string[]) {
+  for (const key of keys) {
+    const value = process.env[key]?.trim();
+    if (value) {
+      return value;
+    }
+  }
+
+  return "";
+}
+
+function getDoubaoSpeechConfig(): DoubaoSpeechConfig | null {
+  const explicitAppId = env.server.DOUBAO_SPEECH_APP_ID.trim();
+  const explicitAccessKey = env.server.DOUBAO_SPEECH_ACCESS_TOKEN.trim();
+  const explicitResourceId = env.server.DOUBAO_SPEECH_RESOURCE_ID.trim();
+  const explicitAppKey = getFirstEnvValue(["DOUBAO_SPEECH_APP_KEY"]);
+
+  if (explicitAppId && explicitAccessKey) {
+    return {
+      appId: explicitAppId,
+      accessKey: explicitAccessKey,
+      appKey: explicitAppKey,
+      resourceId: explicitResourceId || DEFAULT_RESOURCE_ID,
+    };
+  }
+
+  const appId = getFirstEnvValue([
+    "ROLEPLAY_DIALOG_SC_APP_ID",
+    "ROLEPLAY_SC_APP_ID",
+    "ROLEPLAY_DIALOG_APP_ID",
+  ]);
+  const accessKey = getFirstEnvValue([
+    "ROLEPLAY_DIALOG_SC_ACCESS_KEY",
+    "ROLEPLAY_SC_ACCESS_KEY",
+    "ROLEPLAY_DIALOG_ACCESS_KEY",
+  ]);
+  const appKey = getFirstEnvValue([
+    "ROLEPLAY_DIALOG_SC_APP_KEY",
+    "ROLEPLAY_SC_APP_KEY",
+    "ROLEPLAY_DIALOG_APP_KEY",
+  ]);
+  const resourceId =
+    getFirstEnvValue([
+      "DOUBAO_SPEECH_RESOURCE_ID",
+      "ROLEPLAY_DIALOG_SC_ASR_RESOURCE_ID",
+      "ROLEPLAY_SC_ASR_RESOURCE_ID",
+      "ROLEPLAY_DIALOG_ASR_RESOURCE_ID",
+    ]) || DEFAULT_RESOURCE_ID;
+
+  if (!appId || !accessKey) {
+    return null;
+  }
+
+  return {
+    appId,
+    accessKey,
+    appKey,
+    resourceId,
+  };
+}
+
 // Date: 2026/3/18
 // Author: Tianbo Cao
 // Wraps Doubao speech recognition so speaking routes can stay focused on request validation and response shaping.
 export function hasDoubaoSpeechConfig() {
-  return Boolean(env.server.DOUBAO_SPEECH_APP_ID && env.server.DOUBAO_SPEECH_ACCESS_TOKEN);
+  return Boolean(getDoubaoSpeechConfig());
 }
 
 export async function transcribeDoubaoSpeech(audioBase64: string) {
-  const appId = env.server.DOUBAO_SPEECH_APP_ID;
-  const accessToken = env.server.DOUBAO_SPEECH_ACCESS_TOKEN;
-  const resourceId = env.server.DOUBAO_SPEECH_RESOURCE_ID || DEFAULT_RESOURCE_ID;
+  const config = getDoubaoSpeechConfig();
 
-  if (!appId || !accessToken) {
-    throw new Error("Speech transcription is not configured. Add DOUBAO_SPEECH_APP_ID and DOUBAO_SPEECH_ACCESS_TOKEN.");
+  if (!config) {
+    throw new Error(
+      "Speech transcription is not configured. Add DOUBAO_SPEECH_APP_ID and DOUBAO_SPEECH_ACCESS_TOKEN, or configure ROLEPLAY_DIALOG_* credentials.",
+    );
   }
 
   const response = await fetch(DOUBAO_ASR_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "X-Api-App-Key": appId,
-      "X-Api-Access-Key": accessToken,
-      "X-Api-Resource-Id": resourceId,
+      ...(config.appKey ? { "X-Api-App-Key": config.appKey } : {}),
+      "X-Api-Access-Key": config.accessKey,
+      "X-Api-Resource-Id": config.resourceId,
       "X-Api-Request-Id": randomUUID(),
       "X-Api-Sequence": "-1",
     },
     body: JSON.stringify({
       user: {
-        uid: appId,
+        uid: config.appId,
       },
       audio: {
         data: audioBase64,
@@ -80,5 +148,6 @@ export async function transcribeDoubaoSpeech(audioBase64: string) {
         end_time_ms: utterance.end_time ?? 0,
       })) ?? [],
     duration_ms: payload?.audio_info?.duration ?? 0,
+    provider: "doubao-speech",
   };
 }

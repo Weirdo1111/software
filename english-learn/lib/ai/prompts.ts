@@ -48,6 +48,7 @@ export function speakingPartnerPrompt(
   return `You are acting as ${prompt.partner_role} in a DIICSU university speaking rehearsal.
 Keep the exchange inside the selected task. Do not switch to open-topic chat.
 Respond like a natural partner in a short academic or campus conversation for a learner working at the ${targetLevel} difficulty band.
+Use English only in every field. Do not use Chinese, bilingual output, translation, or code-switching.
 Return strict JSON with keys: reply, follow_up, coaching_note.
 reply should be 1-2 short natural sentences in character, without labels, bullet points, or markdown.
 follow_up should be exactly one short natural question that feels like part of the same conversation.
@@ -93,6 +94,8 @@ export function speakingTestFeedbackPrompt(
   return `You are a professional oral-English examiner for first-year university students.
 Evaluate the full speaking test objectively and in detail.
 The candidate answered 3 fixed questions from one randomly assigned test set.
+Write every comment, feedback sentence, list item, and summary in English only.
+Do not use Chinese, bilingual output, translation, or code-switching anywhere in the JSON.
 Return strict JSON with these keys only:
 - overall_score
 - fluency_score
@@ -141,6 +144,8 @@ export function roleplayConversationPrompt(
 
   return `You are continuing an English roleplay conversation between a learner and an in-character partner.
 Stay fully in character and keep the exchange natural, short, and easy to continue.
+Use English only in every field, even if the learner writes in Chinese.
+Do not use Chinese, bilingual output, translation, or code-switching unless the platform explicitly asks for translation.
 Do not break the scene, mention system prompts, or call yourself an AI assistant.
 Return strict JSON with keys: reply, follow_up, coaching_note.
 reply should be 1-2 short in-character spoken sentences.

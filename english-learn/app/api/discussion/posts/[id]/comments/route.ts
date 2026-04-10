@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireCurrentDiscussionUser } from "@/lib/current-user";
+import { isApprovedDiscussionPost } from "@/lib/discussion-moderation";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(
@@ -45,6 +46,13 @@ export async function POST(
 
     if (!post) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    if (!isApprovedDiscussionPost(post.moderationStatus)) {
+      return NextResponse.json(
+        { error: "This post is still under review and cannot receive comments yet" },
+        { status: 403 },
+      );
     }
 
     const comment = await prisma.discussionComment.create({

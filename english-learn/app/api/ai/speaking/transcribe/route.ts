@@ -4,11 +4,16 @@ import { z } from "zod";
 import { jsonError } from "@/lib/api";
 import { getAIConfig, hasAIConfig } from "@/lib/ai/client";
 import { hasDoubaoSpeechConfig, transcribeDoubaoSpeech } from "@/lib/doubao-speech";
+import { MAX_TRANSCRIPTION_DURATION_MS, MAX_TRANSCRIPTION_DURATION_SECONDS } from "@/lib/speaking-audio";
 
 const schema = z.object({
   audio_base64: z.string().min(20),
   mime_type: z.string().optional(),
-  duration_ms: z.number().nonnegative().optional(),
+  duration_ms: z
+    .number()
+    .nonnegative()
+    .max(MAX_TRANSCRIPTION_DURATION_MS, `Audio duration must be between 0 and ${MAX_TRANSCRIPTION_DURATION_SECONDS} seconds.`)
+    .optional(),
 });
 
 const OPENAI_AUDIO_BASE_URL = "https://api.openai.com/v1/";
@@ -31,6 +36,15 @@ function buildAudioFileName(mimeType?: string) {
   if (mimeType?.includes("webm")) return "speaking-take.webm";
   if (mimeType?.includes("mp4")) return "speaking-take.mp4";
   return "speaking-take.wav";
+}
+
+function shouldUseConfiguredAIForTranscription() {
+  if (!hasAIConfig()) {
+    return false;
+  }
+
+  const { baseURL } = getAIConfig();
+  return !baseURL?.includes("open.bigmodel.cn");
 }
 
 async function transcribeWithConfiguredAI(audioBase64: string, mimeType?: string) {
@@ -81,12 +95,14 @@ export async function POST(request: Request) {
     const body = await request.json();
     const payload = schema.parse(body);
 
-    const transcription = hasAIConfig()
-      ? await transcribeWithConfiguredAI(payload.audio_base64, payload.mime_type)
-      : hasDoubaoSpeechConfig()
-        ? await transcribeDoubaoSpeech(payload.audio_base64)
+    const transcription = hasDoubaoSpeechConfig()
+      ? await transcribeDoubaoSpeech(payload.audio_base64)
+      : shouldUseConfiguredAIForTranscription()
+        ? await transcribeWithConfiguredAI(payload.audio_base64, payload.mime_type)
         : (() => {
-            throw new Error("Speech transcription is not configured. This project now prefers AI_API_KEY and AI_BASE_URL from the main AI setup.");
+            throw new Error(
+              "Speech transcription is not configured for the current provider. Configure existing OpenSpeech credentials or a non-Zhipu AI transcription provider.",
+            );
           })();
     const provider = "provider" in transcription ? transcription.provider : "doubao-speech";
 

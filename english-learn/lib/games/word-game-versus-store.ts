@@ -433,9 +433,11 @@ const mapRoomState = (room: InternalRoom, playerId?: string): VersusRoomState =>
           wordDisplay: room.question.type === "spell" ? room.question.maskedWord : toReadableWord(room.question.word),
           hint:
             room.question.type === "spell"
-              ? "Type the full word to strike your opponent core."
+              ? "Type the full word correctly to score this wave."
               : "Type the correct option number (1-3).",
           options: room.question.type === "meaning" ? room.question.options.map((option) => option.meaningZh) : [],
+          timeLeftSeconds: Math.max(0, Math.ceil((room.question.deadlineAt - now) / 1000)),
+          timeTotalSeconds: QUESTION_DURATION_SECONDS,
         }
       : null;
 
@@ -712,27 +714,15 @@ export async function submitVersusAnswer(input: SubmitAnswerInput) {
     const correct = parseCorrect(room, input.answer);
     if (correct) {
       const scoreGain = calculateScoreGain(room, now);
-      const opponent = room.players.find((item) => item.id !== player.id) ?? null;
-
       player.score += scoreGain;
-      if (opponent) {
-        opponent.hp = Math.max(0, opponent.hp - 1);
-      }
 
-      room.lastEvent = opponent
-        ? `${player.name} answered correctly (+${scoreGain}) and hit ${opponent.name}.`
-        : `${player.name} answered correctly (+${scoreGain}).`;
-
-      if (opponent && opponent.hp <= 0) {
-        finishRoom(room, "knockout", `${player.name} wins by knockout.`, player.id);
+      room.lastEvent = `${player.name} answered correctly (+${scoreGain}).`;
+      room.waveNumber += 1;
+      if (room.waveNumber > room.totalWaves) {
+        finishRoom(room, "waves", "All waves cleared. Winner decided by score.");
       } else {
-        room.waveNumber += 1;
-        if (room.waveNumber > room.totalWaves) {
-          finishRoom(room, "waves", "All waves cleared. Winner decided by score.");
-        } else {
-          const pool = getPoolForRoom(room.bank);
-          openNextWave(room, pool, now);
-        }
+        const pool = getPoolForRoom(room.bank);
+        openNextWave(room, pool, now);
       }
     } else {
       player.hp = Math.max(0, player.hp - 1);
@@ -743,6 +733,15 @@ export async function submitVersusAnswer(input: SubmitAnswerInput) {
           finishRoom(room, "knockout", `${opponent.name} wins by knockout.`, opponent.id);
         } else {
           finishRoom(room, "knockout", "Both cores collapsed. Winner decided by score.");
+        }
+      } else {
+        // Resolve this question cycle even on wrong answer so the timer resets per question.
+        room.waveNumber += 1;
+        if (room.waveNumber > room.totalWaves) {
+          finishRoom(room, "waves", "All waves cleared. Winner decided by score.");
+        } else {
+          const pool = getPoolForRoom(room.bank);
+          openNextWave(room, pool, now);
         }
       }
     }

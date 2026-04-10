@@ -105,6 +105,7 @@ export default function RegisterPage() {
         localStorage.setItem("demo_auth_user_id", data.user_id);
       }
       localStorage.setItem("demo_auth_provider", data.auth_provider || "local-file");
+      localStorage.setItem("demo_auth_role", "user");
       window.dispatchEvent(new Event("demo-auth-changed"));
       window.location.href = "/dashboard";
     } catch {

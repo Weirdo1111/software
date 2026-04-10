@@ -38,7 +38,7 @@ import {
   WandSparkles,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from "react";
 
 import { InstitutionBrand } from "@/components/institution-brand";
 import { BuddyCampusLobby } from "@/components/home/buddy-campus-lobby";
@@ -957,7 +957,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     setPreferences(updated);
   };
 
-  const clearHomeBuddyIntroTimers = () => {
+  const clearHomeBuddyIntroTimers = useCallback(() => {
     if (homeBuddyIntroShrinkTimerRef.current !== null) {
       window.clearTimeout(homeBuddyIntroShrinkTimerRef.current);
       homeBuddyIntroShrinkTimerRef.current = null;
@@ -966,9 +966,9 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       window.clearTimeout(homeBuddyIntroFinishTimerRef.current);
       homeBuddyIntroFinishTimerRef.current = null;
     }
-  };
+  }, []);
 
-  const syncHomeBuddyIntroTarget = () => {
+  const syncHomeBuddyIntroTarget = useCallback(() => {
     if (typeof window === "undefined") return;
     const activeAnchor = isLoggedIn ? mainBuddyAnchorRef.current : guestBuddyAnchorRef.current;
     if (!activeAnchor) return;
@@ -985,7 +985,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       y: targetCenterY - viewportCenterY,
       scale: Math.max(0.42, Math.min(0.88, rect.width / introBaseWidth)),
     });
-  };
+  }, [isLoggedIn]);
 
   const ensureHomeBuddyAudio = () => {
     if (typeof window === "undefined") return null;
@@ -1001,7 +1001,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     return context;
   };
 
-  const playHomeBuddyVoice = (variant: BuddyVariant) => {
+  const playHomeBuddyVoice = useCallback((variant: BuddyVariant) => {
     const context = ensureHomeBuddyAudio();
     if (!context || !homeBuddyAudioReady) return;
 
@@ -1034,7 +1034,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       oscillator.start(now + index * 0.065);
       oscillator.stop(now + index * 0.065 + 0.12);
     });
-  };
+  }, [homeBuddyAudioReady]);
 
   const finishHomeBuddyIntro = () => {
     clearHomeBuddyIntroTimers();
@@ -1078,7 +1078,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       window.cancelAnimationFrame(frame);
       clearHomeBuddyIntroTimers();
     };
-  }, [homeHasHydrated]);
+  }, [clearHomeBuddyIntroTimers, homeHasHydrated]);
 
   useEffect(() => {
     if (!homeBuddyIntroActive) return;
@@ -1088,7 +1088,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
     window.addEventListener("resize", handleResize);
 
     return () => window.removeEventListener("resize", handleResize);
-  }, [homeBuddyIntroActive, isLoggedIn]);
+  }, [homeBuddyIntroActive, syncHomeBuddyIntroTarget]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1156,7 +1156,7 @@ export function HomeActionEntry({ locale }: { locale: Locale }) {
       window.clearTimeout(reopenTimer);
       window.clearTimeout(secondBlinkTimer);
     };
-  }, []);
+  }, [homeBuddyIntroActive]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

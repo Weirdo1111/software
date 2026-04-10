@@ -34,6 +34,7 @@ const basePost: DiscussionPost = {
   createdAt: "2026-03-30T08:00:00.000Z",
   comments: [],
   views: 12,
+  moderationStatus: "approved",
 };
 
 const notifications: DiscussionNotification[] = [];
@@ -74,5 +75,31 @@ describe("DiscussionBoard", () => {
       "href",
       "/posts/post-1?lang=en",
     );
+  });
+
+  it("shows a voice badge and preview text for voice-only posts", () => {
+    render(
+      <DiscussionBoard
+        locale="en"
+        posts={[
+          {
+            ...basePost,
+            id: "voice-post",
+            content: "",
+            excerpt: "",
+            audioDataUrl: "data:audio/webm;base64,AAAA",
+            audioMimeType: "audio/webm",
+            audioDurationSec: 12,
+          },
+        ]}
+        notifications={notifications}
+        onOpenComposer={() => {}}
+      />,
+    );
+
+    expect(screen.getByText("Voice")).toBeInTheDocument();
+    expect(
+      screen.getByText("This is a voice post. Open it to listen to the full clip."),
+    ).toBeInTheDocument();
   });
 });

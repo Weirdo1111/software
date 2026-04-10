@@ -2,6 +2,7 @@ import { LoaderCircle, Mic, Pause, RotateCcw, Sparkles, Square, Waves } from "lu
 
 import { formatRecordingTime } from "@/components/forms/speaking/formatters";
 import type { RecorderStatus, SpeakingAudioClip } from "@/components/forms/speaking/types";
+import { MAX_TRANSCRIPTION_DURATION_SECONDS } from "@/lib/speaking-audio";
 
 function formatClipSize(blob: Blob) {
   if (blob.size < 1024 * 1024) {
@@ -149,6 +150,11 @@ export function SpeakingRecorderPanel({
           <RotateCcw className="size-4" /> Reset
         </button>
       </div>
+
+      <p className="mt-3 text-xs leading-5 text-[var(--ink-soft)]">
+        AI transcription accepts local recordings from 0 to {MAX_TRANSCRIPTION_DURATION_SECONDS} seconds. Recording stops
+        automatically at the limit.
+      </p>
 
       {error ? (
         <p className="mt-4 rounded-[1rem] bg-[rgba(255,244,240,0.9)] px-4 py-3 text-sm font-medium text-[var(--coral)]">

@@ -425,7 +425,11 @@ export function getBuddyGuidePageForPath(pathname: string | null | undefined) {
   if (!pathname) return null;
   const normalizedPath = pathname === "/" ? "/" : pathname.replace(/\/+$/, "");
 
-  if (normalizedPath.startsWith("/listening/test")) {
+  if (
+    normalizedPath.startsWith("/challenge") ||
+    normalizedPath.startsWith("/listening/test") ||
+    normalizedPath.startsWith("/speaking/test")
+  ) {
     return getBuddyGuidePageById("listening-test");
   }
 

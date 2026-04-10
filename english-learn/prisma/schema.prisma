@@ -362,7 +362,11 @@ model DiscussionPost {
   title              String   @db.VarChar(255)
   content            String   @db.Text
   excerpt            String?  @db.VarChar(300)
+  audioData          String?  @db.LongText
+  audioMimeType      String?  @db.VarChar(100)
+  audioDurationSec   Int?
   category           String   @db.VarChar(50)
+  moderationStatus   String   @default("APPROVED") @db.VarChar(20)
   pinned             Boolean  @default(false)
   viewsCount         Int      @default(0)
   likesCount         Int      @default(0)
