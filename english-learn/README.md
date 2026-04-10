@@ -32,8 +32,11 @@ The product already includes:
 For a cleaner structure, detailed documentation now lives in `docs/`:
 
 - [docs/architecture.md](./docs/architecture.md): system structure, feature organization, data layers, and engineering notes
+- [docs/source-register.md](./docs/source-register.md): teacher-friendly source checklist covering dependencies, assets, AI services, and the listening source manifest
+- [docs/source-attribution-ai-statement.md](./docs/source-attribution-ai-statement.md): image/material sourcing notes, GitHub citation guidance, and AI disclosure
 - [docs/demo-guide.md](./docs/demo-guide.md): recommended demo flows, stage highlights, audience-specific storytelling, and presentation tips
 - [docs/deployment.md](./docs/deployment.md): deployment, release, rollback, and demo evidence workflow
+- [docs/release-notes.md](./docs/release-notes.md): final release summary, scope snapshot, and suggested review order
 - [docs/seminar-rooms.md](./docs/seminar-rooms.md): seminar-room chat + live-call schema, routes, storage behavior, and extension notes
 
 ## Quick Start
@@ -57,7 +60,12 @@ npm install
 cp .env.example .env.local
 ```
 
-Then update `.env.local` with your own credentials.
+Then set env files like this:
+
+- put team-shared development keys in `.env.development` and commit that file to GitHub if your team wants zero-manual-setup development
+- put personal overrides in `.env.local`, which stays untracked
+
+For this repo, `.env.development` is the right place for shared realtime bridge keys if you want teammates to clone and run `npm run dev` without adding them manually.
 
 ### Start the app
 
@@ -65,9 +73,48 @@ Then update `.env.local` with your own credentials.
 npm run dev
 ```
 
+This command now starts both:
+
+- the Next.js dev server
+- the local realtime bridge used by AI dialogue and speaking test
+
 Local URL:
 
 - [http://localhost:3000](http://localhost:3000)
+
+### Realtime bridge for AI dialogue and speaking test
+
+`AI dialogue` and `Speaking Test` do not connect directly from Next.js to the upstream realtime provider. They require a separate local Python WebSocket bridge on each developer machine.
+
+One-time setup:
+
+```bash
+npm run roleplay:bridge:setup
+```
+
+Then make sure the required realtime bridge keys exist in either `.env.development` or `.env.local`:
+
+```bash
+ROLEPLAY_DIALOG_APP_ID=
+ROLEPLAY_DIALOG_ACCESS_KEY=
+ROLEPLAY_DIALOG_APP_KEY=
+```
+
+If you want to run the bridge manually instead of using `npm run dev`:
+
+```bash
+npm run roleplay:bridge
+```
+
+Expected local bridge address:
+
+- `ws://127.0.0.1:8877`
+
+If `npm run dev` still cannot bring up realtime Connect on a teammate machine, the usual causes are:
+
+- Python is not installed or the `py` launcher is unavailable
+- `websockets` is not installed yet
+- `ROLEPLAY_DIALOG_APP_ID`, `ROLEPLAY_DIALOG_ACCESS_KEY`, or `ROLEPLAY_DIALOG_APP_KEY` are missing in that machine's `.env.development` or `.env.local`
 
 ### Quality checks
 
@@ -190,6 +237,8 @@ npm run test:watch
 npm run typecheck
 npm run prisma:generate
 npm run prisma:seed
+npm run roleplay:bridge:setup
+npm run roleplay:bridge
 npm run audio:listening
 npm run seed:listening
 ```

@@ -14,6 +14,7 @@ export async function GET() {
     user: {
       username: identity.username,
       email: identity.email ?? null,
+      role: identity.role,
     },
     auth_provider: identity.authProvider,
     auth_user_id: identity.authUserId,

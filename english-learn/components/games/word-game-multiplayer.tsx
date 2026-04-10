@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import type { VersusRoomState } from "@/lib/games/word-game-versus-types";
@@ -73,6 +73,7 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
   const [roomState, setRoomState] = useState<VersusRoomState | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const autoEnteredRoomRef = useRef<string>("");
 
   const activeRoomCode = roomState?.roomCode ?? "";
   const normalizedJoinCode = useMemo(() => normalizeRoomCode(joinCodeInput), [joinCodeInput]);
@@ -92,7 +93,6 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
     () => (readyCount / 2) * 100,
     [readyCount],
   );
-  const canEnterMatch = roomState?.status === "active" || roomState?.status === "finished";
   const canToggleReady = Boolean(roomState && selfPlayer && roomState.status === "lobby");
   const canStartMatch = Boolean(roomState?.canStart && selfPlayer?.isHost);
 
@@ -154,10 +154,28 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
     };
   }, [activeRoomCode, playerId]);
 
-  const openVersusBattle = () => {
-    if (!activeRoomCode || !playerId) return;
-    router.push(`/games/word-game/versus?lang=${locale}&room=${activeRoomCode}&player=${encodeURIComponent(playerId)}`);
+  const openVersusBattle = (roomCode = activeRoomCode) => {
+    if (!roomCode || !playerId) return;
+    autoEnteredRoomRef.current = roomCode;
+    router.push(`/games/word-game/versus?lang=${locale}&room=${roomCode}&player=${encodeURIComponent(playerId)}`);
   };
+
+  useEffect(() => {
+    if (!roomState || !playerId) return;
+
+    const matchStarted = roomState.status === "active" || roomState.status === "finished";
+
+    if (!matchStarted) {
+      if (autoEnteredRoomRef.current === roomState.roomCode) {
+        autoEnteredRoomRef.current = "";
+      }
+      return;
+    }
+
+    if (autoEnteredRoomRef.current === roomState.roomCode) return;
+
+    openVersusBattle(roomState.roomCode);
+  }, [locale, playerId, roomState, router]);
 
   const handleCopy = async () => {
     if (!navigator?.clipboard) {
@@ -269,6 +287,9 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
         }),
       });
       setRoomState(state);
+      if (state.status === "active" || state.status === "finished") {
+        openVersusBattle(state.roomCode);
+      }
     } catch (error) {
       setErrorText(error instanceof Error ? error.message : "Failed to start match.");
     } finally {
@@ -311,7 +332,7 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
                 </div>
 
                 <div className="field">
-                  <span className="label">Create Room</span>
+                  <span className="label">Room Code</span>
                   <div className="room-box">{activeRoomCode || draftRoomCode}</div>
                   <div className="tiny-actions">
                     <button type="button" className="tiny-btn" onClick={handleCopy}>
@@ -327,9 +348,6 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
                       disabled={busy}
                     >
                       Regenerate
-                    </button>
-                    <button type="button" className="tiny-btn" onClick={handleCreateRoom} disabled={busy || !playerId}>
-                      Create
                     </button>
                   </div>
                 </div>
@@ -359,18 +377,28 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
 
                 <div className="field">
                   <span className="label">Sector Bank</span>
-                  <select
-                    className="bank-select"
-                    value={selectedBank}
-                    onChange={(event) => setSelectedBank(event.target.value)}
-                    disabled={roomState?.status === "active"}
-                  >
-                    {BANKS.map((bank) => (
-                      <option key={bank.id} value={bank.id}>
-                        {bank.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="join-row bank-row">
+                    <select
+                      className="bank-select"
+                      value={selectedBank}
+                      onChange={(event) => setSelectedBank(event.target.value)}
+                      disabled={roomState?.status === "active"}
+                    >
+                      {BANKS.map((bank) => (
+                        <option key={bank.id} value={bank.id}>
+                          {bank.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="tiny-btn join-btn create-room-btn"
+                      onClick={handleCreateRoom}
+                      disabled={busy || !playerId}
+                    >
+                      Create a Room
+                    </button>
+                  </div>
                 </div>
               </article>
 
@@ -422,14 +450,6 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
               </button>
               <button type="button" className="action-btn test" onClick={handleStartMatch} disabled={!canStartMatch || busy}>
                 {busy ? "Working..." : "Start Match"}
-              </button>
-              <button
-                type="button"
-                className="action-btn primary"
-                disabled={!canEnterMatch}
-                onClick={() => openVersusBattle()}
-              >
-                Enter Versus Match
               </button>
             </footer>
           </div>
@@ -667,8 +687,29 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
         }
 
         .join-btn {
-          min-width: 86px;
+          min-width: 138px;
           min-height: 42px;
+          font-size: 0.76rem;
+          letter-spacing: 0.03em;
+          padding-inline: 14px;
+          white-space: nowrap;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+        }
+
+        .bank-row .bank-select {
+          height: 42px;
+        }
+
+        .create-room-btn {
+          min-width: 138px;
+          min-height: 42px;
+          font-size: 0.76rem;
+          letter-spacing: 0.03em;
+          padding-inline: 14px;
+          white-space: nowrap;
         }
 
         .join-help {
@@ -779,7 +820,7 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
         .action-bar {
           margin-top: 18px;
           display: grid;
-          grid-template-columns: 0.8fr 1fr 1fr 1fr 1.2fr;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
           gap: 10px;
         }
 
@@ -792,6 +833,7 @@ export function WordGameMultiplayer({ locale }: { locale: Locale }) {
           letter-spacing: 0.06em;
           text-transform: uppercase;
           min-height: 52px;
+          width: 100%;
           padding: 10px 14px;
           transition: transform 0.2s ease, filter 0.2s ease;
         }

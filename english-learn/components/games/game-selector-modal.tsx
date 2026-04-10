@@ -43,7 +43,7 @@ export function GameSelectorModal({ locale }: { locale: Locale }) {
             ? "调查线索、听广播、解密码，用一条完整路线逃出场景。"
             : "Follow clues, decode the route, and clear the room before time runs out.",
         href: `/games/escape-room?lang=${locale}`,
-        image: "/game-center/escape-room-preview.png",
+        image: "/quests/escape-room/scenes/library-briefing.png",
         chips: locale === "zh" ? ["线索调查", "音频机关", "密码门"] : ["Clue trail", "Audio puzzle", "Keypad unlock"],
         icon: DoorClosed,
         cta: locale === "zh" ? "进入 Escape Room" : "Enter Escape Room",

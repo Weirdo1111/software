@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LogIn,
   LogOut,
+  ShieldCheck,
   Sparkles,
   User,
 } from "lucide-react";
@@ -37,6 +38,11 @@ function getServerSnapshot() {
   return false;
 }
 
+function getStoredAuthRole() {
+  if (typeof window === "undefined") return "user";
+  return localStorage.getItem("demo_auth_role") === "manager" ? "manager" : "user";
+}
+
 function getLevelPrefix(raw: string | null) {
   const next = String(raw ?? "A2").toUpperCase();
   return allowedLevels.has(next) ? next : "A2";
@@ -44,10 +50,13 @@ function getLevelPrefix(raw: string | null) {
 
 export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: boolean }) {
   const pathname = usePathname();
+  const router = useRouter();
   const isLoggedIn = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const [levelPrefix, setLevelPrefix] = useState("A2");
+  const [authRole, setAuthRole] = useState<"user" | "manager">("user");
 
   const accountLabel = locale === "zh" ? "个人主页" : "Profile";
+  const moderationLabel = locale === "zh" ? "审核页" : "Moderation";
   const loginLabel = locale === "zh" ? "登录" : "Log in";
   const logoutLabel = locale === "zh" ? "退出" : "Log out";
   const homeLabel = locale === "zh" ? "首页" : "Home";
@@ -79,6 +88,21 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
   }, []);
 
   useEffect(() => {
+    const refreshRole = () => {
+      setAuthRole(getStoredAuthRole());
+    };
+
+    refreshRole();
+    window.addEventListener("storage", refreshRole);
+    window.addEventListener("demo-auth-changed", refreshRole as EventListener);
+
+    return () => {
+      window.removeEventListener("storage", refreshRole);
+      window.removeEventListener("demo-auth-changed", refreshRole as EventListener);
+    };
+  }, []);
+
+  useEffect(() => {
     if (isLoggedIn) return;
 
     let cancelled = false;
@@ -90,7 +114,7 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
 
         const payload = (await response.json()) as {
           authenticated?: boolean;
-          user?: { username?: string; email?: string } | null;
+          user?: { username?: string; email?: string; role?: string } | null;
           auth_provider?: string;
           auth_user_id?: string;
         };
@@ -108,6 +132,7 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
         if (payload.auth_provider) {
           localStorage.setItem("demo_auth_provider", payload.auth_provider);
         }
+        localStorage.setItem("demo_auth_role", payload.user?.role === "manager" ? "manager" : "user");
         window.dispatchEvent(new Event("demo-auth-changed"));
       } catch {
         // Ignore silent session sync failures on the nav shell.
@@ -120,6 +145,18 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
       cancelled = true;
     };
   }, [isLoggedIn]);
+
+  useEffect(() => {
+    if (!isLoggedIn || authRole !== "manager") {
+      return;
+    }
+
+    if (pathname === "/manager") {
+      return;
+    }
+
+    router.replace(`/manager?lang=${locale}`);
+  }, [authRole, isLoggedIn, locale, pathname, router]);
 
   const handleLogout = async () => {
     try {
@@ -134,11 +171,14 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
     localStorage.removeItem("demo_user");
     localStorage.removeItem("demo_auth_provider");
     localStorage.removeItem("demo_auth_user_id");
+    localStorage.removeItem("demo_auth_role");
     window.dispatchEvent(new Event("demo-auth-changed"));
     window.location.href = "/";
   };
 
   const isHomeActive = pathname === "/";
+  const isManagerPortal = authRole === "manager";
+  const managerHref = `/manager?lang=${locale}`;
 
   const isPrimaryActive = (id: FunctionZoneId) => {
     if (id === "challenge") {
@@ -192,53 +232,64 @@ export function AppShell({ locale, fixed = false }: { locale: Locale; fixed?: bo
 
         <div className="min-w-0 overflow-x-auto">
           <div className="party-nav-track flex w-max min-w-full items-center gap-1.5 p-1.5 whitespace-nowrap">
-            <Link
-              href={`/?lang=${locale}`}
-              className={`party-tab ${isHomeActive ? "party-tab-active" : ""}`}
-            >
-              <Sparkles className="size-4" />
-              {homeLabel}
-            </Link>
-
-            {primaryNav.map((item) => {
-              const active = isPrimaryActive(item.id);
-              const className = `party-tab ${active ? "party-tab-active" : ""}`;
-
-              if (item.protected === false) {
-                return (
-                  <Link key={item.id} href={item.href} className={className}>
-                    <item.Icon className="size-4" />
-                    {item.label}
-                  </Link>
-                );
-              }
-
-              return (
-                <ProtectedAction
-                  key={item.id}
-                  href={item.href}
-                  locale={locale}
-                  isLoggedIn={isLoggedIn}
-                  className={className}
+            {isManagerPortal ? (
+              <Link href={managerHref} className="party-tab party-tab-active">
+                <ShieldCheck className="size-4" />
+                {moderationLabel}
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href={`/?lang=${locale}`}
+                  className={`party-tab ${isHomeActive ? "party-tab-active" : ""}`}
                 >
-                  <item.Icon className="size-4" />
-                  {item.label}
-                </ProtectedAction>
-              );
-            })}
+                  <Sparkles className="size-4" />
+                  {homeLabel}
+                </Link>
+
+                {primaryNav.map((item) => {
+                  const active = isPrimaryActive(item.id);
+                  const className = `party-tab ${active ? "party-tab-active" : ""}`;
+
+                  if (item.protected === false) {
+                    return (
+                      <Link key={item.id} href={item.href} className={className}>
+                        <item.Icon className="size-4" />
+                        {item.label}
+                      </Link>
+                    );
+                  }
+
+                  return (
+                    <ProtectedAction
+                      key={item.id}
+                      href={item.href}
+                      locale={locale}
+                      isLoggedIn={isLoggedIn}
+                      className={className}
+                    >
+                      <item.Icon className="size-4" />
+                      {item.label}
+                    </ProtectedAction>
+                  );
+                })}
+              </>
+            )}
           </div>
         </div>
 
         <div className="flex shrink-0 items-center justify-end gap-2">
           {isLoggedIn ? (
             <>
-              <Link
-                href={`/dashboard?lang=${locale}`}
-                className="party-button-ghost"
-              >
-                <User className="size-4" />
-                {accountLabel}
-              </Link>
+              {isManagerPortal ? null : (
+                <Link
+                  href={`/dashboard?lang=${locale}`}
+                  className="party-button-ghost"
+                >
+                  <User className="size-4" />
+                  {accountLabel}
+                </Link>
+              )}
               <button
                 type="button"
                 onClick={handleLogout}

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import type { RecorderStatus, SpeakingAudioClip } from "@/components/forms/speaking/types";
+import { MAX_TRANSCRIPTION_DURATION_MS } from "@/lib/speaking-audio";
 
 const MIME_TYPE_CANDIDATES = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"] as const;
 
@@ -42,10 +43,21 @@ function getRecorderSupportServerSnapshot() {
   return true;
 }
 
+function getMonotonicTimestamp() {
+  if (typeof performance !== "undefined" && typeof performance.now === "function") {
+    return performance.now();
+  }
+  return Date.now();
+}
+
 // Date: 2026/3/18
 // Author: Tianbo Cao
 // Added a browser audio recorder hook so the speaking studio can capture real rehearsal audio before ASR is connected.
-export function useAudioRecorder() {
+export function useAudioRecorder({
+  maxDurationMs = MAX_TRANSCRIPTION_DURATION_MS,
+}: {
+  maxDurationMs?: number;
+} = {}) {
   const [status, setStatus] = useState<RecorderStatus>("idle");
   const [error, setError] = useState("");
   const [elapsedMs, setElapsedMs] = useState(0);
@@ -68,6 +80,14 @@ export function useAudioRecorder() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const autoStoppedRef = useRef(false);
+  const stopWaiterRef = useRef<((clip: SpeakingAudioClip | null) => void) | null>(null);
+
+  function resolvePendingStop(clip: SpeakingAudioClip | null) {
+    const resolve = stopWaiterRef.current;
+    stopWaiterRef.current = null;
+    resolve?.(clip);
+  }
 
   function clearTickTimer() {
     if (tickTimerRef.current !== null) {
@@ -113,8 +133,22 @@ export function useAudioRecorder() {
     clearTickTimer();
 
     tickTimerRef.current = window.setInterval(() => {
-      const runningMs = startedAtRef.current ? Date.now() - startedAtRef.current : 0;
-      setElapsedMs(elapsedBeforePauseRef.current + runningMs);
+      const runningMs = startedAtRef.current
+        ? getMonotonicTimestamp() - startedAtRef.current
+        : 0;
+      const nextElapsedMs = elapsedBeforePauseRef.current + runningMs;
+      setElapsedMs(nextElapsedMs);
+
+      if (
+        maxDurationMs > 0 &&
+        nextElapsedMs >= maxDurationMs &&
+        mediaRecorderRef.current?.state === "recording" &&
+        !autoStoppedRef.current
+      ) {
+        autoStoppedRef.current = true;
+        setError(`Recording reached the ${Math.round(maxDurationMs / 1000)}-second limit and stopped automatically.`);
+        stopRecording();
+      }
     }, 150);
   }
 
@@ -162,6 +196,7 @@ export function useAudioRecorder() {
     setAudioLevel(0);
     elapsedBeforePauseRef.current = 0;
     chunksRef.current = [];
+    autoStoppedRef.current = false;
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -187,15 +222,16 @@ export function useAudioRecorder() {
         const recordedMimeType = mediaRecorder.mimeType || mimeType || "audio/webm";
         const blob = new Blob(chunksRef.current, { type: recordedMimeType });
         const nextUrl = URL.createObjectURL(blob);
-        revokeClipUrl();
-        clipUrlRef.current = nextUrl;
-        setAudioClip({
+        const nextClip = {
           blob,
           url: nextUrl,
           mimeType: recordedMimeType,
           durationMs: elapsedBeforePauseRef.current,
           createdAt: new Date().toISOString(),
-        });
+        } satisfies SpeakingAudioClip;
+        revokeClipUrl();
+        clipUrlRef.current = nextUrl;
+        setAudioClip(nextClip);
         setElapsedMs(elapsedBeforePauseRef.current);
         setStatus("stopped");
         chunksRef.current = [];
@@ -203,6 +239,7 @@ export function useAudioRecorder() {
         await teardownAudioMonitor();
         stopStreamTracks();
         mediaRecorderRef.current = null;
+        resolvePendingStop(nextClip);
       };
 
       mediaRecorder.onerror = async () => {
@@ -213,10 +250,11 @@ export function useAudioRecorder() {
         await teardownAudioMonitor();
         stopStreamTracks();
         mediaRecorderRef.current = null;
+        resolvePendingStop(null);
       };
 
       await configureAudioMonitor(stream);
-      startedAtRef.current = Date.now();
+      startedAtRef.current = getMonotonicTimestamp();
       startTickTimer();
       mediaRecorder.start(250);
       setStatus("recording");
@@ -228,6 +266,7 @@ export function useAudioRecorder() {
       await teardownAudioMonitor();
       stopStreamTracks();
       mediaRecorderRef.current = null;
+      resolvePendingStop(null);
     }
   }
 
@@ -237,7 +276,7 @@ export function useAudioRecorder() {
 
     mediaRecorder.pause();
     if (startedAtRef.current) {
-      elapsedBeforePauseRef.current += Date.now() - startedAtRef.current;
+      elapsedBeforePauseRef.current += getMonotonicTimestamp() - startedAtRef.current;
       startedAtRef.current = null;
       setElapsedMs(elapsedBeforePauseRef.current);
     }
@@ -251,7 +290,7 @@ export function useAudioRecorder() {
     const mediaRecorder = mediaRecorderRef.current;
     if (!mediaRecorder || mediaRecorder.state !== "paused") return;
 
-    startedAtRef.current = Date.now();
+    startedAtRef.current = getMonotonicTimestamp();
     startTickTimer();
     if (audioContextRef.current?.state === "suspended") {
       await audioContextRef.current.resume().catch(() => {});
@@ -266,13 +305,25 @@ export function useAudioRecorder() {
     if (!mediaRecorder || mediaRecorder.state === "inactive") return;
 
     if (startedAtRef.current) {
-      elapsedBeforePauseRef.current += Date.now() - startedAtRef.current;
+      elapsedBeforePauseRef.current += getMonotonicTimestamp() - startedAtRef.current;
       startedAtRef.current = null;
     }
     clearTickTimer();
     clearLevelFrame();
     setAudioLevel(0);
     mediaRecorder.stop();
+  }
+
+  async function stopRecordingAndWait() {
+    const mediaRecorder = mediaRecorderRef.current;
+    if (!mediaRecorder || mediaRecorder.state === "inactive") {
+      return audioClip;
+    }
+
+    return new Promise<SpeakingAudioClip | null>((resolve) => {
+      stopWaiterRef.current = resolve;
+      stopRecording();
+    });
   }
 
   async function resetRecording() {
@@ -283,10 +334,13 @@ export function useAudioRecorder() {
       mediaRecorder.stop();
     }
 
+    resolvePendingStop(null);
+
     clearTickTimer();
     startedAtRef.current = null;
     elapsedBeforePauseRef.current = 0;
     chunksRef.current = [];
+    autoStoppedRef.current = false;
     revokeClipUrl();
     setAudioClip(null);
     setElapsedMs(0);
@@ -322,6 +376,7 @@ export function useAudioRecorder() {
     pauseRecording,
     resumeRecording,
     stopRecording,
+    stopRecordingAndWait,
     resetRecording,
   };
 }

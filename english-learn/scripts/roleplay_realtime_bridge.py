@@ -23,6 +23,26 @@ def json_message(payload: dict[str, Any]) -> str:
     return json.dumps(payload, ensure_ascii=True)
 
 
+def build_bridge_error_payload(error: object) -> dict[str, Any]:
+    message = str(error or "Upstream realtime roleplay service failed.")
+    lowered = message.lower()
+
+    if "dialogaudioidletimeouterror" in lowered or "52000042" in lowered:
+        return {
+            "type": "error",
+            "reason": "idle_timeout",
+            "shouldClose": True,
+            "message": "The realtime session was closed because it stayed idle for too long. Please reconnect when you are ready to continue.",
+        }
+
+    return {
+        "type": "error",
+        "reason": "upstream_error",
+        "shouldClose": False,
+        "message": message,
+    }
+
+
 class RealtimeRoleplayBridgeSession:
     def __init__(
         self,
@@ -45,6 +65,7 @@ class RealtimeRoleplayBridgeSession:
         self.hello_finished = False
         self.upstream_finished = False
         self.reset_session_each_turn = config.should_reset_session_each_turn(self.character_id)
+        self.preparing_next_turn = False
 
     async def connect(self):
         ws_config = config.build_ws_config(self.character_id)
@@ -157,14 +178,7 @@ class RealtimeRoleplayBridgeSession:
                     continue
 
                 if message_type == "SERVER_ERROR_RESPONSE":
-                    await self.client_ws.send(
-                        json_message(
-                            {
-                                "type": "error",
-                                "message": str(payload or "Upstream realtime roleplay service failed."),
-                            }
-                        )
-                    )
+                    await self.client_ws.send(json_message(build_bridge_error_payload(payload)))
                     break
 
                 event = parsed.get("event")
@@ -187,6 +201,9 @@ class RealtimeRoleplayBridgeSession:
                 elif event == 459:
                     await self.client_ws.send(json_message({"type": "assistant_resumed"}))
                 elif event in (152, 153):
+                    if self.preparing_next_turn:
+                        self.preparing_next_turn = False
+                        continue
                     await self.client_ws.send(json_message({"type": "session_finished", "event": event}))
                     self.upstream_finished = True
                     break
@@ -203,7 +220,7 @@ class RealtimeRoleplayBridgeSession:
                     )
         except Exception as exc:
             if not self.client_ws.closed:
-                await self.client_ws.send(json_message({"type": "error", "message": str(exc)}))
+                await self.client_ws.send(json_message(build_bridge_error_payload(exc)))
         finally:
             self.upstream_finished = True
 
@@ -244,6 +261,7 @@ class RealtimeRoleplayBridgeSession:
         if not self.ws or self.upstream_finished:
             return
 
+        self.preparing_next_turn = True
         await self._finish_session()
         self.session_id = str(uuid.uuid4())
         await self._send_start_session()
@@ -290,7 +308,7 @@ async def handle_browser_client(client_ws):
                     session.receive_task = asyncio.create_task(session.receive_forever())
                     await session.say_hello()
                 except Exception as exc:
-                    await client_ws.send(json_message({"type": "error", "message": str(exc)}))
+                    await client_ws.send(json_message(build_bridge_error_payload(exc)))
             elif command_type == "text":
                 if session is None:
                     await client_ws.send(json_message({"type": "error", "message": "Session has not started yet."}))
@@ -299,6 +317,12 @@ async def handle_browser_client(client_ws):
                 if content:
                     await session.send_text(content)
                     await client_ws.send(json_message({"type": "text_sent", "content": content}))
+            elif command_type == "prepare_next_turn":
+                if session is None:
+                    await client_ws.send(json_message({"type": "error", "message": "Session has not started yet."}))
+                    continue
+                await session._prepare_next_turn_session()
+                await client_ws.send(json_message({"type": "turn_session_prepared"}))
             elif command_type == "finish":
                 break
             elif command_type == "ping":

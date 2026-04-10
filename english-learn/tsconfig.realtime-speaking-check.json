@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "components/discussion/use-realtime-roleplay.ts",
+    "components/speaking/speaking-test-module.tsx",
+    "app/api/ai/feedback/speaking-test/route.ts",
+    "app/api/speaking/evaluations/history/route.ts",
+    "lib/speaking-evaluation-history.ts",
+    "lib/speaking-test.ts",
+    "lib/speaking-audio.ts"
+  ]
+}

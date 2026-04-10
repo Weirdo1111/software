@@ -21,6 +21,7 @@ import { useSpeakingAttemptHistory } from "@/components/forms/speaking/use-speak
 import { type Locale } from "@/lib/i18n/dictionaries";
 import { appendSpeakingAttemptInStorage } from "@/lib/speaking-attempts";
 import { recordSkillAttemptInStorage } from "@/lib/learning-tracker";
+import { MAX_TRANSCRIPTION_DURATION_SECONDS } from "@/lib/speaking-audio";
 import { speakingModuleCopy } from "@/lib/speaking-modules";
 import {
   getSpeakingPromptById,
@@ -298,7 +299,9 @@ export function SpeakingFeedbackForm({
       }
 
       setTranscript(data.transcript);
-      setTranscribeStatus("The latest recording has been transcribed into the draft field.");
+      setTranscribeStatus(
+        `The latest recording has been transcribed into the draft field. Accepted transcription length: 0-${MAX_TRANSCRIPTION_DURATION_SECONDS} seconds.`,
+      );
       emitBuddyPageEvent({
         text: {
           zh: "\u6700\u65b0\u5f55\u97f3\u5df2\u8f6c\u6210\u6587\u5b57\uff0c\u53ef\u4ee5\u76f4\u63a5\u6539\u7a3f\u4e86",

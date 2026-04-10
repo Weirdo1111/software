@@ -20,6 +20,8 @@ export type VersusQuestionView = {
   wordDisplay: string;
   hint: string;
   options: string[];
+  timeLeftSeconds: number;
+  timeTotalSeconds: number;
 };
 
 export type VersusRoomState = {

@@ -367,6 +367,60 @@ export function buildMockSpeakingTestFeedback(
   };
 }
 
+export function buildMissingTranscriptSpeakingTestFeedback(
+  questionSet: SpeakingTestQuestionSet,
+  answers: SpeakingTestAnswerInput[],
+): SpeakingTestFeedback {
+  const missingCount = answers.filter((answer) => answer.transcript.trim().length === 0).length;
+  const completedCount = answers.length - missingCount;
+
+  return {
+    overall_score: 0,
+    fluency_score: 0,
+    pronunciation_score: 0,
+    intonation_score: 0,
+    vocabulary_score: 0,
+    grammar_score: 0,
+    overall_comment:
+      missingCount === questionSet.questions.length
+        ? "No scorable transcript was captured during this speaking test, so the formal score is 0 out of 100."
+        : `Only ${completedCount} of ${questionSet.questions.length} answers produced a scorable transcript, so the formal score is 0 out of 100.`,
+    fluency_feedback:
+      "Fluency could not be evaluated because no reliable transcript was available for formal scoring.",
+    pronunciation_feedback:
+      "Pronunciation could not be evaluated because no reliable transcript was available for formal scoring.",
+    intonation_feedback:
+      "Intonation could not be evaluated because no reliable transcript was available for formal scoring.",
+    vocabulary_feedback:
+      "Vocabulary range could not be evaluated because no reliable transcript was available for formal scoring.",
+    grammar_feedback:
+      "Grammar variety could not be evaluated because no reliable transcript was available for formal scoring.",
+    transcript_overview:
+      missingCount === questionSet.questions.length
+        ? "The test session completed, but none of the answers produced a reliable transcript."
+        : `The test session completed, but ${missingCount} answer(s) did not produce a reliable transcript.`,
+    strengths: [
+      "The candidate completed the speaking-test flow.",
+      "The exam session remained active through the submitted answers.",
+      "A retriable transcript capture issue was identified clearly.",
+    ],
+    priorities: [
+      "Retry the test with a stable microphone and network path.",
+      "Confirm that transcript capture is working before finishing each answer.",
+      "Regenerate the report only after every answer shows reliable text.",
+    ],
+  };
+}
+
+export function getSpeakingEvaluationTier(score: number) {
+  if (score >= 90) return "Distinction";
+  if (score >= 80) return "Exceptional";
+  if (score >= 70) return "Advanced";
+  if (score >= 60) return "Proficient";
+  if (score >= 45) return "Developing";
+  return "Emerging";
+}
+
 function clampScore20(value: number) {
   return Math.max(0, Math.min(20, Math.round(value)));
 }
